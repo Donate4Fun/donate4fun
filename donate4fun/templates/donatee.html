@@ -1,0 +1,24 @@
+<html>
+  <head>
+    <title>Donatee ${ donatee }.</title>
+  </head>
+  <body>
+    Donatee ${ donatee } has total ${ sum_donated } sats donated. Unclaimed ${ sum_unclaimed }.
+  % if is_claim_allowed:
+    Are you a donatee? <a href="${ query(request.url_for('claim'), donatee=donatee) }">Claim</a>
+  % endif
+    Want to support him? <a href="${ query(request.url_for('donate'), donatee=donatee) }">Donate</a>
+    <ul>
+      % for d in donations:
+      <li>
+        ${ d.donatee } donated ${ d.amount_sat } sats at ${ d.created_at }. 
+        % if d.claimed_at:
+          Claimed at ${ d.claimed_at }
+        % else:
+          Unclaimed
+        % endif
+      </li>
+      % endfor
+    </ul>
+  </body>
+</html>

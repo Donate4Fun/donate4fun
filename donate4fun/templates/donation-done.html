@@ -1,0 +1,8 @@
+<html>
+  <head>
+    <title>Donation for ${ donation.donatee } [${ donation.id }]</title>
+  </head>
+  <body>
+    At ${ donation.created_at } <a href="${ request.url_for('donator', donator=donation.donator) }">${ donation.donator }</a> donated ${ donation.amount } msats to <a href="${ query(request.url_for('donatee'), donatee=donation.donatee) }">${ donation.donatee }</a> because he made ${ donation.trigger }.
+  </body>
+</html>

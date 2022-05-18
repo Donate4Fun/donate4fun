@@ -1,0 +1,28 @@
+<html>
+<head>
+  <title>Donate4.fun</title>
+  <link href="${ request.url_for('static', path='/styles.css') }" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.2.0.min.js"></script>
+</head>
+<body>
+  <h1>Donate for fun</h1>
+  <form action="${ request.url_for('donate_form') }" method="post" class="form"> 
+    Donate <div class="container"><span class="text"></span><input type="number" name="amount" value="1"></div> sats
+    to <div class="container"><span class="text"></span><input type="text" name="donatee" value="${ donatee }"></div>
+    because he made <div class="container"><span class="text"></span><input type="text" name="trigger" value="something good"></div>.
+    Tell him <div class="container"><span class="text"></span><input type="text" name="message" value="you are the best"></div>,
+    sincerely <div class="container"><span class="text"></span><input type="text" name="donator" value="anonymous"></div>.
+    <input type="submit" value="Donate">
+  </form>
+  <script>
+  $(() => {
+    $('.container input').on('input', (e) => {
+      $(e.target).prev().text($(e.target).val())
+    })
+    $('.container input').each((idx, elem) => {
+      $(elem).prev().text($(elem).val())
+    })
+  })
+  </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Donate4.fun to {{ target }}</title>
+    <link href="{{ url_for('static', path='/styles.css') }}" rel="stylesheet">
+  </head>
+  <body>
+    <div class="centered">
+      <div class="header">Pay {{ amount }} msat to {{ donatee }}</div>
+      <div><a href="lightning:{{ pay_req }}"><img class="qrcode" src="{{ qrcode }}"></a></div>
+      <div class="lnurl">{{ pay_req }}</div>
+    </div>
+  <body>
+</html>
