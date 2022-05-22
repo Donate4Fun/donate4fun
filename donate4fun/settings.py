@@ -14,6 +14,7 @@ class OAuthSettings(BaseModel):
 
 class YoutubeSettings(BaseModel):
     oauth: OAuthSettings
+    service_account_key_file: str
     api_key: str
 
 

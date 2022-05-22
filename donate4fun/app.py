@@ -1,39 +1,27 @@
-from base64 import b64decode, b64encode
-import io
 import binascii
-import os.path
-import re
+from base64 import b64decode
 from uuid import UUID
-from urllib.parse import urlparse
-from typing import Any
 
-import httpx
-import qrcode
 from fastapi import FastAPI, Request, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-#from fastapi.templating import Jinja2Templates
 from mako.lookup import TemplateLookup
-from qrcode.image.pure import PymagingImage
 from aiogoogle import Aiogoogle
 from hypercorn.asyncio import serve
 from hypercorn.config import Config
-from email_validator import validate_email
 from debug_toolbar.middleware import DebugToolbarMiddleware
 from .settings import settings, load_settings
 from .db import db, init_db
-from .youtube import validate_youtube_url, get_user_channel, make_youtube_channel_url
-from .models import DonationRequest, Donation, UnsupportedDonatee
+from .models import DonationRequest, Donation, UnsupportedTarget, ValidationError
+from .core import Url, query_lnd, datauri, validate_target
+from .youtube import fetch_user_channel, ChannelInfo
+from . import api
 
-Url = str
-PaymentRequest = str
-#templates = Jinja2Templates(directory="donate4fun/templates")
 templates = TemplateLookup(
     directories=['donate4fun/templates'],
     strict_undefined=True,
     imports=['from donate4fun.mako import query'],
 )
-#TemplateResponse = templates.TemplateResponse
 
 
 def TemplateResponse(name, *args, **kwargs) -> HTMLResponse:
@@ -43,6 +31,15 @@ def TemplateResponse(name, *args, **kwargs) -> HTMLResponse:
 app = FastAPI(debug=True)
 app.add_middleware(DebugToolbarMiddleware)
 app.mount("/static", StaticFiles(directory="donate4fun/static"), name="static")
+app.include_router(api.router, prefix="/api/v1")
+
+
+@app.exception_handler(ValidationError)
+async def not_found_exception_handler(request: Request, exc: ValidationError):
+    return JSONResponse(
+        status_code=400,
+        content={"message": repr(exc)},
+    )
 
 
 async def main():
@@ -57,58 +54,18 @@ async def donate(request: Request, donatee: str | None = Query(...)):
     return TemplateResponse("donate.html", request=request, donatee=donatee)
 
 
-async def validate_donatee(donatee: str):
-    if re.match(r'https?://.+', donatee):
-        return await validate_donatee_url(donatee)
-    return validate_email(donatee).email
-
-
-async def validate_donatee_url(donatee: Url):
-    parsed = urlparse(donatee)
-    if parsed.hostname in ['youtube.com', 'www.youtube.com', 'youtu.be']:
-        return await validate_youtube_url(parsed)
-    else:
-        raise UnsupportedDonatee
-
-
-def datauri(pay_req: PaymentRequest):
-    """
-    converts ln payment request to qr code in form of data: uri
-    """
-    img = qrcode.make(pay_req, image_factory=PymagingImage)
-    data = io.BytesIO()
-    img.save(data)
-    encoded = b64encode(data.getvalue()).decode()
-    return 'data:image/png;base64,' + encoded
-
-
-def load_invoice_macaroon() -> str:
-    return binascii.hexlify(open(os.path.expanduser("~/.lnd/data/chain/bitcoin/mainnet/invoices.macaroon"), "rb").read())
-
-
-async def query_lnd(method: str, api: str, **request: dict[str, Any]) -> dict[str, Any]:
-    async with httpx.AsyncClient() as client:
-        resp = await client.request(
-            method=method,
-            url=f'{settings.get().lnd_url}{api}',
-            json=request,
-            headers={"Grpc-Metadata-macaroon": load_invoice_macaroon()},
-        )
-        return resp.json()
-
-
 @app.post("/donate")
 async def donate_form(
     request: Request,
     amount: float = Form(...),
-    donatee: Url = Form(...),
+    target: Url = Form(...),
     donator: Url = Form(...),
     trigger: Url = Form(...),
     message: Url = Form(...),
 ):
     try:
-        donatee: Url = await validate_donatee(donatee)
-    except UnsupportedDonatee:
+        donatee, trigger = await validate_target(target)
+    except UnsupportedTarget:
         return TemplateResponse("unsupported.html",  request=request, donatee=donatee)
 
     invoice = await query_lnd('POST', '/v1/invoices', memo=f"donate4.fun to {donatee}", value_msat=int(amount * 1000))
@@ -169,17 +126,9 @@ async def auth_google(request: Request, error: str = None, error_description: st
             'error_description': error_description
         }
     elif code:
-        async with Aiogoogle() as aiogoogle:
-            full_user_creds = await aiogoogle.oauth2.build_user_creds(
-                grant=code,
-                client_creds=dict(
-                    redirect_uri=request.url_for('auth_google'),
-                    **settings.get().youtube.oauth.dict(),
-                ),
-            )
-        channel_id = await get_user_channel(full_user_creds)
-        donations = await db().query_donations(donatee=make_youtube_channel_url(channel_id))
-        return dict(channel=channel_id, donations=donations)
+        channel_info: ChannelInfo = await fetch_user_channel(request, code)
+        donations = await db().query_donations(donatee=channel_info.url)
+        return dict(channel=channel_info.id, donations=donations)
     else:
         # Should either receive a code or an error
         raise Exception("Something's probably wrong with your callback")
@@ -203,8 +152,16 @@ async def donatee(request: Request, donatee: Url = Query(...)):
 @app.post('/claim')
 async def claim(request: Request, donatee: Url = Query(...)):
     donations = await db().query_donations(donatee=donatee)
+    for donation in donations:
+        pass
 
 
 @app.get('/donator/{donator}')
 async def donator(request: Request, donator: str):
     return None
+
+
+@app.get('/donations')
+async def donations(request: Request):
+    donations = await db().query_donations(donatee=donatee)
+    return TemplateResponse("donations.html", request, donations=donations)

@@ -7,6 +7,8 @@ from dataclasses_json import dataclass_json
 
 from .settings import settings
 
+Url = str
+
 
 @dataclass_json
 @dataclass
@@ -40,7 +42,12 @@ class Donation:
     @property
     def amount_sat(self):
         return self.amount / 1000
+    pass
 
 
-class UnsupportedDonatee(Exception):
+class ValidationError(Exception):
+    pass
+
+
+class UnsupportedTarget(ValidationError):
     pass

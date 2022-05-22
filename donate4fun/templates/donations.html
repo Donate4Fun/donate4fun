@@ -1,0 +1,19 @@
+<html>
+  <head>
+    <title>Donations.</title>
+  </head>
+  <body>
+    <ul>
+      % for d in donations:
+      <li>
+        ${ d.donator } donated ${ d.amount_sat } sats at ${ d.created_at } to ${ d.donatee }.   
+        % if d.claimed_at:
+          Claimed at ${ d.claimed_at }
+        % else:
+          Unclaimed
+        % endif
+      </li>
+      % endfor
+    </ul>
+  </body>
+</html>
