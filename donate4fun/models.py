@@ -1,13 +1,17 @@
+from __future__ import annotations
 from uuid import UUID
 from dataclasses import dataclass
 from datetime import datetime
 
 import jwt
 from dataclasses_json import dataclass_json
+from pydantic import BaseModel, validator
+from funkybob import UniqueRandomNameGenerator
+from multiavatar.multiavatar import multiavatar
 
 from .settings import settings
-
-Url = str
+from .core import to_datauri
+from .types import Url
 
 
 @dataclass_json
@@ -27,27 +31,56 @@ class DonationRequest:
         return cls(**jwt.decode(token, settings.get().jwt_secret, algorithms=["HS256"]))
 
 
-@dataclass
-class Donation:
+class YoutubeChannel(BaseModel):
+    id: UUID
+    title: str
+    channel_id: str
+    thumbnail: Url | None
+
+    class Config:
+        orm_mode = True
+
+
+class Donator(BaseModel):
+    id: UUID
+    name: str | None
+    avatar_url: str | None
+
+    @validator('name', always=True)
+    def generate_name(cls, v, values):
+        if v is not None:
+            return v
+        else:
+            generator = UniqueRandomNameGenerator(3, separator=' ', seed=settings().donator_name_seed)
+            return generator[int(values['id']) % len(generator)].title()
+
+    @validator('avatar_url', always=True)
+    def generate_avatar(cls, v, values):
+        if v is not None:
+            return v
+        else:
+            return to_datauri('image/svg', multiavatar(str(values['id']), None, None).encode())
+
+    class Config:
+        orm_mode = True
+
+
+class Donation(BaseModel):
     id: UUID
     r_hash: str
-    donator: str
-    donatee: str
+    donator_id: UUID | None
+    donator: Donator
+    youtube_channel: YoutubeChannel
     amount: int
-    trigger: str | None
-    message: str | None
     created_at: datetime
-    claimed_at: datetime | None
+    trigger: str | None = None
+    message: str | None = None
+    paid_at: datetime | None = None
+    claimed_at: datetime | None = None
 
-    @property
-    def amount_sat(self):
-        return self.amount / 1000
-    pass
+    @validator('donator', pre=True)
+    def default_donator(cls, v, values):
+        return v or Donator(id=values['donator_id'])
 
-
-class ValidationError(Exception):
-    pass
-
-
-class UnsupportedTarget(ValidationError):
-    pass
+    class Config:
+        orm_mode = True

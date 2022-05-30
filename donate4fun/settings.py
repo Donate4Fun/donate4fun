@@ -1,7 +1,9 @@
+import yaml
+import os
 from typing import Any
 from contextvars import ContextVar
 from contextlib import contextmanager
-import yaml
+
 from pydantic import BaseSettings, BaseModel
 
 Url = str
@@ -28,18 +30,19 @@ class DbSettings(BaseModel):
 
 
 def yaml_config_source(settings: BaseSettings) -> dict[str, Any]:
-    return yaml.safe_load(open('config.yaml'))
+    return yaml.safe_load(open(os.getenv('DONATE4FUN_CONFIG', 'config.yaml')))
 
 
 class Settings(BaseSettings):
     domain: str = "donate4.fun"
     lnd_url: Url
-    secret_key: str
     youtube: YoutubeSettings
     db: DbSettings
     hypercorn: HypercornSettings
     jwt_secret: str
     claim_limit: int  # Limit in sats for claiming
+    debug: bool
+    donator_name_seed: int
 
     class Config:
         @classmethod
@@ -63,7 +66,7 @@ settings_var = ContextVar("settings")
 def load_settings():
     token = settings_var.set(Settings())
     try:
-        yield
+        yield settings_var.get()
     finally:
         settings_var.reset(token)
 

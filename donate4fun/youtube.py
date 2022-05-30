@@ -5,8 +5,10 @@ from urllib.parse import parse_qs, urlunparse
 
 from aiogoogle import Aiogoogle
 from aiogoogle.auth.creds import ClientCreds, ServiceAccountCreds
+from pydantic import BaseModel
+
 from .settings import settings
-from .models import UnsupportedTarget, Url, ValidationError
+from .types import UnsupportedTarget, Url, ValidationError
 
 ChannelId = str
 
@@ -23,16 +25,7 @@ class YoutubeChannelNotFound(ValidationError):
     pass
 
 
-@dataclass
-class YoutubeDonatee:
-    name: str
-    url: Url
-    trigger: Url | None
-    thumbnail: Url | None
-
-
-@dataclass
-class ChannelInfo:
+class ChannelInfo(BaseModel):
     id: ChannelId
     title: str
     thumbnail: Url
@@ -50,6 +43,12 @@ class ChannelInfo:
         return f'https://youtube.com/channel/{self.id}'
 
 
+@dataclass
+class YoutubeDonatee:
+    channel: ChannelInfo
+    trigger: Url | None
+
+
 async def validate_youtube_url(parsed) -> YoutubeDonatee:
     parts = parsed.path.split('/')
     trigger = None
@@ -57,9 +56,9 @@ async def validate_youtube_url(parsed) -> YoutubeDonatee:
         video_id = parse_qs(parsed.query)['v']
         channel_info = await fetch_channel_by_video(video_id)
         trigger = urlunparse(parsed)
-    elif parts[1] == 'channel':
+    elif parts[1] in ('channel', 'c'):
         part = parts[2]
-        if part[:3] == 'UC_':
+        if part[:3] == 'UC':
             channel_info = await fetch_channel(channel_id=part)
         else:
             channel_info = await fetch_channel(username=part)
@@ -68,9 +67,7 @@ async def validate_youtube_url(parsed) -> YoutubeDonatee:
     else:
         raise UnsupportedYoutubeUrl
     return YoutubeDonatee(
-        name=channel_info.title,
-        url=channel_info.url,
-        thumbnail=channel_info.thumbnail,
+        channel=channel_info,
         trigger=trigger,
     )
 
