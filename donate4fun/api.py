@@ -1,3 +1,4 @@
+import logging
 from uuid import UUID, uuid4
 from typing import Callable
 
@@ -6,12 +7,14 @@ from fastapi.routing import APIRoute
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, HttpUrl, ValidationError as PydanticValidationError
 
-from .core import validate_target, base64_to_hex, get_db_session
+from .core import validate_target, get_db_session, get_db_session_ws
 from .models import Donation, Donator
 from .types import ValidationError, RequestHash
-from .youtube import YoutubeDonatee, ChannelInfo
+from .youtube import YoutubeDonatee
 from .db import DbSession
 from . import lnd
+
+logger = logging.getLogger(__name__)
 
 
 class CustomRoute(APIRoute):
@@ -40,11 +43,7 @@ class DonateRequest(BaseModel):
     donater: str | None
 
 
-class DonateResponse(BaseModel):
-    r_hash: str
-    payment_request: str
-    channel: ChannelInfo
-    trigger: HttpUrl | None
+DonateResponse = Donation
 
 
 def get_donator(request: Request):
@@ -58,25 +57,22 @@ def get_donator(request: Request):
 
 @router.post("/donate", response_model=DonateResponse)
 async def donate(request: DonateRequest, donator: Donator = Depends(get_donator), db: DbSession = Depends(get_db_session)):
+    logger.debug("/donate")
     donatee: YoutubeDonatee = await validate_target(request.target)
     invoice: lnd.Invoice = await lnd.create_invoice(memo=f"Donate4.fun to {donatee.channel.title}", amount=request.amount)
     youtube_channel_id: UUID = await db.get_or_create_youtube_channel(
         channel_id=donatee.channel.id, title=donatee.channel.title, thumbnail_url=donatee.channel.thumbnail,
     )
-    await db.create_donation(
+    donation: Donation = await db.create_donation(
         r_hash=invoice.r_hash, amount=invoice.amount, youtube_channel_id=youtube_channel_id, donator_id=donator.id,
     )
-    return DonateResponse(
-        r_hash=base64_to_hex(invoice.r_hash),
-        payment_request=invoice.payment_request,
-        channel=donatee.channel,
-        trigger=donatee.trigger,
-    )
+    return donation
 
 
 @router.websocket("/donation/subscribe/{donation_id}")
-async def subscribe_to_donation(websocket: WebSocket, donation_id: UUID, db=Depends(get_db_session)):
+async def subscribe_to_donation(websocket: WebSocket, donation_id: UUID, db=Depends(get_db_session_ws)):
     await websocket.accept()
+    logger.debug("Connected /donation/subscribe/")
     try:
         async for msg in db.listen_for_donations():
             if msg not in (None, donation_id):
@@ -86,6 +82,7 @@ async def subscribe_to_donation(websocket: WebSocket, donation_id: UUID, db=Depe
                 await websocket.send_json(dict(status="ok", donation=donation.dict()))
                 break
     except Exception as exc:
+        logger.exception("Exception while listening for donations")
         await websocket.send_json(dict(status='error', error=repr(exc)))
 
 

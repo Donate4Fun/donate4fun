@@ -31,6 +31,7 @@ starlette-authlib = "^0.1.9"
 multiavatar = "^1.0.3"
 funkybob = {git = "https://github.com/nikicat/funkybob"}
 setuptools = "^62.3.2"
+asgi-testclient = {git = "https://github.com/nikicat/asgi-testClient"}
 
 [tool.poetry.dev-dependencies]
 ipython = "^8.3.0"
@@ -41,6 +42,9 @@ anyio = "^3.6.1"
 pytest-icdiff = "^0.5"
 vcrpy = "^4.1.1"
 pytest-vcr = "^1.0.2"
+pytest-asyncio = "^0.18.3"
+pytest-freezegun = "^0.4.2"
+pytest-aiohttp = "^1.0.4"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

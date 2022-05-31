@@ -3,21 +3,12 @@ from datetime import datetime
 
 import pytest
 import anyio
-from sqlalchemy import select, func
-
-from donate4fun.db import DbSession
 from donate4fun.models import Donation
 
 from tests.test_util import verify_fixture
 
 
 pytestmark = pytest.mark.anyio
-
-
-@pytest.fixture
-async def db_session(db) -> DbSession:
-    async with db.rollback() as session:
-        yield session
 
 
 async def test_query_donator(db_session):
@@ -31,7 +22,7 @@ async def test_query_donator(db_session):
 async def test_query_donatee(db_session):
     donations = await db_session.query_donatee('120108f4-a5e3-492f-8a4b-fdaff6dbfaf0')
     assert len(donations) == 3
-    verify_fixture('query-donatee', [donation.dict() for donation in donations])
+    verify_fixture([donation.dict() for donation in donations], 'query-donatee')
 
 
 async def test_query_donation(db_session):
@@ -42,7 +33,7 @@ async def test_query_donation(db_session):
 async def test_query_donations(db_session):
     donations = await db_session.query_recent_donations()
     assert len(donations) == 2
-    verify_fixture('query-donations', [donation.dict() for donation in donations])
+    verify_fixture([donation.dict() for donation in donations], 'query-donations')
 
 
 async def test_create_donation(db_session):
@@ -64,29 +55,6 @@ async def test_donation_paid(db_session):
     await db_session.donation_paid(r_hash='asdas', paid_at=datetime.utcnow(), amount=100)
     donation: Donation = await db_session.query_donation(r_hash='asdas')
     assert donation is not None
-
-
-@pytest.mark.skip('only for dev')
-async def test_nested(db):
-    print(0.1)
-    async with db.session.begin() as session:
-        print(1.1)
-        await session.connection()
-        print(1.2)
-        print(2.1)
-        res = await session.execute(select(func.pg_backend_pid()))
-        print(res.scalar())
-        print(2.3)
-        async with session.begin_nested() as transaction:
-            print(3.1)
-            res = await session.execute(select(func.pg_backend_pid()))
-            print(res.scalar())
-            await transaction.rollback()
-            print(3.2)
-        print(2.4)
-        print(2.5)
-        print(1.3)
-    print(0.2)
 
 
 async def test_listen_notify(db_session):

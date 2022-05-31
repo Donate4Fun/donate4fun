@@ -1,10 +1,11 @@
 import yaml
 import os
+import logging
 from typing import Any
 from contextvars import ContextVar
 from contextlib import contextmanager
 
-from pydantic import BaseSettings, BaseModel
+from pydantic import BaseSettings, BaseModel, Field
 
 Url = str
 
@@ -29,6 +30,43 @@ class DbSettings(BaseModel):
     echo: bool = False
 
 
+class FormatterConfig(BaseModel):
+    format: str
+    datefmt: str = None
+    style: str = '%'
+    validate_: str = Field(None, alias='validate')
+
+
+class FilterConfig(BaseModel):
+    name: str
+
+
+class HandlerConfig(BaseModel):
+    class_: str = Field(None, alias='class')
+    level: str = None
+    formatter: str = None
+    filters: list[str] = []
+    stream: str = None
+
+
+class LoggerConfig(BaseModel):
+    level: str
+    propagate: bool = True
+    filters: list[str] = []
+    handlers: list[str] = []
+
+
+class LoggingConfig(BaseModel):
+    version: int
+    formatters: dict[str, FormatterConfig] = {}
+    filters: dict[str, FilterConfig] = {}
+    handlers: dict[str, HandlerConfig] = {}
+    loggers: dict[str, LoggerConfig] = {}
+    root: LoggerConfig
+    disable_existing_loggers: bool
+    incremental: bool = False
+
+
 def yaml_config_source(settings: BaseSettings) -> dict[str, Any]:
     return yaml.safe_load(open(os.getenv('DONATE4FUN_CONFIG', 'config.yaml')))
 
@@ -43,6 +81,7 @@ class Settings(BaseSettings):
     claim_limit: int  # Limit in sats for claiming
     debug: bool
     donator_name_seed: int
+    log: LoggingConfig
 
     class Config:
         @classmethod
@@ -64,9 +103,12 @@ settings_var = ContextVar("settings")
 
 @contextmanager
 def load_settings():
-    token = settings_var.set(Settings())
+    settings = Settings()
+    log_config = settings.log.dict(by_alias=True)
+    logging.config.dictConfig(log_config)
+    token = settings_var.set(settings)
     try:
-        yield settings_var.get()
+        yield settings
     finally:
         settings_var.reset(token)
 

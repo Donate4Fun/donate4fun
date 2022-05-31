@@ -68,7 +68,7 @@ class Donator(BaseModel):
 class Donation(BaseModel):
     id: UUID
     r_hash: str
-    donator_id: UUID | None
+    donator_id: UUID
     donator: Donator
     youtube_channel: YoutubeChannel
     amount: int

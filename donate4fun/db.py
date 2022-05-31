@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from uuid import UUID
 from contextlib import asynccontextmanager
 from contextvars import ContextVar
@@ -12,9 +13,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from .settings import settings
 from .models import Donation
 
-
-def name_for_collection_relationship(base, local_cls, referred_cls, constraint):
-    return referred_cls.__name__.lower() + "s"
+logger = logging.getLogger(__name__)
 
 
 Base = declarative_base()
@@ -168,6 +167,7 @@ class DbSession:
                     r_hash=r_hash,
                     donator_id=str(donator_id),
                     youtube_channel_id=str(youtube_channel_id),
+                    created_at=datetime.utcnow(),
                 )
                 .returning(DonationDb.id)
             )
@@ -196,6 +196,7 @@ class DbSession:
         raw_connection = await connection.get_raw_connection()
         asyncpg_connection = raw_connection.connection._connection
         await asyncpg_connection.add_listener(channel, queue.put)
+        logger.debug(f"Added listener for '{channel}'")
         yield None
         while True:
             try:
@@ -207,6 +208,9 @@ class DbSession:
 
     async def listen_for_donations(self):
         async for msg in self.listen('"donation-paid"'):
+            if msg is None:
+                continue
+            breakpoint()
             yield UUID(msg)
 
 

@@ -60,6 +60,7 @@ async def cancel_invoice(r_hash: str):
 
 
 async def monitor_invoices(db):
+    logger.debug("Start monitoring invoices")
     async for data in subscribe_lnd("/v1/invoices/subscribe"):
         logger.debug(f"monitor_invoices {data}")
         result = data['result']

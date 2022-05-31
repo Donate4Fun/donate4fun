@@ -5,7 +5,7 @@ from base64 import b64encode, b64decode, urlsafe_b64encode
 from urllib.parse import urlparse
 
 import qrcode
-from fastapi import Request
+from fastapi import Request, WebSocket
 from email_validator import validate_email
 from qrcode.image.pure import PymagingImage
 
@@ -17,6 +17,11 @@ PaymentRequest = str
 
 async def get_db_session(request: Request):
     async with request.app.db.acquire_session() as session:
+        yield session
+
+
+async def get_db_session_ws(websocket: WebSocket):
+    async with websocket.app.db.acquire_session() as session:
         yield session
 
 
