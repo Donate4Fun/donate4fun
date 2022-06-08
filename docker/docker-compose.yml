@@ -1,0 +1,79 @@
+version: "3.9"
+
+x-common-lnd: &clnd
+  build:
+    context: ./lnd
+    args:
+      GIT_REF: c2d31dc53d4cbb019430b5a905dd9d35511596eb
+  command:
+  - run.sh
+  environment:
+  - BITCOIN_PORT=${BITCOIN_PORT}
+  depends_on:
+  - bitcoind
+
+services:
+  bitcoind:
+    container_name: ${COMPOSE_PROJECT_NAME}-bitcoind
+    build: ./bitcoind
+    command: [
+      "bitcoind",
+      "-datadir=/data",
+      "-bind=0.0.0.0:${BITCOIN_PORT}",
+      "-rpcbind=0.0.0.0:${BITCOIN_RPC_PORT}",
+      "-rpcallowip=0.0.0.0/0",
+      "-dnsseed=0",
+      "-dns=0",
+      "-listenonion=0",
+      "-txindex=1",
+      "-onlynet=ipv4",
+      "-regtest=1",
+      "-blockfilterindex=1",
+      "-peerblockfilters=1",
+      "-fallbackfee=0.0002",
+      "-wallet=testwallet",
+    ]
+    ports:
+    - "127.0.0.1:${BITCOIN_RPC_PORT}:${BITCOIN_RPC_PORT}"
+    - "127.0.0.1:${BITCOIN_PORT}:${BITCOIN_PORT}"
+    volumes:
+    - ./bitcoind-data:/data
+
+  lnd-alice:
+    <<: *clnd
+    container_name: ${COMPOSE_PROJECT_NAME}-lnd-alice
+    volumes:
+    - ./lnd-alice:/lnd
+    ports:
+    - "127.0.0.1:10001:${LND_REST_PORT}"
+    - "127.0.0.1:20001:${LND_RPC_PORT}"
+ 
+  lnd-bob:
+    <<: *clnd
+    container_name: ${COMPOSE_PROJECT_NAME}-lnd-bob
+    volumes:
+    - ./lnd-bob:/lnd
+    ports:
+    - "127.0.0.1:10002:${LND_REST_PORT}"
+    - "127.0.0.1:20002:${LND_RPC_PORT}"
+     
+  rtl:
+    container_name: ${COMPOSE_PROJECT_NAME}-rtl
+    build:
+      context: ./rtl
+      args:
+        GIT_REF: ee096d7e1b9b03736fb5317f7355abdab2c6a678
+    restart: unless-stopped
+    depends_on:
+      - lnd-alice
+      - lnd-bob
+    volumes:
+      - ./lnd-alice:/lnd-alice:ro
+      - ./lnd-bob:/lnd-bob:ro
+      - ./rtl-config:/config
+      - ./rtl-backup:/backup
+    ports:
+      - "[::1]:${RTL_PORT}:${RTL_PORT}"
+    environment:
+      RTL_CONFIG_PATH: /config
+      PORT: ${RTL_PORT}

@@ -6,9 +6,13 @@ export default defineConfig({
   plugins: [svelte()],
   server: {
     proxy: {
-      '/api': {
+      '/api/': {
         target: 'http://localhost:8000',
         changeOrigin: true
+      },
+      '/api/v1/invoice/subscribe/': {
+        target: 'ws://localhost:8000',
+        ws: true
       }
     }
   }

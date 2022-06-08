@@ -1,0 +1,3 @@
+#!/bin/sh
+
+lncli --rpcserver=localhost:20002 --lnddir=./lnd-bob --network regtest "$@"

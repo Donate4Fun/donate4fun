@@ -3,7 +3,7 @@ import os
 import logging
 from typing import Any
 from contextvars import ContextVar
-from contextlib import contextmanager
+from contextlib import asynccontextmanager
 
 from pydantic import BaseSettings, BaseModel, Field
 
@@ -28,6 +28,7 @@ class HypercornSettings(BaseModel):
 class DbSettings(BaseModel):
     dsn: str
     echo: bool = False
+    isolation_level: str = 'SERIALIZABLE'
 
 
 class FormatterConfig(BaseModel):
@@ -67,13 +68,20 @@ class LoggingConfig(BaseModel):
     incremental: bool = False
 
 
+class LndSettings(BaseModel):
+    url: Url
+    bitcoin_network: str | None
+    invoices_macaroon_path: str | None = None
+    invoice_expiry: int = 3600  # In seconds
+
+
 def yaml_config_source(settings: BaseSettings) -> dict[str, Any]:
     return yaml.safe_load(open(os.getenv('DONATE4FUN_CONFIG', 'config.yaml')))
 
 
 class Settings(BaseSettings):
     domain: str = "donate4.fun"
-    lnd_url: Url
+    lnd: LndSettings
     youtube: YoutubeSettings
     db: DbSettings
     hypercorn: HypercornSettings
@@ -101,8 +109,8 @@ class Settings(BaseSettings):
 settings_var = ContextVar("settings")
 
 
-@contextmanager
-def load_settings():
+@asynccontextmanager
+async def load_settings():
     settings = Settings()
     log_config = settings.log.dict(by_alias=True)
     logging.config.dictConfig(log_config)

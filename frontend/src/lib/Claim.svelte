@@ -15,6 +15,19 @@
 <Section>
   <h1>Claim donations</h1>
   <p>Check if your channel have been donated, just paste your Channel’s URL</p>
-  <Input placeholder="Paste your Youtube channel’s URL" bind:value={donatee}/>
-  <Button disabled={!donatee} on:click={claim}>Check donation</Button>
+  <p class="controls">
+    <Input placeholder="Paste your Youtube channel’s URL" bind:value={donatee}/>
+    <Button disabled={!donatee} on:click={claim}>Check donation</Button>
+  <div>
 </Section>
+
+<style>
+.controls {
+  display: flex;
+  align-items: center;
+  margin-left: -10px;
+}
+:global(button) {
+  white-space: nowrap;
+}
+</style>

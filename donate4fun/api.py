@@ -6,13 +6,14 @@ from fastapi import APIRouter, WebSocket, Request, Response, Depends
 from fastapi.routing import APIRoute
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, HttpUrl, ValidationError as PydanticValidationError
+from httpx import HTTPStatusError
 
-from .core import validate_target, get_db_session, get_db_session_ws
+from .core import validate_target, get_db_session, get_lnd
 from .models import Donation, Donator
-from .types import ValidationError, RequestHash
+from .types import ValidationError, RequestHash, PaymentRequest
 from .youtube import YoutubeDonatee
-from .db import DbSession
-from . import lnd
+from .lnd import Invoice
+from .db import Database
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +25,9 @@ class CustomRoute(APIRoute):
         async def custom_route_handler(request: Request) -> Response:
             try:
                 return await original_route_handler(request)
+            except HTTPStatusError as exc:
+                body = await exc.response.aread()
+                return JSONResponse(status_code=500, content={"message": f"Upstream server returned {exc}: {body}"})
             except (ValidationError, PydanticValidationError) as exc:
                 return JSONResponse(
                     status_code=400,
@@ -43,7 +47,9 @@ class DonateRequest(BaseModel):
     donater: str | None
 
 
-DonateResponse = Donation
+class DonateResponse(BaseModel):
+    donation: Donation
+    payment_request: PaymentRequest
 
 
 def get_donator(request: Request):
@@ -56,39 +62,59 @@ def get_donator(request: Request):
 
 
 @router.post("/donate", response_model=DonateResponse)
-async def donate(request: DonateRequest, donator: Donator = Depends(get_donator), db: DbSession = Depends(get_db_session)):
-    logger.debug("/donate")
+async def donate(
+    request: DonateRequest, donator: Donator = Depends(get_donator), db_session=Depends(get_db_session), lnd=Depends(get_lnd),
+ ) -> DonateResponse:
+    logger.debug(f"Donator {donator.id} wants to donate {request.amount} to {request.target}")
     donatee: YoutubeDonatee = await validate_target(request.target)
-    invoice: lnd.Invoice = await lnd.create_invoice(memo=f"Donate4.fun to {donatee.channel.title}", amount=request.amount)
-    youtube_channel_id: UUID = await db.get_or_create_youtube_channel(
+    invoice: Invoice = await lnd.create_invoice(memo=f"Donate4.fun to {donatee.channel.title}", amount=request.amount)
+    youtube_channel_id: UUID = await db_session.get_or_create_youtube_channel(
         channel_id=donatee.channel.id, title=donatee.channel.title, thumbnail_url=donatee.channel.thumbnail,
     )
-    donation: Donation = await db.create_donation(
+    donation: Donation = await db_session.create_donation(
         r_hash=invoice.r_hash, amount=invoice.amount, youtube_channel_id=youtube_channel_id, donator_id=donator.id,
     )
-    return donation
+    return DonateResponse(donation=donation, payment_request=invoice.payment_request)
+
+
+class DonationPaidResponse(BaseModel):
+    status: str
+    donation: Donation
 
 
 @router.websocket("/donation/subscribe/{donation_id}")
-async def subscribe_to_donation(websocket: WebSocket, donation_id: UUID, db=Depends(get_db_session_ws)):
-    await websocket.accept()
+async def subscribe_to_donation(websocket: WebSocket, donation_id: UUID):
     logger.debug("Connected /donation/subscribe/")
+    db: Database = websocket.app.db
     try:
-        async for msg in db.listen_for_donations():
-            if msg not in (None, donation_id):
-                continue
-            donation: Donation = await db.query_donation(donation_id)
-            if donation.paid_at is not None:
-                await websocket.send_json(dict(status="ok", donation=donation.dict()))
-                break
+        async with db.pubsub() as sub:
+            async for msg in sub.listen_for_donations():
+                if msg is None:
+                    await websocket.accept()
+                    logger.debug(f"Accepted ws connection for {donation_id}")
+                elif msg == donation_id:
+                    async with db.session() as db_session:
+                        donation: Donation = await db_session.query_donation(id=donation_id)
+                    if donation.paid_at is not None:
+                        await websocket.send_text(DonationPaidResponse(status="ok", donation=donation).json())
+                    else:
+                        logger.warning(f"Received notification about already paid donation {donation_id}")
+                    break
+                else:
+                    logger.debug(f"Received notification about donation {donation.id}, skipping")
     except Exception as exc:
         logger.exception("Exception while listening for donations")
         await websocket.send_json(dict(status='error', error=repr(exc)))
+    finally:
+        await websocket.close()
 
 
-@router.post("/invoice/cancel/{donation_id}")
-async def cancel_invoice(donation_id: UUID, db: DbSession = Depends(get_db_session)):
-    r_hash: RequestHash = await db.cancel_invoice(donation_id)
+@router.post("/donation/cancel/{donation_id}")
+async def cancel_donation(donation_id: UUID, db=Depends(get_db_session), lnd=Depends(get_lnd)):
+    """
+    It only works for HODL invoices
+    """
+    r_hash: RequestHash = await db.cancel_donation(donation_id)
     await lnd.cancel_invoice(r_hash)
 
 

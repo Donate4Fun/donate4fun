@@ -1,1 +1,1 @@
-<img src="twi.jpeg" />
+<img src="twi.jpeg" alt="twitter" />

@@ -2,6 +2,7 @@
 
 Url = str
 RequestHash = str
+PaymentRequest = str
 
 
 class ValidationError(Exception):

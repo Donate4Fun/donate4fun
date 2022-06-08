@@ -1,0 +1,49 @@
+{
+  "defaultNodeIndex": 1,
+  "SSO": {
+    "rtlSSO": 0,
+    "rtlCookiePath": "",
+    "logoutRedirectLink": ""
+  },
+  "nodes": [
+    {
+      "index": 1,
+      "lnNode": "Alice",
+      "lnImplementation": "LND",
+      "Authentication": {
+        "macaroonPath": "/lnd-alice/data/chain/bitcoin/regtest",
+        "configPath": "/lnd-alice/lnd.conf"
+      },
+      "Settings": {
+        "userPersona": "MERCHANT",
+        "themeMode": "NIGHT",
+        "themeColor": "PURPLE",
+        "channelBackupPath": "/backup/alice",
+        "logLevel": "ERROR",
+        "lnServerUrl": "http://lnd-alice:8080",
+        "fiatConversion": true,
+        "currencyUnit": "EUR"
+      }
+    },
+    {
+      "index": 2,
+      "lnNode": "Bob",
+      "lnImplementation": "LND",
+      "Authentication": {
+        "macaroonPath": "/lnd-bob/data/chain/bitcoin/regtest",
+        "configPath": "/lnd-bob/lnd.conf"
+      },
+      "Settings": {
+        "userPersona": "MERCHANT",
+        "themeMode": "NIGHT",
+        "themeColor": "PURPLE",
+        "channelBackupPath": "/backup/bob",
+        "logLevel": "ERROR",
+        "lnServerUrl": "http://lnd-bob:8080",
+        "fiatConversion": true,
+        "currencyUnit": "EUR"
+      }
+    }
+  ],
+  "multiPassHashed": "85fd7c889f71cf105375595cddc06b9d38fc562cb69c54f8c165aa751d81b3d9"
+}

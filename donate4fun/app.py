@@ -11,7 +11,7 @@ from starlette_authlib.middleware import AuthlibMiddleware
 
 from .settings import load_settings, Settings
 from .db import load_db
-from .lnd import monitor_invoices
+from .lnd import monitor_invoices_loop, LndClient
 from . import api, web
 
 logger = logging.getLogger(__name__)
@@ -30,10 +30,11 @@ async def create_app(settings: Settings):
 
 
 async def main():
-    with load_settings() as settings:
-        async with create_app() as app, load_db() as db, anyio.create_task_group() as tg:
-            tg.start_soon(monitor_invoices, db)
-            hyper_config = Config.from_mapping(settings().hypercorn)
-            app.db = db
-            await serve(app, hyper_config)
-            tg.cancel_scope.cancel()
+    async with load_settings() as settings, create_app() as app, load_db(settings.db) as db, anyio.create_task_group() as tg:
+        lnd = LndClient(settings.lnd)
+        await tg.start(monitor_invoices_loop, lnd, db)
+        hyper_config = Config.from_mapping(settings.hypercorn)
+        app.db = db
+        app.lnd = lnd
+        await serve(app, hyper_config)
+        tg.cancel_scope.cancel()

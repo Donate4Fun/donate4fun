@@ -11,6 +11,8 @@ input {
   border-radius: 100px;
   box-sizing: border-box;
   height: 40px;
+  width: 100%;
+  margin: 0 10px;
 
   font-size: 16px;
   line-height: 24px;

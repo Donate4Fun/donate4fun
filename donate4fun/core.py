@@ -5,24 +5,21 @@ from base64 import b64encode, b64decode, urlsafe_b64encode
 from urllib.parse import urlparse
 
 import qrcode
-from fastapi import Request, WebSocket
+from fastapi import Request
 from email_validator import validate_email
 from qrcode.image.pure import PymagingImage
 
 from .youtube import validate_youtube_url
-from .types import UnsupportedTarget, Url
-
-PaymentRequest = str
+from .types import UnsupportedTarget, Url, PaymentRequest
 
 
 async def get_db_session(request: Request):
-    async with request.app.db.acquire_session() as session:
+    async with request.app.db.session() as session:
         yield session
 
 
-async def get_db_session_ws(websocket: WebSocket):
-    async with websocket.app.db.acquire_session() as session:
-        yield session
+async def get_lnd(request: Request):
+    return request.app.lnd
 
 
 async def validate_target(target: str):

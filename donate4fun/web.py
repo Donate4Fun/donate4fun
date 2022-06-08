@@ -5,13 +5,12 @@ from aiogoogle import Aiogoogle
 from fastapi import Request, Form, Query, APIRouter, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 
-from .core import payreq_to_datauri, validate_target, get_db_session
+from .core import payreq_to_datauri, validate_target, get_db_session, get_lnd
 from .models import DonationRequest, Donation
 from .types import Url, UnsupportedTarget
 from .youtube import fetch_user_channel, ChannelInfo
 from .settings import settings
-from .db import db_session_var
-from . import lnd
+from .lnd import LndClient, Invoice
 
 templates = TemplateLookup(
     directories=['donate4fun/templates'],
@@ -40,6 +39,7 @@ async def donate_form(
     donator: Url = Form(...),
     trigger: Url = Form(...),
     message: Url = Form(...),
+    lnd: LndClient = Depends(get_lnd),
 ):
     try:
         donatee, trigger = await validate_target(target)
@@ -58,10 +58,10 @@ async def donate_form(
 
 
 @router.get("/donation/{donation_id}", response_class=HTMLResponse)
-async def donate_invoice(request: Request, donation_id: str, db=Depends(get_db_session)):
+async def donate_invoice(request: Request, donation_id: str, db=Depends(get_db_session), lnd=Depends(get_lnd)):
     donation: Donation = await db.query_donation(donation_id)
     if donation.paid_at is None:
-        invoice: lnd.Invoice = await lnd.fetch_invoice(donation.r_hash)
+        invoice: Invoice = await lnd.fetch_invoice(donation.r_hash)
         if invoice.amt_paid > 0:
             await db.donation_paid(donation_id=donation_id, amount=invoice.amt_paid)
         else:
@@ -87,14 +87,16 @@ async def login_via_google(request: Request, orig_channel_id: str):
         client_creds=dict(
             scopes=['https://www.googleapis.com/auth/youtube.readonly'],
             redirect_uri=request.url_for('auth_google'),
-            **settings.get().youtube.oauth.dict(),
+            **settings().youtube.oauth.dict(),
         ),
     )
     return RedirectResponse(uri)
 
 
 @router.get('/auth/google', response_class=JSONResponse)
-async def auth_google(request: Request, error: str = None, error_description: str = None, code: str = None):
+async def auth_google(
+    request: Request, error: str = None, error_description: str = None, code: str = None, db_session=Depends(get_db_session)
+):
     if error:
         return {
             'error': error,
@@ -102,7 +104,7 @@ async def auth_google(request: Request, error: str = None, error_description: st
         }
     elif code:
         channel_info: ChannelInfo = await fetch_user_channel(request, code)
-        donations = await db_session_var.get().query_donations(donatee=channel_info.url)
+        donations = await db_session.query_donations(donatee=channel_info.url)
         return dict(channel=channel_info.id, donations=donations)
     else:
         # Should either receive a code or an error
@@ -110,8 +112,8 @@ async def auth_google(request: Request, error: str = None, error_description: st
 
 
 @router.get('/donatee')
-async def donatee(request: Request, donatee: Url = Query(...)):
-    donations = await db_session_var.get().query_donations(donatee=donatee)
+async def donatee(request: Request, donatee: Url = Query(...), db_session=Depends(get_db_session)):
+    donations = await db_session.query_donations(donatee=donatee)
     sum_unclaimed = sum(d.amount for d in donations if d.claimed_at is None) / 1000
     return TemplateResponse(
         "donatee.html",
@@ -125,8 +127,8 @@ async def donatee(request: Request, donatee: Url = Query(...)):
 
 
 @router.post('/claim')
-async def claim(request: Request, donatee: Url = Query(...)):
-    donations = await db_session_var.get().query_donations(donatee=donatee)
+async def claim(request: Request, donatee: Url = Query(...), db_session=Depends(get_db_session)):
+    donations = await db_session.query_donations(donatee=donatee)
     for donation in donations:
         pass
 
@@ -137,6 +139,6 @@ async def donator(request: Request, donator: str):
 
 
 @router.get('/donations')
-async def donations(request: Request):
-    donations = await db_session_var.get().query_donations(donatee=donatee)
+async def donations(request: Request, db_session=Depends(get_db_session)):
+    donations = await db_session.query_donations(donatee=donatee)
     return TemplateResponse("donations.html", request, donations=donations)

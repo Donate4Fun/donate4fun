@@ -33,6 +33,7 @@
     flex-grow: 1;
     gap: 20px;
     padding-top: 40px;
+    flex-wrap: wrap;
   }
   .forms {
     display: flex;
@@ -41,7 +42,8 @@
     gap: 20px;
   }
   aside {
-    flex-basis: 40%;
+    flex-basis: 30%;
+    min-width: 400px;
   }
   header {
     font-size: 24px;

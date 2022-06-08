@@ -3,6 +3,5 @@ from .db import load_db
 
 
 async def load():
-    with load_settings() as settings:
-        async with load_db() as db:
-            return settings, db
+    async with load_settings() as settings, load_db(settings) as db:
+        return settings, db

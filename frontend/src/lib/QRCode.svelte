@@ -13,3 +13,10 @@
 {:then value}
 <img src={value} alt="qrcode" >
 {/await}
+
+<style>
+img {
+  margin: -15px;
+  margin-bottom: -20px;
+}
+</style>

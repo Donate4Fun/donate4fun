@@ -10,7 +10,7 @@ button {
   line-height: 19px;
   color: #FFFFFF;
   padding: 5px 20px;
-  margin: 0px 20px;
+  margin-left: 10px;
   cursor: pointer;
   height: 40px;
 
@@ -19,6 +19,9 @@ button {
 
   /* identical to box height, or 150% */
   letter-spacing: 0.02em;
+
+  display: flex;
+  align-items: center;
 }
 /* Chrome, Safari, Edge, Opera */
 input::-webkit-outer-spin-button,
