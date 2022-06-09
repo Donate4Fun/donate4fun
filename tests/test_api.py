@@ -1,21 +1,17 @@
 import uuid
 import time
 import json
-from contextlib import asynccontextmanager
 from datetime import datetime
 
 import anyio
 import pytest
 from authlib.jose import jwt
-from httpx import AsyncClient
 from vcr.filters import replace_query_parameters
 from asgi_testclient import TestClient
-from sqlalchemy import select
 
 from donate4fun.api import DonateRequest, DonateResponse, DonationPaidResponse
 from donate4fun.lnd import monitor_invoices, LndClient
 from donate4fun.settings import LndSettings
-from donate4fun.db import Database
 
 from tests.test_util import verify_fixture
 from tests.fixtures import *  # noqa
@@ -31,25 +27,7 @@ async def user_token(settings, donator_id):
 
 
 @pytest.fixture
-async def client(app, user_token):
-    async with AsyncClient(app=app, base_url="http://test", cookies=dict(session=user_token)) as client:
-        yield client
-
-
-class NestedDb(Database):
-    def __init__(self, db_session):
-        self.db_session = db_session
-        self.session_maker = db_session.db.session_maker
-
-    @asynccontextmanager
-    async def session(self):
-        async with self.db_session.savepoint() as nested:
-            yield nested
-
-
-@pytest.fixture
 def asgi_client(app, user_token):
-    #app.db = NestedDb(db_session)
     return TestClient(app, cookies=dict(session=user_token))
 
 
@@ -71,8 +49,7 @@ def verify_response(response, name, status_code=None):
 
 
 @pytest.mark.freeze_time('2022-02-02 22:22:22')
-async def test_latest_donations(asgi_client, db_session, paid_donation_fixture):
-    asgi_client.app.db = NestedDb(db_session)
+async def test_latest_donations(asgi_client, paid_donation_fixture):
     response = await asgi_client.get("/api/v1/latest-donations")
     verify_response(response, 'latest-donations', 200)
 
@@ -156,8 +133,6 @@ async def test_cancel_donation(asgi_client, app, db_session, freeze_uuid):
         verify_fixture(ws_response, "cancel-donation-subscribe")
 
 
-#@mark_vcr
-#@pytest.mark.freeze_time('2022-02-02 22:22:22')
 async def test_donate_full(asgi_client, app, freeze_uuid: uuid.UUID, payer_lnd: LndClient):
     donation_id = freeze_uuid
     donate_response: DonateResponse = await asgi_client.post(
@@ -167,8 +142,6 @@ async def test_donate_full(asgi_client, app, freeze_uuid: uuid.UUID, payer_lnd: 
     check_response(donate_response, 200)
     assert donate_response.json()['donation']['id'] == str(donation_id)
     payment_request = donate_response.json()['payment_request']
-    print(payment_request)
-    #verify_response(donate_response, 'payment-donate')
     async with anyio.create_task_group() as tg, asgi_client.ws_session(f"/api/v1/donation/subscribe/{donation_id}") as ws:
         await tg.start(monitor_invoices, app.lnd, app.db)
         await payer_lnd.pay_invoice(payment_request, timeout=5)
@@ -190,24 +163,11 @@ async def test_donate_full(asgi_client, app, freeze_uuid: uuid.UUID, payer_lnd: 
 
 
 @pytest.mark.freeze_time('2022-02-02 22:22:22')
-async def test_websocket(asgi_client, donation_fixture, db_session):
+async def test_websocket(asgi_client, donation_fixture, db):
     messages = []
-    asgi_client.app.db = NestedDb(db_session)
     async with asgi_client.ws_session(f'/api/v1/donation/subscribe/{donation_fixture.id}') as ws:
-        await db_session.donation_paid(r_hash=donation_fixture.r_hash, amount=100, paid_at=datetime.utcnow())
+        async with db.session() as db_session:
+            await db_session.donation_paid(r_hash=donation_fixture.r_hash, amount=100, paid_at=datetime.utcnow())
         msg = await ws.receive_json()
         messages.append(msg)
     verify_fixture(messages, "websocket-messages")
-
-
-async def test_nested(db_session):
-    await db_session.execute(select(1))
-    async with NestedDb(db_session).session() as nested:
-        await nested.execute(select(1))
-        try:
-            async with NestedDb(nested).session() as nested2:
-                await nested2.execute(select(1))
-                raise Exception
-        except Exception:
-            pass
-    await db_session.execute(select(1))

@@ -78,17 +78,14 @@ class LndClient:
         # lnd does not return headers until the first event, so it deadlocks
 
         async def request_impl(queue):
-            try:
-                async with self.request(api, method='GET', json=request, timeout=None) as resp:
-                    async for line in resp.aiter_lines():
-                        await queue.put(json.loads(line))
-            except Exception as exc:
-                breakpoint()
+            async with self.request(api, method='GET', json=request, timeout=None) as resp:
+                async for line in resp.aiter_lines():
+                    await queue.put(json.loads(line))
 
         async with anyio.create_task_group() as tg:
             queue = asyncio.Queue()
             tg.start_soon(request_impl, queue)
-            await asyncio.sleep(0.4)
+            await asyncio.sleep(0.2)
             yield
             while result := await queue.get():
                 yield result

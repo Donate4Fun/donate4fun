@@ -3,14 +3,13 @@ import uuid
 import contextvars
 import functools
 from datetime import datetime
-from contextlib import asynccontextmanager
 
 import pytest
 from donate4fun.app import create_app
 from donate4fun.settings import load_settings, Settings, DbSettings
 from donate4fun.db import DbSession, Database
 from donate4fun.lnd import LndClient
-from donate4fun.models import Donation, Donator
+from donate4fun.models import Donation
 
 
 @pytest.fixture(scope='session')
@@ -19,6 +18,10 @@ def anyio_backend():
 
 
 class Task311(asyncio.tasks._PyTask):
+    """
+    This is backport of Task from CPython 3.11
+    It's needed to allow context passing
+    """
     def __init__(self, coro, *, loop=None, name=None, context=None):
         super(asyncio.tasks._PyTask, self).__init__(loop=loop)
         if self._source_traceback:
@@ -84,15 +87,6 @@ async def db(settings: Settings):
         await base_db.drop_database(db_name)
 
 
-class FixtureDatabase(Database):
-    def __init__(self, db_session):
-        self.db_session = db_session
-
-    @asynccontextmanager
-    async def session(self):
-        yield self.db_session
-
-
 @pytest.fixture
 async def app(db, settings):
     async with create_app(settings) as app:
@@ -123,27 +117,21 @@ def donator_id():
 
 
 @pytest.fixture
-async def donator_fixture(donator_id: uuid.UUID):
-    donator: Donator = await db_session.update_donator(
-        id=donator_id,
-    )
-    return donator
+async def donation_fixture(db, donator_id, freeze_uuid):
+    async with db.session() as db_session:
+        youtube_channel_id = await db_session.get_or_create_youtube_channel(
+            channel_id='q2dsaf', title='asdzxc', thumbnail_url='1wdasd',
+        )
+        donation: Donation = await db_session.create_donation(
+            donator_id=donator_id,
+            amount=20,
+            youtube_channel_id=youtube_channel_id,
+            r_hash='hash',
+        )
+        return donation
 
 
 @pytest.fixture
-async def donation_fixture(db_session, donator_id, freeze_uuid):
-    youtube_channel_id = await db_session.get_or_create_youtube_channel(
-        channel_id='q2dsaf', title='asdzxc', thumbnail_url='1wdasd',
-    )
-    donation: Donation = await db_session.create_donation(
-        donator_id=donator_id,
-        amount=20,
-        youtube_channel_id=youtube_channel_id,
-        r_hash='hash',
-    )
-    return donation
-
-
-@pytest.fixture
-async def paid_donation_fixture(db_session, donation_fixture):
-    await db_session.donation_paid(r_hash=donation_fixture.r_hash, amount=donation_fixture.amount, paid_at=datetime.now())
+async def paid_donation_fixture(db, donation_fixture):
+    async with db.session() as db_session:
+        await db_session.donation_paid(r_hash=donation_fixture.r_hash, amount=donation_fixture.amount, paid_at=datetime.now())
