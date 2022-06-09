@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "rtl.fullname" . }}
+  labels:
+    {{- include "rtl.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "rtl.selectorLabels" . | nindent 6 }}
+  serviceName: {{ include "rtl.name" . }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "rtl.selectorLabels" . | nindent 8 }}
+    spec:
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+      - name: {{ .Chart.Name }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        image: {{ include "rtl.image" . }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+        volumeMounts:
+        - name: data
+          mountPath: /rtl-backup
+        - name: config
+          mountPath: /rtl-config/RTL-Config.json
+          subPath: RTL-Config.json
+        env:
+        - name: RTL_CONFIG_PATH
+          value: /rtl-config
+      volumes:
+      - name: config
+        configMap:
+          name: {{ template "rtl.fullname" . }}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes:
+      - {{ .Values.persistence.accessMode | quote }}
+      storageClassName: {{ template "rtl.fullname" . }}
+      resources:
+        requests:
+          storage: {{ .Values.persistence.size | quote }}

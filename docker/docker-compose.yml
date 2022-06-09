@@ -6,9 +6,9 @@ x-common-lnd: &clnd
     args:
       GIT_REF: c2d31dc53d4cbb019430b5a905dd9d35511596eb
   command:
-  - run.sh
-  environment:
-  - BITCOIN_PORT=${BITCOIN_PORT}
+  - /entrypoint.sh
+  - --neutrino.connect=bitcoind:${BITCOIN_PORT}
+  - --configfile=/lnd-config/lnd.conf
   depends_on:
   - bitcoind
 
@@ -44,6 +44,7 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME}-lnd-alice
     volumes:
     - ./lnd-alice:/lnd
+    - ./lnd-config:/lnd-config
     ports:
     - "127.0.0.1:10001:${LND_REST_PORT}"
     - "127.0.0.1:20001:${LND_RPC_PORT}"
@@ -53,6 +54,7 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME}-lnd-bob
     volumes:
     - ./lnd-bob:/lnd
+    - ./lnd-config:/lnd-config
     ports:
     - "127.0.0.1:10002:${LND_REST_PORT}"
     - "127.0.0.1:20002:${LND_RPC_PORT}"
@@ -68,8 +70,6 @@ services:
       - lnd-alice
       - lnd-bob
     volumes:
-      - ./lnd-alice:/lnd-alice:ro
-      - ./lnd-bob:/lnd-bob:ro
       - ./rtl-config:/config
       - ./rtl-backup:/backup
     ports:

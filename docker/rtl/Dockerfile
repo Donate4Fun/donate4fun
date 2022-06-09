@@ -30,6 +30,7 @@ COPY --from=builder /RTL/package.json ./package.json
 COPY --from=builder /RTL/frontend ./frontend
 COPY --from=builder /RTL/backend ./backend
 COPY --from=builder /RTL/node_modules/ ./node_modules
+RUN mkdir /fake-macaroon && echo fake > /fake-macaroon/admin.macaroon
 
 EXPOSE 3000
 

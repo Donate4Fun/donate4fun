@@ -1,1 +1,5 @@
+/docker/bitcoind-data/
+/docker/lnd-alice/
+/docker/lnd-bob/
+/docker/rtl-backup/
 __pycache__/

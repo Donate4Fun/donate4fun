@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ template "lnd.fullname" . }}
+  labels:
+    app: {{ template "lnd.name" . }}
+    chart: {{ template "lnd.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "lnd.name" . }}
+      release: {{ .Release.Name }}
+  serviceName: {{ template "lnd.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "lnd.name" . }}
+        release: {{ .Release.Name }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+      - name: {{ template "lnd.fullname" . }}
+        image: {{ template "lnd.image" . }}
+        command:
+        - /entrypoint.sh
+        - --configfile=/lnd-config/lnd.conf
+        imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+        resources:
+{{ toYaml .Values.resources | indent 10 }}
+        ports:
+        - name: rpc
+          containerPort: 10009
+        - name: rest
+          containerPort: 8080
+        - name: p2p
+          containerPort: 9735
+        volumeMounts:
+        - name: data
+          mountPath: /lnd
+        - name: config
+          mountPath: /lnd-config/lnd.conf
+          subPath: lnd.conf
+      volumes:
+      - name: config
+        configMap:
+          name: {{ template "lnd.fullname" . }}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes:
+      - {{ .Values.persistence.accessMode | quote }}
+      storageClassName: {{ template "lnd.fullname" . }}
+      resources:
+        requests:
+          storage: {{ .Values.persistence.size | quote }}

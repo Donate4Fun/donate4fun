@@ -11,8 +11,7 @@
       "lnNode": "Alice",
       "lnImplementation": "LND",
       "Authentication": {
-        "macaroonPath": "/lnd-alice/data/chain/bitcoin/regtest",
-        "configPath": "/lnd-alice/lnd.conf"
+        "macaroonPath": "/fake-macaroon"
       },
       "Settings": {
         "userPersona": "MERCHANT",
@@ -30,8 +29,7 @@
       "lnNode": "Bob",
       "lnImplementation": "LND",
       "Authentication": {
-        "macaroonPath": "/lnd-bob/data/chain/bitcoin/regtest",
-        "configPath": "/lnd-bob/lnd.conf"
+        "macaroonPath": "/fake-macaroon"
       },
       "Settings": {
         "userPersona": "MERCHANT",

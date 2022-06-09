@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "rtl.fullname" . }}
+  labels:
+    app: {{ template "rtl.name" . }}
+    chart: {{ template "rtl.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  RTL-Config.json: |-
+{{ toPrettyJson .Values.config | indent 4 }}
