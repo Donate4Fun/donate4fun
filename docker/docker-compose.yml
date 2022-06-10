@@ -7,8 +7,11 @@ x-common-lnd: &clnd
       GIT_REF: c2d31dc53d4cbb019430b5a905dd9d35511596eb
   command:
   - /entrypoint.sh
-  - --neutrino.connect=bitcoind:${BITCOIN_PORT}
   - --configfile=/lnd-config/lnd.conf
+  - --tor.password=${TOR_PASSWORD}
+  environment:
+  - NEUTRINO_HOST=bitcoind
+  - NEUTRINO_PORT=${BITCOIN_PORT}
   depends_on:
   - bitcoind
 
@@ -38,6 +41,18 @@ services:
     - "127.0.0.1:${BITCOIN_PORT}:${BITCOIN_PORT}"
     volumes:
     - ./bitcoind-data:/data
+
+  tor:
+    container_name: ${COMPOSE_PROJECT_NAME}-tor
+    build: ./tor
+    volumes:
+    - ./tor-data:/var/lib/tor
+    - ./tor-config:/tor-config
+    ports:
+    - "[::1]:${TOR_CONTROL_PORT}:9051"
+    - "[::1]:${TOR_SOCKS_PORT}:9050"
+    environment:
+    - TOR_PASSWORD
 
   lnd-alice:
     <<: *clnd

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "tor.fullname" . }}
+  labels:
+    app: {{ template "tor.name" . }}
+    chart: {{ template "tor.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  torrc: |
+    DataDirectory /var/lib/tor
+    SocksPort 0.0.0.0:9050
+    ControlPort 0.0.0.0:9051
+{{- range $k, $v := .Values.tor.config }}
+    {{ $k }} {{ $v }}
+{{- end }}

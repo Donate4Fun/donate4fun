@@ -28,6 +28,9 @@ spec:
         command:
         - /entrypoint.sh
         - --configfile=/lnd-config/lnd.conf
+        env:
+        - name: TOR_TARGET_HOST
+          value: {{ template "lnd.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
         imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
         resources:
 {{ toYaml .Values.resources | indent 10 }}

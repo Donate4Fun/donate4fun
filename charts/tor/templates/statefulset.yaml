@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "tor.fullname" . }}
+  labels:
+    {{- include "tor.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "tor.fullname" . }}
+  selector:
+    matchLabels:
+      {{- include "tor.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "tor.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ include "tor.image" . }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        env:
+        - name: TOR_PASSWORD
+          value: {{ .Values.tor.password | quote }}
+        ports:
+        - name: control
+          containerPort: 9051
+          protocol: TCP
+        - name: socks
+          containerPort: 9050
+          protocol: TCP
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/tor
+        - name: config
+          mountPath: /tor-config/torrc
+          subPath: torrc
+      volumes:
+      - name: config
+        configMap:
+          name: {{ template "tor.fullname" . }}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes:
+      - {{ .Values.persistence.accessMode | quote }}
+      storageClassName: {{ template "tor.fullname" . }}
+      resources:
+        requests:
+          storage: {{ .Values.persistence.size | quote }}

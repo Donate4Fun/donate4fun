@@ -14,7 +14,7 @@ RUN make && make install
 
 FROM alpine
 
-RUN apk add --no-cache --update bash grep iproute2-ss
+RUN apk add --no-cache --update bash grep iproute2-ss bind-tools
 COPY entrypoint.sh /
 
 EXPOSE 9735 10009
