@@ -8,7 +8,7 @@ python-versions = ">=3.6,<4.0"
 
 [[package]]
 name = "aiogoogle"
-version = "4.1.0"
+version = "4.2.0"
 description = "Async Google API client"
 category = "main"
 optional = false
@@ -87,12 +87,17 @@ version = "0.3.1"
 description = "Test Clietn for ASGI web applications"
 category = "dev"
 optional = false
-python-versions = "^3.6"
+python-versions = "^3.7"
 develop = false
 
+[package.dependencies]
+anyio = "^3.6.1"
+
 [package.source]
-type = "directory"
-url = "../asgi-testClient"
+type = "git"
+url = "https://github.com/nikicat/asgi-testClient"
+reference = "fix-busy-loop"
+resolved_reference = "e419c4a3714189a5e1c2f08ea16360790903c0b8"
 
 [[package]]
 name = "asgiref"
@@ -1337,13 +1342,20 @@ version = "4.1.1"
 description = "Automatically mock your HTTP interactions to simplify and speed up testing"
 category = "dev"
 optional = false
-python-versions = ">=3.5"
+python-versions = ">=3.7"
+develop = false
 
 [package.dependencies]
 PyYAML = "*"
 six = ">=1.5"
 wrapt = "*"
-yarl = {version = "*", markers = "python_version >= \"3.6\""}
+yarl = "*"
+
+[package.source]
+type = "git"
+url = "https://github.com/nikicat/vcrpy"
+reference = "fix-httpx-stub"
+resolved_reference = "6ae2073e03110e9f759f5b2244fc92ccb56fc0f5"
 
 [[package]]
 name = "wcwidth"
@@ -1387,7 +1399,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "aa544708d64dfc458dc7b75df69ee134efac7df47b837815a061decef571bfbd"
+content-hash = "e769f262b0b91515a48d11614249955d00ec17f9f59370267fff250cb3c18123"
 
 [metadata.files]
 aiofiles = [
@@ -1395,8 +1407,8 @@ aiofiles = [
     {file = "aiofiles-0.8.0.tar.gz", hash = "sha256:8334f23235248a3b2e83b2c3a78a22674f39969b96397126cc93664d9a901e59"},
 ]
 aiogoogle = [
-    {file = "aiogoogle-4.1.0-py3-none-any.whl", hash = "sha256:ad604ae4b727e1e9658337e87713abd645cc407212a7859ec2066d74c953defb"},
-    {file = "aiogoogle-4.1.0.tar.gz", hash = "sha256:d062da77a6ec4c464188ba175bb503daadb83e4befe1f0d0d872c61e3aa5405b"},
+    {file = "aiogoogle-4.2.0-py3-none-any.whl", hash = "sha256:db3c3de271015f271f96aad34a2c0d7266c4ee0cbbdf6c4ba45e71b23c51082a"},
+    {file = "aiogoogle-4.2.0.tar.gz", hash = "sha256:1745f329eab6af917afd7d9fb09ef0d7b1677b277c4ebdd72ea9233363697175"},
 ]
 aiohttp = [
     {file = "aiohttp-3.8.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:1ed0b6477896559f17b9eaeb6d38e07f7f9ffe40b9f0f9627ae8b9926ae260a8"},
@@ -2322,10 +2334,7 @@ uvicorn = [
     {file = "uvicorn-0.17.6-py3-none-any.whl", hash = "sha256:19e2a0e96c9ac5581c01eb1a79a7d2f72bb479691acd2b8921fce48ed5b961a6"},
     {file = "uvicorn-0.17.6.tar.gz", hash = "sha256:5180f9d059611747d841a4a4c4ab675edf54c8489e97f96d0583ee90ac3bfc23"},
 ]
-vcrpy = [
-    {file = "vcrpy-4.1.1-py2.py3-none-any.whl", hash = "sha256:12c3fcdae7b88ecf11fc0d3e6d77586549d4575a2ceee18e82eee75c1f626162"},
-    {file = "vcrpy-4.1.1.tar.gz", hash = "sha256:57095bf22fc0a2d99ee9674cdafebed0f3ba763018582450706f7d3a74fff599"},
-]
+vcrpy = []
 wcwidth = [
     {file = "wcwidth-0.2.5-py2.py3-none-any.whl", hash = "sha256:beb4802a9cebb9144e99086eff703a642a13d6a0052920003a230f3294bbe784"},
     {file = "wcwidth-0.2.5.tar.gz", hash = "sha256:c4d647b99872929fdb7bdcaa4fbe7f01413ed3d98077df798530e5b04f116c83"},

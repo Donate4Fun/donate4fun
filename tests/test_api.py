@@ -14,7 +14,6 @@ from donate4fun.lnd import monitor_invoices, LndClient
 from donate4fun.settings import LndSettings
 
 from tests.test_util import verify_fixture
-from tests.fixtures import *  # noqa
 
 
 @pytest.fixture
@@ -144,7 +143,7 @@ async def test_donate_full(asgi_client, app, freeze_uuid: uuid.UUID, payer_lnd: 
     payment_request = donate_response.json()['payment_request']
     async with anyio.create_task_group() as tg, asgi_client.ws_session(f"/api/v1/donation/subscribe/{donation_id}") as ws:
         await tg.start(monitor_invoices, app.lnd, app.db)
-        await payer_lnd.pay_invoice(payment_request, timeout=5)
+        await payer_lnd.pay_invoice(payment_request, timeout=10)
         ws_response = []
         while True:
             response = DonationPaidResponse.parse_obj(await ws.receive_json())
@@ -171,3 +170,8 @@ async def test_websocket(asgi_client, donation_fixture, db):
         msg = await ws.receive_json()
         messages.append(msg)
     verify_fixture(messages, "websocket-messages")
+
+
+async def test_state(asgi_client):
+    response = await asgi_client.get("/api/v1/status")
+    verify_response(response, "status", 200)

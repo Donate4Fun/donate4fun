@@ -10,7 +10,7 @@ image:
 
 services:
   rpcPort: 10009
-  restPort: 8080
+  restPort: 80
   p2pPort: 9735
 
 persistence:
@@ -27,6 +27,7 @@ resources:
 
 # Custom lnd configuration file used to override default lnd settings
 lnd:
+  walletPassword: ""
   config: |
     bitcoin.active=1
     bitcoin.mainnet=1

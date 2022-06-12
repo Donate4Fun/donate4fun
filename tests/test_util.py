@@ -23,7 +23,7 @@ var = ContextVar('var')
 
 
 @pytest.fixture
-async def fixture_test(event_loop):
+async def fixture_test():
     token = var.set('asd')
     yield
     var.reset(token)
@@ -31,20 +31,3 @@ async def fixture_test(event_loop):
 
 async def test_async_context(fixture_test):
     assert var.get() == 'asd'
-
-
-def test_context(event_loop, fixture_test):
-    var = ContextVar('var')
-
-    async def afun_get():
-        assert var.get() == 'asd'
-
-    async def afun_reset(token):
-        assert var.get() == 'asd'
-        var.reset(token)
-
-    async def afun_set():
-        return var.set('asd')
-
-    token = event_loop.run_until_complete(afun_set())
-    event_loop.run_until_complete(afun_reset(token))

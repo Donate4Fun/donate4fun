@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "donate4fun.fullname" . }}
+  labels:
+    {{- include "donate4fun.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "donate4fun.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "donate4fun.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.backend.imagePullSecrets }}
+      imagePullSecrets:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: backend
+        image: {{ include "donate4fun.image" .Values.backend }}
+        imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+        ports:
+        - name: http-backend
+          containerPort: 8080
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /api/v1/status
+            port: http-backend
+        readinessProbe:
+          httpGet:
+            path: /api/v1/status
+            port: http-backend
+        resources:
+          {{- toYaml .Values.backend.resources | nindent 10 }}
+        volumeMounts:
+        - name: config
+          mountPath: /app/config.yaml
+          subPath: config.yaml
+        - name: secret
+          mountPath: /secret
+      - name: frontend
+        image: {{ include "donate4fun.image" .Values.frontend }}
+        imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+        ports:
+        - name: http-frontend
+          containerPort: 80
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http-frontend
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http-frontend
+        resources:
+          {{- toYaml .Values.frontend.resources | nindent 10 }}
+      volumes:
+      - name: config
+        configMap:
+          name: {{ template "donate4fun.fullname" . }}
+      - name: secret
+        secret:
+          secretName: {{ template "donate4fun.fullname" . }}

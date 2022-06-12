@@ -1,6 +1,7 @@
 version: "3.9"
 
 x-common-lnd: &clnd
+  user: ${UID}:${GID}
   build:
     context: ./lnd
     args:
@@ -17,6 +18,7 @@ x-common-lnd: &clnd
 
 services:
   bitcoind:
+    user: ${UID}:${GID}
     container_name: ${COMPOSE_PROJECT_NAME}-bitcoind
     build: ./bitcoind
     command: [
@@ -43,6 +45,7 @@ services:
     - ./bitcoind-data:/data
 
   tor:
+    user: ${UID}:${GID}
     container_name: ${COMPOSE_PROJECT_NAME}-tor
     build: ./tor
     volumes:
@@ -75,6 +78,7 @@ services:
     - "127.0.0.1:20002:${LND_RPC_PORT}"
      
   rtl:
+    user: ${UID}:${GID}
     container_name: ${COMPOSE_PROJECT_NAME}-rtl
     build:
       context: ./rtl

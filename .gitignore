@@ -2,4 +2,7 @@
 /docker/lnd-alice/
 /docker/lnd-bob/
 /docker/rtl-backup/
+/docker/rtl-config/logs/
+/docker/tor-data/
 __pycache__/
+/secrets/

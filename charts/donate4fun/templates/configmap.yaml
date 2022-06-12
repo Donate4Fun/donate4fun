@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "donate4fun.fullname" . }}
+  labels:
+    app: {{ template "donate4fun.name" . }}
+    chart: {{ template "donate4fun.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  config.yaml: |
+{{ toYaml .Values.backend.config | indent 4 }}

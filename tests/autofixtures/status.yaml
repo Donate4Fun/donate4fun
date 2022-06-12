@@ -1,0 +1,4 @@
+json:
+  db: ok
+  lnd: SERVER_ACTIVE
+status_code: 200

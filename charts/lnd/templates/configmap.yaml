@@ -9,4 +9,6 @@ metadata:
     heritage: {{ .Release.Service }}
 data:
   lnd.conf: |
+    wallet-unlock-password-file=/secret/wallet.pw
+    wallet-unlock-allow-create=1
 {{ .Values.lnd.config | indent 4 }}

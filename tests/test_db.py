@@ -72,3 +72,8 @@ async def test_listen_notify(db):
             async with db.pubsub() as pub:
                 await pub.notify(channel, messages[i])
             i += 1
+
+
+async def test_db(db_session):
+    db_status = await db_session.query_status()
+    assert db_status == 'ok'

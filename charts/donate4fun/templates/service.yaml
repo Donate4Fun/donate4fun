@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "donate4fun.fullname" . }}
+  labels:
+    {{- include "donate4fun.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+  - port: {{ .Values.backend.port }}
+    targetPort: http-backend
+    protocol: TCP
+    name: http-backend
+  - port: {{ .Values.frontend.port }}
+    targetPort: http-frontend
+    protocol: TCP
+    name: http-frontend
+  selector:
+    {{- include "donate4fun.selectorLabels" . | nindent 4 }}

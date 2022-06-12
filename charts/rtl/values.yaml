@@ -66,6 +66,6 @@ config:
       themeColor: PURPLE
       channelBackupPath: "/rtl-backup"
       logLevel: ERROR
-      lnServerUrl: http://lnd-prod.lnd-prod:8080
+      lnServerUrl: http://lnd-prod.lnd-prod
       fiatConversion: true
       currencyUnit: EUR

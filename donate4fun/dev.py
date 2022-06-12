@@ -1,7 +1,10 @@
 from .settings import load_settings
-from .db import load_db
+from .db import Database
 
 
 async def load():
-    async with load_settings() as settings, load_db(settings) as db:
-        return settings, db
+    """
+    This is just a helper for ipython
+    """
+    async with load_settings() as settings:
+        return settings, Database(settings.db)

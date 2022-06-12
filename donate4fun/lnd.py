@@ -42,9 +42,9 @@ class LndClient:
     @cached_property
     def invoice_macaroon(self) -> str | None:
         macaroon_path = None
-        if macaroon_path := self.settings.invoices_macaroon_path:
+        if macaroon_path := self.settings.macaroon_by_path:
             pass
-        elif network := self.settings.bitcoin_network:
+        elif network := self.settings.macaroon_by_network:
             macaroon_path = f'~/.lnd/data/chain/bitcoin/{network}/invoices.macaroon'
         if macaroon_path:
             return binascii.hexlify(open(os.path.expanduser(macaroon_path), "rb").read())
@@ -91,7 +91,14 @@ class LndClient:
                 yield result
 
     async def create_invoice(self, memo: str, amount: int) -> Invoice:
-        resp = await self.query('POST', '/v1/invoices', memo=memo, value=amount, expiry=self.settings.invoice_expiry)
+        resp = await self.query(
+            'POST',
+            '/v1/invoices',
+            memo=memo,
+            value=amount,
+            expiry=self.settings.invoice_expiry,
+            private=self.settings.private,
+        )
         return Invoice(amount=amount, **resp)
 
     async def cancel_invoice(self, r_hash: RequestHash):
@@ -108,10 +115,10 @@ class LndClient:
         return resp['state']
 
 
-async def monitor_invoices_loop(lnd_client, db, *, task_status: TaskStatus = TASK_STATUS_IGNORED):
+async def monitor_invoices_loop(lnd_client, db):
     while True:
         try:
-            await monitor_invoices(lnd_client, db, task_status=task_status)
+            await monitor_invoices(lnd_client, db)
         except Exception as exc:
             logger.error(f"Exception in monitor_invoices task: {exc}")
             await asyncio.sleep(5)

@@ -20,6 +20,7 @@ spec:
         release: {{ .Release.Name }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
     spec:
       terminationGracePeriodSeconds: 60
       containers:
@@ -47,10 +48,15 @@ spec:
         - name: config
           mountPath: /lnd-config/lnd.conf
           subPath: lnd.conf
+        - name: secret
+          mountPath: /secret
       volumes:
       - name: config
         configMap:
           name: {{ template "lnd.fullname" . }}
+      - name: secret
+        secret:
+          secretName: {{ template "lnd.fullname" . }}
   volumeClaimTemplates:
   - metadata:
       name: data

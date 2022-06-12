@@ -121,3 +121,16 @@ async def cancel_donation(donation_id: UUID, db=Depends(get_db_session), lnd=Dep
 @router.get("/latest-donations", response_model=list[Donation])
 async def donations(db=Depends(get_db_session)):
     return await db.query_recent_donations()
+
+
+class StatusResponse(BaseModel):
+    db: str
+    lnd: str
+
+
+@router.get("/status")
+async def status(db=Depends(get_db_session), lnd=Depends(get_lnd)):
+    return StatusResponse(
+        db=await db.query_status(),
+        lnd=await lnd.query_state(),
+    )

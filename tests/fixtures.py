@@ -2,14 +2,20 @@ import asyncio
 import uuid
 import contextvars
 import functools
+import logging
 from datetime import datetime
 
+import anyio
 import pytest
+
 from donate4fun.app import create_app
 from donate4fun.settings import load_settings, Settings, DbSettings
 from donate4fun.db import DbSession, Database
 from donate4fun.lnd import LndClient
 from donate4fun.models import Donation
+
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope='session')
@@ -55,7 +61,7 @@ def task_factory(loop, coro, context=None):
 
 
 @pytest.fixture(scope="session")
-def event_loop(request):
+def event_loop():
     """Create an instance of the default event loop for entire session."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     context = contextvars.copy_context()
@@ -68,8 +74,8 @@ def event_loop(request):
 async def settings():
     async with load_settings() as settings:
         settings.lnd.url = 'http://localhost:10001'
-        # No macaroons for test lnds
-        settings.lnd.bitcoin_network = None
+        settings.lnd.macaroon_by_network = None
+        settings.debug = False  # We need to disable Debug Toolbar to avoid zero-division error (because of freezegun)
         yield settings
 
 
@@ -87,8 +93,20 @@ async def db(settings: Settings):
         await base_db.drop_database(db_name)
 
 
+async def run(command):
+    process = await anyio.run_process(command.split(), cwd='docker')
+    assert process.returncode == 0
+
+
+@pytest.fixture(scope="session")
+async def lnd_server(event_loop):
+    await run('docker-compose up -d')
+    await run('bitcoin-cli -regtest -datadir=./bitcoind-data -generate 5')
+    yield
+
+
 @pytest.fixture
-async def app(db, settings):
+async def app(db, settings, lnd_server):
     async with create_app(settings) as app:
         app.db = db
         app.lnd = LndClient(settings.lnd)
@@ -98,10 +116,8 @@ async def app(db, settings):
 @pytest.fixture
 async def db_session(db) -> DbSession:
     async with db.session() as session:
-        try:
-            yield session
-        finally:
-            await session.rollback()
+        yield session
+        await session.rollback()
 
 
 @pytest.fixture

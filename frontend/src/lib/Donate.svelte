@@ -17,7 +17,7 @@
   let target = "https://www.youtube.com/watch?v=dcjJY0-Aig0"; // tmp for dev
   let message = "You are the best!";
   let error = null;
-  let spin = true;
+  let spin = false;
   let invoice = null;
   let donation = null;
 

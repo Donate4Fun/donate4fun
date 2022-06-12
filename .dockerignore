@@ -1,0 +1,8 @@
+.venv/
+.pytest_cache/
+.git/
+**/node_modules/
+**/__pycache__/
+docker/
+.direnv/
+secrets/

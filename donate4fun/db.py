@@ -5,7 +5,7 @@ from uuid import UUID
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from sqlalchemy import select, desc, update, Column, TIMESTAMP, String, BigInteger, ForeignKey, func, text
+from sqlalchemy import select, desc, update, Column, TIMESTAMP, String, BigInteger, ForeignKey, func, text, literal
 from sqlalchemy.dialects.postgresql import insert, UUID as Uuid
 from sqlalchemy.orm import sessionmaker, joinedload, selectinload, contains_eager, declarative_base, relationship
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
@@ -63,7 +63,12 @@ Base.registry.configure()  # Create backrefs
 
 class Database:
     def __init__(self, db_settings: DbSettings):
-        self.engine = create_async_engine(db_settings.dsn, echo=db_settings.echo, isolation_level=db_settings.isolation_level)
+        self.engine = create_async_engine(
+            url=db_settings.dsn,
+            echo=db_settings.echo,
+            isolation_level=db_settings.isolation_level,
+            connect_args=db_settings.connect_args,
+        )
         self.session_maker = sessionmaker(self.engine, class_=AsyncSession, future=True)
 
     async def create_tables(self):
@@ -227,6 +232,10 @@ class DbSession(BaseDbSession):
     async def rollback(self):
         return await self.session.rollback()
 
+    async def query_status(self):
+        response = await self.execute(select(literal('ok')))
+        return response.scalars().one()
+
 
 class PubSubSession(BaseDbSession):
     async def notify_donation_paid(self, donation_id: UUID):
@@ -258,9 +267,3 @@ class PubSubSession(BaseDbSession):
     async def listen_for_donations(self):
         async for msg in self.listen('donation_paid'):
             yield msg and UUID(msg)
-
-
-@asynccontextmanager
-async def load_db(db_settings):
-    db = Database(db_settings)
-    yield db

@@ -21,14 +21,11 @@ class YoutubeSettings(BaseModel):
     api_key: str
 
 
-class HypercornSettings(BaseModel):
-    use_reloader: bool = False
-
-
 class DbSettings(BaseModel):
     dsn: str
     echo: bool = False
     isolation_level: str = 'SERIALIZABLE'
+    connect_args: dict[str, Any] = {}
 
 
 class FormatterConfig(BaseModel):
@@ -70,9 +67,10 @@ class LoggingConfig(BaseModel):
 
 class LndSettings(BaseModel):
     url: Url
-    bitcoin_network: str | None
-    invoices_macaroon_path: str | None = None
+    macaroon_by_network: str | None = None
+    macaroon_by_path: str | None = None
     invoice_expiry: int = 3600  # In seconds
+    private: bool = True
 
 
 def yaml_config_source(settings: BaseSettings) -> dict[str, Any]:
@@ -84,7 +82,7 @@ class Settings(BaseSettings):
     lnd: LndSettings
     youtube: YoutubeSettings
     db: DbSettings
-    hypercorn: HypercornSettings
+    hypercorn: dict[str, Any]
     jwt_secret: str
     claim_limit: int  # Limit in sats for claiming
     debug: bool
