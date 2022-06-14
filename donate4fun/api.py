@@ -5,14 +5,13 @@ from typing import Callable
 from fastapi import APIRouter, WebSocket, Request, Response, Depends
 from fastapi.routing import APIRoute
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, HttpUrl, ValidationError as PydanticValidationError
+from pydantic import BaseModel, ValidationError as PydanticValidationError
 from httpx import HTTPStatusError
 
 from .core import validate_target, get_db_session, get_lnd
-from .models import Donation, Donator
-from .types import ValidationError, RequestHash, PaymentRequest
+from .models import Donation, Donator, Invoice, DonateResponse, DonateRequest, DonationPaidResponse
+from .types import ValidationError, RequestHash
 from .youtube import YoutubeDonatee
-from .lnd import Invoice
 from .db import Database
 
 logger = logging.getLogger(__name__)
@@ -26,9 +25,12 @@ class CustomRoute(APIRoute):
             try:
                 return await original_route_handler(request)
             except HTTPStatusError as exc:
-                body = await exc.response.aread()
-                return JSONResponse(status_code=500, content={"message": f"Upstream server returned {exc}: {body}"})
+                logger.debug(f"{request.url}: Upstream error", exc_info=exc)
+                status_code = exc.response.status_code
+                body = exc.response.json()
+                return JSONResponse(status_code=500, content={"message": f"Upstream server returned {status_code}: {body}"})
             except (ValidationError, PydanticValidationError) as exc:
+                logger.debug(f"{request.url}: Validation error", exc_info=exc)
                 return JSONResponse(
                     status_code=400,
                     content={"message": repr(exc)},
@@ -38,18 +40,6 @@ class CustomRoute(APIRoute):
 
 
 router = APIRouter(route_class=CustomRoute)
-
-
-class DonateRequest(BaseModel):
-    target: HttpUrl
-    amount: int
-    message: str | None
-    donater: str | None
-
-
-class DonateResponse(BaseModel):
-    donation: Donation
-    payment_request: PaymentRequest
 
 
 def get_donator(request: Request):
@@ -67,19 +57,29 @@ async def donate(
  ) -> DonateResponse:
     logger.debug(f"Donator {donator.id} wants to donate {request.amount} to {request.target}")
     donatee: YoutubeDonatee = await validate_target(request.target)
-    invoice: Invoice = await lnd.create_invoice(memo=f"Donate4.fun to {donatee.channel.title}", amount=request.amount)
+    invoice: Invoice = await lnd.create_invoice(memo=f"Donate4.fun to {donatee.channel.title}", value=request.amount)
     youtube_channel_id: UUID = await db_session.get_or_create_youtube_channel(
         channel_id=donatee.channel.id, title=donatee.channel.title, thumbnail_url=donatee.channel.thumbnail,
     )
     donation: Donation = await db_session.create_donation(
-        r_hash=invoice.r_hash, amount=invoice.amount, youtube_channel_id=youtube_channel_id, donator_id=donator.id,
+        r_hash=invoice.r_hash, amount=invoice.value, youtube_channel_id=youtube_channel_id, donator_id=donator.id,
     )
     return DonateResponse(donation=donation, payment_request=invoice.payment_request)
 
 
-class DonationPaidResponse(BaseModel):
-    status: str
-    donation: Donation
+@router.get("/donation/{donation_id}", response_model=DonateResponse)
+async def donation(donation_id: UUID, db_session=Depends(get_db_session), lnd=Depends(get_lnd)):
+    donation: Donation = await db_session.query_donation(id=donation_id)
+    if donation.paid_at is None:
+        invoice: Invoice = await lnd.lookup_invoice(donation.r_hash)
+        if invoice.state == 'CANCELED':
+            logger.debug(f"Invoice {invoice} cancelled, recreating")
+            invoice = await lnd.create_invoice(memo=invoice.memo, value=invoice.value)
+            await db_session.update_donation(donation_id=donation_id, r_hash=invoice.r_hash)
+        payment_request = invoice.payment_request
+    else:
+        payment_request = None
+    return DonateResponse(donation=donation, payment_request=payment_request)
 
 
 @router.websocket("/donation/subscribe/{donation_id}")

@@ -4,15 +4,16 @@ import contextvars
 import functools
 import logging
 from datetime import datetime
+from base64 import urlsafe_b64encode
 
 import anyio
 import pytest
-
 from donate4fun.app import create_app
+from donate4fun.models import Invoice, Donation
+from donate4fun.lnd import LndClient
 from donate4fun.settings import load_settings, Settings, DbSettings
 from donate4fun.db import DbSession, Database
-from donate4fun.lnd import LndClient
-from donate4fun.models import Donation
+from donate4fun.models import RequestHash, PaymentRequest
 
 
 logger = logging.getLogger(__name__)
@@ -93,6 +94,25 @@ async def db(settings: Settings):
         await base_db.drop_database(db_name)
 
 
+@pytest.fixture
+async def db_session(db) -> DbSession:
+    async with db.session() as session:
+        yield session
+        await session.rollback()
+
+
+@pytest.fixture
+def freeze_uuid(monkeypatch):
+    value = uuid.UUID(int=1)
+    monkeypatch.setattr(uuid, 'uuid4', lambda: value)
+    return value
+
+
+@pytest.fixture
+def donator_id():
+    return uuid.UUID(int=0)
+
+
 async def run(command):
     process = await anyio.run_process(command.split(), cwd='docker')
     assert process.returncode == 0
@@ -114,40 +134,47 @@ async def app(db, settings, lnd_server):
 
 
 @pytest.fixture
-async def db_session(db) -> DbSession:
-    async with db.session() as session:
-        yield session
-        await session.rollback()
+def freeze_request_hash_json(monkeypatch):
+    def mock_to_json(self):
+        return urlsafe_b64encode(b'hash').decode()
+    monkeypatch.setattr(RequestHash, 'to_json', mock_to_json)
 
 
 @pytest.fixture
-def freeze_uuid(monkeypatch):
-    value = uuid.UUID(int=1)
-    monkeypatch.setattr(uuid, 'uuid4', lambda: value)
-    return value
+def freeze_request_hash(monkeypatch):
+    def mockinit(self, _):
+        self.data = b'hash'
+    monkeypatch.setattr(RequestHash, '__init__', mockinit)
 
 
 @pytest.fixture
-def donator_id():
-    return uuid.UUID(int=0)
+def freeze_payment_request(monkeypatch):
+    def mocknew(cls, value):
+        return str.__new__(cls, f'{cls.prefixes[0]}something')
+    monkeypatch.setattr(PaymentRequest, '__new__', mocknew)
 
 
 @pytest.fixture
-async def donation_fixture(db, donator_id, freeze_uuid):
+async def unpaid_donation_fixture(app, db, donator_id, freeze_uuid):
     async with db.session() as db_session:
         youtube_channel_id = await db_session.get_or_create_youtube_channel(
             channel_id='q2dsaf', title='asdzxc', thumbnail_url='1wdasd',
         )
+        invoice: Invoice = await app.lnd.create_invoice(memo="Donate4.fun to asdzxc", value=100)
         donation: Donation = await db_session.create_donation(
             donator_id=donator_id,
             amount=20,
             youtube_channel_id=youtube_channel_id,
-            r_hash='hash',
+            r_hash=invoice.r_hash,
         )
         return donation
 
 
 @pytest.fixture
-async def paid_donation_fixture(db, donation_fixture):
+async def paid_donation_fixture(db, unpaid_donation_fixture):
     async with db.session() as db_session:
-        await db_session.donation_paid(r_hash=donation_fixture.r_hash, amount=donation_fixture.amount, paid_at=datetime.now())
+        await db_session.donation_paid(
+            r_hash=unpaid_donation_fixture.r_hash,
+            amount=unpaid_donation_fixture.amount,
+            paid_at=datetime.now(),
+        )

@@ -58,7 +58,7 @@ async def validate_youtube_url(parsed) -> YoutubeDonatee:
         trigger = urlunparse(parsed)
     elif parts[1] in ('channel', 'c'):
         part = parts[2]
-        if part[:3] == 'UC':
+        if part.startswith('UC'):
             channel_info = await fetch_channel(channel_id=part)
         else:
             channel_info = await fetch_channel(username=part)

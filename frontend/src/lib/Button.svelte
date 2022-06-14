@@ -1,8 +1,13 @@
 <button {...$$restProps} on:click>
+  <div>
   <slot />
+  </div>
 </button>
 
 <style>
+button > div {
+  
+}
 button {
   background: linear-gradient(90deg, #00A3FF 0%, #7000FF 100%);
   font-weight: 700;
@@ -22,6 +27,7 @@ button {
 
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 /* Chrome, Safari, Edge, Opera */
 input::-webkit-outer-spin-button,

@@ -1,7 +1,6 @@
 import re
 import io
-from binascii import a2b_hex, b2a_hex
-from base64 import b64encode, b64decode, urlsafe_b64encode
+from base64 import b64encode
 from urllib.parse import urlparse
 
 import qrcode
@@ -49,11 +48,3 @@ def payreq_to_datauri(pay_req: PaymentRequest):
 def to_datauri(mime_type: str, data: bytes) -> str:
     encoded = b64encode(data).decode()
     return f'data:{mime_type};base64,{encoded}'
-
-
-def hex_to_base64(r_hash: str):
-    return urlsafe_b64encode(a2b_hex(r_hash)).decode()
-
-
-def base64_to_hex(r_hash: str):
-    return b2a_hex(b64decode(r_hash)).decode()

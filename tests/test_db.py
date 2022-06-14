@@ -3,6 +3,7 @@ from datetime import datetime
 
 import pytest
 from donate4fun.models import Donation
+from donate4fun.types import RequestHash
 
 from tests.test_util import verify_fixture
 
@@ -20,18 +21,18 @@ async def test_query_donator(db_session):
 
 
 @pytest.mark.freeze_time('2022-02-02 22:22:22')
-async def test_query_donatee(db_session, donation_fixture: Donation):
-    donations: list[Donation] = await db_session.query_donatee(donation_fixture.youtube_channel.id)
+async def test_query_donatee(db_session, unpaid_donation_fixture: Donation, freeze_request_hash):
+    donations: list[Donation] = await db_session.query_donatee(unpaid_donation_fixture.youtube_channel.id)
     verify_fixture([donation.dict() for donation in donations], 'query-donatee')
 
 
-async def test_query_donation(db_session, donation_fixture):
-    donation = await db_session.query_donation(id=donation_fixture.id)
-    assert donation == donation_fixture
+async def test_query_donation(db_session, unpaid_donation_fixture):
+    donation = await db_session.query_donation(id=unpaid_donation_fixture.id)
+    assert donation == unpaid_donation_fixture
 
 
 @pytest.mark.freeze_time('2022-02-02 22:22:22')
-async def test_query_donations(db_session, paid_donation_fixture):
+async def test_query_donations(db_session, paid_donation_fixture, freeze_request_hash):
     donations = await db_session.query_recent_donations()
     verify_fixture([donation.dict() for donation in donations], 'query-donations')
 
@@ -45,16 +46,16 @@ async def test_create_donation(db_session):
         donator_id=uuid4(),
         amount=100,
         youtube_channel_id=youtube_channel_id,
-        r_hash='hash',
+        r_hash=RequestHash(b'123qwe'),
     )
     assert donation is not None
     donation2: Donation = await db_session.query_donation(id=donation.id)
     assert donation.r_hash == donation2.r_hash
 
 
-async def test_donation_paid(db_session, donation_fixture):
-    await db_session.donation_paid(r_hash=donation_fixture.r_hash, paid_at=datetime.utcnow(), amount=100)
-    donation: Donation = await db_session.query_donation(r_hash=donation_fixture.r_hash)
+async def test_donation_paid(db_session, unpaid_donation_fixture):
+    await db_session.donation_paid(r_hash=unpaid_donation_fixture.r_hash, paid_at=datetime.utcnow(), amount=100)
+    donation: Donation = await db_session.query_donation(r_hash=unpaid_donation_fixture.r_hash)
     assert donation.paid_at != None  # noqa
 
 

@@ -11,12 +11,12 @@ json:
     id: 00000000-0000-0000-0000-000000000001
     message: null
     paid_at: null
-    r_hash: null
+    r_hash: aGFzaA==
     trigger: null
     youtube_channel:
       channel_id: UC3ptU7hyNeFlJdvQj2nZHJg
       id: 00000000-0000-0000-0000-000000000001
       thumbnail: null
       title: Alex007SC2
-  payment_request: null
+  payment_request: lnbcsomething
 status_code: 200

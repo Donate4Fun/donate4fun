@@ -6,21 +6,10 @@
   import Spinner from "../lib/Spinner.svelte";
   import QRCode from "../lib/QRCode.svelte";
 
-  export let invoice;
-  let spinCancel = false;
+  export let donation;
+  export let payment_request;
 
 	const dispatch = createEventDispatcher();
-  const cancel = async () => {
-    console.log("invoice cancel");
-    spinCancel = true;
-    try {
-      await axios.post(`/api/v1/invoice/cancel/${invoice.r_hash}`);
-    } catch (err) {
-      console.error("Can't cancel invoice, ignoring:", err);
-    }
-    spinCancel = false;
-    dispatch("cancel");
-  }
 
   onMount(() => {
     const loc = window.location;
@@ -30,7 +19,7 @@
     } else {
         scheme = "ws:";
     }
-    const ws_uri = `${scheme}//${loc.host}/api/v1/invoice/subscribe/${invoice.r_hash}`;
+    const ws_uri = `${scheme}//${loc.host}/api/v1/donation/subscribe/${donation.id}`;
     const socket = new WebSocket(ws_uri);
     socket.onopen = (event) => {
       console.log("It's open");
@@ -40,7 +29,7 @@
       const data = JSON.parse(event.data)
       if (data.status === 'success') {
         if (data.state === 'SETTLED') {
-          dispatch('paid', {amount: data.amount})
+          dispatch('paid', data.donation)
           return;
         }
       }
@@ -50,21 +39,16 @@
 </script>
 <section>
   <h1>Lightning invoice</h1>
-  <a href="lightning:{invoice.payment_request}"><QRCode value={invoice.payment_request} /></a>
+  <a href="lightning:{payment_request}"><QRCode value={payment_request} /></a>
   <div class="suggestion">Pay with a Wallet like
     <a href="https://muun.com" target="_blank">Muun</a>, 
     <a href="https://phoenix.acinq.co" target="_blank">Phoenix</a>, 
     <a href="https://breez.technology" target="_blank">Breez</a> or 
     <a href="https://bluewallet.io" target="_blank">BlueWallet</a>
   </div>
-  <a href="lightning:{invoice.payment_request}"><Button>Open in Wallet</Button></a>
-  <Button on:click={navigator.clipboard.writeText(invoice.payment_request)}>Copy to clipboard</Button>
-  <Button on:click={cancel}>
-    {#if spinCancel}
-    <Spinner />
-    {/if}
-    Cancel
-  </Button>
+  <a href="lightning:{payment_request}"><Button>Open in Wallet</Button></a>
+  <Button on:click={navigator.clipboard.writeText(payment_request)}>Copy to clipboard</Button>
+  <Button on:click={dispatch("cancel")}>Cancel</Button>
 </section>
 
 <style>

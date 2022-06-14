@@ -161,14 +161,15 @@ class DbSession(BaseDbSession):
     async def query_recent_donations(self):
         return await self.query_donations(DonationDb.paid_at.isnot(None))
 
-    async def query_donation(self, *, r_hash: str | None = None, id: UUID | None = None) -> Donation:
+    async def query_donation(self, *, r_hash: RequestHash | None = None, id: UUID | None = None) -> Donation:
         result = await self.execute(
             select(DonationDb)
             .where(
-                (DonationDb.r_hash == r_hash) if r_hash else (DonationDb.id == str(id))
+                (DonationDb.r_hash == r_hash.as_base64) if r_hash else (DonationDb.id == str(id))
             )
         )
-        return Donation.from_orm(result.scalars().one())
+        data = result.scalars().one()
+        return Donation.from_orm(data)
 
     async def get_or_create_youtube_channel(self, channel_id: str, title: str, thumbnail_url: str) -> UUID:
         resp = await self.execute(
@@ -183,12 +184,12 @@ class DbSession(BaseDbSession):
             donatee_id = resp.scalars().one().id
         return donatee_id
 
-    async def create_donation(self, donator_id: UUID, youtube_channel_id: UUID, amount: int, r_hash: str):
+    async def create_donation(self, donator_id: UUID, youtube_channel_id: UUID, amount: int, r_hash: RequestHash):
         resp = await self.execute(
             insert(DonationDb)
             .values(
                 amount=amount,
-                r_hash=r_hash,
+                r_hash=r_hash.as_base64,
                 donator_id=str(donator_id),
                 youtube_channel_id=str(youtube_channel_id),
                 created_at=datetime.utcnow(),
@@ -198,6 +199,13 @@ class DbSession(BaseDbSession):
         )
         donation_id: UUID = resp.scalar()
         return await self.query_donation(id=donation_id)
+
+    async def update_donation(self, donation_id: UUID, r_hash: RequestHash):
+        await self.execute(
+            update(DonationDb)
+            .values(r_hash=r_hash.as_base64)
+            .where(DonationDb.id == str(donation_id))
+        )
 
     async def cancel_donation(self, donation_id: UUID) -> RequestHash:
         resp = await self.execute(
@@ -212,10 +220,10 @@ class DbSession(BaseDbSession):
         )
         return resp.scalar()
 
-    async def donation_paid(self, r_hash: str, amount: int, paid_at: datetime):
+    async def donation_paid(self, r_hash: RequestHash, amount: int, paid_at: datetime):
         resp = await self.execute(
             update(DonationDb)
-            .where((DonationDb.r_hash == r_hash) & DonationDb.paid_at.is_(None))
+            .where((DonationDb.r_hash == r_hash.as_base64) & DonationDb.paid_at.is_(None))
             .values(
                 amount=amount,
                 paid_at=paid_at,

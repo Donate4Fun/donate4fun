@@ -6,3 +6,4 @@
 /docker/tor-data/
 __pycache__/
 /secrets/
+tags

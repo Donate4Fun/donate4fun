@@ -1,8 +1,9 @@
 <script>
-  import { Router, Link, Route } from "svelte-routing";
+  import { Router, Link, Route } from "svelte-navigator";
   import Main from "./routes/Main.svelte";
-  import DonateePage from "./routes/DonateePage.svelte";
+  import DonatorPage from "./routes/DonatorPage.svelte";
   import DonationPage from "./routes/DonationPage.svelte";
+  import YoutubeChannelPage from "./routes/YoutubeChannelPage.svelte";
 
   const url = "";
 </script>
@@ -13,8 +14,9 @@
 
 <Router url={url}>
   <div>
-    <Route path="donation/:id" component="{DonationPage}" />
-    <Route path="donatee/:donatee" component="{DonateePage}" />
+    <Route path="donation/:donation_id" component="{DonationPage}" />
+    <Route path="youtube-channel/:channel_id" component="{YoutubeChannelPage}" />
+    <Route path="donator/:donator_id" component="{DonatorPage}" />
     <Route path="/"><Main /></Route>
   </div>
 </Router>

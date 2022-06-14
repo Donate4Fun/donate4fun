@@ -3,6 +3,7 @@
 .git/
 **/node_modules/
 **/__pycache__/
+**/tags
 docker/
 .direnv/
 secrets/

@@ -1,6 +1,5 @@
 import uuid
 import time
-import json
 from datetime import datetime
 
 import anyio
@@ -12,6 +11,7 @@ from asgi_testclient import TestClient
 from donate4fun.api import DonateRequest, DonateResponse, DonationPaidResponse
 from donate4fun.lnd import monitor_invoices, LndClient
 from donate4fun.settings import LndSettings
+from donate4fun.models import Donation
 
 from tests.test_util import verify_fixture
 
@@ -48,7 +48,7 @@ def verify_response(response, name, status_code=None):
 
 
 @pytest.mark.freeze_time('2022-02-02 22:22:22')
-async def test_latest_donations(asgi_client, paid_donation_fixture):
+async def test_latest_donations(asgi_client, paid_donation_fixture, freeze_request_hash_json):
     response = await asgi_client.get("/api/v1/latest-donations")
     verify_response(response, 'latest-donations', 200)
 
@@ -93,27 +93,23 @@ mark_vcr = pytest.mark.vcr(before_record_request=remove_credentials_and_testclie
 
 @mark_vcr
 @pytest.mark.freeze_time('2022-02-02 22:22:22')
-async def test_donate(asgi_client, db_session, freeze_uuid):
+async def test_donate(asgi_client, db_session, freeze_uuid, freeze_request_hash, freeze_payment_request):
     donate_response = await asgi_client.post(
         "/api/v1/donate",
         json=DonateRequest(amount=100, target='https://www.youtube.com/c/Alex007SC2').dict(),
     )
-    # Reset dynamic fields
-    resp_json = donate_response.json()
-    resp_json['donation']['r_hash'] = None
-    resp_json['payment_request'] = None
-    donate_response._content = json.dumps(resp_json).encode()
     verify_response(donate_response, 'donate', 200)
 
 
-async def test_get_donation(asgi_client, donation_fixture):
-    donation_response = await asgi_client.get(f"/api/v1/donation/{donation_fixture.id}")
-    verify_response(donation_response, 'get-donation')
+@pytest.mark.freeze_time('2022-02-02T22:22:22')
+async def test_get_donation(asgi_client, unpaid_donation_fixture: Donation, freeze_request_hash_json, freeze_payment_request):
+    donation_response = await asgi_client.get(f"/api/v1/donation/{unpaid_donation_fixture.id}")
+    verify_response(donation_response, 'get-donation', 200)
 
 
 @mark_vcr
 @pytest.mark.skip(reason="Only HODL invoices (not implemented)")
-@pytest.mark.freeze_time('2022-05-31T12:54:19')
+@pytest.mark.freeze_time('2022-02-02T22:22:22')
 async def test_cancel_donation(asgi_client, app, db_session, freeze_uuid):
     donate_response = await asgi_client.post(
         "/api/v1/donate",
@@ -143,7 +139,7 @@ async def test_donate_full(asgi_client, app, freeze_uuid: uuid.UUID, payer_lnd: 
     payment_request = donate_response.json()['payment_request']
     async with anyio.create_task_group() as tg, asgi_client.ws_session(f"/api/v1/donation/subscribe/{donation_id}") as ws:
         await tg.start(monitor_invoices, app.lnd, app.db)
-        await payer_lnd.pay_invoice(payment_request, timeout=10)
+        await payer_lnd.pay_invoice(payment_request, timeout=20)
         ws_response = []
         while True:
             response = DonationPaidResponse.parse_obj(await ws.receive_json())
@@ -158,15 +154,16 @@ async def test_donate_full(asgi_client, app, freeze_uuid: uuid.UUID, payer_lnd: 
         verify_fixture(ws_response, "payment-subscribe")
         tg.cancel_scope.cancel()
     donation_response = await asgi_client.get(f"/api/v1/donation/{donation_id}")
-    verify_response(donation_response, "payment-donation")
+    check_response(donation_response, 200)
+    assert donation_response.json()['donation']['paid_at'] != None  # noqa
 
 
 @pytest.mark.freeze_time('2022-02-02 22:22:22')
-async def test_websocket(asgi_client, donation_fixture, db):
+async def test_websocket(asgi_client, unpaid_donation_fixture, db, freeze_request_hash_json):
     messages = []
-    async with asgi_client.ws_session(f'/api/v1/donation/subscribe/{donation_fixture.id}') as ws:
+    async with asgi_client.ws_session(f'/api/v1/donation/subscribe/{unpaid_donation_fixture.id}') as ws:
         async with db.session() as db_session:
-            await db_session.donation_paid(r_hash=donation_fixture.r_hash, amount=100, paid_at=datetime.utcnow())
+            await db_session.donation_paid(r_hash=unpaid_donation_fixture.r_hash, amount=100, paid_at=datetime.utcnow())
         msg = await ws.receive_json()
         messages.append(msg)
     verify_fixture(messages, "websocket-messages")

@@ -1,7 +1,8 @@
 <script>
-  import axios from "axios";
   import { createEventDispatcher } from 'svelte';
-  import { navigate } from "svelte-routing";
+  import { navigate } from "svelte-navigator";
+
+  import api from "../lib/api.js";
   import Error from "../lib/Error.svelte";
   import Section from "../lib/Section.svelte";
   import Input from "../lib/Input.svelte";
@@ -12,13 +13,14 @@
 	const dispatch = createEventDispatcher();
   const amountMin = 10;
 
+  const alexsc2_channel = "https://www.youtube.com/watch?v=dcjJY0-Aig0";
+  const mytest_channel = "https://www.youtube.com/channel/UCk2OzObixhe_mbMfMQGLuJw";
+
   let amount = 10;
-  //let target = "";
-  let target = "https://www.youtube.com/watch?v=dcjJY0-Aig0"; // tmp for dev
+  let target = mytest_channel;
   let message = "You are the best!";
   let error = null;
   let spin = false;
-  let invoice = null;
   let donation = null;
 
   $: isValid = amount >= amountMin && target;
@@ -26,15 +28,15 @@
   async function donate(e) {
     spin = true;
     try {
-      const resp = await axios.post('/api/v1/donate', {
+      const response = await api.post('/api/v1/donate', {
           amount: amount,
           target: target,
           message: message
       });
-      invoice=resp.data;
+      console.log(response);
+      navigate(`/donation/${response.donation.id}`, {state: response});
     } catch (err) {
-      console.log(err);
-      const data = err.response.data;
+      const data = err.data;
       if (typeof myVar === 'string') {
         error = data;
       } else {
@@ -43,24 +45,11 @@
     }
     spin = false;
   }
-  function cancel() {
-    console.log("invoice cancel");
-    invoice = null;
-  }
-  function close() {
-    console.log("donate close");
-    donation = null;
-  }
-  function paid(new_donation) {
-    console.log("paid", new_donation);
-    invoice = null;
-    donation = new_donation;
-  }
 </script>
 
 <Section>
-  {#if invoice}
-  <Invoice invoice={invoice} on:cancel={cancel} on:paid={paid} />
+  {#if donation}
+  <Invoice donation={donation} on:cancel={cancel} on:paid={paid} />
   {:else if donation}
   <Donation {...donation} on:close={close} />
   {:else}

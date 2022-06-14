@@ -6,29 +6,21 @@ import logging
 from functools import cached_property
 from typing import Any
 from contextlib import asynccontextmanager
-from datetime import datetime
 
 import anyio
 import httpx
-from pydantic import BaseModel
 from anyio import TASK_STATUS_IGNORED
 from anyio.abc import TaskStatus
 
 from .settings import LndSettings
-from .core import base64_to_hex
 from .types import RequestHash, PaymentRequest
+from .models import Invoice
 
 logger = logging.getLogger(__name__)
 
 
 Data = dict[str, Any]
 State = str
-
-
-class Invoice(BaseModel):
-    r_hash: str
-    payment_request: str
-    amount: int
 
 
 class PayInvoiceError(Exception):
@@ -49,8 +41,8 @@ class LndClient:
         if macaroon_path:
             return binascii.hexlify(open(os.path.expanduser(macaroon_path), "rb").read())
 
-    async def query(self, method: str, api: str, **request: Data) -> Data:
-        async with self.request(api, method=method, json=request) as resp:
+    async def query(self, method: str, api: str, data: Data = None, **kwargs) -> Data:
+        async with self.request(api, method=method, json=data, **kwargs) as resp:
             results = [json.loads(line) async for line in resp.aiter_lines()]
             if len(results) == 1:
                 return results[0]
@@ -70,6 +62,8 @@ class LndClient:
                 **kwargs,
             ) as resp:
                 logger.debug(f"{method} {url} {resp.status_code}")
+                if not resp.is_success:
+                    await resp.aread()
                 resp.raise_for_status()
                 yield resp
 
@@ -90,22 +84,36 @@ class LndClient:
             while result := await queue.get():
                 yield result
 
-    async def create_invoice(self, memo: str, amount: int) -> Invoice:
+    async def create_invoice(self, memo: str, value: int) -> Invoice:
         resp = await self.query(
             'POST',
             '/v1/invoices',
-            memo=memo,
-            value=amount,
-            expiry=self.settings.invoice_expiry,
-            private=self.settings.private,
+            data=dict(
+                memo=memo,
+                value=value,
+                expiry=self.settings.invoice_expiry,
+                private=self.settings.private,
+            ),
         )
-        return Invoice(amount=amount, **resp)
+        return Invoice(value=value, **resp)
+
+    async def lookup_invoice(self, r_hash: RequestHash) -> Invoice:
+        resp = await self.query("GET", f"/v1/invoice/{r_hash.as_hex}")
+        return Invoice(**resp)
 
     async def cancel_invoice(self, r_hash: RequestHash):
-        await self.query("POST", "/v2/invoices/cancel", payment_hash=base64_to_hex(r_hash))
+        """
+        Only HODL invoices
+        """
+        await self.query("POST", "/v2/invoices/cancel", data=dict(payment_hash=r_hash.as_hex))
 
     async def pay_invoice(self, payment_request: PaymentRequest, timeout: int):
-        results = await self.query("POST", "/v2/router/send", payment_request=payment_request, timeout_seconds=timeout)
+        results = await self.query(
+            "POST",
+            "/v2/router/send",
+            data=dict(payment_request=payment_request, timeout_seconds=timeout),
+            timeout=httpx.Timeout(5, read=10),
+        )
         last_result = results[-1]
         if last_result['result']['status'] != 'SUCCEEDED':
             raise PayInvoiceError(json.dumps(last_result))
@@ -131,15 +139,15 @@ async def monitor_invoices(lnd_client, db, *, task_status: TaskStatus = TASK_STA
         if data is None:
             task_status.started()
             continue
-        result = data['result']
-        if result['state'] == 'SETTLED':
+        invoice: Invoice = Invoice(**data['result'])
+        if invoice.state == 'SETTLED':
             logger.debug(f"donation paid {data}")
             try:
                 async with db.session() as sess:
                     await sess.donation_paid(
-                        r_hash=result['r_hash'],
-                        paid_at=datetime.fromtimestamp(int(result['settle_date'])),
-                        amount=int(result['amt_paid_sat']),
+                        r_hash=invoice.r_hash,
+                        paid_at=invoice.settle_date,
+                        amount=invoice.amt_paid_sat,
                     )
             except Exception:
                 logger.exception("Error while handling donation notification from lnd")
