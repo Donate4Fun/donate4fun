@@ -6,6 +6,7 @@
   import api from "../lib/api.js";
 
   export let donation_id;
+  export let navigate;
 
   let donation;
   let payment_request;
@@ -15,26 +16,27 @@
     if (state_donation && state_donation.id === donation_id) {
       donation = state_donation;
     } else {
-      const response = await api.get(`/api/v1/donation/${donation_id}`);
+      const response = await api.get(`donation/${donation_id}`);
       ({ donation, payment_request } = response);
     }
   }
   function cancel() {
     console.log("invoice cancel");
-    invoice = null;
+    navigate(-1);
   }
   function close() {
     console.log("donate close");
-    donation = null;
+    navigate(-1);
   }
-  function paid(new_donation) {
-    console.log("paid", new_donation);
-    donation = new_donation;
+  function paid(event) {
+    console.log("paid", event.detail);
+    donation = event.detail;
   }
 
 </script>
 
 <Header />
+<main>
 {#await loadDonation()}
   <Spinner />Loading...
 {:then}
@@ -44,3 +46,11 @@
     <Invoice donation={donation} payment_request={payment_request} on:cancel={cancel} on:paid={paid} />
   {/if}
 {/await}
+</main>
+
+<style>
+main {
+  display: flex;
+  justify-content: center;
+}
+</style>

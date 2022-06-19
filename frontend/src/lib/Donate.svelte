@@ -16,9 +16,9 @@
   const alexsc2_channel = "https://www.youtube.com/watch?v=dcjJY0-Aig0";
   const mytest_channel = "https://www.youtube.com/channel/UCk2OzObixhe_mbMfMQGLuJw";
 
-  let amount = 10;
-  let target = mytest_channel;
-  let message = "You are the best!";
+  export let amount = 10;
+  export let target = mytest_channel;
+  export let message = "You are the best!";
   let error = null;
   let spin = false;
   let donation = null;
@@ -28,7 +28,7 @@
   async function donate(e) {
     spin = true;
     try {
-      const response = await api.post('/api/v1/donate', {
+      const response = await api.post('donate', {
           amount: amount,
           target: target,
           message: message

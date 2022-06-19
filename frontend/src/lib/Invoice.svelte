@@ -5,6 +5,7 @@
   import Button from "../lib/Button.svelte";
   import Spinner from "../lib/Spinner.svelte";
   import QRCode from "../lib/QRCode.svelte";
+  import { copy, partial } from "../lib/utils.js";
 
   export let donation;
   export let payment_request;
@@ -26,14 +27,15 @@
     }
     socket.onmessage = (event) => {
       console.log("message", event);
-      const data = JSON.parse(event.data)
-      if (data.status === 'success') {
-        if (data.state === 'SETTLED') {
-          dispatch('paid', data.donation)
+      try {
+        donation = JSON.parse(event.data)
+        if (donation.paid_at) {
+          dispatch('paid', donation)
           return;
         }
+      } catch (err) {
+        console.error("unexpected websocket notification", err, event);
       }
-      console.error("unexpected invoice state", data);
     }
   })
 </script>
@@ -47,8 +49,8 @@
     <a href="https://bluewallet.io" target="_blank">BlueWallet</a>
   </div>
   <a href="lightning:{payment_request}"><Button>Open in Wallet</Button></a>
-  <Button on:click={navigator.clipboard.writeText(payment_request)}>Copy to clipboard</Button>
-  <Button on:click={dispatch("cancel")}>Cancel</Button>
+  <Button on:click={copy(payment_request)}>Copy to clipboard</Button>
+  <Button on:click={partial(dispatch, "cancel")}>Back</Button>
 </section>
 
 <style>

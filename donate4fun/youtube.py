@@ -1,14 +1,17 @@
 import json
+import re
 from functools import wraps
 from dataclasses import dataclass
-from urllib.parse import parse_qs, urlunparse
+from urllib.parse import parse_qs, urlunparse, urlparse
 
 from aiogoogle import Aiogoogle
 from aiogoogle.auth.creds import ClientCreds, ServiceAccountCreds
 from pydantic import BaseModel
+from email_validator import validate_email
 
 from .settings import settings
 from .types import UnsupportedTarget, Url, ValidationError
+from .core import absolute_url_for
 
 ChannelId = str
 
@@ -75,7 +78,7 @@ async def validate_youtube_url(parsed) -> YoutubeDonatee:
 def withyoutube(func):
     @wraps(func)
     async def wrapper(*args, **kwargs):
-        async with Aiogoogle(api_key=settings().youtube.api_key) as aiogoogle:
+        async with Aiogoogle(api_key=settings.youtube.api_key) as aiogoogle:
             youtube_v3 = await aiogoogle.discover("youtube", "v3")
             return await func(aiogoogle, youtube_v3, *args, **kwargs)
     return wrapper
@@ -83,15 +86,17 @@ def withyoutube(func):
 
 @withyoutube
 async def fetch_channel_by_owner(aiogoogle, youtube, creds: ClientCreds) -> ChannelInfo:
-    req = youtube.channels.list(mine=True, part='id')
+    req = youtube.channels.list(mine=True, part='snippet')
     res = await aiogoogle.as_user(req, user_creds=creds)
     items = res['items']
     if not items:
         raise YoutubeChannelNotFound
-    snippet = items[0]['snippet']
+    channel = items[0]
+    snippet = channel['snippet']
     return ChannelInfo(
-        id=snippet['id'],
+        id=channel['id'],
         title=snippet['title'],
+        thumbnail=snippet['thumbnails']['medium']['url'],
     )
 
 
@@ -100,7 +105,7 @@ def get_service_account_creds():
         scopes=[
             "https://www.googleapis.com/auth/youtube.read_only",
         ],
-        **json.load(open(settings().youtube.service_account_key_file))
+        **json.load(open(settings.youtube.service_account_key_file))
     )
 
 
@@ -129,8 +134,22 @@ async def fetch_user_channel(request, code: str) -> ChannelInfo:
         full_user_creds = await aiogoogle.oauth2.build_user_creds(
             grant=code,
             client_creds=dict(
-                redirect_uri=request.url_for('auth_google'),
-                **settings.get().youtube.oauth.dict(),
+                redirect_uri=absolute_url_for(request, 'auth_google'),
+                **settings.youtube.oauth.dict(),
             ),
         )
     return await fetch_channel_by_owner(full_user_creds)
+
+
+async def validate_target(target: str):
+    if re.match(r'https?://.+', target):
+        return await validate_target_url(target)
+    return validate_email(target).email
+
+
+async def validate_target_url(target: Url):
+    parsed = urlparse(target)
+    if parsed.hostname in ['youtube.com', 'www.youtube.com', 'youtu.be']:
+        return await validate_youtube_url(parsed)
+    else:
+        raise UnsupportedTarget

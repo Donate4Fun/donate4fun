@@ -13,26 +13,18 @@ backend:
   image:
     repository: europe-central2-docker.pkg.dev/donate4fun-prod/docker/donate4fun-backend
   config:
-    youtube:
-      api_key: AIzaSyCjBMteVKRWMnUDMMt_ANQ4SkZllD30TZM
-      service_account_key_file: /secret/service-account.json
-      oauth:
-        client_id: 338895585019-sc1ai7fnbtos5bh097rarrjml8chm9id.apps.googleusercontent.com
-        client_secret: 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
-    lnd:
-      url: http://lnd-prod.lnd-prod
     db:
-      dsn: postgresql+asyncpg://donate4fun:donate4fun@postgresql.postgresql/donate4fun
       echo: false
       connect_arg:
         timeout: 1
     hypercorn:
       use_reloader: false
       bind: '[::]:8080'
-    jwt_secret: oop3keWu5aikoh0teA
-    claim_limit: 10
-    debug: false
-    donator_name_seed: 30598
+    min_withdraw: 10
+    base_url: https://donate4.fun
+    fastapi:
+      debug: false
+      root_path: ""
     log:
       version: 1
       disable_existing_loggers: true
@@ -56,16 +48,3 @@ backend:
         level: DEBUG
         propagate: true
         handlers: [stderr]
-
-  serviceAccount: {
-    "type": "service_account",
-    "project_id": "donate4fun-prod",
-    "private_key_id": "a98bbc7015230f2b39f6149111f182db6fec8335",
-    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCGvNOV2goNEEYm\nc/Sm3W0KdotAXwpQx3r8TbfzjVGlDHADuGqJbBmMoncfcKDM9gk/U4KrQ6Az1Ccu\n5iTQxXHDA2EAI/a/nVCSQS3CoggLer9hhBR1MPcUvxZwfwZiqhSRzCBGMQ8NFb/p\n4xVLMPcCo++TzloUf8pqvLl1w26QYZa/QrmPunAe7U9hwA8Oqif+dhz/tOlRApjK\ndOPBp0s85A03Id+PkutHvAXtQMj+v2pe8q77QrloyVvmH40KLXF47PahkhinlGLS\n0Zj2RkQfzNHohkd2mHlYQ2MoTpHLLy9Hbet7IupXFXtMXyOyzD9N5pm+C2F78gC7\nEeBqm3N9AgMBAAECggEAGU8ERnhhnXESYDw1NxfOGOJKB2Iiz6gcvaJCnKTNsn06\n2DQOjPgpd214B0eSaNWJSKQg3hcykzG1V32i6jVASHOMx6g5u+XqocJM/GuPq8pX\ngxN6fUXgj3zSU/jERAmzGezYHh8udtSAS0hcslZE+7G7+Y1QBdw4MyL2ijyWutdY\nHNfD3xJIbAHMZ/9ceckSI9RSVlIKJVCh4F/ClVblOAGttP9gxnpFBF1N25OtWJ/2\nrb2xXYm+UGGChEkRKp7f1BkQcxf5BqQKazPDYo6RDlwN9VHKoZ9I1gbL/GGEJau/\neeeESlrRhyMKYUAPG1H/S2yikkzG13h4HTXtH6DWgQKBgQC+Vy0nQdB6CO4yhDMK\nnpv30hzu/Tql7vIvBbzly3WPAZi+KoxLebc1cyvtyOgTLK3qzpbtBd7/DOZx9jfS\nwiS2dp7E+jCC5Lxf2e4X02yXUG0C5RZsFfWAaKV6dmc34yyEb0WAVLNXTWGyjWfp\nsT+ANWstdfQwDQuu3t3tdhDD/QKBgQC1N2Yf0oUA622raeUztAfDjJDIrgYRbKoE\nNm042Qiy8XTACJr4IZYI0rXoGJX51O6E036n4ZRUnmJcvR19ndIUnOsYq3QciRkX\nJ5I6WJ+sbUdbUbzlQy5ohjtiTJZN/d5thm+rv9fh+q5h08nmckKc2MapbW1cvCzX\nYq667OPFgQKBgQCHi3EeOaIKpX1q//WRJG4RRtFP54jyTXytu7pPMlpfIlXxZj9O\nKDktmPy5co7ByNl5EvErjTjGDBu3IA2Uyqh2P3bE8x3EuLrkzz7cPLVh8+YNX7Jd\n+i0/6kWdNeA/TkmPbeXig27LRtHB4y0SoCSGWoQedZcU+NVPDGqiBafeyQKBgEtS\nQ3hmoDHJqUPeOA5NfgyhmGxRKOSFLgWiObOvQhZelhBbg04vZ5UzP7jAv1WgU6OR\n5MsSz/x7+JZjZKaZuoAm2PDgEtrpgSxGnljyDSw2H7qtNr50Ng3r/TLWcoLoSlNr\n1W6lxq1+7Ixs4zaNt3JKCAjUGui4rkq4EbhQTjwBAoGATCst/RYhvBNCghEiK0TJ\nyf3pkLjK2igCbDGnWd0X1XxRbMmv4ig5RDGfCcL71kcYTmEki8WMcOrIdtOEEuk7\nH7+sl8gGqD+QZnLxmY7ue5KT2VhO0N/DnkeqoMYCZWM7o7UcBaDZOZw302KYur1c\n60CfE6bSAw1twJp6lI2tnLo=\n-----END PRIVATE KEY-----\n",
-    "client_email": "donate4fun-prod@donate4fun-prod.iam.gserviceaccount.com",
-    "client_id": "104860654949016753596",
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "https://oauth2.googleapis.com/token",
-    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/donate4fun-prod%40donate4fun-prod.iam.gserviceaccount.com"
-  }

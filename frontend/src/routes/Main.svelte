@@ -1,7 +1,7 @@
 <script>
   import Donate from '../lib/Donate.svelte';
   import Claim from '../lib/Claim.svelte';
-  import Donations from "../lib/Donations.svelte";
+  import LatestDonations from "../lib/LatestDonations.svelte";
   import Header from "../lib/Header.svelte";
   import Footer from "../lib/Footer.svelte";
 </script>
@@ -13,45 +13,43 @@
     Instant delivery with Lightning network. No KYC.
   </header>
   <main>
-    <section class="forms">
+    <div class="forms">
       <Donate />
       <Claim />
-      <article>
-        FAQ
-      </article>
-    </section>
-    <aside>
-      <Donations />
-    </aside>
+    </div>
+    <div class="latest">
+      <LatestDonations />
+    </div>
   </main>
+  <article>
+    How to use this service:
+  </article>
 </article>
 <Footer />
 
 <style>
-  main {
-    display: flex;
-    flex-grow: 1;
-    gap: 20px;
-    padding-top: 40px;
-    flex-wrap: wrap;
+@media only screen and (max-width: 1200px) {
+  .latest {
+    display: none;
   }
-  .forms {
-    display: flex;
-    flex-direction: column;
-    flex-basis: 60%;
-    gap: 20px;
-  }
-  aside {
-    flex-basis: 30%;
-    min-width: 400px;
-  }
-  header {
-    font-size: 24px;
-    line-height: 29px;
-  }
-  h1 {
-    font-weight: 900;
-    font-size: 44px;
-    line-height: 53px;
-  }
+}
+main {
+  display: flex;
+  gap: 20px;
+  padding-top: 40px;
+}
+.forms {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+header {
+  font-size: 24px;
+  line-height: 29px;
+}
+h1 {
+  font-weight: 900;
+  font-size: 44px;
+  line-height: 53px;
+}
 </style>

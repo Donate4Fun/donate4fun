@@ -7,7 +7,8 @@
 {/if}
 
 <style>
-  p {
-    font-color: red;
-  }
+p {
+  color: #FF4B4B;
+  font-size: 12px;
+}
 </style>

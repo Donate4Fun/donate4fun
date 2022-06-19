@@ -2,6 +2,7 @@
   import { Router, Link, Route } from "svelte-navigator";
   import Main from "./routes/Main.svelte";
   import DonatorPage from "./routes/DonatorPage.svelte";
+  import DonatePage from "./routes/DonatePage.svelte";
   import DonationPage from "./routes/DonationPage.svelte";
   import YoutubeChannelPage from "./routes/YoutubeChannelPage.svelte";
 
@@ -13,12 +14,11 @@
 </svelte:head>
 
 <Router url={url}>
-  <div>
-    <Route path="donation/:donation_id" component="{DonationPage}" />
-    <Route path="youtube-channel/:channel_id" component="{YoutubeChannelPage}" />
-    <Route path="donator/:donator_id" component="{DonatorPage}" />
-    <Route path="/"><Main /></Route>
-  </div>
+  <Route path="donation/:donation_id" component="{DonationPage}" />
+  <Route path="youtube-channel/:channel_id" component="{YoutubeChannelPage}" />
+  <Route path="donator/:donator_id" component="{DonatorPage}" />
+  <Route path="donate/:channel_id" component="{DonatePage}" />
+  <Route path="/"><Main /></Route>
 </Router>
 
 <style>
@@ -27,6 +27,18 @@
   font-family: Inter;
   font-weight: 400;
   color: #000000;
-  padding: 20px;
+  margin: 0;
+}
+:global(div#app) {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+:global(div#app > *) {
+  padding: 2em;
+}
+:global(a) {
+  color: #004EE7;
+  text-decoration: none;
 }
 </style>

@@ -1,8 +1,11 @@
 import logging
 import sys
+import os
 from contextlib import asynccontextmanager
 
 import anyio
+import bugsnag
+from bugsnag.asgi import BugsnagMiddleware
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from hypercorn.asyncio import serve as hypercorn_serve
@@ -20,8 +23,8 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def create_app(settings: Settings):
-    app = FastAPI(debug=settings.debug)
-    if settings.debug:
+    app = FastAPI(debug=settings.fastapi.debug, root_path=settings.fastapi.root_path)
+    if settings.fastapi.debug:
         app.add_middleware(DebugToolbarMiddleware)
     app.add_middleware(AuthlibMiddleware, secret_key=settings.jwt_secret)
     app.mount("/static", StaticFiles(directory="donate4fun/static"), name="static")
@@ -47,11 +50,14 @@ async def create_db():
 
 async def serve():
     async with load_settings() as settings, create_app(settings) as app, anyio.create_task_group() as tg:
+        if settings.bugsnag.api_key:
+            bugsnag.configure(api_key=settings.bugsnag.api_key, project_root=os.path.dirname(__file__))
         lnd = LndClient(settings.lnd)
         db = Database(settings.db)
         hyper_config = Config.from_mapping(settings.hypercorn)
         app.db = db
         app.lnd = lnd
+        app.task_group = tg
         tg.start_soon(monitor_invoices_loop, lnd, db)
-        await hypercorn_serve(app, hyper_config)
+        await hypercorn_serve(BugsnagMiddleware(app), hyper_config)
         tg.cancel_scope.cancel()

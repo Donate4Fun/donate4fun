@@ -5,10 +5,10 @@ from aiogoogle import Aiogoogle
 from fastapi import Request, Form, Query, APIRouter, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 
-from .core import payreq_to_datauri, validate_target, get_db_session, get_lnd
+from .core import payreq_to_datauri, get_db_session, get_lnd
 from .models import DonationRequest, Donation
 from .types import Url, UnsupportedTarget
-from .youtube import fetch_user_channel, ChannelInfo
+from .youtube import fetch_user_channel, ChannelInfo, validate_target
 from .settings import settings
 from .lnd import LndClient, Invoice
 
@@ -87,7 +87,7 @@ async def login_via_google(request: Request, orig_channel_id: str):
         client_creds=dict(
             scopes=['https://www.googleapis.com/auth/youtube.readonly'],
             redirect_uri=request.url_for('auth_google'),
-            **settings().youtube.oauth.dict(),
+            **settings.youtube.oauth.dict(),
         ),
     )
     return RedirectResponse(uri)
@@ -120,7 +120,7 @@ async def donatee(request: Request, donatee: Url = Query(...), db_session=Depend
         request=request,
         sum_donated=sum(d.amount for d in donations) / 1000,
         sum_unclaimed=sum_unclaimed,
-        is_claim_allowed=sum_unclaimed >= settings().claim_limit,
+        is_claim_allowed=sum_unclaimed >= settings.min_withdrawal,
         donatee=donatee,
         donations=donations,
     )

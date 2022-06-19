@@ -2,10 +2,11 @@ version: "3.9"
 
 x-common-lnd: &clnd
   user: ${UID}:${GID}
+  privileged: true
   build:
     context: ./lnd
     args:
-      GIT_REF: c2d31dc53d4cbb019430b5a905dd9d35511596eb
+      GIT_REF: abaef4f8c14be17998566d4cacdc25f1ec585101
   command:
   - /entrypoint.sh
   - --configfile=/lnd-config/lnd.conf
@@ -40,7 +41,7 @@ services:
     ]
     ports:
     - "127.0.0.1:${BITCOIN_RPC_PORT}:${BITCOIN_RPC_PORT}"
-    - "127.0.0.1:${BITCOIN_PORT}:${BITCOIN_PORT}"
+    - "${BITCOIN_PORT}:${BITCOIN_PORT}"
     volumes:
     - ./bitcoind-data:/data
 
@@ -74,8 +75,8 @@ services:
     - ./lnd-bob:/lnd
     - ./lnd-config:/lnd-config
     ports:
-    - "127.0.0.1:10002:${LND_REST_PORT}"
-    - "127.0.0.1:20002:${LND_RPC_PORT}"
+    - "10002:${LND_REST_PORT}"
+    - "20002:${LND_RPC_PORT}"
      
   rtl:
     user: ${UID}:${GID}

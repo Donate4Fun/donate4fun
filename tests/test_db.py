@@ -1,9 +1,9 @@
-from uuid import uuid4
 from datetime import datetime
 
 import pytest
-from donate4fun.models import Donation
+from donate4fun.models import Donation, Donator, YoutubeChannel
 from donate4fun.types import RequestHash
+from donate4fun.db import DonationDb
 
 from tests.test_util import verify_fixture
 
@@ -11,19 +11,11 @@ from tests.test_util import verify_fixture
 pytestmark = pytest.mark.anyio
 
 
-@pytest.mark.skip("no api to update or create donator yet")
-async def test_query_donator(db_session):
-    donator = await db_session.query_donator('9842425d-f653-4758-9afc-40a576561597')
-    assert len(donator.donations) == 2
-    for donation in donator.donations:
-        assert donation.donator is donator
-        assert donation.youtube_channel.title == 'Alex007SC2'
-
-
-@pytest.mark.freeze_time('2022-02-02 22:22:22')
-async def test_query_donatee(db_session, unpaid_donation_fixture: Donation, freeze_request_hash):
-    donations: list[Donation] = await db_session.query_donatee(unpaid_donation_fixture.youtube_channel.id)
-    verify_fixture([donation.dict() for donation in donations], 'query-donatee')
+async def test_query_donator(db_session, paid_donation_fixture):
+    await db_session.save_donator(paid_donation_fixture.donator)
+    await db_session.save_donator(paid_donation_fixture.donator)
+    donator: Donator = await db_session.query_donator(paid_donation_fixture.donator.id)
+    verify_fixture(donator, 'query-donator')
 
 
 async def test_query_donation(db_session, unpaid_donation_fixture):
@@ -33,21 +25,21 @@ async def test_query_donation(db_session, unpaid_donation_fixture):
 
 @pytest.mark.freeze_time('2022-02-02 22:22:22')
 async def test_query_donations(db_session, paid_donation_fixture, freeze_request_hash):
-    donations = await db_session.query_recent_donations()
+    donations = await db_session.query_donations(DonationDb.paid_at.isnot(None))
     verify_fixture([donation.dict() for donation in donations], 'query-donations')
 
 
 @pytest.mark.freeze_time('2022-02-02 22:22:22')
 async def test_create_donation(db_session):
-    youtube_channel_id = await db_session.get_or_create_youtube_channel(
-        channel_id='q2dsaf', title='asdzxc', thumbnail_url='1wdasd',
-    )
-    donation: Donation = await db_session.create_donation(
-        donator_id=uuid4(),
+    youtube_channel = YoutubeChannel(channel_id='q2dsaf', title='asdzxc', thumbnail_url='1wdasd')
+    await db_session.save_youtube_channel(youtube_channel)
+    donation = Donation(
+        donator=Donator(),
         amount=100,
-        youtube_channel_id=youtube_channel_id,
+        youtube_channel=youtube_channel,
         r_hash=RequestHash(b'123qwe'),
     )
+    donation: Donation = await db_session.create_donation(donation)
     assert donation is not None
     donation2: Donation = await db_session.query_donation(id=donation.id)
     assert donation.r_hash == donation2.r_hash

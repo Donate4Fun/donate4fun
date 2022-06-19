@@ -3,9 +3,9 @@ import os
 import logging
 from typing import Any
 from contextvars import ContextVar
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, contextmanager
 
-from pydantic import BaseSettings, BaseModel, Field
+from pydantic import BaseSettings, BaseModel, Field, AnyUrl
 
 Url = str
 
@@ -73,21 +73,32 @@ class LndSettings(BaseModel):
     private: bool = True
 
 
+class FastApiSettings(BaseModel):
+    debug: bool
+    root_path: str
+
+
+class BugsnagSettings(BaseModel):
+    api_key: str
+
+
 def yaml_config_source(settings: BaseSettings) -> dict[str, Any]:
     return yaml.safe_load(open(os.getenv('DONATE4FUN_CONFIG', 'config.yaml')))
 
 
 class Settings(BaseSettings):
-    domain: str = "donate4.fun"
+    base_url: AnyUrl
     lnd: LndSettings
     youtube: YoutubeSettings
     db: DbSettings
+    log: LoggingConfig
+    fastapi: FastApiSettings
+    bugsnag: BugsnagSettings
     hypercorn: dict[str, Any]
     jwt_secret: str
-    claim_limit: int  # Limit in sats for claiming
-    debug: bool
+    min_withdraw: int  # Limit in sats for claiming
     donator_name_seed: int
-    log: LoggingConfig
+    withdraw_timeout: int = 10
 
     class Config:
         @classmethod
@@ -104,20 +115,32 @@ class Settings(BaseSettings):
             )
 
 
-settings_var = ContextVar("settings")
+class ContextualObject:
+    def __init__(self, name: str):
+        self.__dict__['var'] = ContextVar(name)
+
+    @contextmanager
+    def assign(self, var):
+        token = self.__dict__['var'].set(var)
+        try:
+            yield self
+        finally:
+            self.var.reset(token)
+
+    def __getattr__(self, attrname):
+        return getattr(self.__dict__['var'].get(), attrname)
+
+    def __setattr__(self, attrname, value):
+        return setattr(self.__dict__['var'].get(), attrname, value)
+
+
+settings = ContextualObject("settings")
 
 
 @asynccontextmanager
 async def load_settings():
-    settings = Settings()
-    log_config = settings.log.dict(by_alias=True)
-    logging.config.dictConfig(log_config)
-    token = settings_var.set(settings)
-    try:
-        yield settings
-    finally:
-        settings_var.reset(token)
-
-
-def settings():
-    return settings_var.get()
+    _settings = Settings()
+    with settings.assign(_settings):
+        log_config = _settings.log.dict(by_alias=True)
+        logging.config.dictConfig(log_config)
+        yield _settings

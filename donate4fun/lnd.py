@@ -97,8 +97,14 @@ class LndClient:
         )
         return Invoice(value=value, **resp)
 
-    async def lookup_invoice(self, r_hash: RequestHash) -> Invoice:
-        resp = await self.query("GET", f"/v1/invoice/{r_hash.as_hex}")
+    async def lookup_invoice(self, r_hash: RequestHash) -> Invoice | None:
+        try:
+            resp = await self.query("GET", f"/v1/invoice/{r_hash.as_hex}")
+        except httpx.HTTPStatusError as err:
+            if err.response.status_code == 404:
+                return None
+            else:
+                raise
         return Invoice(**resp)
 
     async def cancel_invoice(self, r_hash: RequestHash):

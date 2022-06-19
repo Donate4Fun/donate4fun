@@ -1,6 +1,15 @@
+<script>
+  import Spinner from "../lib/Spinner.svelte";
+
+  export let loading = false;
+</script>
+
 <button {...$$restProps} on:click>
+{#if loading}
+  <Spinner color=white />
+{/if}
   <div>
-  <slot />
+    <slot />
   </div>
 </button>
 

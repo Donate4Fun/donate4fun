@@ -1,7 +1,7 @@
 <script>
   export let width = '4px';
-  export let color = '#ffffff';
-  export let size = '28px';
+  export let color = 'black';
+  export let size = '1em';
 </script>
 
 

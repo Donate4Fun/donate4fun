@@ -8,9 +8,8 @@ export default defineConfig({
     proxy: {
       '/api/': {
         target: 'http://localhost:8000',
-        changeOrigin: true
       },
-      '/api/v1/invoice/subscribe/': {
+      '/api/v1/donation/subscribe/': {
         target: 'ws://localhost:8000',
         ws: true
       }

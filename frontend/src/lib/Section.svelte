@@ -1,4 +1,4 @@
-<section>
+<section class={$$props.class}>
   <slot />
 </section>
 <style>
@@ -24,8 +24,5 @@ section :global(h1) {
 }
 h1, p {
   margin: inherit;
-}
-section :global(p) {
-  padding: 15px 0px;
 }
 </style>

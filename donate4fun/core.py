@@ -1,15 +1,13 @@
-import re
 import io
 from base64 import b64encode
-from urllib.parse import urlparse
 
 import qrcode
 from fastapi import Request
-from email_validator import validate_email
+from starlette.datastructures import URL
 from qrcode.image.pure import PymagingImage
 
-from .youtube import validate_youtube_url
-from .types import UnsupportedTarget, Url, PaymentRequest
+from .types import PaymentRequest
+from .settings import settings
 
 
 async def get_db_session(request: Request):
@@ -17,22 +15,16 @@ async def get_db_session(request: Request):
         yield session
 
 
+async def get_db(request: Request):
+    return request.app.db
+
+
 async def get_lnd(request: Request):
     return request.app.lnd
 
 
-async def validate_target(target: str):
-    if re.match(r'https?://.+', target):
-        return await validate_target_url(target)
-    return validate_email(target).email
-
-
-async def validate_target_url(target: Url):
-    parsed = urlparse(target)
-    if parsed.hostname in ['youtube.com', 'www.youtube.com', 'youtu.be']:
-        return await validate_youtube_url(parsed)
-    else:
-        raise UnsupportedTarget
+def absolute_url_for(request: Request, name: str, **path_params) -> URL:
+    return request.app.url_path_for(name, **path_params).make_absolute_url(settings.base_url)
 
 
 def payreq_to_datauri(pay_req: PaymentRequest):
