@@ -1,9 +1,11 @@
 import asyncio
 import logging
+import json
 from uuid import UUID
 from contextlib import asynccontextmanager
 from datetime import datetime
 
+from pydantic import BaseModel
 from sqlalchemy import select, desc, update, Column, TIMESTAMP, String, BigInteger, ForeignKey, func, text, literal
 from sqlalchemy.dialects.postgresql import insert, UUID as Uuid
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
@@ -27,7 +29,7 @@ class YoutubeChannelDb(Base):
     channel_id = Column(String, unique=True, nullable=False)
     title = Column(String)
     thumbnail_url = Column(String)
-    balance = Column(BigInteger)
+    balance = Column(BigInteger, nullable=False)
 
     donations = relationship("DonationDb", back_populates="youtube_channel")
 
@@ -287,12 +289,29 @@ class DbSession(BaseDbSession):
         return response.scalars().one()
 
 
+class Notification(BaseModel):
+    id: UUID
+    status: str
+    message: str | None
+
+
 class PubSubSession(BaseDbSession):
     async def notify_donation_paid(self, donation_id: UUID):
-        await self.notify('donation_paid', str(donation_id))
+        await self.notify('donation_paid', Notification(id=donation_id, status='OK'))
 
-    async def notify(self, channel: str, message: str):
-        await self.execute(select(func.pg_notify(channel, message)))
+    async def listen_for_donations(self):
+        async for msg in self.listen('donation_paid'):
+            yield msg
+
+    async def notify_withdrawal_sent(self, youtube_channel_id: UUID, status: str, message: str):
+        await self.notify('withdrawal_sent', Notification(id=youtube_channel_id, status=status, message=message))
+
+    async def listen_for_withdrawals(self):
+        async for msg in self.listen('withdrawal_sent'):
+            yield msg
+
+    async def notify(self, channel: str, notification: Notification):
+        await self.execute(select(func.pg_notify(channel, notification.json())))
 
     async def listen(self, channel: str):
         connection = await self.session.connection()
@@ -308,12 +327,13 @@ class PubSubSession(BaseDbSession):
         try:
             yield None
             while True:
-                msg = await queue.get()
-                logger.debug(f"[{id(self)}] Notification from '{channel}': {msg}")
-                yield msg
+                msg: str = await queue.get()
+                try:
+                    notification = Notification(**json.loads(msg))
+                except Exception:
+                    logger.exception(f"Exception while deserializing '{msg}'")
+                else:
+                    logger.debug(f"[{id(self)}] Notification from '{channel}': {notification}")
+                    yield notification
         finally:
             await asyncpg_connection.remove_listener(channel, listener)
-
-    async def listen_for_donations(self):
-        async for msg in self.listen('donation_paid'):
-            yield msg and UUID(msg)

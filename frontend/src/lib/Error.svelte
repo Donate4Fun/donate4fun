@@ -3,11 +3,11 @@
 </script>
 
 {#if message}
-<p>{message}</p>
+<span {...$$restProps}>{message}</span>
 {/if}
 
 <style>
-p {
+span {
   color: #FF4B4B;
   font-size: 12px;
 }

@@ -14,7 +14,5 @@ a {
 }
 img {
   width: 3em;
-  height: 3em;
-  margin-left: 1em;
 }
 </style>

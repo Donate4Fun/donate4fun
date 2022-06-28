@@ -1,9 +1,10 @@
 from datetime import datetime
+from uuid import UUID
 
 import pytest
 from donate4fun.models import Donation, Donator, YoutubeChannel
 from donate4fun.types import RequestHash
-from donate4fun.db import DonationDb
+from donate4fun.db import DonationDb, Notification
 
 from tests.test_util import verify_fixture
 
@@ -59,11 +60,11 @@ async def test_listen_notify(db):
     async with db.pubsub() as sub:
         async for received in sub.listen(channel):
             if received is not None:
-                assert received == messages[i - 1]
+                assert received.message == messages[i - 1]
             if i == len(messages):
                 break
             async with db.pubsub() as pub:
-                await pub.notify(channel, messages[i])
+                await pub.notify(channel, Notification(id=UUID(int=0), status='OK', message=messages[i]))
             i += 1
 
 

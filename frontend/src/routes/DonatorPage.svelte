@@ -1,8 +1,7 @@
 <script>
-  import Header from "../lib/Header.svelte";
-  import Footer from "../lib/Footer.svelte";
   import Loading from "../lib/Loading.svelte";
   import Userpic from "../lib/Userpic.svelte";
+  import Page from "../lib/Page.svelte";
   import Section from "../lib/Section.svelte";
   import YoutubeChannel from "../lib/YoutubeChannel.svelte";
   import Amount from "../lib/Amount.svelte";
@@ -20,30 +19,30 @@
   }
 </script>
 
-<Header/>
-{#await load()}
-<Loading/>
-{:then}
-<Section>
-  <h1><Userpic {...$me.donator}/> {$me.donator.name}</h1>
-  <table>
-    <thead><tr><th>When<th>Whom<th>Amount</tr></thead>
-    <tbody>
-    {#each donations as donation}
-      <tr><td><a href="/donation/{donation.id}" use:link>
-      {#if donation.paid_at}
-      <Datetime dt={donation.paid_at}/>
-      {:else}
-      unpaid
-      {/if}
-      </a>
-      <td><YoutubeChannel {...donation.youtube_channel}/><td><Amount amount={donation.amount}/></tr>
-    {/each}
-    </tbody>
-  </table>
-</Section>
-{/await}
-<Footer/>
+<Page>
+  <Section>
+  {#await load()}
+    <Loading/>
+  {:then}
+    <h1><Userpic {...$me.donator}/> {$me.donator.name}</h1>
+    <table>
+      <thead><tr><th>When<th>Whom<th>Amount</tr></thead>
+      <tbody>
+      {#each donations as donation}
+        <tr><td><a href="/donation/{donation.id}" use:link>
+        {#if donation.paid_at}
+        <Datetime dt={donation.paid_at}/>
+        {:else}
+        unpaid
+        {/if}
+        </a>
+        <td><YoutubeChannel {...donation.youtube_channel}/><td><Amount amount={donation.amount}/></tr>
+      {/each}
+      </tbody>
+    </table>
+  {/await}
+  </Section>
+</Page>
 
 <style>
 h1 {

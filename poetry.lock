@@ -97,7 +97,7 @@ anyio = "^3.6.1"
 type = "git"
 url = "https://github.com/nikicat/asgi-testClient"
 reference = "fix-busy-loop"
-resolved_reference = "e419c4a3714189a5e1c2f08ea16360790903c0b8"
+resolved_reference = "6ba8fd4235b40727ff2cdfa4af9db7061c24d26c"
 
 [[package]]
 name = "asgiref"

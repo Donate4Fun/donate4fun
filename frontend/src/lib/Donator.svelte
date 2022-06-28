@@ -5,9 +5,9 @@
   export let user;
 </script>
 
-<a href="/donator/{user.id}" use:link>
-    <Userpic {...user}/>
-    {user.name}
+<a href="/donator/{user.id}" use:link {...$$restProps}>
+  <Userpic {...user}/>
+  {user.name}
 </a>
 
 <style>

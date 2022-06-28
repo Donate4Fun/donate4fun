@@ -12,20 +12,40 @@
   }
 </script>
 
-<Section>
+<Section class="claim">
   <h1>Claim donations</h1>
-  <p>Check if your channel have been donated, just paste your Channel’s URL</p>
-  <p class="controls">
+  <span>Check if your channel have been donated, just paste your Channel’s URL</span>
+  <form>
     <Input placeholder="Paste your Youtube channel’s URL" bind:value={donatee}/>
     <Button disabled={!donatee} on:click={claim}>Check donation</Button>
-  <div>
+  </form>
 </Section>
 
 <style>
-.controls {
+:global(.claim) {
+  padding: 36px 36px 40px 36px;
+  display: flex;
+  flex-direction: column;
+  width: 718px;
+  height: 216px;
+  box-sizing: border-box;
+}
+h1 {
+  margin-top: 0px;
+  margin-bottom: 16px;
+}
+span {
+  font-size: 14px;
+  line-height: 17px;
+}
+form {
   display: flex;
   align-items: center;
-  margin-left: -10px;
+  margin-top: 38px;
+  gap: 24px;
+}
+form :global(input) {
+  width: 416px;
 }
 :global(button) {
   white-space: nowrap;

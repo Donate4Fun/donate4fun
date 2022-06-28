@@ -10,7 +10,7 @@
 </script>
 
 <svelte:head>
-  <link href="https://fonts.googleapis.com/css?family=Inter:400,700,900" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Inter:400,500,700,900" rel="stylesheet">
 </svelte:head>
 
 <Router url={url}>

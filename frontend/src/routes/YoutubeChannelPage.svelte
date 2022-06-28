@@ -5,13 +5,13 @@
   import Donator from "../lib/Donator.svelte";
   import Datetime from "../lib/Datetime.svelte";
   import Amount from "../lib/Amount.svelte";
-  import Header from "../lib/Header.svelte";
-  import Footer from "../lib/Footer.svelte";
   import Error from "../lib/Error.svelte";
   import Button from "../lib/Button.svelte";
   import YoutubeChannel from "../lib/YoutubeChannel.svelte";
+  import Page from "../lib/Page.svelte";
   import Section from "../lib/Section.svelte";
   import QRCode from "../lib/QRCode.svelte";
+  import Infobox from "../lib/Infobox.svelte";
   import api from "../lib/api.js";
   import { me } from "../lib/session.js";
 
@@ -19,35 +19,43 @@
 
   let youtube_channel;
   let sum_donated;
-  let sum_unclaimed;
   let donations;
   let error;
   let lnurl;
   let amount;
   let loading = false;
-  const min_claim_limit = 100;
-  $: isClaimAllowed = sum_unclaimed >= min_claim_limit;
+  let balance;
+
+  let youtube_channel_url;
+
+  const min_withdraw = 100;
 
   const load = async () => {
-    await me.init()
-    youtube_channel = await api.get(`youtube-channel/${channel_id}`);
-    donations = await api.get(`donations/by-donatee/${channel_id}`);
-    sum_donated = donations.reduce((accum, donation) => accum + donation.amount, 0);
-    sum_unclaimed = donations.reduce((accum, donation) => {
-      if (!donation.claimed_at) {
-        return accum + donation.amount;
-      } else {
-        return accum;
-      }
-    }, 0);
-  }
-  async function withdraw() {
     loading = true;
+    lnurl = null;
+    amount = null;
     try {
-      const response = await api.get(`youtube-channel/${channel_id}/withdraw`);
-      lnurl = response.lnurl;
-      amount = response.amount;
+      await me.init()
+      youtube_channel = await api.get(`youtube-channel/${channel_id}`);
+      balance = youtube_channel.balance;
+      youtube_channel_url = `https://youtube.com/channel/${youtube_channel.channel_id}`
+      donations = await api.get(`donations/by-donatee/${channel_id}`);
+      sum_donated = donations.reduce((accum, donation) => accum + donation.amount, 0);
+      if (balance >= min_withdraw) {
+        if ($me.youtube_channels.includes(channel_id)) {
+          const response = await api.get(`youtube-channel/${channel_id}/withdraw`);
+          lnurl = response.lnurl;
+          amount = response.amount;
+          api.subscribe(`youtube-channel/${channel_id}/subscribe`, (msg) => {
+            if (msg.status === 'ERROR') {
+              error = msg.message;
+            }
+            load();
+          });
+        }
+      }
     } catch (err) {
+      console.log(err)
       error = err.response.data.detail;
     }
     loading = false;
@@ -64,59 +72,84 @@
   }
 </script>
 
-<Header/>
-<Section class="youtube-channel-section">
-{#await load()}
-  <Loading />
-{:then}
-  <YoutubeChannel {...youtube_channel}/>
-  <div>Total donated: <Amount amount={sum_donated}/>.</div>
-  <div>Unclaimed: <Amount amount={sum_unclaimed}/>.</div>
-  <div class="action-button">
-    {#if lnurl}
-      <QRCode value={lnurl} />
-      <div class=lnurl>lightning:{lnurl}</div>
-      <Amount amount={amount}/>
-    {:else if $me.youtube_channels.includes(channel_id)}
-      <Button loading={loading} disabled={!isClaimAllowed} on:click={withdraw}>Withdraw</Button>
-    {:else}
-      <Button loading={loading} on:click={login}>Login to YouTube</Button>
-    {/if}
-    <Error message={error}/>
-  </div>
-  <div>Want to support him? <a href="/donate/{channel_id}" use:link>Donate</a></div>
-  <table>
-    <thead>
-      <tr><th>Whom<th>Paid at<th>How much<th>Withdrawed at</tr>
-    </thead>
-    <tbody>
-    {#each donations as donation}
-      <tr><td><Donator user={donation.donator}/><td><Datetime dt={donation.paid_at}/><td><Amount amount={donation.amount}/><td><Datetime dt={donation.claimed_at}/></tr>
-    {/each}
-    </tbody>
-  </table>
-{/await}
-</Section>
-<Footer/>
+<Page>
+  <Section class="youtube-channel">
+  {#await load()}
+    <Loading />
+  {:then}
+    <h1>Donations to <a href={youtube_channel_url}>{youtube_channel.title}</a></h1>
+    <img src={youtube_channel.thumbnail_url} alt="logo">
+    <div class="controls">
+      {#if lnurl}
+        <a href="lightning:{lnurl}"><QRCode value={lnurl}/></a>
+        <div class=lnurl>lightning:{lnurl}</div>
+        <div>Available BTC to withdraw: <Amount amount={amount}/></div>
+      {:else if balance >= min_withdraw}
+        <Infobox>You can withdraw donations if the you channel belongs to you. Confirm by login with Google</Infobox>
+        <div>Available BTC to withdraw: <Amount amount={balance}/></div>
+        <Button loading={loading} on:click={login}>Withdraw — Sign in with Google</Button>
+        <div class="annotation">Minimum amount to withdraw is: {min_withdraw} sats</div>
+      {/if}
+      <Error message={error}/>
+    </div>
+    <div>Want to support him? <a href="/donate/{channel_id}" use:link>Donate</a></div>
+    <table>
+      <thead>
+        <tr><th>Name<th>Date<th>Amount</tr>
+      </thead>
+      <tbody>
+      {#each donations as donation}
+        <tr><td><Donator user={donation.donator}/><td><Datetime dt={donation.paid_at}/><td><Amount amount={donation.amount}/></tr>
+      {/each}
+      </tbody>
+    </table>
+  {/await}
+  </Section>
+</Page>
 
 <style>
+:global(.youtube-channel) {
+  padding: 20px 120px 0px 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 640px;
+  box-sizing: border-box;
+}
+h1 {
+  text-align: center;
+}
 table {
   font-size: 12px;
+}
+thead {
+  color:  rgba(0, 0, 0, 0.6);
+  text-align: left;
+}
+tbody {
+  font-weight: 500;
+}
+th, td {
+  padding: 0 1em 1em 1em;
+}
+img {
+  width: 72px;
+  height: 72px;
 }
 .lnurl {
   word-break: break-all;
   font-size: 12px;
   line-height: 1em;
+  text-align: center;
 }
-.donate-button {
-  display: flex;
-  flex-direction: column;
-}
-:global(.youtube-channel-section) {
+.controls {
   display: flex;
   flex-direction: column;
   align-items: center;
-  max-width: 30em;
   gap: 1em;
+}
+.annotation {
+  font-size: 14px;
+  color: #7C7C7C;
 }
 </style>

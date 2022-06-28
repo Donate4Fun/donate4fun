@@ -9,7 +9,7 @@
 <header>
   <Logo/>
   <div class="right">
-    <Social/>
+    <Social class="onlylarge" />
     {#await me.init()}
     <Loading/>
     {:then}
@@ -23,8 +23,14 @@ header {
   display: flex;
   place-content: space-between;
 }
+@media only screen and (max-width: 1280px) {
+  :global(.onlylarge) {
+    display: none;
+  }
+}
 .right {
   display: flex;
   align-items: center;
+  gap: 1em;
 }
 </style>

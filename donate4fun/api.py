@@ -40,11 +40,24 @@ class CustomRoute(APIRoute):
                 status_code = exc.response.status_code
                 body = exc.response.json()
                 return JSONResponse(status_code=500, content={"message": f"Upstream server returned {status_code}: {body}"})
-            except (ValidationError, PydanticValidationError) as exc:
+            except ValidationError as exc:
+                return JSONResponse(
+                    status_code=400,
+                    content=dict(
+                        status="error",
+                        type=type(exc).__name__,
+                        error=str(exc),
+                    ),
+                )
+            except PydanticValidationError as exc:
                 logger.debug(f"{request.url}: Validation error", exc_info=exc)
                 return JSONResponse(
                     status_code=400,
-                    content={"message": repr(exc)},
+                    content=dict(
+                        status="error",
+                        type=type(exc).__name__,
+                        error=exc.errors()[0].msg,
+                    ),
                 )
 
         return custom_route_handler
@@ -103,7 +116,7 @@ async def donation(donation_id: UUID, db_session=Depends(get_db_session), lnd=De
     return DonateResponse(donation=donation, payment_request=payment_request)
 
 
-@router.websocket("/donation/subscribe/{donation_id}")
+@router.websocket("/donation/{donation_id}/subscribe")
 async def subscribe_to_donation(websocket: WebSocket, donation_id: UUID):
     logger.debug("Connected /donation/subscribe/")
     db: Database = websocket.app.db
@@ -113,7 +126,7 @@ async def subscribe_to_donation(websocket: WebSocket, donation_id: UUID):
                 if msg is None:
                     await websocket.accept()
                     logger.debug(f"Accepted ws connection for {donation_id}")
-                elif msg == donation_id:
+                elif msg.id == donation_id:
                     async with db.session() as db_session:
                         donation: Donation = await db_session.query_donation(id=donation_id)
                     if donation.paid_at is not None:
@@ -130,7 +143,7 @@ async def subscribe_to_donation(websocket: WebSocket, donation_id: UUID):
         await websocket.close()
 
 
-@router.post("/donation/cancel/{donation_id}")
+@router.post("/donation/{donation_id}/cancel")
 async def cancel_donation(donation_id: UUID, db=Depends(get_db_session), lnd=Depends(get_lnd)):
     """
     It only works for HODL invoices
@@ -241,8 +254,8 @@ async def lnurl_withdraw(request: Request, token: str):
         callback=absolute_url_for(request, 'withdraw_callback'),
         k1=token,
         default_description=decoded.description,
-        min_withdrawable=decoded.min_amount,
-        max_withdrawable=decoded.max_amount,
+        min_withdrawable=decoded.min_amount * 1000,
+        max_withdrawable=decoded.max_amount * 1000,
     )
 
 
@@ -274,6 +287,7 @@ async def withdraw_callback(request: Request, k1: str, pr: str, db=Depends(get_d
 async def send_withdrawal(
     *, youtube_channel_id: UUID, payment_request: PaymentRequest, amount: int, lnd, db, task_status: TaskStatus
 ):
+    message = None
     try:
         async with db.session() as db_session:
             youtube_channel: YoutubeChannel = await db_session.lock_youtube_channel(youtube_channel_id=youtube_channel_id)
@@ -282,12 +296,36 @@ async def send_withdrawal(
                     f"{youtube_channel!r} balance {youtube_channel.balance} is insufficient (invoiced {amount})"
                 )
             task_status.started()
-            await lnd.pay_invoice(payment_request, timeout=settings.withdraw_timeout)
+            await lnd.pay_invoice(payment_request)
             await db_session.withdraw(youtube_channel_id=youtube_channel_id, amount=amount)
+            status = 'OK'
     except Exception as exc:
         logger.exception("Failed to send withdrawal payment")
         bugsnag.notify(exc)
-        raise
+        status = 'ERROR'
+        message = str(exc)
+    async with db.pubsub() as pub:
+        await pub.notify_withdrawal_sent(youtube_channel_id, status, message)
+
+
+@router.websocket("/youtube-channel/{youtube_channel_id}/subscribe")
+async def subscribe_to_withdrawal(websocket: WebSocket, youtube_channel_id: UUID):
+    db: Database = websocket.app.db
+    try:
+        async with db.pubsub() as sub:
+            async for msg in sub.listen_for_withdrawals():
+                if msg is None:
+                    await websocket.accept()
+                    logger.debug(f"Accepted ws connection for youtube channel {youtube_channel_id}")
+                elif msg.id == youtube_channel_id:
+                    await websocket.send_text(msg.json())
+                else:
+                    logger.debug(f"Received notification about channel {msg}, skipping")
+    except Exception as exc:
+        logger.exception("Exception while listening for donations")
+        await websocket.send_json(dict(status='error', error=repr(exc)))
+    finally:
+        await websocket.close()
 
 
 class GoogleAuthState(BaseModel):

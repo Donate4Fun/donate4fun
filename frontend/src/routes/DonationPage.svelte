@@ -1,8 +1,9 @@
 <script>
-  import Header from "../lib/Header.svelte";
   import Donation from "../lib/Donation.svelte";
-  import Spinner from "../lib/Spinner.svelte";
+  import Loading from "../lib/Loading.svelte";
   import Invoice from "../lib/Invoice.svelte";
+  import Page from "../lib/Page.svelte";
+  import Section from "../lib/Section.svelte";
   import api from "../lib/api.js";
 
   export let donation_id;
@@ -35,22 +36,26 @@
 
 </script>
 
-<Header />
-<main>
-{#await loadDonation()}
-  <Spinner />Loading...
-{:then}
-  {#if donation.paid_at}
-    <Donation {...donation} on:close={close} />
-  {:else}
-    <Invoice donation={donation} payment_request={payment_request} on:cancel={cancel} on:paid={paid} />
-  {/if}
-{/await}
-</main>
+<Page>
+  <Section class="main-section">
+  {#await loadDonation()}
+    <Loading />
+  {:then}
+    {#if donation.paid_at}
+      <Donation {...donation} on:close={close} />
+    {:else}
+      <Invoice donation={donation} payment_request={payment_request} on:cancel={cancel} on:paid={paid} />
+    {/if}
+  {/await}
+  </Section>
+</Page>
 
 <style>
-main {
+:global(.main-section) {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  width: 640px;
+  box-sizing: border-box;
 }
 </style>

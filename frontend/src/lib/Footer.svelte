@@ -2,7 +2,7 @@
   <div>2022 Donate4Fun<sup>©</sup></div>
   <div class="links">
     <a href="#">Terms of Use</a>
-    <a href="#">Privacy Policy</a>
+    <a href="/privacy-policy.html">Privacy Policy</a>
   </div>
 </footer>
 

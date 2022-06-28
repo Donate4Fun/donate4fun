@@ -98,7 +98,8 @@ class Settings(BaseSettings):
     jwt_secret: str
     min_withdraw: int  # Limit in sats for claiming
     donator_name_seed: int
-    withdraw_timeout: int = 10
+    fee_limit: int
+    withdraw_timeout: int
 
     class Config:
         @classmethod

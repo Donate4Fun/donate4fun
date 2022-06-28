@@ -9,7 +9,7 @@ export default defineConfig({
       '/api/': {
         target: 'http://localhost:8000',
       },
-      '/api/v1/donation/subscribe/': {
+      '^/api/v1/.*/subscribe': {
         target: 'ws://localhost:8000',
         ws: true
       }

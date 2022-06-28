@@ -5,7 +5,7 @@
 </script>
 
 
-<div style="--width:{width}; --color:{color}; --size:{size}"></div>
+<div style="--width:{width}; --color:{color}; --size:{size}" {...$$restProps}></div>
 
 <style>
 :root {
@@ -18,7 +18,6 @@ div {
   width: var(--size);
   height: var(--size);
   animation: spin 1.5s infinite linear;
-  margin: 0 auto;
   aspect-ratio: 1;
   position: relative;
   z-index: 0;

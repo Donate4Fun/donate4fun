@@ -1,6 +1,7 @@
 import time
 from uuid import UUID
 from datetime import datetime
+from functools import partial
 
 import anyio
 import pytest
@@ -13,7 +14,8 @@ from lnurl.helpers import _lnurl_decode
 from donate4fun.api import DonateRequest, DonateResponse, WithdrawResponse, LnurlWithdrawResponse
 from donate4fun.lnd import monitor_invoices, LndClient, Invoice
 from donate4fun.settings import LndSettings
-from donate4fun.models import Donation, BaseModel
+from donate4fun.models import Donation, BaseModel, YoutubeChannel
+from donate4fun.db import Notification
 
 from tests.test_util import verify_fixture
 
@@ -142,9 +144,9 @@ async def test_cancel_donation(client, app, db_session, freeze_donation_id):
     )
     # verify_response(donate_response, "cancel-donation-donate-response")
     donation_id = donate_response.json()['id']
-    async with anyio.create_task_group() as tg, client.ws_session(f"/api/v1/donation/subscribe/{donation_id}") as ws:
+    async with anyio.create_task_group() as tg, client.ws_session(f"/api/v1/donation/{donation_id}/subscribe") as ws:
         await tg.start(monitor_invoices, app.lnd, app.db)
-        cancel_response = await client.post(f"/api/v1/donation/cancel/{donation_id}")
+        cancel_response = await client.post(f"/api/v1/donation/{donation_id}/cancel")
         verify_response(cancel_response, "cancel-donation-cancel-response")
         ws_response = []
         while True:
@@ -164,9 +166,9 @@ async def test_donate_full(
     check_response(donate_response, 200)
     assert donate_response.json()['donation']['id'] == str(freeze_donation_id)
     payment_request = donate_response.json()['payment_request']
-    async with anyio.create_task_group() as tg, client.ws_session(f"/api/v1/donation/subscribe/{freeze_donation_id}") as ws:
+    async with anyio.create_task_group() as tg, client.ws_session(f"/api/v1/donation/{freeze_donation_id}/subscribe") as ws:
         await tg.start(monitor_invoices, app.lnd, app.db)
-        await payer_lnd.pay_invoice(payment_request, timeout=20)
+        await payer_lnd.pay_invoice(payment_request)
         ws_response = []
         while True:
             donation = Donation.parse_obj(await ws.receive_json())
@@ -185,7 +187,7 @@ async def test_donate_full(
 @pytest.mark.freeze_time('2022-02-02 22:22:22')
 async def test_websocket(client, unpaid_donation_fixture, db, freeze_request_hash_json):
     messages = []
-    async with client.ws_session(f'/api/v1/donation/subscribe/{unpaid_donation_fixture.id}') as ws:
+    async with client.ws_session(f'/api/v1/donation/{unpaid_donation_fixture.id}/subscribe') as ws:
         async with db.session() as db_session:
             await db_session.donation_paid(r_hash=unpaid_donation_fixture.r_hash, amount=100, paid_at=datetime.utcnow())
         msg = await ws.receive_json()
@@ -204,7 +206,7 @@ async def test_withdraw_unproved(client, unpaid_donation_fixture):
     check_response(resp, 403)
 
 
-async def wait_for_payment(lnd_client, r_hash, *, task_status: TaskStatus = anyio.TASK_STATUS_IGNORED):
+async def wait_for_payment(lnd_client, r_hash, *, task_status: TaskStatus):
     async for data in lnd_client.subscribe("/v1/invoices/subscribe"):
         if data is None:
             task_status.started()
@@ -215,27 +217,49 @@ async def wait_for_payment(lnd_client, r_hash, *, task_status: TaskStatus = anyi
         break
 
 
+async def wait_for_withdrawal(
+    client, youtube_channel_id: UUID, amount_diff: int, status: str, message: str, task_status: TaskStatus,
+):
+    async with client.ws_session(f"/api/v1/youtube-channel/{youtube_channel_id}/subscribe") as ws:
+        task_status.started()
+        msg = await ws.receive_json()
+        notification = Notification(**msg)
+        assert notification.id == youtube_channel_id
+        assert notification.status == status
+        assert notification.message == message
+
+
 def login_youtuber(client, client_session, youtube_channel):
     client_session.youtube_channels = [youtube_channel.id]
     client.cookies['session'] = client_session.to_jwt()
 
 
-@pytest.mark.parametrize('amount_diff, balance_diff, is_ok', [(-1, 0, True), (0, 0, True), (1, 0, False), (0, -1, False)])
-async def test_withdraw(client, paid_donation_fixture, client_session, payer_lnd, amount_diff, balance_diff, is_ok, settings, db):
-    login_youtuber(client, client_session, paid_donation_fixture.youtube_channel)
+@pytest.mark.parametrize('balance, amount_diff, balance_diff, status, message, is_ok', [
+    (20, -1, 0, 'OK', None, True), (20, 0, 0, 'OK', None, True),
+    (20, 1, 0, 'OK', None, False), (20, 0, -1, 'OK', None, False),
+    (10**8, 0, 0, 'ERROR', 'FAILURE_REASON_INSUFFICIENT_BALANCE', False),
+])
+async def test_withdraw(
+    client, paid_donation_fixture, client_session, payer_lnd, balance, amount_diff, balance_diff, status,
+    message, is_ok, settings, db,
+):
     channel_id = paid_donation_fixture.youtube_channel.id
+    login_youtuber(client, client_session, paid_donation_fixture.youtube_channel)
+    # Update balance to target value
+    async with db.session() as db_session:
+        await db_session.withdraw(youtube_channel_id=channel_id, amount=paid_donation_fixture.amount - balance)
     resp = await client.get(f'/api/v1/youtube-channel/{channel_id}/withdraw')
     check_response(resp, 200)
     response = WithdrawResponse(**resp.json())
-    assert response.amount == paid_donation_fixture.amount
+    assert response.amount == balance
     decoded_url = _lnurl_decode(response.lnurl)
     lnurl_response = await client.get(decoded_url)
     lnurl_data = LnurlWithdrawResponse(**lnurl_response.json())
-    assert lnurl_data.min_withdrawable == settings.min_withdraw
-    assert lnurl_data.max_withdrawable == paid_donation_fixture.amount
+    assert lnurl_data.min_sats == settings.min_withdraw
+    assert lnurl_data.max_sats == balance
     invoice: Invoice = await payer_lnd.create_invoice(
         memo=lnurl_data.default_description,
-        value=paid_donation_fixture.amount + amount_diff,
+        value=balance + amount_diff,
     )
     if balance_diff:
         async with db.session() as db_session:
@@ -244,6 +268,18 @@ async def test_withdraw(client, paid_donation_fixture, client_session, payer_lnd
         client.app.task_group = tg
         if is_ok:
             await tg.start(wait_for_payment, payer_lnd, invoice.r_hash)
+            await tg.start(partial(
+                wait_for_withdrawal,
+                client=client,
+                amount_diff=amount_diff,
+                youtube_channel_id=paid_donation_fixture.youtube_channel.id,
+                status=status,
+                message=message,
+            ))
         callback_response = await client.get(lnurl_data.callback, params=dict(k1=lnurl_data.k1, pr=invoice.payment_request))
         check_response(callback_response, 200)
         assert callback_response.json()['status'] == 'OK' if is_ok else 'ERROR', callback_response.json()['reason']
+    # Check final balance
+    async with db.session() as db_session:
+        youtube_channel: YoutubeChannel = await db_session.query_youtube_channel(youtube_channel_id=channel_id)
+        assert youtube_channel.balance == -amount_diff if is_ok else balance

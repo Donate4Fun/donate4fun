@@ -11,8 +11,9 @@ import anyio
 import httpx
 from anyio import TASK_STATUS_IGNORED
 from anyio.abc import TaskStatus
+from lnpayencode import lndecode, LnAddr
 
-from .settings import LndSettings
+from .settings import LndSettings, settings
 from .types import RequestHash, PaymentRequest
 from .models import Invoice
 
@@ -113,16 +114,26 @@ class LndClient:
         """
         await self.query("POST", "/v2/invoices/cancel", data=dict(payment_hash=r_hash.as_hex))
 
-    async def pay_invoice(self, payment_request: PaymentRequest, timeout: int):
-        results = await self.query(
-            "POST",
-            "/v2/router/send",
-            data=dict(payment_request=payment_request, timeout_seconds=timeout),
-            timeout=httpx.Timeout(5, read=10),
-        )
-        last_result = results[-1]
-        if last_result['result']['status'] != 'SUCCEEDED':
-            raise PayInvoiceError(json.dumps(last_result))
+    async def pay_invoice(self, payment_request: PaymentRequest):
+        try:
+            decoded: LnAddr = lndecode(payment_request)
+            logger.debug(f"Sending payment to {decoded}")
+            results = await self.query(
+                "POST",
+                "/v2/router/send",
+                data=dict(
+                    payment_request=payment_request,
+                    timeout_seconds=settings.withdraw_timeout,
+                    fee_limit_sat=settings.fee_limit,
+                ),
+                timeout=httpx.Timeout(5, read=15),
+            )
+        except httpx.HTTPStatusError as exc:
+            raise PayInvoiceError(exc.response.json()['error']['message']) from exc
+        else:
+            last_result = results[-1]
+            if last_result['result']['status'] != 'SUCCEEDED':
+                raise PayInvoiceError(last_result['result']['failure_reason'])
 
     async def query_state(self) -> State:
         resp = await self.query('GET', '/v1/state')

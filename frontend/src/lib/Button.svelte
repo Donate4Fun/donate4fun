@@ -1,30 +1,15 @@
-<script>
-  import Spinner from "../lib/Spinner.svelte";
-
-  export let loading = false;
-</script>
-
 <button {...$$restProps} on:click>
-{#if loading}
-  <Spinner color=white />
-{/if}
-  <div>
-    <slot />
-  </div>
+  <slot />
 </button>
 
 <style>
-button > div {
-  
-}
 button {
-  background: linear-gradient(90deg, #00A3FF 0%, #7000FF 100%);
+  background: linear-gradient(90deg, #F9F03E 0%, #9DEDA2 100%);
   font-weight: 700;
   font-size: 16px;
   line-height: 19px;
-  color: #FFFFFF;
+  color: black;
   padding: 5px 20px;
-  margin-left: 10px;
   cursor: pointer;
   height: 40px;
 
@@ -38,6 +23,13 @@ button {
   align-items: center;
   justify-content: center;
 }
+button.white {
+  border: 1px solid #000000;
+  background: white;
+}
+button.grey {
+  background: #E9E9E9;
+}
 /* Chrome, Safari, Edge, Opera */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
@@ -45,6 +37,9 @@ input::-webkit-inner-spin-button {
   margin: 0;
 }
 button:disabled {
-  background: grey;
+  opacity: 0.5;
+}
+button:hover:enabled {
+  box-shadow: 0px 8px 20px rgba(185, 192, 204, 0.6);
 }
 </style>

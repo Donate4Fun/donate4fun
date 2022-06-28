@@ -66,9 +66,9 @@ async def validate_youtube_url(parsed) -> YoutubeDonatee:
         else:
             channel_info = await fetch_channel(username=part)
     elif parsed.hostname == 'youtu.be':
-        raise UnsupportedYoutubeUrl
+        raise UnsupportedYoutubeUrl("youtu.be urls are not supported")
     else:
-        raise UnsupportedYoutubeUrl
+        raise UnsupportedYoutubeUrl("Unrecognized YouTube URL")
     return YoutubeDonatee(
         channel=channel_info,
         trigger=trigger,
@@ -152,4 +152,4 @@ async def validate_target_url(target: Url):
     if parsed.hostname in ['youtube.com', 'www.youtube.com', 'youtu.be']:
         return await validate_youtube_url(parsed)
     else:
-        raise UnsupportedTarget
+        raise UnsupportedTarget("URL is invalid")

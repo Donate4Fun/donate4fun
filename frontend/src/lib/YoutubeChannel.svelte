@@ -9,20 +9,15 @@
   let channel_url = `https://youtube.com/channel/${channel_id}`;
 </script>
 
-<div>
+<span {...$$restProps}>
   <a href="/youtube-channel/{id}" use:link>
-    <img src={thumbnail_url} alt="youtube channel logo">
     {title}
   </a>
-</div>
+</span>
 
 <style>
 div a {
   display: flex;
   align-items: center;
-}
-div a img {
-  width: 2em;
-  height: 2em;
 }
 </style>
