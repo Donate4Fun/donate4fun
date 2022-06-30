@@ -1,3 +1,5 @@
 json:
-  message: UnsupportedTarget()
+  error: URL is invalid
+  status: error
+  type: UnsupportedTarget
 status_code: 400

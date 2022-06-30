@@ -11,7 +11,6 @@ from email_validator import validate_email
 
 from .settings import settings
 from .types import UnsupportedTarget, Url, ValidationError
-from .core import absolute_url_for
 
 ChannelId = str
 
@@ -123,6 +122,8 @@ async def fetch_channel_by_video(aiogoogle, youtube, video_id: str) -> ChannelIn
 async def fetch_channel(aiogoogle, youtube, channel_id: str | None = None, username: str | None = None) -> ChannelInfo:
     req = youtube.channels.list(id=channel_id, forUsername=username, part='snippet')
     res = await aiogoogle.as_api_key(req)
+    if res['pageInfo']['totalResults'] == 0:
+        raise YoutubeChannelNotFound("Invalid YouTube channel")
     items = res['items']
     if not items:
         raise YoutubeChannelNotFound
@@ -134,7 +135,7 @@ async def fetch_user_channel(request, code: str) -> ChannelInfo:
         full_user_creds = await aiogoogle.oauth2.build_user_creds(
             grant=code,
             client_creds=dict(
-                redirect_uri=absolute_url_for(request, 'auth_google'),
+                redirect_uri=request.app.url_path_for('auth_google').make_absolute_url(settings.youtube.oauth.redirect_base_url),
                 **settings.youtube.oauth.dict(),
             ),
         )

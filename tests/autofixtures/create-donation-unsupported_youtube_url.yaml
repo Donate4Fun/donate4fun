@@ -1,3 +1,5 @@
 json:
-  message: UnsupportedYoutubeUrl()
+  error: Unrecognized YouTube URL
+  status: error
+  type: UnsupportedYoutubeUrl
 status_code: 400

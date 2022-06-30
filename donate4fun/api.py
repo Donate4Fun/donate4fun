@@ -18,8 +18,10 @@ from lnpayencode import lndecode, LnAddr
 from aiogoogle import Aiogoogle
 from anyio.abc import TaskStatus
 
-from .core import get_db_session, get_lnd, get_db, absolute_url_for
-from .models import Donation, Donator, Invoice, DonateResponse, DonateRequest, YoutubeChannel, WithdrawalToken, BaseModel
+from .core import get_db_session, get_lnd, get_db
+from .models import (
+    Donation, Donator, Invoice, DonateResponse, DonateRequest, YoutubeChannelRequest, YoutubeChannel, WithdrawalToken, BaseModel
+)
 from .types import ValidationError, RequestHash, PaymentRequest
 from .youtube import YoutubeDonatee, ChannelInfo, fetch_user_channel, validate_target
 from .db import Database, NoResultFound, DonationDb
@@ -40,6 +42,8 @@ class CustomRoute(APIRoute):
                 status_code = exc.response.status_code
                 body = exc.response.json()
                 return JSONResponse(status_code=500, content={"message": f"Upstream server returned {status_code}: {body}"})
+            except NoResultFound:
+                return JSONResponse(status_code=404, content=dict(message="Item not found"))
             except ValidationError as exc:
                 return JSONResponse(
                     status_code=400,
@@ -56,7 +60,7 @@ class CustomRoute(APIRoute):
                     content=dict(
                         status="error",
                         type=type(exc).__name__,
-                        error=exc.errors()[0].msg,
+                        error=exc.errors()[0]['msg'],
                     ),
                 )
 
@@ -87,7 +91,25 @@ def make_memo(youtube_channel: YoutubeChannel) -> str:
 async def donate(
     request: DonateRequest, donator: Donator = Depends(get_donator), db_session=Depends(get_db_session), lnd=Depends(get_lnd),
  ) -> DonateResponse:
-    logger.debug(f"Donator {donator.id} wants to donate {request.amount} to {request.target}")
+    logger.debug(f"Donator {donator.id} wants to donate {request.amount} to {request.target or request.channel_id}")
+    if request.channel_id:
+        youtube_channel: YoutubeChannel = await db_session.query_youtube_channel(youtube_channel_id=request.channel_id)
+    else:
+        donatee: YoutubeDonatee = await validate_target(request.target)
+        youtube_channel = YoutubeChannel(
+            channel_id=donatee.channel.id,
+            title=donatee.channel.title,
+            thumbnail_url=donatee.channel.thumbnail,
+        )
+        await db_session.save_youtube_channel(youtube_channel)
+    invoice: Invoice = await lnd.create_invoice(memo=make_memo(youtube_channel), value=request.amount)
+    donation = Donation(r_hash=invoice.r_hash, amount=invoice.value, youtube_channel=youtube_channel, donator=donator)
+    await db_session.create_donation(donation)
+    return DonateResponse(donation=donation, payment_request=invoice.payment_request)
+
+
+@router.post("/donatee", response_model=YoutubeChannel)
+async def donatee_by_url(request: YoutubeChannelRequest, db_session=Depends(get_db_session)):
     donatee: YoutubeDonatee = await validate_target(request.target)
     youtube_channel = YoutubeChannel(
         channel_id=donatee.channel.id,
@@ -95,10 +117,7 @@ async def donate(
         thumbnail_url=donatee.channel.thumbnail,
     )
     await db_session.save_youtube_channel(youtube_channel)
-    invoice: Invoice = await lnd.create_invoice(memo=make_memo(youtube_channel), value=request.amount)
-    donation = Donation(r_hash=invoice.r_hash, amount=invoice.value, youtube_channel=youtube_channel, donator=donator)
-    await db_session.create_donation(donation)
-    return DonateResponse(donation=donation, payment_request=invoice.payment_request)
+    return youtube_channel
 
 
 @router.get("/donation/{donation_id}", response_model=DonateResponse)
@@ -154,7 +173,7 @@ async def cancel_donation(donation_id: UUID, db=Depends(get_db_session), lnd=Dep
 
 @router.get("/donations/latest", response_model=list[Donation])
 async def latest_donations(db=Depends(get_db_session)):
-    return await db.query_donations(DonationDb.paid_at.isnot(None))
+    return await db.query_donations(DonationDb.paid_at.isnot(None), limit=10)
 
 
 @router.get("/donations/by-donator/{donator_id}", response_model=list[Donation])
@@ -194,6 +213,14 @@ async def me(request: Request, db=Depends(get_db_session), donator: Donator = De
     return MeResponse(donator=donator, youtube_channels=request.session.get('youtube_channels', []))
 
 
+@router.get("/donator/{donator_id}", response_model=Donator)
+async def donator(request: Request, donator_id: UUID, db=Depends(get_db_session)):
+    try:
+        return await db.query_donator(donator_id=donator_id)
+    except NoResultFound:
+        return Donator(id=donator_id)
+
+
 @router.get("/youtube-channel/{channel_id}", response_model=YoutubeChannel)
 async def youtube_channel(channel_id: UUID, db=Depends(get_db_session)):
     return await db.query_youtube_channel(channel_id)
@@ -220,7 +247,8 @@ async def withdraw(request: Request, channel_id: UUID, db_session=Depends(get_db
         description=f'Donate4.Fun withdrawal for "{youtube_channel.title}"',
         youtube_channel_id=youtube_channel.id,
     )
-    withdraw_url = URL(absolute_url_for(request, 'lnurl_withdraw')).include_query_params(token=token.to_jwt())
+    url = request.app.url_path_for('lnurl_withdraw').make_absolute_url(settings.lnd.lnurl_base_url)
+    withdraw_url = URL(url).include_query_params(token=token.to_jwt())
     return WithdrawResponse(
         lnurl=lnurl_encode(str(withdraw_url)),
         amount=youtube_channel.balance,
@@ -251,7 +279,7 @@ class LnurlWithdrawResponse(LnurlResponseModel):
 async def lnurl_withdraw(request: Request, token: str):
     decoded = WithdrawalToken.from_jwt(token)
     return LnurlWithdrawResponse(
-        callback=absolute_url_for(request, 'withdraw_callback'),
+        callback=request.app.url_path_for('withdraw_callback').make_absolute_url(settings.lnd.lnurl_base_url),
         k1=token,
         default_description=decoded.description,
         min_withdrawable=decoded.min_amount * 1000,
@@ -339,7 +367,7 @@ async def login_via_google(request: Request, channel_id: UUID, donator=Depends(g
     url = aiogoogle.oauth2.authorization_url(
         client_creds=dict(
             scopes=['https://www.googleapis.com/auth/youtube.readonly'],
-            redirect_uri=absolute_url_for(request, 'auth_google'),
+            redirect_uri=request.app.url_path_for('auth_google').make_absolute_url(settings.youtube.oauth.redirect_base_url),
             **settings.youtube.oauth.dict(),
         ),
         state=GoogleAuthState(last_url=request.headers['referer'], donator_id=donator.id).to_jwt(),

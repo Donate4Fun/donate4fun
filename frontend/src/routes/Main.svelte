@@ -18,7 +18,7 @@
       <Donate />
       <Claim />
     </div>
-    <div class="latest"><LatestDonations /></div>
+    <LatestDonations />
   </main>
   <article>
     <div class="how-title">How it works</div>
@@ -42,16 +42,22 @@ h1 {
   main {
     flex-direction: column;
   }
+}
+@media only screen and (max-width: 640px) {
+  main,article,header {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
   header {
     text-align: center;
-  }
-  .item {
-    width: 100%;
   }
 }
 header {
   font-size: 24px;
   line-height: 29px;
+  padding-left: 40px;
+  padding-right: 40px;
+  align-self: start;
 }
 main {
   display: flex;
@@ -71,5 +77,8 @@ article {
   font-size: 24px;
   font-weight: 700;
   text-align: center;
+}
+ul {
+  box-sizing: border-box;
 }
 </style>

@@ -4,6 +4,9 @@ import yaml
 import pytest
 
 
+# This file is needed because pytest modifies "assert" only in test_*.py files
+
+
 def pytest_assert(left, right, message):
     assert left == right, message
 
@@ -31,3 +34,19 @@ async def fixture_test():
 
 async def test_async_context(fixture_test):
     assert var.get() == 'asd'
+
+
+def check_response(response, expected_status_code=200):
+    assert response.status_code == expected_status_code, response.text
+    return response
+
+
+def verify_response(response, name, status_code=None):
+    if status_code is not None:
+        check_response(response, status_code)
+    content_type = response.headers['content-type']
+    if content_type == 'application/json':
+        data = dict(status_code=response.status_code, json=response.json())
+    elif content_type == 'application/xml':
+        data = dict(status_code=response.status_code, xml=response.text)
+    verify_fixture(data, name)

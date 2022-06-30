@@ -4,12 +4,38 @@
 </script>
 
 <!-- img src={logo} alt="Donate4.Fun Logo" / -->
-<Link to="/" style="text-decoration: none;"><div class="parent"><img src="/ln-icon.svg" alt="bolt"><div class="text"><span class="stroke">Donate4Fun</span><span class="gradient">Donate4Fun</span><sup>BETA</sup></div></div></Link>
+<Link to="/" style="text-decoration: none;">
+  <div class="parent">
+    <img class=bolt src="/ln-icon.svg" alt="bolt">
+    <img class=text src="/D.svg" alt="D">
+    <div class=text>
+      <span class="stroke"><span>Donate4Fun</span></span>
+      <span class="gradient"><span>Donate4Fun</span></span>
+      <sup>BETA</sup>
+    </div>
+  </div>
+</Link>
 
 <style>
 :root {
   --stroke-width: 0.1em;
   --stroke-color: #2E6CFF;
+}
+@media only screen and (max-width: 640px) {
+  img.bolt,div.text {
+    display: None;
+  }
+  .stroke:after {
+    content: 'D';
+  }
+  .gradient:after {
+    content: 'D';
+  }
+}
+@media (min-width: 641px) {
+  img.text {
+    display: none;
+  }
 }
 div.parent {
   display: flex;

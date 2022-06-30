@@ -20,12 +20,15 @@ backend:
     hypercorn:
       use_reloader: false
       bind: '[::]:8080'
+    youtube:
+      oauth:
+        redirect_base_url: https://donate4.fun
     lnd:
       url: http://lnd-prod.lnd-prod
+      lnurl_base_url: https://donate4.fun
     min_withdraw: 10
     fee_limit: 10
     withdraw_timeout: 10
-    base_url: https://donate4.fun
     fastapi:
       debug: false
       root_path: ""

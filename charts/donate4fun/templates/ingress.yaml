@@ -10,6 +10,7 @@ metadata:
   {{- if eq .Values.ingress.className "gce" }}
     kubernetes.io/ingress.global-static-ip-name: {{ .Values.ingress.staticIpName }}
     kubernetes.io/ingress.class: {{ .Values.ingress.className }}
+    networking.gke.io/v1beta1.FrontendConfig: {{ $fullName }}
     networking.gke.io/managed-certificates: {{ $fullName }}
   {{- end }}
   {{- with .Values.ingress.annotations }}
@@ -24,21 +25,39 @@ spec:
     secretName: {{ .Values.ingress.tls.secretName }}
   {{- end }}
   rules:
-    - host: {{ .Values.ingress.host | quote }}
-      http:
-        paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ $fullName }}
-                port:
-                  name: http-backend
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ $fullName }}
-                port:
-                  name: http-frontend
+  - host: {{ .Values.ingress.host | quote }}
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ $fullName }}
+            port:
+              name: http-backend
+      - path: /sitemap.xml
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ $fullName }}
+            port:
+              name: http-backend
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ $fullName }}
+            port:
+              name: http-frontend
+---
+{{- if eq .Values.ingress.className "gce" }}
+apiVersion: networking.gke.io/v1beta1
+kind: FrontendConfig
+metadata:
+  name: {{ $fullName}}
+spec:
+  redirectToHttps:
+    enabled: true
+    responseCodeName: PERMANENT_REDIRECT
+{{- end }}
 {{- end }}

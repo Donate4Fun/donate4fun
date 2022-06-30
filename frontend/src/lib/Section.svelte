@@ -3,8 +3,6 @@
 </section>
 <style>
 section {
-  margin: 0px;
-
   background: #FFFFFF;
   border: 1px solid rgba(26, 41, 82, 0.05);
   border-radius: 20px;
@@ -14,5 +12,7 @@ section {
 
   /* identical to box height, or 133% */
   letter-spacing: 0.015em;
+
+  box-sizing: border-box;
 }
 </style>

@@ -3,11 +3,9 @@ from base64 import b64encode
 
 import qrcode
 from fastapi import Request
-from starlette.datastructures import URL
 from qrcode.image.pure import PymagingImage
 
 from .types import PaymentRequest
-from .settings import settings
 
 
 async def get_db_session(request: Request):
@@ -21,10 +19,6 @@ async def get_db(request: Request):
 
 async def get_lnd(request: Request):
     return request.app.lnd
-
-
-def absolute_url_for(request: Request, name: str, **path_params) -> URL:
-    return request.app.url_path_for(name, **path_params).make_absolute_url(settings.base_url)
 
 
 def payreq_to_datauri(pay_req: PaymentRequest):

@@ -13,20 +13,14 @@
 
   export let amount;
   export let claimed_at;
-  export let donator;
   export let donator_id;
-  export let r_hash;
   export let id;
   export let trigger;
   export let paid_at;
   export let created_at;
   export let youtube_channel;
 
-  let message = `
-      I’ve donated ${amount} satoshi for you.
-      Thank you for great content you make.
-      Claim your donation at <b>https://donate4.fun/claim/${youtube_channel.channel_id}</b>
-  `;
+  let message = `Hi! This video is cool! I’ve donated ${amount} sats to you. You can take it here https://donate4.fun/youtube-channel/${youtube_channel.id}`;
 </script>
 
 <main>
@@ -39,7 +33,7 @@
     {#if $me.donator.id === donator_id}
     <Infobox>Copy and share the message with the link or just tell Ninja to receive the donation here at «Donate4Fun»</Infobox>
     <div contenteditable class="message" bind:innerHTML={message}></div>
-    <Button on:click={copy(message)}>Copy and Share</Button>
+    <Button on:click={copy(message)} class="copy-button">Copy and Share</Button>
     <Button on:click={partial(dispatch, "close")} class="grey">Back</Button>
     {/if}
   {:else}
@@ -53,8 +47,20 @@ main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  max-width: 30em;
-  gap: 1em;
+  padding: 44px 84px 40px 84px;
+}
+main > img {
+  margin-bottom: 16px;
+}
+main > .header {
+  margin-bottom: 22px;
+}
+main > .message {
+  margin-top: 52px;
+  margin-bottom: 28px;
+}
+main > :global(.copy-button) {
+  margin-bottom: 20px;
 }
 .youtube_channel_thumbnail {
   width: 3em;
@@ -65,9 +71,6 @@ main {
   font-size: 24px;
   text-align: center;
 }
-.channel-title {
-  color: #004EE7;
-}
 .message {
   border-radius: 8px;
   background-color: #F8F8F8;
@@ -76,8 +79,8 @@ main {
   padding: 1em;
   border-color: #7000FF;
 }
-:global(main button) {
-  width: 28em;
-  height: 3em;
+main > :global(button) {
+  width: 402px;
+  height: 44px;
 }
 </style>

@@ -1,8 +1,9 @@
 from uuid import UUID
+from xml.etree import ElementTree as ET
 
 from mako.lookup import TemplateLookup
 from aiogoogle import Aiogoogle
-from fastapi import Request, Form, Query, APIRouter, Depends
+from fastapi import Request, Form, Query, APIRouter, Depends, Response
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 
 from .core import payreq_to_datauri, get_db_session, get_lnd
@@ -142,3 +143,16 @@ async def donator(request: Request, donator: str):
 async def donations(request: Request, db_session=Depends(get_db_session)):
     donations = await db_session.query_donations(donatee=donatee)
     return TemplateResponse("donations.html", request, donations=donations)
+
+
+@router.get('/sitemap.xml')
+async def sitemap(request: Request, db_session=Depends(get_db_session)):
+    base_url = settings.youtube.oauth.redirect_base_url
+    urlset = ET.Element('urlset', xmlns="http://www.sitemaps.org/schemas/sitemap/0.9")
+
+    for youtube_channel in await db_session.query_youtube_channels():
+        url = ET.SubElement(urlset, 'url')
+        loc = ET.SubElement(url, 'loc')
+        loc.text = f'{base_url}/youtube-channel/{youtube_channel.id}'
+        ET.SubElement(url, 'changefreq', text='weekly')
+    return Response(content=ET.tostring(urlset), media_type="application/xml")

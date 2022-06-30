@@ -5,7 +5,8 @@
   import Spinner from "../lib/Spinner.svelte";
   import QRCode from "../lib/QRCode.svelte";
   import Loading from "../lib/Loading.svelte";
-  import { copy, partial } from "../lib/utils.js";
+  import Lnurl from "../lib/Lnurl.svelte";
+  import { partial } from "../lib/utils.js";
   import api from "../lib/api.js";
 
   export let donation;
@@ -35,7 +36,7 @@
     <a href="https://blixtwallet.github.io" target="_blank">Blixt</a>
   </div>
   <a href="lightning:{payment_request}"><Button>Open in Wallet</Button></a>
-  <Button on:click={copy(payment_request)} class="white">Copy to clipboard</Button>
+  <Lnurl lnurl={payment_request} class="lnurl" />
   <Button on:click={partial(dispatch, "cancel")} class="grey">Back</Button>
   {/await}
 </main>
@@ -53,9 +54,6 @@ h1 {
   margin-top: 0;
   margin-bottom: 20px;
 }
-section > :global(*) {
-  --margin: 5px;
-}
 .suggestion {
   font-size: 16px;
   width: 402px;
@@ -69,6 +67,9 @@ main :global(button) {
   width: 402px;
   height: 44px;
   font-weight: 700;
+}
+main :global(.lnurl) {
+  width: 402px;
 }
 main div {
   text-align: center;

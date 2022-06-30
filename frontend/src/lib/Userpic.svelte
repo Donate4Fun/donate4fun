@@ -6,7 +6,7 @@
   export let id;
 </script>
 
-<a href="/donator/{id}" use:link><img src="{avatar_url}" alt="user logo"></a>
+<a href="/donator/{id}" use:link {...$$restProps}><img src="{avatar_url}" alt="user logo"></a>
 
 <style>
 a {

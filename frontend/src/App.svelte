@@ -34,11 +34,9 @@
   flex-direction: column;
   height: 100vh;
 }
-:global(div#app > *) {
-  padding: 2em;
-}
 :global(a) {
   color: #004EE7;
   text-decoration: none;
+  font-weight: 700;
 }
 </style>

@@ -6,6 +6,9 @@ export default defineConfig({
   plugins: [svelte()],
   server: {
     proxy: {
+      '/sitemap.xml': {
+        target: 'http://localhost:8000',
+      },
       '/api/': {
         target: 'http://localhost:8000',
       },

@@ -1,4 +1,3 @@
-import time
 from uuid import UUID
 from datetime import datetime
 from functools import partial
@@ -6,62 +5,21 @@ from functools import partial
 import anyio
 import pytest
 from anyio.abc import TaskStatus
-from authlib.jose import jwt
 from vcr.filters import replace_query_parameters
-from asgi_testclient import TestClient
 from lnurl.helpers import _lnurl_decode
 
 from donate4fun.api import DonateRequest, DonateResponse, WithdrawResponse, LnurlWithdrawResponse
 from donate4fun.lnd import monitor_invoices, LndClient, Invoice
 from donate4fun.settings import LndSettings
-from donate4fun.models import Donation, BaseModel, YoutubeChannel
+from donate4fun.models import Donation, YoutubeChannel
 from donate4fun.db import Notification
 
-from tests.test_util import verify_fixture
-
-
-class Session(BaseModel):
-    donator: UUID
-    youtube_channels: list[UUID] = []
-    jwt_secret: str
-
-    def to_jwt(self):
-        return jwt.encode(
-            dict(alg='HS256'),
-            dict(
-                donator=str(self.donator),
-                youtube_channels=[str(channel) for channel in self.youtube_channels],
-                exp=int(time.time()) + 10 ** 6,
-            ),
-            self.jwt_secret,
-        ).decode()
-
-
-@pytest.fixture
-def client_session(donator_id, settings):
-    return Session(donator=donator_id, jwt_secret=settings.jwt_secret)
-
-
-@pytest.fixture
-def client(app, client_session):
-    return TestClient(app, cookies=dict(session=client_session.to_jwt()))
+from tests.test_util import verify_fixture, verify_response, check_response
 
 
 @pytest.fixture
 async def payer_lnd():
-    return LndClient(LndSettings(url='http://localhost:10002'))
-
-
-def check_response(response, expected_status_code=200):
-    assert response.status_code == expected_status_code, response.text
-    return response
-
-
-def verify_response(response, name, status_code=None):
-    if status_code is not None:
-        check_response(response, status_code)
-    data = dict(status_code=response.status_code, json=response.json())
-    verify_fixture(data, name)
+    return LndClient(LndSettings(url='http://localhost:10002', lnurl_base_url='http://test'))
 
 
 @pytest.mark.freeze_time('2022-02-02 22:22:22')

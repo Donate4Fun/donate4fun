@@ -143,6 +143,12 @@ class DbSession(BaseDbSession):
         )
         return YoutubeChannel.from_orm(resp.scalars().one())
 
+    async def query_youtube_channels(self) -> list[YoutubeChannel]:
+        resp = await self.execute(
+            select(YoutubeChannelDb)
+        )
+        return [YoutubeChannel.from_orm(data) for data in resp.scalars()]
+
     async def lock_youtube_channel(self, youtube_channel_id: UUID) -> YoutubeChannel:
         result = await self.execute(
             select(YoutubeChannelDb)
@@ -178,11 +184,12 @@ class DbSession(BaseDbSession):
         )
         return Donator.from_orm(result.scalars().one())
 
-    async def query_donations(self, where):
+    async def query_donations(self, where, limit=20):
         result = await self.execute(
             select(DonationDb)
             .where(where)
-            .order_by(desc(DonationDb.paid_at))
+            .order_by(desc(func.coalesce(DonationDb.paid_at, DonationDb.created_at)))
+            .limit(limit)
         )
         return [Donation.from_orm(obj) for obj in result.unique().scalars()]
 

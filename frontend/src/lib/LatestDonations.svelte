@@ -1,18 +1,19 @@
 <script>
-import Loading from "../lib/Loading.svelte";
-import Donation from "../lib/Donation.svelte";
-import Section from "../lib/Section.svelte";
-import Amount from "../lib/Amount.svelte";
-import YoutubeChannel from "../lib/YoutubeChannel.svelte";
-import Donator from "../lib/Donator.svelte";
-import Datetime from "../lib/Datetime.svelte";
-import api from "../lib/api.js";
+  import { link } from "svelte-navigator";
+  import Loading from "../lib/Loading.svelte";
+  import Donation from "../lib/Donation.svelte";
+  import Section from "../lib/Section.svelte";
+  import Amount from "../lib/Amount.svelte";
+  import YoutubeChannel from "../lib/YoutubeChannel.svelte";
+  import Donator from "../lib/Donator.svelte";
+  import Datetime from "../lib/Datetime.svelte";
+  import api from "../lib/api.js";
 
-let donations = [];
+  let donations = [];
 
-const loadDonations = async () => {
-  donations = await api.get("donations/latest");
-}
+  const loadDonations = async () => {
+    donations = await api.get("donations/latest");
+  }
 </script>
 
 <Section class="donations">
@@ -24,29 +25,39 @@ const loadDonations = async () => {
       <div class="head">
         <div>Who</div><div>When</div><div>Amount</div><div>Blogger</div>
       </div>
-      <div class="body">
       {#each donations as donation}
-        <div class="row">
-          <Donator user={donation.donator} class="ellipsis" />
-          <div><Datetime dt={donation.paid_at} /></div>
-          <div class="vcenter"><Amount amount={donation.amount} /></div>
-          <div class="vcenter"><YoutubeChannel {...donation.youtube_channel} class="ellipsis"/></div>
-        </div>
+        <Donator user={donation.donator} class="ellipsis" />
+        <div><Datetime dt={donation.paid_at} /></div>
+        <div class="vcenter"><Amount amount={donation.amount} /></div>
+        <div class="vcenter"><a href="/donate/{donation.youtube_channel.id}" class="ellipsis" use:link>{donation.youtube_channel.title}</a></div>
       {/each}
-      </div>
     </div>
+    <div class=fadeout></div>
   {/await}
 </Section>
 
 <style>
 :global(.donations) {
-  width: 462px;
+  width: 537px;
   height: 501px;
-  padding: 36px 31px 37px 36px;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+  padding: 36px 40px 0 36px;
+  display: grid;
   overflow: hidden;
+  position: relative;
+}
+@media only screen and (max-width: 1280px) {
+  :global(.donations) {
+    width: 640px;
+  }
+}
+@media only screen and (max-width: 640px) {
+  :global(.donations) {
+    width: 100%;
+  }
+  .table {
+    overflow-x: scroll;
+    overflow-y: hidden;
+  }
 }
 h1 {
   margin-top: 0px;
@@ -67,7 +78,7 @@ h1 {
 }
 .table {
   display: grid;
-  grid-template-columns: 128px 57px 80px 69px;
+  grid-template-columns: 128px 57px 80px 98px;
   column-gap: 20px;
   row-gap: 26px;
   font-size: 12px;
@@ -76,13 +87,23 @@ h1 {
 }
 .head {
   color: rgba(0, 0, 0, 0.6);
-}
-.head,.body,.row {
   display: contents;
 }
 :global(.ellipsis) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.fadeout {
+  position : absolute;
+  z-index  : 1;
+  bottom   : 0;
+  left     : 0;
+  pointer-events   : none;
+  background-image : linear-gradient(to bottom,
+                    rgba(255,255,255, 0),
+                    rgba(255,255,255, 1) 90%);
+  width    : 100%;
+  height   : 4em;
 }
 </style>

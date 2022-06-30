@@ -52,10 +52,7 @@
 
 <style>
 :global(.main-section) {
-  display: flex;
-  flex-direction: column;
   align-items: center;
   width: 640px;
-  box-sizing: border-box;
 }
 </style>

@@ -1,23 +1,24 @@
 <script>
-  import {link} from "svelte-navigator";
+  import { link } from "svelte-navigator";
 
   export let thumbnail_url;
   export let title;
   export let channel_id;
   export let id;
-
-  let channel_url = `https://youtube.com/channel/${channel_id}`;
+  export let linkto = 'external';
 </script>
 
 <span {...$$restProps}>
-  <a href="/youtube-channel/{id}" use:link>
-    {title}
-  </a>
+  {#if linkto === 'external'}
+  <a href="https://youtube.com/channel/{channel_id}" target="_blank">{title}</a>
+  {:else if linkto === 'withdraw'}
+  <a href="/youtube-channel/{id}" use:link>{title}</a>
+  {:else if linkto === 'donate'}
+  <a href="/donate/{id}" use:link>{title}</a>
+  {:else}
+    Invalid linkto:
+  {/if}
 </span>
 
 <style>
-div a {
-  display: flex;
-  align-items: center;
-}
 </style>

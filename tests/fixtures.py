@@ -3,6 +3,7 @@ import uuid
 import contextvars
 import functools
 import logging
+import time
 from datetime import datetime
 from base64 import urlsafe_b64encode
 from functools import partial
@@ -10,12 +11,15 @@ from uuid import UUID
 
 import anyio
 import pytest
+from authlib.jose import jwt
+from asgi_testclient import TestClient
+
 from donate4fun.app import create_app
 from donate4fun.models import Invoice, Donation
 from donate4fun.lnd import LndClient
 from donate4fun.settings import load_settings, Settings, DbSettings
 from donate4fun.db import DbSession, Database
-from donate4fun.models import RequestHash, PaymentRequest, YoutubeChannel, Donator
+from donate4fun.models import RequestHash, PaymentRequest, YoutubeChannel, Donator, BaseModel
 
 
 logger = logging.getLogger(__name__)
@@ -194,3 +198,30 @@ async def paid_donation_fixture(db, unpaid_donation_fixture) -> Donation:
             paid_at=datetime.now(),
         )
         return await db_session.query_donation(id=unpaid_donation_fixture.id)
+
+
+class Session(BaseModel):
+    donator: UUID
+    youtube_channels: list[UUID] = []
+    jwt_secret: str
+
+    def to_jwt(self):
+        return jwt.encode(
+            dict(alg='HS256'),
+            dict(
+                donator=str(self.donator),
+                youtube_channels=[str(channel) for channel in self.youtube_channels],
+                exp=int(time.time()) + 10 ** 6,
+            ),
+            self.jwt_secret,
+        ).decode()
+
+
+@pytest.fixture
+def client_session(donator_id, settings):
+    return Session(donator=donator_id, jwt_secret=settings.jwt_secret)
+
+
+@pytest.fixture
+def client(app, client_session):
+    return TestClient(app, cookies=dict(session=client_session.to_jwt()))

@@ -13,6 +13,7 @@ Url = str
 class OAuthSettings(BaseModel):
     client_id: str
     client_secret: str
+    redirect_base_url: AnyUrl
 
 
 class YoutubeSettings(BaseModel):
@@ -67,6 +68,7 @@ class LoggingConfig(BaseModel):
 
 class LndSettings(BaseModel):
     url: Url
+    lnurl_base_url: AnyUrl
     macaroon_by_network: str | None = None
     macaroon_by_path: str | None = None
     invoice_expiry: int = 3600  # In seconds
@@ -87,7 +89,6 @@ def yaml_config_source(settings: BaseSettings) -> dict[str, Any]:
 
 
 class Settings(BaseSettings):
-    base_url: AnyUrl
     lnd: LndSettings
     youtube: YoutubeSettings
     db: DbSettings

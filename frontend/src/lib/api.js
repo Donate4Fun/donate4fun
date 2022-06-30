@@ -9,7 +9,7 @@ class ApiError extends Error {
 
 function handle_response(response) {
   if (response.status === 200) {
-    console.log("received response", response);
+    console.log(`received response for ${response.request.responseURL}`, response);
     return response.data;
   } else {
     console.error("API error", response);
@@ -23,12 +23,20 @@ function fullpath(path) {
 
 const api = {
   post: async (path, body) => {
-    const resp = await axios.post(fullpath(path), body);
-    return handle_response(resp);
+    try {
+      const resp = await axios.post(fullpath(path), body);
+      return handle_response(resp);
+    } catch (error) {
+      throw error.response.data;
+    }
   },
 
   get: async (path) => {
-    return handle_response(await axios.get(fullpath(path)));
+    try {
+      return handle_response(await axios.get(fullpath(path)));
+    } catch (error) {
+      throw error.response.data;
+    }
   },
 
   subscribe: async (path, on_message) => {

@@ -3,7 +3,8 @@
 
   export let amount;
   let rate;
-  $: usd_amount = (amount * rate).toFixed(3);
+  const format = new Intl.NumberFormat('en-US', { style: "currency", maximumSignificantDigits: 5, currency: "USD", notation: "compact" });
+  $: usd_amount = format.format(amount * rate);
 
   async function load() {
     const resp = await axios.get("https://api.alternative.me/v2/ticker/bitcoin/");
@@ -11,9 +12,8 @@
   }
 </script>
 
-<span>
-≈${#await load()}
-{:then}
+<span {...$$restProps}>
+≈{#await load() then}
 {usd_amount}
 {/await}
 </span>

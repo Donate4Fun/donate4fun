@@ -44,10 +44,15 @@ class WithdrawalToken(BaseModel):
 
 
 class DonateRequest(BaseModel):
-    target: HttpUrl
     amount: int
+    channel_id: UUID | None
+    target: HttpUrl | None
     message: str | None
     donater: str | None
+
+
+class YoutubeChannelRequest(BaseModel):
+    target: HttpUrl | str
 
 
 class Invoice(BaseModel):

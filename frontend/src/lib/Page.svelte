@@ -5,7 +5,7 @@
 
 <div class="container">
   <div class="item">
-    <Header />
+    <Header class="page-header" />
     <slot />
   </div>
 </div>
@@ -20,6 +20,15 @@
 .item {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  width: 1280px;
 }
-
+@media only screen and (max-width: 1280px) {
+  .item {
+    width: 100%;
+  }
+}
+:global(.page-header) {
+  margin-bottom: 16px;
+}
 </style>

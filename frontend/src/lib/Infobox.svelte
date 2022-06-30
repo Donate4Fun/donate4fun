@@ -1,12 +1,12 @@
-<div class="outer">
+<span {...$$restProps}>
   <img src="/exclamation.svg" alt="exclamation">
   <div>
     <slot />
   </div>
-</div>
+</span>
 
 <style>
-.outer {
+span {
   display: flex;
   align-content: center;
   background: rgba(0, 78, 231, 0.07);
@@ -15,7 +15,7 @@
   font-weight: 400;
   font-size: 14px;
 }
-.outer > img {
+span > img {
   margin-right: 1em;
 }
 </style>

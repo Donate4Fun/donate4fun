@@ -11,51 +11,97 @@
 
   import { link } from "svelte-navigator";
 
+  export let donator_id;
   let donations;
+  let donator;
 
   async function load() {
-    await me.init();
-    donations = await api.get(`donations/by-donator/${$me.donator.id}`);
+    donator = await api.get(`donator/${donator_id}`)
+    donations = await api.get(`donations/by-donator/${donator_id}`);
   }
 </script>
 
 <Page>
-  <Section>
+  <Section class="donator-main">
   {#await load()}
     <Loading/>
   {:then}
-    <h1><Userpic {...$me.donator}/> {$me.donator.name}</h1>
-    <table>
-      <thead><tr><th>When<th>Whom<th>Amount</tr></thead>
-      <tbody>
+    <Userpic {...donator} class="userpic" />
+    <div class="name">{donator.name}</div>
+    <div class="transactions"><span>Transactions<span></div>
+    <div class="table">
+      <div class="head">
+        <div>When</div>
+        <div>Whom</div>
+        <div>Amount</div>
+        <div>Status</div>
+      </div>
       {#each donations as donation}
-        <tr><td><a href="/donation/{donation.id}" use:link>
-        {#if donation.paid_at}
-        <Datetime dt={donation.paid_at}/>
-        {:else}
-        unpaid
-        {/if}
+        <a href="/donation/{donation.id}" use:link>
+          {#if donation.paid_at}
+          <Datetime dt={donation.paid_at}/>
+          {:else}
+          <Datetime dt={donation.created_at}/>
+          {/if}
         </a>
-        <td><YoutubeChannel {...donation.youtube_channel}/><td><Amount amount={donation.amount}/></tr>
+        <YoutubeChannel {...donation.youtube_channel} linkto=donate class="ellipsis" />
+        <Amount amount={donation.amount}/>
+        <div>
+          {#if donation.paid_at}
+          Paid
+          {:else}
+          Unpaid
+          {/if}
+        </div>
       {/each}
-      </tbody>
-    </table>
+    </div>
   {/await}
   </Section>
 </Page>
 
 <style>
-h1 {
+:global(.donator-main) {
+  padding: 36px 158px 123px 158px;
+  width: 718px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 1em;
 }
-th {
+:global(.donator-main .userpic img) {
+  width: 88px;
+}
+.name {
+  margin-top: 24px;
+  font-weight: 500;
+  font-size: 16px;
+}
+.transactions {
+  background: linear-gradient(180deg, 
+    rgba(0,0,0,0) calc(50% - 1px), 
+    rgba(0,0,0,0.1) calc(50%), 
+    rgba(0,0,0,0) calc(50% + 1px)
+  );
+  margin-top: 64px;
+  margin-bottom: 32px;
+  width: 100%;
+  text-align: center;
+}
+.transactions > span {
+  background: white;
+  padding: 0 6px;
+  font-weight: 500;
+  font-size: 16px;
+}
+.table .head {
   color: rgba(0, 0, 0, 0.6);
   text-align: left;
+  display: contents;
 }
-table {
+.table {
   font-size: 12px;
+  display: grid;
+  grid-template-columns: 99px 69px 83px 69px;
+  column-gap: 20px;
+  row-gap: 26px;
 }
-
 </style>
