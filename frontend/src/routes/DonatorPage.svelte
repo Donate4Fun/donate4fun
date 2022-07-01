@@ -100,7 +100,7 @@
 .table {
   font-size: 12px;
   display: grid;
-  grid-template-columns: 99px 69px 83px 69px;
+  grid-template-columns: 109px 69px 83px 69px;
   column-gap: 20px;
   row-gap: 26px;
 }

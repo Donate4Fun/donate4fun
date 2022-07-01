@@ -5,7 +5,7 @@
 
   $: dtString = (() => {
     if (dt !== null) {
-      return dateFormat(dt, "DDDD H:M")
+      return dateFormat(dt, "DDDD HH:MM")
     } else {
       return "";
     }

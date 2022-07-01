@@ -39,4 +39,7 @@
   text-decoration: none;
   font-weight: 700;
 }
+:global(*) {
+  box-sizing: border-box;
+}
 </style>

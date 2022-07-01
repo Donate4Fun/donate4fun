@@ -30,7 +30,7 @@
   <span>Check if your channel have been donated, just paste your Channel’s URL</span>
   <form on:submit|preventDefault={claim}>
     <div class=url><Input type=url placeholder="Paste YouTube URL" bind:value={donatee} bind:error={error} logo=url(/youtube.svg) /></div>
-    <Button disabled={!donatee} type=submit class=submit>
+    <Button disabled={!donatee} type=submit class="submit white">
       {#if spin}
       <Spinner class="spinner" size=20px width=3px/>
       {/if}
@@ -40,30 +40,21 @@
 </Section>
 
 <style>
-:global(.claim) {
-  padding: 36px 36px 40px 36px;
-  display: flex;
-  flex-direction: column;
-  width: 640px;
-  height: 216px;
-  box-sizing: border-box;
-}
-@media only screen and (max-width: 640px) {
+@media (max-width: 640px) {
   :global(.claim) {
     width: 100%;
-    height: 413px;
     padding: 20px 36px 20px 24px;
   }
   form {
-    flex-direction: column;
+    margin-top: 42px;
   }
   form .url {
     width: 100%;
-    margin-top: 42px;
     margin-bottom: 24px;
   }
   form :global(.submit) {
     width: 100%;
+    margin-bottom: 25px;
   }
 }
 h1 {
@@ -74,17 +65,23 @@ span {
   font-size: 14px;
   line-height: 17px;
 }
-form {
-  display: flex;
-  align-items: center;
-  margin-top: 38px;
-}
-.url {
-  width: 365px;
-  margin-right: 24px;
-}
-form :global(button) {
-  white-space: nowrap;
-  width: 180px;
+@media (min-width: 641px) {
+  :global(.claim) {
+    width: 640px;
+    padding: 36px 36px 40px 36px;
+  }
+  form {
+    display: flex;
+    align-items: center;
+    margin-top: 38px;
+  }
+  form .url {
+    width: 365px;
+    margin-right: 24px;
+  }
+  form :global(button) {
+    white-space: nowrap;
+    width: 180px;
+  }
 }
 </style>
