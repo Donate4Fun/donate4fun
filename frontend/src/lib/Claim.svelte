@@ -11,12 +11,12 @@
   let spin = false;
   let error = null;
 
-  const claim = async () => {
+  async function claim() {
     spin = true;
     error = null;
     try {
       const channel = await api.post(`donatee`, {target: donatee})
-      navigate(`/youtube-channel/${channel.id}`);
+      navigate(`/youtube/${channel.id}`);
     } catch (exc) {
       console.error(exc);
       error = exc.error;

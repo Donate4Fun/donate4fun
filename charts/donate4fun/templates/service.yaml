@@ -4,6 +4,8 @@ metadata:
   name: {{ include "donate4fun.fullname" . }}
   labels:
     {{- include "donate4fun.labels" . | nindent 4 }}
+  annotations:
+    cloud.google.com/backend-config: '{"default": "{{ include "donate4fun.fullname" . }}"}'
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -17,3 +19,13 @@ spec:
     name: http-frontend
   selector:
     {{- include "donate4fun.selectorLabels" . | nindent 4 }}
+{{- if eq .Values.ingress.className "gce" }}
+---
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: {{ include "donate4fun.fullname" . }}
+spec:
+  logging:
+    enable: true
+{{- end }}

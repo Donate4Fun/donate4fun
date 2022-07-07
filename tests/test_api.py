@@ -86,6 +86,19 @@ async def test_donate(
     verify_response(donate_response, 'donate', 200)
 
 
+@mark_vcr
+@pytest.mark.freeze_time('2022-02-02 22:22:22')
+async def test_donate_video(
+    client, db_session, freeze_donation_id, freeze_request_hash, freeze_payment_request, freeze_youtube_channel_id,
+    freeze_youtube_video_id,
+):
+    donate_response = await client.post(
+        "/api/v1/donate",
+        json=DonateRequest(amount=100, target='https://www.youtube.com/watch?v=7qH7WMzqOlU&t=692s').dict(),
+    )
+    verify_response(donate_response, 'donate_video', 200)
+
+
 @pytest.mark.freeze_time('2022-02-02T22:22:22')
 async def test_get_donation(client, unpaid_donation_fixture: Donation, freeze_request_hash_json, freeze_payment_request):
     donation_response = await client.get(f"/api/v1/donation/{unpaid_donation_fixture.id}")

@@ -1,25 +1,12 @@
 <script>
-  import Button from "../lib/Button.svelte";
-  import { copy } from "../lib/utils.js";
+  import CopyButton from "../lib/Button.svelte";
 
   export let lnurl;
-  let copied = false;
-
-  function doCopy() {
-    copy(lnurl);
-    copied = true;
-  }
 </script>
 
 <div {...$$restProps}>
   <span>{lnurl}</span>
-  <Button on:click={doCopy}>
-  {#if copied}
-  Copied
-  {:else}
-  Copy
-  {/if}
-  </Button>
+  <CopyButton bind:content={lnurl} />
 </div>
 
 <style>
@@ -38,9 +25,10 @@ div span {
   overflow: hidden;
   font-size: 12px;
   line-height: 1em;
-  text-overflow: clip;
+  text-overflow: ellipsis;
 }
 div :global(button) {
   align-self: end;
+  font-size: 15px !important;
 }
 </style>

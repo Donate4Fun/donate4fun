@@ -12,7 +12,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 from sqlalchemy.orm.exc import NoResultFound  # noqa
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 
-from .models import Donation, Donator, YoutubeChannel
+from .models import Donation, Donator, YoutubeChannel, YoutubeVideo
 from .types import RequestHash
 from .settings import DbSettings
 
@@ -29,9 +29,21 @@ class YoutubeChannelDb(Base):
     channel_id = Column(String, unique=True, nullable=False)
     title = Column(String)
     thumbnail_url = Column(String)
-    balance = Column(BigInteger, nullable=False)
+    balance = Column(BigInteger, nullable=False, server_default=text('0'))
+    total_donated = Column(BigInteger, nullable=False, server_default=text('0'))
 
-    donations = relationship("DonationDb", back_populates="youtube_channel")
+
+class YoutubeVideoDb(Base):
+    __tablename__ = 'youtube_video'
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4())
+    video_id = Column(String, unique=True, nullable=False)
+    youtube_channel_id = Column(Uuid(as_uuid=True), ForeignKey(YoutubeChannelDb.id), nullable=False)
+    title = Column(String)
+    thumbnail_url = Column(String)
+    total_donated = Column(BigInteger, nullable=False, server_default=text('0'))
+
+    youtube_channel = relationship(YoutubeChannelDb, lazy='joined')
 
 
 class DonatorDb(Base):
@@ -40,8 +52,6 @@ class DonatorDb(Base):
     id = Column(Uuid(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4())
     name = Column(String)
     avatar_url = Column(String)
-
-    donations = relationship("DonationDb", back_populates="donator")
 
 
 class DonationDb(Base):
@@ -52,12 +62,13 @@ class DonationDb(Base):
     amount = Column(BigInteger, nullable=False)
     donator_id = Column(Uuid(as_uuid=True), ForeignKey(DonatorDb.id), nullable=False)
     youtube_channel_id = Column(Uuid(as_uuid=True), ForeignKey(YoutubeChannelDb.id), nullable=False)
+    youtube_video_id = Column(Uuid(as_uuid=True), ForeignKey(YoutubeVideoDb.id))
     created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
     paid_at = Column(TIMESTAMP)
     cancelled_at = Column(TIMESTAMP)
 
-    donator = relationship(DonatorDb, back_populates="donations", lazy='joined')
-    youtube_channel = relationship(YoutubeChannelDb, back_populates="donations", lazy='joined')
+    donator = relationship(DonatorDb, lazy='joined')
+    youtube_channel = relationship(YoutubeChannelDb, lazy='joined')
 
 
 Base.registry.configure()  # Create backrefs
@@ -228,6 +239,38 @@ class DbSession(BaseDbSession):
             id_ = resp.scalar()
         youtube_channel.id = id_
 
+    async def save_youtube_video(self, youtube_video: YoutubeVideo):
+        resp = await self.execute(
+            insert(YoutubeVideoDb)
+            .values(dict(
+                youtube_channel_id=youtube_video.youtube_channel.id,
+                **{
+                    key: value
+                    for key, value in youtube_video.dict().items()
+                    if key != 'youtube_channel'
+                },
+            ))
+            .on_conflict_do_update(
+                index_elements=[YoutubeVideoDb.video_id],
+                set_={
+                    YoutubeVideoDb.title: youtube_video.title,
+                    YoutubeVideoDb.thumbnail_url: youtube_video.thumbnail_url,
+                },
+                where=(
+                    (func.coalesce(YoutubeVideoDb.title, '') != youtube_video.title)
+                    | (func.coalesce(YoutubeVideoDb.thumbnail_url, '') != youtube_video.thumbnail_url)
+                ),
+            )
+            .returning(YoutubeVideoDb.id)
+        )
+        id_: UUID = resp.scalar()
+        if id_ is None:
+            resp = await self.execute(
+                select(YoutubeVideoDb.id).where(YoutubeVideoDb.video_id == youtube_video.video_id)
+            )
+            id_ = resp.scalar()
+        youtube_video.id = id_
+
     async def create_donation(self, donation: Donation):
         donation.created_at = datetime.utcnow()
         await self.execute(
@@ -236,6 +279,7 @@ class DbSession(BaseDbSession):
                 id=donation.id,
                 created_at=donation.created_at,
                 youtube_channel_id=donation.youtube_channel.id,
+                youtube_video_id=donation.youtube_video and donation.youtube_video.id,
                 donator_id=donation.donator.id,
                 amount=donation.amount,
                 r_hash=donation.r_hash.as_base64,
@@ -274,14 +318,23 @@ class DbSession(BaseDbSession):
                 amount=amount,
                 paid_at=paid_at,
             )
-            .returning(DonationDb.id, DonationDb.youtube_channel_id)
+            .returning(DonationDb.id, DonationDb.youtube_channel_id, DonationDb.youtube_video_id)
         )
-        donation_id, youtube_channel_id = resp.fetchone()
+        donation_id, youtube_channel_id, youtube_video_id = resp.fetchone()
         await self.execute(
             update(YoutubeChannelDb)
-            .values(balance=YoutubeChannelDb.balance + amount)
+            .values(
+                balance=YoutubeChannelDb.balance + amount,
+                total_donated=YoutubeChannelDb.total_donated + amount,
+            )
             .where(YoutubeChannelDb.id == youtube_channel_id)
         )
+        if youtube_video_id:
+            await self.execute(
+                update(YoutubeVideoDb)
+                .values(total_donated=YoutubeVideoDb.total_donated + amount)
+                .where(YoutubeVideoDb.id == youtube_video_id)
+            )
         async with self.db.pubsub() as pub:
             await pub.notify_donation_paid(donation_id)
 

@@ -33,6 +33,7 @@ div {
   border-radius: 100px;
   padding-left: 24px;
   padding-right: 24px;
+  color: #004EE7;
 }
 input {
   box-sizing: border-box;
@@ -74,10 +75,11 @@ input.logo {
 }
 .root > :global(.error) {
   position: absolute;
-  left: 42px;
+  left: 27px;
   top: 40px;
 }
 .suffix {
-  padding-right: 16px;
+  padding-right: 0px;
+  opacity: 60%;
 }
 </style>

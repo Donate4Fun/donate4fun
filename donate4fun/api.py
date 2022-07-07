@@ -20,7 +20,8 @@ from anyio.abc import TaskStatus
 
 from .core import get_db_session, get_lnd, get_db
 from .models import (
-    Donation, Donator, Invoice, DonateResponse, DonateRequest, YoutubeChannelRequest, YoutubeChannel, WithdrawalToken, BaseModel
+    Donation, Donator, Invoice, DonateResponse, DonateRequest, YoutubeChannelRequest, YoutubeChannel, YoutubeVideo,
+    WithdrawalToken, BaseModel,
 )
 from .types import ValidationError, RequestHash, PaymentRequest
 from .youtube import YoutubeDonatee, ChannelInfo, fetch_user_channel, validate_target
@@ -94,6 +95,7 @@ async def donate(
     logger.debug(f"Donator {donator.id} wants to donate {request.amount} to {request.target or request.channel_id}")
     if request.channel_id:
         youtube_channel: YoutubeChannel = await db_session.query_youtube_channel(youtube_channel_id=request.channel_id)
+        youtube_video = None
     else:
         donatee: YoutubeDonatee = await validate_target(request.target)
         youtube_channel = YoutubeChannel(
@@ -102,8 +104,24 @@ async def donate(
             thumbnail_url=donatee.channel.thumbnail,
         )
         await db_session.save_youtube_channel(youtube_channel)
+        if video := donatee.video:
+            youtube_video = YoutubeVideo(
+                youtube_channel=youtube_channel,
+                video_id=video.id,
+                title=video.title,
+                thumbnail_url=video.thumbnail,
+            )
+            await db_session.save_youtube_video(youtube_video)
+        else:
+            youtube_video = None
     invoice: Invoice = await lnd.create_invoice(memo=make_memo(youtube_channel), value=request.amount)
-    donation = Donation(r_hash=invoice.r_hash, amount=invoice.value, youtube_channel=youtube_channel, donator=donator)
+    donation = Donation(
+        r_hash=invoice.r_hash,
+        amount=invoice.value,
+        youtube_channel=youtube_channel,
+        youtube_video=youtube_video,
+        donator=donator,
+    )
     await db_session.create_donation(donation)
     return DonateResponse(donation=donation, payment_request=invoice.payment_request)
 

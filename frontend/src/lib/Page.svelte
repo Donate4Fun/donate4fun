@@ -1,11 +1,13 @@
 <script>
   import Header from "../lib/Header.svelte";
   import Footer from "../lib/Footer.svelte";
+  import Toast from "../lib/Toast.svelte";
 </script>
 
 <div class="container">
   <div class="item">
     <Header class="page-header" />
+    <Toast />
     <slot />
   </div>
 </div>

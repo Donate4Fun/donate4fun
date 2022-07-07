@@ -2,7 +2,7 @@ import json
 import re
 from functools import wraps
 from dataclasses import dataclass
-from urllib.parse import parse_qs, urlunparse, urlparse
+from urllib.parse import parse_qs, urlparse
 
 from aiogoogle import Aiogoogle
 from aiogoogle.auth.creds import ClientCreds, ServiceAccountCreds
@@ -13,6 +13,7 @@ from .settings import settings
 from .types import UnsupportedTarget, Url, ValidationError
 
 ChannelId = str
+VideoId = str
 
 
 class UnsupportedYoutubeUrl(UnsupportedTarget):
@@ -45,33 +46,37 @@ class ChannelInfo(BaseModel):
         return f'https://youtube.com/channel/{self.id}'
 
 
+class VideoInfo(BaseModel):
+    id: VideoId
+    title: str
+    thumbnail: Url
+
+
 @dataclass
 class YoutubeDonatee:
     channel: ChannelInfo
-    trigger: Url | None
+    video: VideoInfo | None
 
 
 async def validate_youtube_url(parsed) -> YoutubeDonatee:
     parts = parsed.path.split('/')
-    trigger = None
     if parsed.path == '/watch':
         video_id = parse_qs(parsed.query)['v']
-        channel_info = await fetch_channel_by_video(video_id)
-        trigger = urlunparse(parsed)
+        return await fetch_donatee_by_video(video_id)
     elif parts[1] in ('channel', 'c'):
         part = parts[2]
         if part.startswith('UC'):
             channel_info = await fetch_channel(channel_id=part)
         else:
             channel_info = await fetch_channel(username=part)
+        return YoutubeDonatee(
+            channel=channel_info,
+            video=None,
+        )
     elif parsed.hostname == 'youtu.be':
         raise UnsupportedYoutubeUrl("youtu.be urls are not supported")
     else:
         raise UnsupportedYoutubeUrl("Unrecognized YouTube URL")
-    return YoutubeDonatee(
-        channel=channel_info,
-        trigger=trigger,
-    )
 
 
 def withyoutube(func):
@@ -109,13 +114,22 @@ def get_service_account_creds():
 
 
 @withyoutube
-async def fetch_channel_by_video(aiogoogle, youtube, video_id: str) -> ChannelInfo:
+async def fetch_donatee_by_video(aiogoogle, youtube, video_id: str) -> YoutubeDonatee:
     req = youtube.videos.list(id=video_id, part='snippet')
     res = await aiogoogle.as_api_key(req)
     items = res['items']
     if not items:
         raise YoutubeVideoNotFound
-    return await fetch_channel(channel_id=items[0]['snippet']['channelId'])
+    item = items[0]
+    snippet = item['snippet']
+    return YoutubeDonatee(
+        channel=await fetch_channel(channel_id=snippet['channelId']),
+        video=VideoInfo(
+            id=item['id'],
+            title=snippet['title'],
+            thumbnail=snippet['thumbnails']['default']['url'],
+        )
+    )
 
 
 @withyoutube

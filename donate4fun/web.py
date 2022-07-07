@@ -1,3 +1,4 @@
+import datetime
 from uuid import UUID
 from xml.etree import ElementTree as ET
 
@@ -146,6 +147,8 @@ async def donations(request: Request, db_session=Depends(get_db_session)):
 
 
 @router.get('/sitemap.xml')
+@router.get('/sitemap3.xml')
+@router.get('/sitemap4.xml')
 async def sitemap(request: Request, db_session=Depends(get_db_session)):
     base_url = settings.youtube.oauth.redirect_base_url
     urlset = ET.Element('urlset', xmlns="http://www.sitemaps.org/schemas/sitemap/0.9")
@@ -154,5 +157,8 @@ async def sitemap(request: Request, db_session=Depends(get_db_session)):
         url = ET.SubElement(urlset, 'url')
         loc = ET.SubElement(url, 'loc')
         loc.text = f'{base_url}/youtube-channel/{youtube_channel.id}'
-        ET.SubElement(url, 'changefreq', text='weekly')
-    return Response(content=ET.tostring(urlset), media_type="application/xml")
+        lastmod = ET.SubElement(url, 'lastmod')
+        lastmod.text = datetime.date.today().isoformat()
+        changefreq = ET.SubElement(url, 'changefreq')
+        changefreq.text = 'weekly'
+    return Response(content=ET.tostring(urlset, xml_declaration=True, encoding='UTF-8'), media_type="application/xml")

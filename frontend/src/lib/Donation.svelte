@@ -6,8 +6,9 @@
   import Loading from "../lib/Loading.svelte";
   import Amount from "../lib/Amount.svelte";
   import YoutubeChannel from "../lib/YoutubeChannel.svelte";
+  import Editable from "../lib/Editable.svelte";
   import { me } from "../lib/session.js";
-  import { copy, partial } from "../lib/utils.js";
+  import { copy } from "../lib/utils.js";
 
   const dispatch = createEventDispatcher();
 
@@ -31,10 +32,10 @@
   <div class="header">Donation of <Amount amount={amount}/> sent to <YoutubeChannel {...youtube_channel}/></div>
   {#if !claimed_at }
     {#if $me.donator.id === donator_id}
-    <Infobox>Copy and share the message with the link or just tell Ninja to receive the donation here at «Donate4Fun»</Infobox>
-    <div contenteditable class="message" bind:innerHTML={message}></div>
-    <Button on:click={copy(message)} class="copy-button">Copy and Share</Button>
-    <Button on:click={partial(dispatch, "close")} class="grey">Back</Button>
+    <Infobox>Copy and share the message with the link or just tell {youtube_channel.title} to receive the donation here at «Donate4Fun»</Infobox>
+    <Editable class=message message={message} />
+    <Button on:click={() => copy(message)} class="copy-button">Copy and Share</Button>
+    <Button on:click={() => dispatch("close")} class="grey">Back</Button>
     {/if}
   {:else}
     Claimed at {claimed_at}
@@ -55,7 +56,7 @@ main > img {
 main > .header {
   margin-bottom: 22px;
 }
-main > .message {
+main > :global(.message) {
   margin-top: 52px;
   margin-bottom: 28px;
 }
@@ -70,14 +71,6 @@ main > :global(.copy-button) {
   font-weight: 900;
   font-size: 24px;
   text-align: center;
-}
-.message {
-  border-radius: 8px;
-  background-color: #F8F8F8;
-  border-width: 1px;
-  border-style: solid;
-  padding: 1em;
-  border-color: #7000FF;
 }
 main > :global(button) {
   width: 402px;

@@ -18,4 +18,7 @@ footer {
   display: flex;
   gap: 2em;
 }
+.links a {
+  font-weight: 500;
+}
 </style>

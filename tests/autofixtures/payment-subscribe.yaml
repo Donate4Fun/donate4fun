@@ -39,6 +39,7 @@
         thumbnail_url: null
         title: null
       __private_attribute_values__: {}
+    youtube_video: null
   __fields_set__: !!set
     amount: null
     claimed_at: null
@@ -51,4 +52,5 @@
     r_hash: null
     trigger: null
     youtube_channel: null
+    youtube_video: null
   __private_attribute_values__: {}

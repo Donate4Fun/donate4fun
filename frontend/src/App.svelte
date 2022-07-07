@@ -5,6 +5,9 @@
   import DonatePage from "./routes/DonatePage.svelte";
   import DonationPage from "./routes/DonationPage.svelte";
   import YoutubeChannelPage from "./routes/YoutubeChannelPage.svelte";
+  import WithdrawPage from "./routes/WithdrawPage.svelte";
+  import YoutubeLinkPage from "./routes/YoutubeLinkPage.svelte";
+  import Test from "./routes/Test.svelte";
 
   const url = "";
 </script>
@@ -15,10 +18,13 @@
 
 <Router url={url}>
   <Route path="donation/:donation_id" component="{DonationPage}" />
-  <Route path="youtube-channel/:channel_id" component="{YoutubeChannelPage}" />
   <Route path="donator/:donator_id" component="{DonatorPage}" />
+  <Route path="youtube/:channel_id" component="{YoutubeChannelPage}" />
+  <Route path="youtube/:channel_id/withdraw" component="{WithdrawPage}" />
+  <Route path="youtube/:channel_id/link" component="{YoutubeLinkPage}" />
   <Route path="donate/:channel_id" component="{DonatePage}" />
-  <Route path="/"><Main /></Route>
+  <Route path="/" component="{Main}" />
+  <Route path="/test" component={Test} />
 </Router>
 
 <style>

@@ -19,7 +19,7 @@ from donate4fun.models import Invoice, Donation
 from donate4fun.lnd import LndClient
 from donate4fun.settings import load_settings, Settings, DbSettings
 from donate4fun.db import DbSession, Database
-from donate4fun.models import RequestHash, PaymentRequest, YoutubeChannel, Donator, BaseModel
+from donate4fun.models import RequestHash, PaymentRequest, YoutubeChannel, Donator, BaseModel, YoutubeVideo
 
 
 logger = logging.getLogger(__name__)
@@ -168,6 +168,12 @@ def freeze_donation_id(monkeypatch):
 @pytest.fixture
 def freeze_youtube_channel_id(monkeypatch):
     monkeypatch.setattr(YoutubeChannel.__fields__['id'], 'default_factory', partial(UUID, int=1))
+    return UUID(int=1)
+
+
+@pytest.fixture
+def freeze_youtube_video_id(monkeypatch):
+    monkeypatch.setattr(YoutubeVideo.__fields__['id'], 'default_factory', partial(UUID, int=1))
     return UUID(int=1)
 
 

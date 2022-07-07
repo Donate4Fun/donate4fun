@@ -8,7 +8,7 @@
 </script>
 
 <header {...$$restProps}>
-  <Logo/>
+  <div class="logo"><Logo /></div>
   <Social class="onlylarge" />
   <div class="right">
     <Button class="connect">Connect Wallet</Button>
@@ -28,19 +28,32 @@ header {
   width: 100%;
   padding: 23px 40px 23px 40px;
   box-sizing: border-box;
+  font-size: 15px;
 }
-@media only screen and (max-width: 1280px) {
+@media (max-width: 1280px) {
   :global(.onlylarge) {
     display: none;
+  }
+}
+@media (max-width: 640px) {
+  .right :global(.connect) {
+    width: 158px;
+    padding: 0;
+  }
+  header {
+    padding-left: 12px;
+    padding-right: 20px;
+  }
+}
+@media (min-width: 641px) {
+  .right :global(.connect) {
+    width: 204px;
   }
 }
 .right {
   display: flex;
   align-items: center;
-  gap: 1em;
-}
-.right :global(.connect) {
-  width: 204px;
+  gap: 25px;
 }
 .right :global(.userpic img) {
   width: 56px;

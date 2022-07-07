@@ -80,6 +80,18 @@ class YoutubeChannel(BaseModel):
         orm_mode = True
 
 
+class YoutubeVideo(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    youtube_channel: YoutubeChannel
+    title: str
+    video_id: str
+    thumbnail_url: Url | None
+    total_donated: int = 0
+
+    class Config:
+        orm_mode = True
+
+
 class Donator(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     name: str | None
@@ -111,6 +123,7 @@ class Donation(BaseModel):
     donator: Donator
     youtube_channel: YoutubeChannel
     amount: int
+    youtube_video: YoutubeVideo | None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     trigger: str | None = None
     message: str | None = None

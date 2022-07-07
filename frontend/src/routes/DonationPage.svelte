@@ -21,14 +21,6 @@
       ({ donation, payment_request } = response);
     }
   }
-  function cancel() {
-    console.log("invoice cancel");
-    navigate(-1);
-  }
-  function close() {
-    console.log("donate close");
-    navigate(-1);
-  }
   function paid(event) {
     console.log("paid", event.detail);
     donation = event.detail;
@@ -42,9 +34,9 @@
     <Loading />
   {:then}
     {#if donation.paid_at}
-      <Donation {...donation} on:close={close} />
+      <Donation {...donation} on:close={() => navigate(-1)} />
     {:else}
-      <Invoice donation={donation} payment_request={payment_request} on:cancel={cancel} on:paid={paid} />
+      <Invoice donation={donation} payment_request={payment_request} on:cancel={() => navigate(-1)} on:paid={paid} />
     {/if}
   {/await}
   </Section>
