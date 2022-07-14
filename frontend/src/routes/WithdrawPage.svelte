@@ -42,7 +42,8 @@
         showSuccess = true;
       });
     } catch (err) {
-      if (err.response.status === 403 || (err.status === 'error' && err.type === 'ValidationError'))
+      console.log(err);
+      if (err.response.status === 403 || (err.response.data.status === 'error' && err.response.data.type === 'ValidationError'))
         navigate(".");
     }
   }

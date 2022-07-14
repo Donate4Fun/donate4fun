@@ -122,9 +122,6 @@ h1 {
   font-size: 24px;
   margin-bottom: 24px;
 }
-.channel-logo {
-  width: 72px;
-}
 .controls {
   margin-top: 44px;
   margin-bottom: 32px;
@@ -148,10 +145,6 @@ h1 {
 .body {
   font-weight: 500;
   padding: 0 1em 1em 1em;
-}
-img {
-  width: 72px;
-  height: 72px;
 }
 .table .head,.table .body {
   color: rgba(0, 0, 0, 0.6);

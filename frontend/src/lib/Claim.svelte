@@ -27,7 +27,7 @@
 
 <Section class="claim">
   <h1>Claim donations</h1>
-  <span>Check if your channel have been donated, just paste your Channel’s URL</span>
+  <span>Check donations for your YouTube channel</span>
   <form on:submit|preventDefault={claim}>
     <div class=url><Input type=url placeholder="Paste YouTube URL" bind:value={donatee} bind:error={error} logo=url(/youtube.svg) required/></div>
     <Button type=submit class="submit white">

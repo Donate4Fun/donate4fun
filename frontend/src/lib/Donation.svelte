@@ -9,7 +9,7 @@
   import Editable from "../lib/Editable.svelte";
   import ChannelLogo from "../lib/ChannelLogo.svelte";
   import { me } from "../lib/session.js";
-  import { copy, youtube_video_url } from "../lib/utils.js";
+  import { copy, youtube_video_url, youtube_channel_url } from "../lib/utils.js";
 
   const dispatch = createEventDispatcher();
 
@@ -26,7 +26,13 @@
 
   function copyAndShare() {
     copy(message);
-    window.open(youtube_video_url(youtube_video.video_id), '_blank').focus();
+    let url;
+    if (youtube_video !== null) {
+      url = youtube_video_url(youtube_video.video_id);
+    } else {
+      url = youtube_channel_url(youtube_channel.channel_id);
+    }
+    window.open(url, '_blank').focus();
   }
 </script>
 

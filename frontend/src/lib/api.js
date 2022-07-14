@@ -3,7 +3,7 @@ import {notify} from "../lib/notifications.js";
 
 class ApiError extends Error {
   constructor(response) {
-    super(response.data);
+    super(response.data.error);
     this.response = response;
     this.name = "ApiError";
   }

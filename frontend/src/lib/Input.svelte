@@ -61,6 +61,9 @@ input::-webkit-inner-spin-button {
 input[type=number] {
   -moz-appearance: textfield;
 }
+input:placeholder-shown {
+  color: unset !important;
+}
 input.error,input:invalid {
   color: #FF4B4B;
 }

@@ -357,23 +357,26 @@ class DbSession(BaseDbSession):
             )
             .returning(DonationDb.id, DonationDb.youtube_channel_id, DonationDb.youtube_video_id)
         )
-        donation_id, youtube_channel_id, youtube_video_id = resp.fetchone()
-        await self.execute(
-            update(YoutubeChannelDb)
-            .values(
-                balance=YoutubeChannelDb.balance + amount,
-                total_donated=YoutubeChannelDb.total_donated + amount,
-            )
-            .where(YoutubeChannelDb.id == youtube_channel_id)
-        )
-        if youtube_video_id:
+        row = resp.fetchone()
+        # Row could be already updated in another replica
+        if row is not None:
+            donation_id, youtube_channel_id, youtube_video_id = row
             await self.execute(
-                update(YoutubeVideoDb)
-                .values(total_donated=YoutubeVideoDb.total_donated + amount)
-                .where(YoutubeVideoDb.id == youtube_video_id)
+                update(YoutubeChannelDb)
+                .values(
+                    balance=YoutubeChannelDb.balance + amount,
+                    total_donated=YoutubeChannelDb.total_donated + amount,
+                )
+                .where(YoutubeChannelDb.id == youtube_channel_id)
             )
-        async with self.db.pubsub() as pub:
-            await pub.notify(f'donation:{donation_id}', Notification(id=donation_id, status='OK'))
+            if youtube_video_id:
+                await self.execute(
+                    update(YoutubeVideoDb)
+                    .values(total_donated=YoutubeVideoDb.total_donated + amount)
+                    .where(YoutubeVideoDb.id == youtube_video_id)
+                )
+            async with self.db.pubsub() as pub:
+                await pub.notify(f'donation:{donation_id}', Notification(id=donation_id, status='OK'))
 
     async def commit(self):
         return await self.session.commit()
