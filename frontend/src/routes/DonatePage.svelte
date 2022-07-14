@@ -11,6 +11,7 @@
   import Button from "../lib/Button.svelte";
   import Spinner from "../lib/Spinner.svelte";
   import Loading from "../lib/Loading.svelte";
+  import ChannelLogo from "../lib/ChannelLogo.svelte";
 
   export let channel_id;
 
@@ -75,7 +76,7 @@
     {:then}
     <form on:submit|preventDefault={donate}>
       <h1>Donate to <YoutubeChannel {...youtube_channel} /></h1>
-      <img class="channel-logo" src={youtube_channel.thumbnail_url} alt="logo">
+      <ChannelLogo url={youtube_channel.thumbnail_url} />
       <div>
         <span class="i-want">I want to donate</span>
         <div class="amount"><Input type=number placeholder="Enter amount" bind:value={amount} min={amountMin} max={amountMax} bind:error={amountError} suffix=sats /></div><FiatAmount bind:amount={amount} class="fiat-amount" />
@@ -112,10 +113,6 @@ form {
 form > h1 {
   margin-top: 0;
   margin-bottom: 24px;
-}
-form > .channel-logo {
-  width: 72px;
-  height: 72px;
 }
 form > div {
   display: flex;

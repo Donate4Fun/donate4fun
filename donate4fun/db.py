@@ -5,14 +5,13 @@ from uuid import UUID
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from pydantic import BaseModel
 from sqlalchemy import select, desc, update, Column, TIMESTAMP, String, BigInteger, ForeignKey, func, text, literal
 from sqlalchemy.dialects.postgresql import insert, UUID as Uuid
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 from sqlalchemy.orm.exc import NoResultFound  # noqa
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 
-from .models import Donation, Donator, YoutubeChannel, YoutubeVideo
+from .models import Donation, Donator, YoutubeChannel, YoutubeVideo, Notification, Credentials
 from .types import RequestHash
 from .settings import DbSettings
 
@@ -52,6 +51,20 @@ class DonatorDb(Base):
     id = Column(Uuid(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4())
     name = Column(String)
     avatar_url = Column(String)
+    lnauth_pubkey = Column(String, unique=True)
+
+    linked_youtube_channels = relationship(
+        YoutubeChannelDb,
+        lazy='noload',
+        secondary=lambda: Base.metadata.tables['youtube_channel_link'],
+    )
+
+
+class YoutubeChannelLink(Base):
+    __tablename__ = 'youtube_channel_link'
+
+    youtube_channel_id = Column(Uuid(as_uuid=True), ForeignKey(YoutubeChannelDb.id), primary_key=True)
+    donator_id = Column(Uuid(as_uuid=True), ForeignKey(DonatorDb.id), primary_key=True)
 
 
 class DonationDb(Base):
@@ -69,6 +82,7 @@ class DonationDb(Base):
 
     donator = relationship(DonatorDb, lazy='joined')
     youtube_channel = relationship(YoutubeChannelDb, lazy='joined')
+    youtube_video = relationship(YoutubeVideoDb, lazy='joined')
 
 
 Base.registry.configure()  # Create backrefs
@@ -89,6 +103,9 @@ class Database:
             await conn.execute(text('CREATE EXTENSION "uuid-ossp"'))
             await conn.run_sync(Base.metadata.create_all)
             await conn.execute(text(f'ALTER TABLE {DonationDb.__table__} DROP CONSTRAINT donation_donator_id_fkey'))
+            await conn.execute(text(
+                f'ALTER TABLE {YoutubeChannelLink.__table__} DROP CONSTRAINT youtube_channel_link_donator_id_fkey'
+            ))
 
     async def execute(self, query: str):
         async with self.engine.connect() as connection:
@@ -154,6 +171,13 @@ class DbSession(BaseDbSession):
         )
         return YoutubeChannel.from_orm(resp.scalars().one())
 
+    async def find_youtube_channel(self, channel_id: str) -> YoutubeChannel:
+        resp = await self.execute(
+            select(YoutubeChannelDb)
+            .where(YoutubeChannelDb.channel_id == channel_id)
+        )
+        return YoutubeChannel.from_orm(resp.scalars().one())
+
     async def query_youtube_channels(self) -> list[YoutubeChannel]:
         resp = await self.execute(
             select(YoutubeChannelDb)
@@ -180,7 +204,12 @@ class DbSession(BaseDbSession):
     async def save_donator(self, donator: Donator):
         await self.execute(
             insert(DonatorDb)
-            .values(donator.dict())
+            .values(dict(
+                id=donator.id,
+                name=donator.name,
+                avatar_url=donator.avatar_url,
+                lnauth_pubkey=donator.lnauth_pubkey,
+            ))
             .on_conflict_do_update(
                 index_elements=[DonatorDb.id],
                 set_={DonatorDb.name: donator.name, DonatorDb.avatar_url: donator.avatar_url},
@@ -193,7 +222,15 @@ class DbSession(BaseDbSession):
             select(DonatorDb)
             .where(DonatorDb.id == donator_id)
         )
-        return Donator.from_orm(result.scalars().one())
+        scalar = result.scalars().one()
+        return Donator.from_orm(scalar)
+
+    async def query_donator_youtube_channels(self, donator_id: UUID) -> list[UUID]:
+        result = await self.execute(
+            select(YoutubeChannelLink.youtube_channel_id)
+            .where(YoutubeChannelLink.donator_id == donator_id)
+        )
+        return result.scalars().all()
 
     async def query_donations(self, where, limit=20):
         result = await self.execute(
@@ -336,7 +373,7 @@ class DbSession(BaseDbSession):
                 .where(YoutubeVideoDb.id == youtube_video_id)
             )
         async with self.db.pubsub() as pub:
-            await pub.notify_donation_paid(donation_id)
+            await pub.notify(f'donation:{donation_id}', Notification(id=donation_id, status='OK'))
 
     async def commit(self):
         return await self.session.commit()
@@ -348,28 +385,50 @@ class DbSession(BaseDbSession):
         response = await self.execute(select(literal('ok')))
         return response.scalars().one()
 
+    async def login_donator(self, donator_id: UUID, key: str):
+        resp = await self.execute(
+            select(DonatorDb.id).where(DonatorDb.lnauth_pubkey == key)
+        )
+        registered_donator_id = resp.scalar()
+        if registered_donator_id is None:
+            # No existing donator with lnauth_pubkey
+            resp = await self.execute(
+                insert(DonatorDb)
+                .values(dict(
+                    id=donator_id,
+                    lnauth_pubkey=key,
+                ))
+                .on_conflict_do_update(
+                    index_elements=[DonatorDb.id],
+                    set_={
+                        DonatorDb.lnauth_pubkey: key,
+                    },
+                    where=(func.coalesce(DonatorDb.lnauth_pubkey, '') != key),
+                )
+                .returning(DonatorDb.id)
+            )
+            registered_donator_id: UUID = resp.scalar()
+            if registered_donator_id is None:
+                registered_donator_id = donator_id
+        async with self.db.pubsub() as pub:
+            await pub.notify(f'donator:{donator_id}', Notification(
+                id=donator_id,
+                status='ok',
+                message=Credentials(donator_id=registered_donator_id, lnauth_pubkey=key).to_jwt()),
+            )
 
-class Notification(BaseModel):
-    id: UUID
-    status: str
-    message: str | None
+    async def link_youtube_channel(self, youtube_channel: YoutubeChannel, donator: Donator):
+        await self.execute(
+            insert(YoutubeChannelLink)
+            .values(
+                youtube_channel_id=youtube_channel.id,
+                donator_id=donator.id,
+            )
+            .on_conflict_do_nothing()
+        )
 
 
 class PubSubSession(BaseDbSession):
-    async def notify_donation_paid(self, donation_id: UUID):
-        await self.notify('donation_paid', Notification(id=donation_id, status='OK'))
-
-    async def listen_for_donations(self):
-        async for msg in self.listen('donation_paid'):
-            yield msg
-
-    async def notify_withdrawal_sent(self, youtube_channel_id: UUID, status: str, message: str):
-        await self.notify('withdrawal_sent', Notification(id=youtube_channel_id, status=status, message=message))
-
-    async def listen_for_withdrawals(self):
-        async for msg in self.listen('withdrawal_sent'):
-            yield msg
-
     async def notify(self, channel: str, notification: Notification):
         await self.execute(select(func.pg_notify(channel, notification.json())))
 

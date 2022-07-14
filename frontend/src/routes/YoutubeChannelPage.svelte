@@ -11,6 +11,7 @@
   import Page from "../lib/Page.svelte";
   import Section from "../lib/Section.svelte";
   import Infobox from "../lib/Infobox.svelte";
+  import ChannelLogo from "../lib/ChannelLogo.svelte";
   import api from "../lib/api.js";
   import { me } from "../lib/session.js";
 
@@ -74,7 +75,7 @@
     <Loading />
   {:then}
     <h1>Donations to <a href={youtube_channel_url}>{youtube_channel.title}</a></h1>
-    <img class="channel-logo" src={youtube_channel.thumbnail_url} alt="logo">
+    <ChannelLogo url={youtube_channel.thumbnail_url} />
     <div class="controls">
     {#if balance >= min_withdraw}
       <div class="available">Available BTC to withdraw: <Amount amount={balance} /></div>
@@ -85,6 +86,7 @@
         <Button on:click={link_youtube}>Link your Youtube channel</Button>
       {/if}
     {:else}
+      <div class="available">Available BTC: <Amount amount={balance} /></div>
       <Infobox class="red">Minimum amount to withdraw is: {min_withdraw} sats</Infobox>
     {/if}
       <Button class="want-more white" link={resolve("link")}>Want more donations?</Button>

@@ -6,11 +6,12 @@ from mako.lookup import TemplateLookup
 from aiogoogle import Aiogoogle
 from fastapi import Request, Form, Query, APIRouter, Depends, Response
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from sqlalchemy.orm.exc import NoResultFound
 
 from .core import payreq_to_datauri, get_db_session, get_lnd
-from .models import DonationRequest, Donation
+from .models import DonationRequest, Donation, YoutubeChannel
 from .types import Url, UnsupportedTarget
-from .youtube import fetch_user_channel, ChannelInfo, validate_target
+from .youtube import fetch_user_channel, ChannelInfo, validate_target, fetch_channel
 from .settings import settings
 from .lnd import LndClient, Invoice
 
@@ -162,3 +163,19 @@ async def sitemap(request: Request, db_session=Depends(get_db_session)):
         changefreq = ET.SubElement(url, 'changefreq')
         changefreq.text = 'weekly'
     return Response(content=ET.tostring(urlset, xml_declaration=True, encoding='UTF-8'), media_type="application/xml")
+
+
+@router.get('/d/{channel_id}')
+async def donate_redirect(request: Request, channel_id: str, db=Depends(get_db_session)):
+    try:
+        youtube_channel = await db.find_youtube_channel(channel_id)
+    except NoResultFound:
+        channel_info = await fetch_channel(channel_id=channel_id)
+        youtube_channel = YoutubeChannel(
+            channel_id=channel_info.id,
+            title=channel_info.title,
+            thumbnail_url=channel_info.thumbnail,
+        )
+        await db.save_youtube_channel(youtube_channel)
+
+    return RedirectResponse(request.url.replace(path=f'/donate/{youtube_channel.id}'), status_code=302)

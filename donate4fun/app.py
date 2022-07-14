@@ -51,7 +51,7 @@ async def create_db():
 async def serve():
     async with load_settings() as settings, create_app(settings) as app, anyio.create_task_group() as tg:
         if settings.bugsnag.api_key:
-            bugsnag.configure(api_key=settings.bugsnag.api_key, project_root=os.path.dirname(__file__))
+            bugsnag.configure(**settings.bugsnag.dict(), project_root=os.path.dirname(__file__))
         lnd = LndClient(settings.lnd)
         db = Database(settings.db)
         hyper_config = Config.from_mapping(settings.hypercorn)

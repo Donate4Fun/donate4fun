@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager, contextmanager
 from pydantic import BaseSettings, BaseModel, Field, AnyUrl
 
 Url = str
+logger = logging.getLogger(__name__)
 
 
 class OAuthSettings(BaseModel):
@@ -82,6 +83,8 @@ class FastApiSettings(BaseModel):
 
 class BugsnagSettings(BaseModel):
     api_key: str
+    release_stage: str
+    app_version: str
 
 
 def yaml_config_source(settings: BaseSettings) -> dict[str, Any]:
@@ -103,6 +106,8 @@ class Settings(BaseSettings):
     withdraw_timeout: int
 
     class Config:
+        env_nested_delimiter = '__'
+
         @classmethod
         def customise_sources(
             cls,
@@ -145,4 +150,5 @@ async def load_settings():
     with settings.assign(_settings):
         log_config = _settings.log.dict(by_alias=True)
         logging.config.dictConfig(log_config)
+        logger.debug('setting loaded: %s', _settings.json())
         yield _settings

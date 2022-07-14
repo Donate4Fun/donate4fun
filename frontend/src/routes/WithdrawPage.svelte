@@ -11,6 +11,7 @@
   import Page from "../lib/Page.svelte";
   import Section from "../lib/Section.svelte";
   import QRCode from "../lib/QRCode.svelte";
+  import ChannelLogo from "../lib/ChannelLogo.svelte";
   import api from "../lib/api.js";
 
   export let channel_id;
@@ -19,7 +20,7 @@
   let lnurl;
   let amount;
   let loading = false;
-  let showSuccess = true;
+  let showSuccess = false;
 
   let youtube_channel_url;
 
@@ -34,15 +35,15 @@
       const response = await api.get(`${base}/withdraw`);
       lnurl = response.lnurl;
       amount = response.amount;
-      api.subscribe(`${base}/subscribe`, (msg) => {
+      api.subscribe(`withdrawal:${channel_id}`, (msg) => {
         if (msg.status === 'ERROR') {
           notify(msg.message);
         }
         showSuccess = true;
       });
     } catch (err) {
-      if (err.status === 'error' && err.type === 'ValidationError')
-        navigate("..");
+      if (err.response.status === 403 || (err.status === 'error' && err.type === 'ValidationError'))
+        navigate(".");
     }
   }
   const loadPromise = load();
@@ -64,13 +65,13 @@
     <img src="/success.png" class="success" alt="success">
     <div class="donations-claimed">Donations claimed</div>
     <div class="buttons">
-      <Button link={resolve("link")}>Want more donations?</Button>
+      <Button link={resolve("../link")}>Want more donations?</Button>
       <Button class="grey" on:click={() => navigate(-1)}>Close</Button>
     </div>
   {:else}
-    <img class="channel-logo" src={youtube_channel.thumbnail_url} alt="logo">
+    <ChannelLogo url={youtube_channel.thumbnail_url} />
     {#if lnurl}
-      <a href="lightning:{lnurl}"><QRCode value={lnurl} /></a>
+      <a class="qrcode" href="lightning:{lnurl}"><QRCode value={lnurl} /></a>
       <div class="buttons">
         <a href="lightning:{lnurl}" class="open-in-wallet"><Button>Open in wallet</Button></a>
         <Lnurl lnurl={lnurl} class="lnurl" />
@@ -104,10 +105,6 @@ h1 {
   font-weight: 900;
   font-size: 24px;
 }
-.channel-logo {
-  width: 72px;
-  margin-bottom: 24px;
-}
 img.success {
   width: 120px;
   height: 120px;
@@ -118,9 +115,8 @@ img.success {
   font-weight: 900;
   font-size: 24px;
 }
-img {
-  width: 72px;
-  height: 72px;
+.qrcode {
+  margin-top: 16px;
 }
 .buttons {
   width: 295px;
@@ -129,19 +125,17 @@ img {
   flex-direction: column;
   align-items: center;
 }
-.button :global(.close-button) {
-  margin-top: 64px;
-  width: 400px;
-}
 .buttons .open-in-wallet {
   margin-top: 24px;
-}
-.buttons .open-in-wallet :global(button) {
   width: 100%;
 }
-.controls :global(.lnurl) {
+.buttons :global(.lnurl) {
   margin-top: 20px;
   margin-bottom: 32px;
+  width: 100%;
+}
+.buttons :global(button) {
+  width: 100%;
 }
 .suggestion {
   font-size: 16px;

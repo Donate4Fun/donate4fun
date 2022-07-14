@@ -38,7 +38,7 @@ class ChannelInfo(BaseModel):
         return cls(
             id=data['id'],
             title=data['snippet']['title'],
-            thumbnail=data['snippet']['thumbnails']['default']['url'],
+            thumbnail=data['snippet']['thumbnails']['medium']['url'],
         )
 
     @property

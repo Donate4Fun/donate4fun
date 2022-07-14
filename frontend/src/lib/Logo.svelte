@@ -11,7 +11,6 @@
     <div class=text>
       <span class="stroke"><span>Donate4Fun</span></span>
       <span class="gradient"><span>Donate4Fun</span></span>
-      <sup>BETA</sup>
     </div>
   </div>
 </Link>

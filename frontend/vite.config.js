@@ -9,13 +9,16 @@ export default defineConfig({
       '/sitemap.xml': {
         target: 'http://localhost:8000',
       },
+      '/api/v1/subscribe': {
+        target: 'ws://localhost:8000',
+        ws: true
+      },
       '/api/': {
         target: 'http://localhost:8000',
       },
-      '^/api/v1/.*/subscribe': {
-        target: 'ws://localhost:8000',
-        ws: true
-      }
+      '/d/': {
+        target: 'http://localhost:8000',
+      },
     }
   }
 })

@@ -7,38 +7,52 @@
   import Amount from "../lib/Amount.svelte";
   import YoutubeChannel from "../lib/YoutubeChannel.svelte";
   import Editable from "../lib/Editable.svelte";
+  import ChannelLogo from "../lib/ChannelLogo.svelte";
   import { me } from "../lib/session.js";
-  import { copy } from "../lib/utils.js";
+  import { copy, youtube_video_url } from "../lib/utils.js";
 
   const dispatch = createEventDispatcher();
 
   export let amount;
-  export let claimed_at;
   export let donator_id;
   export let id;
   export let trigger;
   export let paid_at;
   export let created_at;
   export let youtube_channel;
+  export let youtube_video;
 
-  let message = `Hi! This video is cool! I’ve donated ${amount} sats to you. You can take it here https://donate4.fun/youtube-channel/${youtube_channel.id}`;
+  let message = `Hi! I like your video! I’ve donated you ${amount} sats. You can take it on "donate 4 fun"`;
+
+  function copyAndShare() {
+    copy(message);
+    window.open(youtube_video_url(youtube_video.video_id), '_blank').focus();
+  }
 </script>
 
 <main>
 {#await me.init()}
   <Loading/>
 {:then}
-  <img class="youtube_channel_thumbnail" src="{youtube_channel.thumbnail_url}" alt="channel logo">
-  <div class="header">Donation of <Amount amount={amount}/> sent to <YoutubeChannel {...youtube_channel}/></div>
-  {#if !claimed_at }
-    {#if $me.donator.id === donator_id}
-    <Infobox>Copy and share the message with the link or just tell {youtube_channel.title} to receive the donation here at «Donate4Fun»</Infobox>
-    <Editable class=message message={message} />
-    <Button on:click={() => copy(message)} class="copy-button">Copy and Share</Button>
-    <Button on:click={() => dispatch("close")} class="grey">Back</Button>
-    {/if}
+  <ChannelLogo url={youtube_channel.thumbnail_url} size=72px />
+  <div class="header">Great! You've sent <Amount amount={amount}/> to <YoutubeChannel {...youtube_channel}/></div>
+  {#if $me.donator.id === donator_id}
+  <Infobox>Copy and share the message with the link or just tell {youtube_channel.title} to receive the donation here at «Donate4Fun»</Infobox>
+  <call-to-action>
+  {#if youtube_video}
+  Now leave a comment on <a href="{youtube_video_url(youtube_video.video_id)}" target=_blank>his video</a> to make him know of donation:
   {:else}
-    Claimed at {claimed_at}
+  Now leave a comment on his video to make him know of donation:
+  {/if}
+  </call-to-action>
+  <ol>
+    <li>Press "Copy and Share" - commend will be copied to clipboard and YouTube video tab will open</li>
+    <li>Scroll to comments section and focus "Add a comment..." field</li>
+    <li>Paste a comment from clipboard and post it</li>
+  </ol>
+  <Editable class=message message={message} />
+  <Button on:click={copyAndShare} class="copy-button">Copy and Share</Button>
+  <Button on:click={() => dispatch("close")} class="grey">Back</Button>
   {/if}
 {/await}
 </main>
@@ -50,10 +64,8 @@ main {
   align-items: center;
   padding: 44px 84px 40px 84px;
 }
-main > img {
-  margin-bottom: 16px;
-}
 main > .header {
+  margin-top: 16px;
   margin-bottom: 22px;
 }
 main > :global(.message) {

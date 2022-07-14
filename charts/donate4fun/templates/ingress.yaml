@@ -9,9 +9,9 @@ metadata:
   annotations:
   {{- if eq .Values.ingress.className "gce" }}
     kubernetes.io/ingress.global-static-ip-name: {{ .Values.ingress.staticIpName }}
-    kubernetes.io/ingress.class: {{ .Values.ingress.className }}
     networking.gke.io/v1beta1.FrontendConfig: {{ $fullName }}
     networking.gke.io/managed-certificates: {{ $fullName }}
+    kubernetes.io/ingress.class: {{ .Values.ingress.className }}
   {{- end }}
   {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}

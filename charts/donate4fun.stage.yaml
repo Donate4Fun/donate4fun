@@ -1,0 +1,13 @@
+ingress:
+  host: stage.donate4.fun
+  staticIpName: donate4fun-stage
+
+backend:
+  config:
+    bugsnag:
+      release_stage: staging
+    youtube:
+      oauth:
+        redirect_base_url: https://stage.donate4.fun
+    lnd:
+      lnurl_base_url: https://stage.donate4.fun

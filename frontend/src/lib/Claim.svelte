@@ -29,8 +29,8 @@
   <h1>Claim donations</h1>
   <span>Check if your channel have been donated, just paste your Channel’s URL</span>
   <form on:submit|preventDefault={claim}>
-    <div class=url><Input type=url placeholder="Paste YouTube URL" bind:value={donatee} bind:error={error} logo=url(/youtube.svg) /></div>
-    <Button disabled={!donatee} type=submit class="submit white">
+    <div class=url><Input type=url placeholder="Paste YouTube URL" bind:value={donatee} bind:error={error} logo=url(/youtube.svg) required/></div>
+    <Button type=submit class="submit white">
       {#if spin}
       <Spinner class="spinner" size=20px width=3px/>
       {/if}

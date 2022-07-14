@@ -3,9 +3,11 @@ import math
 from uuid import UUID, uuid4
 from typing import Callable, Literal
 from functools import partial
+from urllib.parse import urlencode
 
 import bugsnag
-from fastapi import APIRouter, WebSocket, Request, Response, Depends, HTTPException
+import ecdsa
+from fastapi import APIRouter, WebSocket, Request, Response, Depends, HTTPException, Query
 from fastapi.routing import APIRoute
 from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.datastructures import URL
@@ -21,7 +23,7 @@ from anyio.abc import TaskStatus
 from .core import get_db_session, get_lnd, get_db
 from .models import (
     Donation, Donator, Invoice, DonateResponse, DonateRequest, YoutubeChannelRequest, YoutubeChannel, YoutubeVideo,
-    WithdrawalToken, BaseModel,
+    WithdrawalToken, BaseModel, Notification, Credentials,
 )
 from .types import ValidationError, RequestHash, PaymentRequest
 from .youtube import YoutubeDonatee, ChannelInfo, fetch_user_channel, validate_target
@@ -78,10 +80,6 @@ def get_donator(request: Request):
         donator = Donator(id=uuid4())
         request.session['donator'] = str(donator.id)
     return donator
-
-
-def get_youtube_channels(request: Request):
-    return request.session.get('youtube_channels', [])
 
 
 def make_memo(youtube_channel: YoutubeChannel) -> str:
@@ -153,33 +151,6 @@ async def donation(donation_id: UUID, db_session=Depends(get_db_session), lnd=De
     return DonateResponse(donation=donation, payment_request=payment_request)
 
 
-@router.websocket("/donation/{donation_id}/subscribe")
-async def subscribe_to_donation(websocket: WebSocket, donation_id: UUID):
-    logger.debug("Connected /donation/subscribe/")
-    db: Database = websocket.app.db
-    try:
-        async with db.pubsub() as sub:
-            async for msg in sub.listen_for_donations():
-                if msg is None:
-                    await websocket.accept()
-                    logger.debug(f"Accepted ws connection for {donation_id}")
-                elif msg.id == donation_id:
-                    async with db.session() as db_session:
-                        donation: Donation = await db_session.query_donation(id=donation_id)
-                    if donation.paid_at is not None:
-                        await websocket.send_text(donation.json())
-                    else:
-                        logger.warning(f"Received notification about already paid donation {donation_id}")
-                    break
-                else:
-                    logger.debug(f"Received notification about donation {msg}, skipping")
-    except Exception as exc:
-        logger.exception("Exception while listening for donations")
-        await websocket.send_json(dict(status='error', error=repr(exc)))
-    finally:
-        await websocket.close()
-
-
 @router.post("/donation/{donation_id}/cancel")
 async def cancel_donation(donation_id: UUID, db=Depends(get_db_session), lnd=Depends(get_lnd)):
     """
@@ -191,7 +162,7 @@ async def cancel_donation(donation_id: UUID, db=Depends(get_db_session), lnd=Dep
 
 @router.get("/donations/latest", response_model=list[Donation])
 async def latest_donations(db=Depends(get_db_session)):
-    return await db.query_donations(DonationDb.paid_at.isnot(None), limit=10)
+    return await db.query_donations(DonationDb.paid_at.isnot(None), limit=25)
 
 
 @router.get("/donations/by-donator/{donator_id}", response_model=list[Donation])
@@ -225,10 +196,12 @@ class MeResponse(BaseModel):
 @router.get("/donator/me", response_model=MeResponse)
 async def me(request: Request, db=Depends(get_db_session), donator: Donator = Depends(get_donator)):
     try:
-        donator = await db.query_donator(donator_id=donator.id)
+        donator = await db.query_donator(donator.id)
     except NoResultFound:
-        pass
-    return MeResponse(donator=donator, youtube_channels=request.session.get('youtube_channels', []))
+        linked_youtube_channels = []
+    else:
+        linked_youtube_channels = await db.query_donator_youtube_channels(donator.id)
+    return MeResponse(donator=donator, youtube_channels=linked_youtube_channels)
 
 
 @router.get("/donator/{donator_id}", response_model=Donator)
@@ -250,11 +223,12 @@ class WithdrawResponse(BaseModel):
 
 
 @router.get('/youtube-channel/{channel_id}/withdraw', response_model=WithdrawResponse)
-async def withdraw(request: Request, channel_id: UUID, db_session=Depends(get_db_session)):
-    youtube_channels = request.session.get('youtube_channels', [])
-    if str(channel_id) not in youtube_channels:
+async def withdraw(request: Request, channel_id: UUID, db=Depends(get_db_session), donator: Donator = Depends(get_donator)):
+    linked_youtube_channels = await db.query_donator_youtube_channels(donator.id)
+
+    if channel_id not in linked_youtube_channels:
         raise HTTPException(status_code=403, detail="You should prove that you own YouTube channel")
-    youtube_channel = await db_session.query_youtube_channel(youtube_channel_id=channel_id)
+    youtube_channel = await db.query_youtube_channel(youtube_channel_id=channel_id)
     if youtube_channel.balance < settings.min_withdraw:
         raise ValidationError(
             f"You can't withdraw less than {settings.min_withdraw}, but available only {youtube_channel.balance}"
@@ -351,27 +325,7 @@ async def send_withdrawal(
         status = 'ERROR'
         message = str(exc)
     async with db.pubsub() as pub:
-        await pub.notify_withdrawal_sent(youtube_channel_id, status, message)
-
-
-@router.websocket("/youtube-channel/{youtube_channel_id}/subscribe")
-async def subscribe_to_withdrawal(websocket: WebSocket, youtube_channel_id: UUID):
-    db: Database = websocket.app.db
-    try:
-        async with db.pubsub() as sub:
-            async for msg in sub.listen_for_withdrawals():
-                if msg is None:
-                    await websocket.accept()
-                    logger.debug(f"Accepted ws connection for youtube channel {youtube_channel_id}")
-                elif msg.id == youtube_channel_id:
-                    await websocket.send_text(msg.json())
-                else:
-                    logger.debug(f"Received notification about channel {msg}, skipping")
-    except Exception as exc:
-        logger.exception("Exception while listening for donations")
-        await websocket.send_json(dict(status='error', error=repr(exc)))
-    finally:
-        await websocket.close()
+        await pub.notify(f'withdrawal:{youtube_channel_id}', Notification(id=youtube_channel_id, status=status, message=message))
 
 
 class GoogleAuthState(BaseModel):
@@ -416,8 +370,70 @@ async def auth_google(
             thumbnail_url=channel_info.thumbnail,
         )
         await db_session.save_youtube_channel(youtube_channel)
-        request.session['youtube_channels'] = list(set(request.session.get('youtube_channels', [])) | {str(youtube_channel.id)})
+        await db_session.link_youtube_channel(youtube_channel, donator)
         return RedirectResponse(auth_state.last_url)
     else:
         # Should either receive a code or an error
         raise Exception("Something's probably wrong with your callback")
+
+
+class LoginLnurlResponse(BaseModel):
+    lnurl: str
+
+
+@router.get('/lnauth', response_model=LoginLnurlResponse)
+async def login_lnauth(request: Request, donator=Depends(get_donator)):
+    url_start = request.app.url_path_for('lnauth_callback').make_absolute_url(settings.lnd.lnurl_base_url)
+    query_string = urlencode(dict(
+        tag='login',
+        k1=donator.id.bytes.hex(),
+        action='link',
+    ))
+    return LoginLnurlResponse(lnurl=lnurl_encode(f'{url_start}?{query_string}'))
+
+
+@router.get('/lnauth-callback', response_class=JSONResponse)
+async def lnauth_callback(
+    request: Request, k1: str = Query(...), sig: str = Query(...), key: str = Query(...), db_session=Depends(get_db_session),
+):
+    try:
+        k1_bytes = bytes.fromhex(k1)
+        vk = ecdsa.VerifyingKey.from_string(bytes.fromhex(key), curve=ecdsa.SECP256k1)
+        vk.verify_digest(bytes.fromhex(sig), k1_bytes, sigdecode=ecdsa.util.sigdecode_der)
+        donator_id = UUID(bytes=k1_bytes)
+        await db_session.login_donator(donator_id, key)
+    except Exception as exc:
+        logger.exception("Error in lnuath callback")
+        return dict(status="ERROR", reason=str(exc))
+    else:
+        return dict(status="OK")
+
+
+@router.websocket('/subscribe/{topic}')
+async def subscribe(websocket: WebSocket, topic: str):
+    db: Database = websocket.app.db
+    try:
+        async with db.pubsub() as sub:
+            async for msg in sub.listen(topic):
+                if msg is None:
+                    await websocket.accept()
+                    logger.debug(f"Accepted ws connection for {topic}")
+                else:
+                    await websocket.send_text(msg.json())
+    except Exception as exc:
+        logger.exception("Exception in ws handler")
+        await websocket.send_json(dict(status='error', error=repr(exc)))
+    finally:
+        logger.debug(f"Closing ws connection for {topic}")
+        await websocket.close()
+
+
+class UpdateSessionRequest(BaseModel):
+    creds_jwt: str
+
+
+@router.post('/update-session')
+async def update_session(request: Request, req: UpdateSessionRequest):
+    creds = Credentials.from_jwt(req.creds_jwt)
+    request.session['donator'] = str(creds.donator_id)
+    request.session['lnauth_pubkey'] = creds.lnauth_pubkey

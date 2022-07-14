@@ -24,7 +24,7 @@ class BaseModel(PydanticBaseModel):
         return jwt.encode(json.loads(self.json()), settings.jwt_secret, algorithm="HS256")
 
     @classmethod
-    def from_jwt(cls, token: str) -> 'DonationRequest':
+    def from_jwt(cls, token: str):
         return cls(**jwt.decode(token, settings.jwt_secret, algorithms=["HS256"]))
 
 
@@ -41,6 +41,10 @@ class WithdrawalToken(BaseModel):
     max_amount: int
     description: str
     youtube_channel_id: UUID
+
+
+class LoginToken(BaseModel):
+    donator_id: UUID
 
 
 class DonateRequest(BaseModel):
@@ -96,6 +100,7 @@ class Donator(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     name: str | None
     avatar_url: str | None
+    lnauth_pubkey: str | None
 
     @validator('name', always=True)
     def generate_name(cls, v, values):
@@ -125,10 +130,8 @@ class Donation(BaseModel):
     amount: int
     youtube_video: YoutubeVideo | None
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    trigger: str | None = None
     message: str | None = None
     paid_at: datetime | None = None
-    claimed_at: datetime | None = None
 
     @root_validator(pre=True)
     def default_donator(cls, values: dict[str, Any]):
@@ -153,3 +156,14 @@ class Donation(BaseModel):
 class DonateResponse(BaseModel):
     donation: Donation
     payment_request: PaymentRequest | None
+
+
+class Notification(BaseModel):
+    id: UUID
+    status: str
+    message: str | None
+
+
+class Credentials(BaseModel):
+    donator_id: UUID
+    lnauth_pubkey: str

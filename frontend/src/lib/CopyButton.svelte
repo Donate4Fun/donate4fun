@@ -3,15 +3,20 @@
   import {copy, sleep} from "../lib/utils.js";
 
   export let content;
-  let text = "Copy";
+  let copied = false;
 
   async function doCopy() {
     copy(content);
-    text = "Copied";
+    copied = true;
     await sleep(3000);
-    text = "Copy";
+    copied = false;
   }
 </script>
-<Button on:click={doCopy}>{text}</Button>
-<style>
-</style>
+
+<Button on:click={doCopy}>
+  {#if copied}
+  Copied
+  {:else}
+  Copy
+  {/if}
+</Button>

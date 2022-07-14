@@ -1,9 +1,11 @@
 from uuid import UUID
 from datetime import datetime
 from functools import partial
+from urllib.parse import urlparse, parse_qs, urlunparse
 
 import anyio
 import pytest
+import ecdsa
 from anyio.abc import TaskStatus
 from vcr.filters import replace_query_parameters
 from lnurl.helpers import _lnurl_decode
@@ -11,7 +13,7 @@ from lnurl.helpers import _lnurl_decode
 from donate4fun.api import DonateRequest, DonateResponse, WithdrawResponse, LnurlWithdrawResponse
 from donate4fun.lnd import monitor_invoices, LndClient, Invoice
 from donate4fun.settings import LndSettings
-from donate4fun.models import Donation, YoutubeChannel
+from donate4fun.models import Donation, YoutubeChannel, Donator
 from donate4fun.db import Notification
 
 from tests.test_util import verify_fixture, verify_response, check_response
@@ -137,18 +139,14 @@ async def test_donate_full(
     check_response(donate_response, 200)
     assert donate_response.json()['donation']['id'] == str(freeze_donation_id)
     payment_request = donate_response.json()['payment_request']
-    async with anyio.create_task_group() as tg, client.ws_session(f"/api/v1/donation/{freeze_donation_id}/subscribe") as ws:
+    async with anyio.create_task_group() as tg, client.ws_session(f"/api/v1/subscribe/donation:{freeze_donation_id}") as ws:
         await tg.start(monitor_invoices, app.lnd, app.db)
         await payer_lnd.pay_invoice(payment_request)
-        ws_response = []
         while True:
-            donation = Donation.parse_obj(await ws.receive_json())
-            donation.paid_at = datetime(2022, 2, 2)
-            donation.created_at = datetime(2022, 2, 2)
-            ws_response.append(donation)
-            if donation.paid_at is not None:
-                break
-        verify_fixture(ws_response, "payment-subscribe")
+            notification = Notification.parse_obj(await ws.receive_json())
+            assert notification.status == 'OK'
+            assert notification.id == freeze_donation_id
+            break
         tg.cancel_scope.cancel()
     donation_response = await client.get(f"/api/v1/donation/{freeze_donation_id}")
     check_response(donation_response, 200)
@@ -158,7 +156,7 @@ async def test_donate_full(
 @pytest.mark.freeze_time('2022-02-02 22:22:22')
 async def test_websocket(client, unpaid_donation_fixture, db, freeze_request_hash_json):
     messages = []
-    async with client.ws_session(f'/api/v1/donation/{unpaid_donation_fixture.id}/subscribe') as ws:
+    async with client.ws_session(f'/api/v1/subscribe/donation:{unpaid_donation_fixture.id}') as ws:
         async with db.session() as db_session:
             await db_session.donation_paid(r_hash=unpaid_donation_fixture.r_hash, amount=100, paid_at=datetime.utcnow())
         msg = await ws.receive_json()
@@ -191,7 +189,7 @@ async def wait_for_payment(lnd_client, r_hash, *, task_status: TaskStatus):
 async def wait_for_withdrawal(
     client, youtube_channel_id: UUID, amount_diff: int, status: str, message: str, task_status: TaskStatus,
 ):
-    async with client.ws_session(f"/api/v1/youtube-channel/{youtube_channel_id}/subscribe") as ws:
+    async with client.ws_session(f"/api/v1/subscribe/withdrawal:{youtube_channel_id}") as ws:
         task_status.started()
         msg = await ws.receive_json()
         notification = Notification(**msg)
@@ -215,9 +213,11 @@ async def test_withdraw(
     message, is_ok, settings, db,
 ):
     channel_id = paid_donation_fixture.youtube_channel.id
-    login_youtuber(client, client_session, paid_donation_fixture.youtube_channel)
     # Update balance to target value
     async with db.session() as db_session:
+        await db_session.link_youtube_channel(
+            donator=Donator(id=client_session.donator), youtube_channel=paid_donation_fixture.youtube_channel,
+        )
         await db_session.withdraw(youtube_channel_id=channel_id, amount=paid_donation_fixture.amount - balance)
     resp = await client.get(f'/api/v1/youtube-channel/{channel_id}/withdraw')
     check_response(resp, 200)
@@ -254,3 +254,46 @@ async def test_withdraw(
     async with db.session() as db_session:
         youtube_channel: YoutubeChannel = await db_session.query_youtube_channel(youtube_channel_id=channel_id)
         assert youtube_channel.balance == -amount_diff if is_ok else balance
+
+
+@pytest.fixture
+async def registered_donator(db):
+    sk = ecdsa.SigningKey.generate(entropy=ecdsa.util.PRNG(b'seed'), curve=ecdsa.SECP256k1)
+    pubkey = sk.verifying_key.to_string().hex()
+    async with db.session() as db_session:
+        await db_session.login_donator(UUID(int=1), key=pubkey)  # Should differ from doantor_id fixture
+
+
+@pytest.mark.parametrize('case_name,donator', [
+    ('signup', None),
+    ('signin', pytest.lazy_fixture('registered_donator')),
+])
+async def test_lnauth(client, case_name, donator, donator_id):
+    lnauth_response = await client.get('/api/v1/lnauth')
+    lnurl = _lnurl_decode(lnauth_response.json()['lnurl'])
+    lnurl_parsed = urlparse(lnurl)
+    query = parse_qs(lnurl_parsed.query, strict_parsing=True)
+    assert query['tag'] == ['login']
+    assert query['action'] == ['link']
+    k1 = query['k1'][0]
+    sk = ecdsa.SigningKey.generate(entropy=ecdsa.util.PRNG(b'seed'), curve=ecdsa.SECP256k1)
+    signature = sk.sign_digest_deterministic(bytes.fromhex(k1), sigencode=ecdsa.util.sigencode_der)
+    callback_url = urlunparse(list(lnurl_parsed)[:3] + [''] * 3)
+    async with client.ws_session(f'/api/v1/subscribe/donator:{donator_id}') as ws:
+        callback_response = await client.get(callback_url, params=dict(
+            sig=signature.hex(),
+            key=sk.verifying_key.to_string().hex(),
+            **{k: v[0] for k, v in query.items()},
+        ))
+        assert callback_response.json()['status'] == 'OK'
+        verify_response(callback_response, 'lnauth-callback', 200)
+        msg = await ws.receive_json()
+        assert msg['status'] == 'ok'
+        registered_donator_jwt = msg['message']
+
+    update_session_resp = await client.post('/api/v1/update-session', json=dict(creds_jwt=registered_donator_jwt))
+    check_response(update_session_resp)
+    me_response = await client.get('/api/v1/donator/me')
+    verify_response(me_response, f'lnauth-me-{case_name}', 200)
+    new_donator = Donator.parse_obj(me_response.json()['donator'])
+    assert new_donator.lnauth_pubkey == sk.verifying_key.to_string().hex()

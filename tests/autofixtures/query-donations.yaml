@@ -1,5 +1,4 @@
 - amount: 20
-  claimed_at: null
   created_at: !!python/object/apply:freezegun.api.FakeDatetime
   - !!binary |
     B+YCAhYWFgAAAA==
@@ -8,6 +7,7 @@
     id: !!python/object/apply:asyncpg.pgproto.pgproto.UUID
     - !!binary |
       AAAAAAAAAAAAAAAAAAAAAA==
+    lnauth_pubkey: null
     name: Admiring Serene Khorana
   donator_id: !!python/object/apply:asyncpg.pgproto.pgproto.UUID
   - !!binary |
@@ -22,7 +22,6 @@
   r_hash: !!python/object:donate4fun.types.RequestHash
     data: !!binary |
       aGFzaA==
-  trigger: null
   youtube_channel:
     balance: 20
     channel_id: q2dsaf

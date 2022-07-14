@@ -13,6 +13,8 @@ backend:
   image:
     repository: europe-central2-docker.pkg.dev/donate4fun-prod/docker/donate4fun-backend
   config:
+    bugsnag:
+      release_stage: production
     db:
       echo: false
       connect_arg:

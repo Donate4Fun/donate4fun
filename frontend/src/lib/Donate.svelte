@@ -15,9 +15,6 @@
   const amountMax = 1000000;
   const fmt = new Intl.NumberFormat('en-US', { maximumSignificantDigits: 5, notation: "compact" });
 
-  const alexsc2_channel = "https://www.youtube.com/watch?v=dcjJY0-Aig0";
-  const mytest_channel = "https://www.youtube.com/channel/UCk2OzObixhe_mbMfMQGLuJw";
-
   export let amount = 1000;
   export let target;
   export let message = "You are the best!";
@@ -62,13 +59,13 @@
   <form on:submit|preventDefault={donate}>
     <div class="first-line">
       <span class="i-want">I want to donate</span>
-      <div class="amount"><Input type=number placeholder="Enter amount" bind:value={amount} min={amountMin} max={amountMax} bind:error={amountError} suffix=sats /></div>
+      <div class="amount"><Input type=number placeholder="Enter amount" bind:value={amount} min={amountMin} max={amountMax} bind:error={amountError} suffix=sats required /></div>
       <FiatAmount bind:amount={amount} class="fiat-amount" />
     </div>
     <div class="second-line">
       <span class=to>To</span>
-      <div class="url"><Input type="text" placeholder="Paste YouTube URL" bind:value={target} bind:error={error} logo=url(/youtube.svg) /></div>
-      <Button class="submit" type=submit disabled={!isValid}>
+      <div class="url"><Input type="text" placeholder="Paste YouTube URL" bind:value={target} bind:error={error} logo=url(/youtube.svg) required /></div>
+      <Button class="submit" type=submit>
         {#if spin}
         <Spinner class="spinner" size=20px width=3px/>
         {/if}

@@ -48,6 +48,9 @@ spec:
           subPath: config.yaml
         - name: secret
           mountPath: /secret
+        env:
+        - name: bugsnag__app_version
+          value: {{ .Release.Revision | quote }}
       - name: frontend
         image: {{ include "donate4fun.image" .Values.frontend }}
         imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}

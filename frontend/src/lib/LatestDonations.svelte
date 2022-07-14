@@ -7,6 +7,7 @@
   import YoutubeChannel from "../lib/YoutubeChannel.svelte";
   import Donator from "../lib/Donator.svelte";
   import Datetime from "../lib/Datetime.svelte";
+  import ChannelLogo from "../lib/ChannelLogo.svelte";
   import api from "../lib/api.js";
 
   let donations = [];
@@ -27,9 +28,12 @@
       </div>
       {#each donations as donation}
         <Donator user={donation.donator} class="ellipsis" />
-        <div><Datetime dt={donation.paid_at} /></div>
-        <div class="vcenter"><Amount amount={donation.amount} /></div>
-        <div class="vcenter"><a href="/donate/{donation.youtube_channel.id}" class="ellipsis" use:link>{donation.youtube_channel.title}</a></div>
+        <div class=vcenter><Datetime dt={donation.paid_at} /></div>
+        <div class=vcenter><Amount amount={donation.amount} /></div>
+        <div class=blogger>
+          <ChannelLogo url={donation.youtube_channel.thumbnail_url} size=28px />
+          <div class=vcenter><a href="/donate/{donation.youtube_channel.id}" class="ellipsis" use:link>{donation.youtube_channel.title}</a></div>
+        </div>
       {/each}
     </div>
     <div class=fadeout></div>
@@ -54,10 +58,6 @@
   :global(.donations) {
     width: 100%;
   }
-  .table {
-    overflow-x: scroll;
-    overflow-y: hidden;
-  }
 }
 h1 {
   margin-top: 0px;
@@ -78,12 +78,13 @@ h1 {
 }
 .table {
   display: grid;
-  grid-template-columns: 128px 57px 80px 98px;
+  grid-template-columns: 128px 109px 80px 98px;
   column-gap: 20px;
   row-gap: 26px;
   font-size: 12px;
   text-align: left;
   line-height: 15px;
+  overflow: scroll;
 }
 .head {
   color: rgba(0, 0, 0, 0.6);
@@ -105,5 +106,10 @@ h1 {
                     rgba(255,255,255, 1) 90%);
   width    : 100%;
   height   : 4em;
+}
+.blogger {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 </style>

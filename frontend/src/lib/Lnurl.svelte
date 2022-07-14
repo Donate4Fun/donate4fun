@@ -1,12 +1,12 @@
 <script>
-  import CopyButton from "../lib/Button.svelte";
+  import CopyButton from "../lib/CopyButton.svelte";
 
   export let lnurl;
 </script>
 
 <div {...$$restProps}>
   <span>{lnurl}</span>
-  <CopyButton bind:content={lnurl} />
+  <CopyButton content={lnurl} />
 </div>
 
 <style>

@@ -3,12 +3,17 @@
   import { navigate } from "svelte-navigator";
 
   export let link = null;
+  export let target = null;
 
   const dispatch = createEventDispatcher();
   function click(ev) {
     console.log("click", ev, link);
     if (link !== null) {
-      navigate(link);
+      if (target !== null) {
+        window.open(link, target).focus();
+      } else {
+        navigate(link);
+      }
     } else {
       dispatch("click", ev);
     }
@@ -17,7 +22,7 @@
 
 <button {...$$restProps} on:click={click}>
   <div>
-    <slot />
+    <slot>asdadd</slot>
   </div>
 </button>
 

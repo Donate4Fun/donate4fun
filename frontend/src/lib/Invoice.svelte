@@ -6,6 +6,8 @@
   import QRCode from "../lib/QRCode.svelte";
   import Loading from "../lib/Loading.svelte";
   import Lnurl from "../lib/Lnurl.svelte";
+  import Amount from "../lib/Amount.svelte";
+  import YoutubeChannel from "../lib/YoutubeChannel.svelte";
   import { partial } from "../lib/utils.js";
   import api from "../lib/api.js";
 
@@ -15,9 +17,10 @@
 	const dispatch = createEventDispatcher();
 
   async function subscribe() {
-    await api.subscribe(`donation/${donation.id}/subscribe`, (donation) => {
-      if (donation.paid_at) {
-        dispatch('paid', donation);
+    await api.subscribe(`donation:${donation.id}`, async (notification) => {
+      if (notification.status === 'OK') {
+        const response = await api.get(`donation/${donation.id}`);
+        dispatch('paid', response.donation);
       }
     });
   }
@@ -27,7 +30,7 @@
   {#await subscribe()}
   <Loading />
   {:then}
-  <h1>Lightning invoice</h1>
+  <h1>Donate <Amount amount={donation.amount} /> to <YoutubeChannel {...donation.youtube_channel} /></h1>
   <a href="lightning:{payment_request}"><QRCode value={payment_request} /></a>
   <div class="suggestion">Pay with a Wallet like
     <a href="https://getalby.com" target="_blank">Alby</a>, 
@@ -53,6 +56,7 @@ h1 {
   font-weight: 900;
   margin-top: 0;
   margin-bottom: 20px;
+  text-align: center;
 }
 .suggestion {
   font-size: 16px;
