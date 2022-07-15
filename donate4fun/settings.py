@@ -24,10 +24,12 @@ class YoutubeSettings(BaseModel):
 
 
 class DbSettings(BaseModel):
-    dsn: str
+    url: str
     echo: bool = False
     isolation_level: str = 'SERIALIZABLE'
     connect_args: dict[str, Any] = {}
+    pool_size: int = 10
+    max_overflow: int = 20
 
 
 class FormatterConfig(BaseModel):

@@ -65,7 +65,7 @@
   {#if showSuccess}
     <img src="/success.png" class="success" alt="success">
     <div class="donations-claimed">Donations claimed</div>
-    <div class="buttons">
+    <div class="buttons success">
       <Button link={resolve("../link")}>Want more donations?</Button>
       <Button class="grey" on:click={() => navigate(-1)}>Close</Button>
     </div>
@@ -120,11 +120,15 @@ img.success {
   margin-top: 16px;
 }
 .buttons {
-  width: 295px;
-  display: flex;
+  width: 310px;
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+.buttons.success {
+  gap: 20px;
+  margin-top: 66px;
+  width: 400px;
 }
 .buttons .open-in-wallet {
   margin-top: 24px;

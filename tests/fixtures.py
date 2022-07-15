@@ -88,11 +88,11 @@ async def settings():
 
 @pytest.fixture
 async def db(settings: Settings):
-    base_db = Database(DbSettings(dsn='postgresql+asyncpg://tester@localhost/postgres', isolation_level='AUTOCOMMIT'))
+    base_db = Database(DbSettings(url='postgresql+asyncpg://tester@localhost/postgres', isolation_level='AUTOCOMMIT'))
     db_name = "donate4fun-test"
     await base_db.create_database(db_name)
     try:
-        db = Database(DbSettings(dsn=f'postgresql+asyncpg://tester@localhost/{db_name}'))
+        db = Database(DbSettings(url=f'postgresql+asyncpg://tester@localhost/{db_name}'))
         await db.create_tables()
         yield db
     finally:

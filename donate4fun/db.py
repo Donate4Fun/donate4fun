@@ -90,12 +90,7 @@ Base.registry.configure()  # Create backrefs
 
 class Database:
     def __init__(self, db_settings: DbSettings):
-        self.engine = create_async_engine(
-            url=db_settings.dsn,
-            echo=db_settings.echo,
-            isolation_level=db_settings.isolation_level,
-            connect_args=db_settings.connect_args,
-        )
+        self.engine = create_async_engine(**db_settings.dict())
         self.session_maker = sessionmaker(self.engine, class_=AsyncSession, future=True)
 
     async def create_tables(self):
