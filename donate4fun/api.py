@@ -198,9 +198,8 @@ async def me(request: Request, db=Depends(get_db_session), donator: Donator = De
     try:
         donator = await db.query_donator(donator.id)
     except NoResultFound:
-        linked_youtube_channels = []
-    else:
-        linked_youtube_channels = await db.query_donator_youtube_channels(donator.id)
+        pass
+    linked_youtube_channels = await db.query_donator_youtube_channels(donator.id)
     return MeResponse(donator=donator, youtube_channels=linked_youtube_channels)
 
 
