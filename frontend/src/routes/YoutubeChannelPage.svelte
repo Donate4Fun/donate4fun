@@ -14,6 +14,7 @@
   import ChannelLogo from "../lib/ChannelLogo.svelte";
   import api from "../lib/api.js";
   import { me } from "../lib/session.js";
+  import title from "../lib/title.js";
 
   export let channel_id;
 
@@ -21,7 +22,6 @@
   let sum_donated;
   let donations;
   let error;
-  let loading = false;
   let showSuccess = false;
   let balance;
   let lnurl;
@@ -34,12 +34,12 @@
   const resolve = useResolve();
 
   async function load() {
-    loading = true;
     showSuccess = false;
     amount = null;
     try {
       await me.init()
       youtube_channel = await api.get(`youtube-channel/${channel_id}`);
+      $title = `Claim donations for ${youtube_channel.title} [${youtube_channel.id}]`
       balance = youtube_channel.balance;
       youtube_channel_url = `https://youtube.com/channel/${youtube_channel.channel_id}`
       donations = await api.get(`donations/by-donatee/${channel_id}`);
@@ -48,30 +48,21 @@
       console.log(err)
       error = err.response.data.detail;
     }
-    loading = false;
   }
   async function link_youtube() {
-    loading = true;
     try {
       const response = await api.get(`youtube-channel/${channel_id}/login`);
       window.location.href = response.url;
     } catch (err) {
       error = err.response.data.detail;
     }
-    loading = false;
   }
   const loadPromise = load();
 </script>
 
-<svelte:head>
-  {#await loadPromise then}
-  <title>[Donate4Fun] Claim donations for {youtube_channel.title} [youtube_channel.id]</title>
-  {/await}
-</svelte:head>
-
 <Page>
   <Section class="youtube-channel">
-  {#await loadPromise}
+  {#await load()}
     <Loading />
   {:then}
     <h1>Donations to <a href={youtube_channel_url}>{youtube_channel.title}</a></h1>

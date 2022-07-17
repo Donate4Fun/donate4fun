@@ -6,6 +6,9 @@
   import Footer from "../lib/Footer.svelte";
   import Section from "../lib/Section.svelte";
   import Page from "../lib/Page.svelte";
+  import title from "../lib/title.js";
+
+  title.clear();
 </script>
 
 <Page>

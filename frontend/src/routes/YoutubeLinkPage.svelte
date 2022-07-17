@@ -7,6 +7,7 @@
   import Loading from "../lib/Loading.svelte";
   import {youtube_channel_url} from "../lib/utils.js";
   import api from "../lib/api.js";
+  import title from "../lib/title.js";
 
   export let channel_id;
   export let navigate;
@@ -17,6 +18,7 @@
   async function load() {
     youtube_channel = await api.get(`youtube-channel/${channel_id}`);
     message = `⚡ Donate4Fun to me here https://${window.location.host}/d/${youtube_channel.channel_id}`;
+    $title = `Collect donations for ${youtube_channel.title} with Bitcoin Lightning`;
   }
 </script>
 

@@ -4,6 +4,7 @@
   import Invoice from "../lib/Invoice.svelte";
   import Page from "../lib/Page.svelte";
   import Section from "../lib/Section.svelte";
+  import title from "../lib/title.js";
   import api from "../lib/api.js";
 
   export let donation_id;
@@ -12,7 +13,7 @@
   let donation;
   let payment_request;
 
-  const loadDonation = async () => {
+  async function loadDonation() {
     const state_donation = window.history.state;
     if (state_donation && state_donation.id === donation_id) {
       donation = state_donation;
@@ -20,12 +21,12 @@
       const response = await api.get(`donation/${donation_id}`);
       ({ donation, payment_request } = response);
     }
+    title.set(`Donate ${donation.amount} sats to ${donation.youtube_channel.title} [${donation.id}]`);
   }
   function paid(event) {
     console.log("paid", event.detail);
     donation = event.detail;
   }
-
 </script>
 
 <Page>

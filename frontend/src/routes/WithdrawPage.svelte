@@ -12,6 +12,7 @@
   import Section from "../lib/Section.svelte";
   import QRCode from "../lib/QRCode.svelte";
   import ChannelLogo from "../lib/ChannelLogo.svelte";
+  import title from "../lib/title.js";
   import api from "../lib/api.js";
 
   export let channel_id;
@@ -35,6 +36,7 @@
       const response = await api.get(`${base}/withdraw`);
       lnurl = response.lnurl;
       amount = response.amount;
+      title.set(`Withdraw ${amount} sats for ${youtube_channel.title} [${youtube_channel.id}]`);
       api.subscribe(`withdrawal:${channel_id}`, (msg) => {
         if (msg.status === 'ERROR') {
           notify(msg.message);
@@ -47,18 +49,11 @@
         navigate(".");
     }
   }
-  const loadPromise = load();
 </script>
-
-<svelte:head>
-  {#await loadPromise then}
-  <title>[Donate4Fun] Withdraw {amount} sats for {youtube_channel.title} [youtube_channel.id]</title>
-  {/await}
-</svelte:head>
 
 <Page>
   <Section class="withdraw">
-  {#await loadPromise}
+  {#await load()}
     <Loading />
   {:then}
     <h1>Withdraw <Amount amount={amount} /></h1>

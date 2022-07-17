@@ -9,12 +9,14 @@
   import YoutubeLinkPage from "./routes/YoutubeLinkPage.svelte";
   import LoginPage from "./routes/LoginPage.svelte";
   import Test from "./routes/Test.svelte";
+  import title from "./lib/title.js";
 
   const url = "";
 </script>
 
 <svelte:head>
   <link href="https://fonts.googleapis.com/css?family=Inter:400,500,700,900" rel="stylesheet">
+  <title>{$title}</title>
 </svelte:head>
 
 <Router url={url}>
@@ -36,6 +38,10 @@
   font-weight: 400;
   color: #000000;
   margin: 0;
+}
+/* https://stackoverflow.com/a/26140154/1022684 */
+:global(input), :global(textarea), :global(button) {
+  font-family: inherit;
 }
 :global(div#app) {
   display: flex;
