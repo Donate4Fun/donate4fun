@@ -19,7 +19,7 @@
     {:then}
       {#if $me.donator.lnauth_pubkey}
       <Button class="connect connected" link={resolve('/login')}>
-        <span>{$me.donator.lnauth_pubkey}</span>
+        <span>@{$me.donator.lnauth_pubkey}</span>
       </Button>
       {:else}
       <Button class="connect" link={resolve('/login')}>
