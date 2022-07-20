@@ -17,8 +17,8 @@
 // @run-at       document-end
 // @connect      donate4.fun
 // @require      https://openuserjs.org/src/libs/sizzle/GM_config.js
-// @downloadURL  https://github.com/donate4fun/donate4fun/raw/master/Extensions/UserScript/Donate4Fun.user.js
-// @updateURL    https://github.com/donate4fun/donate4fun/raw/master/Extensions/UserScript/Donate4Fun.user.js
+// @downloadURL  https://github.com/Donate4Fun/donate4fun/raw/master/extensions/donate4fun.user.js
+// @updateURL    https://github.com/Donate4Fun/donate4fun/raw/master/extensions/donate4fun.user.js
 // @supportURL   https://github.com/donate4Fun/donate4fun/issues
 // ==/UserScript==
 
