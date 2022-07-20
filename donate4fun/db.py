@@ -353,25 +353,33 @@ class DbSession(BaseDbSession):
             .returning(DonationDb.id, DonationDb.youtube_channel_id, DonationDb.youtube_video_id)
         )
         row = resp.fetchone()
-        # Row could be already updated in another replica
-        if row is not None:
-            donation_id, youtube_channel_id, youtube_video_id = row
-            await self.execute(
-                update(YoutubeChannelDb)
-                .values(
-                    balance=YoutubeChannelDb.balance + amount,
-                    total_donated=YoutubeChannelDb.total_donated + amount,
-                )
-                .where(YoutubeChannelDb.id == youtube_channel_id)
+        if row is None:
+            # Row could be already updated in another replica
+            logger.debug(f"Donation {r_hash} was already handled, skipping")
+            return
+
+        donation_id, youtube_channel_id, youtube_video_id = row
+        await self.execute(
+            update(YoutubeChannelDb)
+            .values(
+                balance=YoutubeChannelDb.balance + amount,
+                total_donated=YoutubeChannelDb.total_donated + amount,
             )
+            .where(YoutubeChannelDb.id == youtube_channel_id)
+        )
+        if youtube_video_id:
+            video_update_resp = await self.execute(
+                update(YoutubeVideoDb)
+                .values(total_donated=YoutubeVideoDb.total_donated + amount)
+                .where(YoutubeVideoDb.id == youtube_video_id)
+                .returning(YoutubeVideoDb.video_id)
+            )
+            (vid,) = video_update_resp.fetchone()
+        async with self.db.pubsub() as pub:
+            await pub.notify(f'donation:{donation_id}', Notification(id=donation_id, status='OK'))
             if youtube_video_id:
-                await self.execute(
-                    update(YoutubeVideoDb)
-                    .values(total_donated=YoutubeVideoDb.total_donated + amount)
-                    .where(YoutubeVideoDb.id == youtube_video_id)
-                )
-            async with self.db.pubsub() as pub:
-                await pub.notify(f'donation:{donation_id}', Notification(id=donation_id, status='OK'))
+                await pub.notify(f'youtube-video:{youtube_video_id}', Notification(id=youtube_video_id, status='OK'))
+                await pub.notify(f'youtube-video-by-vid:{vid}', Notification(id=youtube_video_id, status='OK'))
 
     async def commit(self):
         return await self.session.commit()
@@ -424,6 +432,13 @@ class DbSession(BaseDbSession):
             )
             .on_conflict_do_nothing()
         )
+
+    async def query_youtube_video(self, video_id: str) -> YoutubeVideo:
+        resp = await self.execute(
+            select(YoutubeVideoDb)
+            .where(YoutubeVideoDb.video_id == video_id)
+        )
+        return YoutubeVideo.from_orm(resp.scalars().one())
 
 
 class PubSubSession(BaseDbSession):

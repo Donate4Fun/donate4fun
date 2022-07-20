@@ -58,7 +58,7 @@
   {:then}
     <h1>Withdraw <Amount amount={amount} /></h1>
   {#if showSuccess}
-    <img src="/success.png" class="success" alt="success">
+    <img src="/static/success.png" class="success" alt="success">
     <div class="donations-claimed">Donations claimed</div>
     <div class="buttons success">
       <Button link={resolve("../link")}>Want more donations?</Button>

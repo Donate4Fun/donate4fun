@@ -54,6 +54,9 @@ spec:
       - name: frontend
         image: {{ include "donate4fun.image" .Values.frontend }}
         imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+        env:
+        - name: HOST
+          value: {{ .Values.ingress.host | quote }}
         ports:
         - name: http-frontend
           containerPort: 80
@@ -66,6 +69,7 @@ spec:
           httpGet:
             path: /
             port: http-frontend
+          periodSeconds: 5
         resources:
           {{- toYaml .Values.frontend.resources | nindent 10 }}
       volumes:

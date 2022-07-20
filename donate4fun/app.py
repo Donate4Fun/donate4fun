@@ -8,6 +8,7 @@ import bugsnag
 from bugsnag.asgi import BugsnagMiddleware
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from hypercorn.asyncio import serve as hypercorn_serve
 from hypercorn.config import Config
 from debug_toolbar.middleware import DebugToolbarMiddleware
@@ -23,9 +24,21 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def create_app(settings: Settings):
+    origins = [
+        "https://youtube.com",
+        "https://www.youtube.com",
+        "https://m/youtube.com",
+    ]
+
     app = FastAPI(debug=settings.fastapi.debug, root_path=settings.fastapi.root_path)
     if settings.fastapi.debug:
         app.add_middleware(DebugToolbarMiddleware)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     app.add_middleware(AuthlibMiddleware, secret_key=settings.jwt_secret)
     app.mount("/static", StaticFiles(directory="donate4fun/static"), name="static")
     app.include_router(api.router, prefix="/api/v1")

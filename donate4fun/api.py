@@ -436,3 +436,17 @@ async def update_session(request: Request, req: UpdateSessionRequest):
     creds = Credentials.from_jwt(req.creds_jwt)
     request.session['donator'] = str(creds.donator_id)
     request.session['lnauth_pubkey'] = creds.lnauth_pubkey
+
+
+class YoutubeVideoResponse(BaseModel):
+    id: UUID | None
+    total_donated: int
+
+
+@router.get('/youtube-video/{video_id}', response_model=YoutubeVideoResponse)
+async def youtube_video_info(video_id: str, db=Depends(get_db_session)):
+    try:
+        video: YoutubeVideo = await db.query_youtube_video(video_id=video_id)
+        return YoutubeVideoResponse(id=video.id, total_donated=video.total_donated)
+    except NoResultFound:
+        return YoutubeVideoResponse(id=None, total_donated=0)

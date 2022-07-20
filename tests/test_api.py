@@ -16,7 +16,7 @@ from donate4fun.settings import LndSettings
 from donate4fun.models import Donation, YoutubeChannel, Donator
 from donate4fun.db import Notification
 
-from tests.test_util import verify_fixture, verify_response, check_response
+from tests.test_util import verify_fixture, verify_response, check_response, freeze_time
 
 
 @pytest.fixture
@@ -24,13 +24,13 @@ async def payer_lnd():
     return LndClient(LndSettings(url='http://localhost:10002', lnurl_base_url='http://test'))
 
 
-@pytest.mark.freeze_time('2022-02-02 22:22:22')
+@freeze_time
 async def test_latest_donations(client, paid_donation_fixture, freeze_request_hash_json):
     response = await client.get("/api/v1/donations/latest")
     verify_response(response, 'latest-donations', 200)
 
 
-@pytest.mark.freeze_time('2022-02-02 22:22:22')
+@freeze_time
 async def test_donator_donations(client, paid_donation_fixture, freeze_request_hash_json, db):
     async with db.session() as db_session:
         await db_session.save_donator(paid_donation_fixture.donator)
@@ -132,21 +132,26 @@ async def test_donate_full(
     client, app, freeze_donation_id, freeze_youtube_channel_id, payer_lnd: LndClient,
     freeze_request_hash_json,
 ):
+    video_id = 'rq2SVMXEMPI'
     donate_response: DonateResponse = await client.post(
         "/api/v1/donate",
-        json=DonateRequest(amount=20, target='https://www.youtube.com/c/Alex007SC2').dict(),
+        json=DonateRequest(amount=20, target=f'https://www.youtube.com/watch?v={video_id}').dict(),
     )
     check_response(donate_response, 200)
     assert donate_response.json()['donation']['id'] == str(freeze_donation_id)
     payment_request = donate_response.json()['payment_request']
-    async with anyio.create_task_group() as tg, client.ws_session(f"/api/v1/subscribe/donation:{freeze_donation_id}") as ws:
+    donation_ws_ctx = client.ws_session(f"/api/v1/subscribe/donation:{freeze_donation_id}")
+    youtube_video_ws_ctx = client.ws_session(f"/api/v1/subscribe/youtube-video-by-vid:{video_id}")
+    async with anyio.create_task_group() as tg, donation_ws_ctx as donation_ws, youtube_video_ws_ctx as youtube_video_ws:
         await tg.start(monitor_invoices, app.lnd, app.db)
         await payer_lnd.pay_invoice(payment_request)
-        while True:
-            notification = Notification.parse_obj(await ws.receive_json())
-            assert notification.status == 'OK'
-            assert notification.id == freeze_donation_id
-            break
+        with anyio.fail_after(5):
+            donation_notification = Notification.parse_obj(await donation_ws.receive_json())
+        assert donation_notification.status == 'OK'
+        assert donation_notification.id == freeze_donation_id
+        with anyio.fail_after(5):
+            youtube_video_notification = Notification.parse_obj(await youtube_video_ws.receive_json())
+        assert youtube_video_notification.status == 'OK'
         tg.cancel_scope.cancel()
     donation_response = await client.get(f"/api/v1/donation/{freeze_donation_id}")
     check_response(donation_response, 200)
@@ -297,3 +302,18 @@ async def test_lnauth(client, case_name, donator, donator_id):
     verify_response(me_response, f'lnauth-me-{case_name}', 200)
     new_donator = Donator.parse_obj(me_response.json()['donator'])
     assert new_donator.lnauth_pubkey == sk.verifying_key.to_string().hex()
+
+
+async def test_youtube_video(client):
+    youtube_videoid = 'sLcdanDHPjM'
+    origin = 'https://youtube.com'
+    response = await client.get(f"/api/v1/youtube-video/{youtube_videoid}", headers=dict(origin=origin))
+    verify_response(response, 'youtube-video', 200)
+    assert response.headers['access-control-allow-origin'] == origin
+
+
+async def test_youtube_video_no_cors(client):
+    youtube_videoid = 'sLcdanDHPjM'
+    response = await client.get(f"/api/v1/youtube-video/{youtube_videoid}", headers=dict(origin="https://unallowed.com"))
+    check_response(response, 200)
+    assert 'Access-Control-Allow-Origin' not in response.headers

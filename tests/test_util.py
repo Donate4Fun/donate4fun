@@ -50,3 +50,6 @@ def verify_response(response, name, status_code=None):
     elif content_type == 'application/xml':
         data = dict(status_code=response.status_code, xml=response.text)
     verify_fixture(data, name)
+
+
+freeze_time = pytest.mark.freeze_time('2022-02-02 22:22:22', ignore=['logging'])

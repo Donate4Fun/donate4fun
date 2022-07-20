@@ -41,7 +41,7 @@ services:
     ]
     ports:
     - "127.0.0.1:${BITCOIN_RPC_PORT}:${BITCOIN_RPC_PORT}"
-    - "${BITCOIN_PORT}:${BITCOIN_PORT}"
+    - "127.0.0.1:${BITCOIN_PORT}:${BITCOIN_PORT}"
     volumes:
     - ./bitcoind-data:/data
 

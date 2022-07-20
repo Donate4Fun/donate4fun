@@ -6,8 +6,8 @@
 <!-- img src={logo} alt="Donate4.Fun Logo" / -->
 <Link to="/" style="text-decoration: none;">
   <div class="parent">
-    <img class=bolt src="/ln-icon.svg" alt="bolt">
-    <img class=text src="/D.svg" alt="D">
+    <img class=bolt src="/static/ln-icon.svg" alt="bolt">
+    <img class=text src="/static/D.svg" alt="D">
     <div class=text>
       <span class="stroke"><span>Donate4Fun</span></span>
       <span class="gradient"><span>Donate4Fun</span></span>
@@ -64,13 +64,5 @@ span.stroke {
     calc(-1 * var(--stroke-width)) calc(1 * var(--stroke-width))  var(--stroke-color),
     calc(1 * var(--stroke-width))  calc(-1 * var(--stroke-width)) var(--stroke-color),
     calc(-1 * var(--stroke-width)) calc(-1 * var(--stroke-width)) var(--stroke-color);
-}
-div sup {
-  font-size: 14px;
-  line-height: 19px;
-  font-weight: 700;
-  color: var(--stroke-color);
-  position: relative;
-  top: -0.7em;
 }
 </style>

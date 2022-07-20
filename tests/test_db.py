@@ -6,7 +6,7 @@ from donate4fun.models import Donation, Donator, YoutubeChannel
 from donate4fun.types import RequestHash
 from donate4fun.db import DonationDb, Notification
 
-from tests.test_util import verify_fixture
+from tests.test_util import verify_fixture, freeze_time
 
 
 pytestmark = pytest.mark.anyio
@@ -24,13 +24,13 @@ async def test_query_donation(db_session, unpaid_donation_fixture):
     assert donation == unpaid_donation_fixture
 
 
-@pytest.mark.freeze_time('2022-02-02 22:22:22')
+@freeze_time
 async def test_query_donations(db_session, paid_donation_fixture, freeze_request_hash):
     donations = await db_session.query_donations(DonationDb.paid_at.isnot(None))
     verify_fixture([donation.dict() for donation in donations], 'query-donations')
 
 
-@pytest.mark.freeze_time('2022-02-02 22:22:22')
+@freeze_time
 async def test_create_donation(db_session):
     youtube_channel = YoutubeChannel(channel_id='q2dsaf', title='asdzxc', thumbnail_url='1wdasd')
     await db_session.save_youtube_channel(youtube_channel)

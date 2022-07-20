@@ -29,7 +29,7 @@
   <h1>Claim donations</h1>
   <span>Check donations for your YouTube channel</span>
   <form on:submit|preventDefault={claim}>
-    <div class=url><Input type=url placeholder="Paste YouTube URL" bind:value={donatee} bind:error={error} logo=url(/youtube.svg) required/></div>
+    <div class=url><Input type=url placeholder="Paste YouTube URL" bind:value={donatee} bind:error={error} logo=url(/static/youtube.svg) required/></div>
     <Button type=submit class="submit white">
       {#if spin}
       <Spinner class="spinner" size=20px width=3px/>

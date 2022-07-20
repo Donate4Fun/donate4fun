@@ -52,7 +52,6 @@ class DonateRequest(BaseModel):
     channel_id: UUID | None
     target: HttpUrl | None
     message: str | None
-    donater: str | None
 
 
 class YoutubeChannelRequest(BaseModel):

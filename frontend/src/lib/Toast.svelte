@@ -2,15 +2,12 @@
   import { flip } from "svelte/animate";
   import { fly } from "svelte/transition";
   import { notifications } from "./notifications.js";
-
-  export let title = null;
-  export let message = null;
 </script>
 
 <div class="notifications">
 {#each [...$notifications].reverse() as notification (notification.id)}
   <div class="toast" animate:flip in:fly={{ y: -30 }} out:fly>
-    <img src="/exclamation-red.svg" alt="exclamation">
+    <img src="/static/exclamation-red.svg" alt="exclamation">
     <div class="text">
       <div class="title">{notification.title}</div>
       <div class="message">{notification.message}</div>

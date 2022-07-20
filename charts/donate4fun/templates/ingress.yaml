@@ -54,7 +54,7 @@ spec:
 apiVersion: networking.gke.io/v1beta1
 kind: FrontendConfig
 metadata:
-  name: {{ $fullName}}
+  name: {{ $fullName }}
 spec:
   redirectToHttps:
     enabled: true

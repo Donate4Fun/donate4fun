@@ -1,5 +1,5 @@
 <span {...$$restProps}>
-  <img src="/exclamation.svg" alt="exclamation">
+  <img src="/static/exclamation.svg" alt="exclamation">
   <div>
     <slot />
   </div>

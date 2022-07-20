@@ -55,7 +55,7 @@
 </script>
 
 <Section class="donate">
-  <h1><img src="/coin.png" alt="coin"><span>Donate</span></h1>
+  <h1><img src="/static/coin.png" alt="coin"><span>Donate</span></h1>
   <form on:submit|preventDefault={donate}>
     <div class="first-line">
       <span class="i-want">I want to donate</span>
@@ -64,7 +64,7 @@
     </div>
     <div class="second-line">
       <span class=to>To</span>
-      <div class="url"><Input type="text" placeholder="Paste YouTube URL" bind:value={target} bind:error={error} logo=url(/youtube.svg) required /></div>
+      <div class="url"><Input type="text" placeholder="Paste YouTube URL" bind:value={target} bind:error={error} logo=url(/static/youtube.svg) required /></div>
       <Button class="submit" type=submit>
         {#if spin}
         <Spinner class="spinner" size=20px width=3px/>
@@ -155,6 +155,10 @@ form > div {
 }
 .second-line {
   justify-content: space-between;
+}
+.second-line .url {
+  margin-left: 14px;
+  margin-right: 24px;
 }
 form :global(.submit) {
   width: 180px;
