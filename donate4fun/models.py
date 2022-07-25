@@ -90,6 +90,7 @@ class YoutubeVideo(BaseModel):
     video_id: str
     thumbnail_url: Url | None
     total_donated: int = 0
+    default_audio_language: str | None
 
     class Config:
         orm_mode = True

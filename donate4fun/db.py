@@ -41,6 +41,7 @@ class YoutubeVideoDb(Base):
     title = Column(String)
     thumbnail_url = Column(String)
     total_donated = Column(BigInteger, nullable=False, server_default=text('0'))
+    default_audio_language = Column(String)
 
     youtube_channel = relationship(YoutubeChannelDb, lazy='joined')
 

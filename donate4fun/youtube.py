@@ -50,6 +50,7 @@ class VideoInfo(BaseModel):
     id: VideoId
     title: str
     thumbnail: Url
+    default_audio_language: str
 
 
 @dataclass
@@ -128,6 +129,7 @@ async def fetch_donatee_by_video(aiogoogle, youtube, video_id: str) -> YoutubeDo
             id=item['id'],
             title=snippet['title'],
             thumbnail=snippet['thumbnails']['default']['url'],
+            default_audio_language=snippet.get('defaultAudioLanguage', 'en'),
         )
     )
 

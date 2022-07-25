@@ -108,6 +108,7 @@ async def donate(
                 video_id=video.id,
                 title=video.title,
                 thumbnail_url=video.thumbnail,
+                default_audio_language=video.default_audio_language,
             )
             await db_session.save_youtube_video(youtube_video)
         else:

@@ -19,6 +19,7 @@ json:
       thumbnail_url: https://yt3.ggpht.com/XRROgwcAhtZPrd7FWz0jLU3b1ii45tmP1SX9BvWrZOFl4iTDKoSruJtK0wm8q4Lf2PlVJmoGTw=s240-c-k-c0x00ffffff-no-rj
       title: Alex007SC2
     youtube_video:
+      default_audio_language: ru
       id: 00000000-0000-0000-0000-000000000001
       thumbnail_url: https://i.ytimg.com/vi/7qH7WMzqOlU/default.jpg
       title: "\u0418\u0413\u0420\u042B \u041F\u041E\u0416\u0418\u041B\u041E\u0413\u041E\
