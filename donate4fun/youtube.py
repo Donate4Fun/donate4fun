@@ -93,7 +93,7 @@ def withyoutube(func):
 async def fetch_channel_by_owner(aiogoogle, youtube, creds: ClientCreds) -> ChannelInfo:
     req = youtube.channels.list(mine=True, part='snippet')
     res = await aiogoogle.as_user(req, user_creds=creds)
-    items = res['items']
+    items = res.get('items')
     if not items:
         raise YoutubeChannelNotFound
     channel = items[0]
