@@ -46,7 +46,7 @@ div:before {
   mask:
      linear-gradient(#fff 0 0) content-box,
      linear-gradient(#fff 0 0);
-  mask-composite: exclude;
+  mask-composite: exclude !important;
   -webkit-mask:
      linear-gradient(#fff 0 0) content-box,
      linear-gradient(#fff 0 0);
