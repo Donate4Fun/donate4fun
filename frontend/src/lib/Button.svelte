@@ -7,7 +7,6 @@
 
   const dispatch = createEventDispatcher();
   function click(ev) {
-    console.log("click", ev, link);
     if (link !== null) {
       if (target !== null) {
         window.open(link, target).focus();
@@ -22,7 +21,7 @@
 
 <button {...$$restProps} on:click={click}>
   <div>
-    <slot>asdadd</slot>
+    <slot />
   </div>
 </button>
 
