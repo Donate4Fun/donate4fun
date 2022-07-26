@@ -2,13 +2,18 @@ import { writable, get } from "svelte/store";
 import api from "../lib/api.js";
 
 
-const { subscribe, update, set } = writable({})
+const { subscribe, update, set } = writable({});
+
+let loadPromise = null;
 
 async function init() {
-  const curr = get(me);
-  if (!('donator' in curr)) { 
-    await load();
+  if (loadPromise === null) {
+    const curr = get(me);
+    if (!('donator' in curr)) {
+      loadPromise = load();
+    }
   }
+  await loadPromise;
 }
 
 async function load() {
