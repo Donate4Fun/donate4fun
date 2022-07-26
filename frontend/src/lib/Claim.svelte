@@ -37,8 +37,10 @@
 <Section class="claim">
   <h1>Claim donations</h1>
   <span>Check donations for your YouTube channel</span>
-  <div>Linked YouTube channels:</div>
   {#await me.init() then}
+  {#if $me.youtube_channels.length > 0}
+  <div>Linked YouTube channels:</div>
+  {/if}
   <ul>
   {#each $me.youtube_channels as channel}
     <li><ChannelLogo url={channel.thumbnail_url} size=28px /><YoutubeChannel {...channel} linkto=withdraw /></li>
