@@ -21,7 +21,7 @@
 // @updateURL    https://github.com/Donate4Fun/donate4fun/raw/master/extensions/donate4fun.user.js
 // @supportURL   https://github.com/donate4Fun/donate4fun/issues
 // ==/UserScript==
-
+/*global GM_config*/
 
 const styles = `
 #donate4fun-button {
@@ -80,23 +80,34 @@ const donateButtonHtml = `
 </div>
 `;
 
-
 let getButtons;
+let unsubscribeVideoWS;
 
 (() => {
   'use strict';
   GM_addStyle(styles);
   window.addEventListener("yt-navigate-finish", load, true);
+  window.addEventListener("yt-navigate-start", () => {
+    if (unsubscribeVideoWS) {
+      unsubscribeVideoWS();
+    }
+  }, true);
 
   GM_config.init({
     id: 'donate4fun-config',
     title: "Donate4.Fun settings",
     fields: {
-      defaultComment: {
+      defaultComment_en: {
         label: 'Default comment',
         type: 'text',
         size: 100,
         default: 'Hi! I like your video! I’ve donated you %amount% sats. You can take it on "donate 4 fun"'
+      },
+      defaultComment_ru: {
+        label: 'Default comment RU',
+        type: 'text',
+        size: 100,
+        default: 'Классное видео, спасибо! Задонатил тебе на "donate 4 fun"'
       },
       amount: {
         label: 'Amount (sats)',
@@ -127,6 +138,7 @@ let getButtons;
     }
   });
   GM_registerMenuCommand("Settings", (event) => GM_config.open());
+  GM_registerMenuCommand("Login", (event) => login());
 
   if (isMobile()) {
     getButtons = getButtons_mobile;
@@ -137,9 +149,14 @@ let getButtons;
   }
 })();
 
+async function login() {
+  const response = await apiGet("/lnauth");
+  cLog("lnurl", response.lnurl);
+}
+
 function load(evt) {
   cLog("Setting up...", evt);
-  window.removeEventListener("yt-navigate-finish", load, true);
+  //window.removeEventListener("yt-navigate-finish", load, true);
   checkLoaded();
 }
 
@@ -152,6 +169,12 @@ function isMobile() {
 }
 
 function checkLoaded() {
+  const videoId = getVideoId();
+  cLog('videoId', videoId);
+  if (videoId === null) {
+    cLog("it's not a video page, stop checking");
+    return;
+  }
   const is_shorts = isShorts();
   const offset_parent = getButtons()?.offsetParent;
   const is_video_loaded = isVideoLoaded();
@@ -173,7 +196,7 @@ async function patchButtons() {
   buttons.insertBefore(node, buttons.children[0]);
   node.addEventListener("click", onDonateClick, true);
   const videoId = getVideoId();
-  await subscribe(`youtube-video-by-vid:${videoId}`, (msg) => {
+  unsubscribeVideoWS = await subscribe(`youtube-video-by-vid:${videoId}`, (msg) => {
     cLog("youtube video updated", msg);
     fetchStats();
   });
@@ -185,25 +208,45 @@ async function subscribe(topic, on_message) {
   const ws_uri = `wss://${apiHost}/api/v1/subscribe/${topic}`;
   const socket = new WebSocket(ws_uri);
   socket.onmessage = (event) => {
-    console.log(`Message from ${topic}`, event);
+    cLog(`Message from ${topic}`, event);
     try {
       const msg = JSON.parse(event.data);
       on_message(msg);
     } catch (err) {
       console.error(`unexpected websocket ${topic} notification`, err, event);
     }
-  }
+  };
+  socket.onerror = (event) => {
+    cLog(`WebSocket ${topic} error`, event);
+    subscribe(topic, on_message);
+  };
+  let opened = true;
+  socket.onclose = (event) => {
+    cLog(`WebSocket ${topic} closed`, event);
+    if (opened) {
+      cLog(`WebSocket ${topic} reconnect`);
+      subscribe(topic, on_message);
+    }
+  };
   await new Promise((resolve, reject) => {
     socket.onopen = _ => {
-      console.log(`Websocket ${topic} opened`);
+      cLog(`WebSocket ${topic} opened`);
       resolve();
     };
   });
+  function unsubscribe() {
+    opened = false;
+    cLog(`Closing WebSocket ${topic}`);
+    socket.close();
+  }
+  return unsubscribe;
 }
 
 async function apiGet(path) {
   const apiHost = GM_config.get('apiHost');
-  const response = await fetch(`https://${apiHost}/api/v1/${path}`);
+  const response = await fetch(`https://${apiHost}/api/v1/${path}`, {
+    credentials: 'include',
+  });
   return await response.json();
 }
 
@@ -214,7 +257,8 @@ async function apiPost(path, data) {
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify(data)
+    body: JSON.stringify(data),
+    credentials: 'include',
   });
   return await response.json();
 }
@@ -268,16 +312,25 @@ async function onDonateClick(evt) {
     // Show connect dialog
     await webln.enable();
   }
+  const amount = GM_config.get("amount");
   // Make a donation
   const response = await apiPost('donate', {
-    amount: 100,
+    amount: amount,
     target: window.location.href
   });
   cLog("donate response", response);
-  await subscribe(`donation:${response.donation.id}`, async (msg) => {
+  const videoLanguage = response.donation.youtube_video.default_audio_language;
+  let defaultComment;
+  try {
+    defaultComment = GM_config.get(`defaultComment_${videoLanguage}`);
+  } catch (exc) {
+    defaultComment = GM_config.get("defaultComment_en");
+  }
+  let unsubscribeWs = await subscribe(`donation:${response.donation.id}`, async (msg) => {
     cLog("donation updated", msg);
+    unsubscribeWs();
     if (GM_config.get("enableComment")) {
-      await postComment(GM_config.get("defaultComment"));
+      await postComment(defaultComment.replace('%amount%', amount));
     }
   });
   const paymentRequest = response.payment_request;
