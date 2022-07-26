@@ -12,7 +12,7 @@
   {#if linkto === 'external'}
   <a href="https://youtube.com/channel/{channel_id}" target="_blank">{title}</a>
   {:else if linkto === 'withdraw'}
-  <a href="/youtube-channel/{id}" use:link>{title}</a>
+  <a href="/youtube/{id}" use:link>{title}</a>
   {:else if linkto === 'donate'}
   <a href="/donate/{id}" use:link>{title}</a>
   {:else}
