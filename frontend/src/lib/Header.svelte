@@ -13,7 +13,7 @@
 <header {...$$restProps}>
   <div class="logo"><Logo /></div>
   <Social class="onlylarge" />
-  <a class="onlylarge" href=https://calm-bun-531.notion.site/How-to-install-browser-integration-a4cf34af2b5c4cc4a48ac0e5ff5afb51 target="_blank">Add to browser</a>
+  <a class="onlylarge" href=https://donate4fun.notion.site/How-to-install-browser-integration-a4cf34af2b5c4cc4a48ac0e5ff5afb51 target="_blank">Add to browser</a>
   <div class="right">
     {#await me.init()}
     <Loading/>

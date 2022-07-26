@@ -1,7 +1,7 @@
 <footer>
   <div>2022 Donate4Fun<sup>©</sup></div>
   <div class="links">
-    <a href="https://calm-bun-531.notion.site/Donat4-Fun-Roadmap-9fe79f04955b4e6bbac73175efee4351">FAQ</a>
+    <a href="https://donate4fun.notion.site/Donat4-Fun-Roadmap-9fe79f04955b4e6bbac73175efee4351">FAQ</a>
     <a href="/terms.html">Terms of Use</a>
     <a href="/privacy-policy.html">Privacy Policy</a>
   </div>
