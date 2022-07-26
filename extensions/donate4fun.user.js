@@ -128,7 +128,7 @@ let unsubscribeVideoWS;
       apiHost: {
         label: 'API host (for testing)',
         type: 'text',
-        default: 'stage.donate4.fun'
+        default: 'donate4.fun'
       },
       checkInterval: {
         label: 'Check interval (ms)',
