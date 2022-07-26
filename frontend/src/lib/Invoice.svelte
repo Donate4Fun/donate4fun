@@ -1,6 +1,5 @@
 <script>
-  import { createEventDispatcher } from 'svelte';
-  import { onMount } from 'svelte';
+  import {createEventDispatcher, onMount, onDestroy} from 'svelte';
   import Button from "../lib/Button.svelte";
   import Spinner from "../lib/Spinner.svelte";
   import QRCode from "../lib/QRCode.svelte";
@@ -13,12 +12,19 @@
 
   export let donation;
   export let payment_request;
+  let unsubscribe = null;
+  onDestroy(() => {
+    if (unsubscribe !== null) {
+      unsubscribe();
+    }
+  });
 
 	const dispatch = createEventDispatcher();
 
   async function subscribe() {
-    await api.subscribe(`donation:${donation.id}`, async (notification) => {
+    unsubscribe = await api.subscribe(`donation:${donation.id}`, async (notification) => {
       if (notification.status === 'OK') {
+        unsubsribe();
         const response = await api.get(`donation/${donation.id}`);
         dispatch('paid', response.donation);
       }

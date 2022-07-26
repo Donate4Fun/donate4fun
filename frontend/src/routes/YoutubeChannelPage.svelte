@@ -50,12 +50,8 @@
     }
   }
   async function link_youtube() {
-    try {
-      const response = await api.get(`youtube-channel/${channel_id}/login`);
-      window.location.href = response.url;
-    } catch (err) {
-      error = err.response.data.detail;
-    }
+    const response = await api.get(`link-youtube-channel`);
+    window.location.href = response.url;
   }
   const loadPromise = load();
 </script>

@@ -23,6 +23,62 @@ function fullpath(path) {
   return `/api/v1/${path}`
 }
 
+function createWebsocket(topic, on_message, on_close) {
+  const loc = window.location;
+  let scheme;
+  if (loc.protocol === "https:") {
+      scheme = "wss:";
+  } else {
+      scheme = "ws:";
+  }
+  const ws_uri = `${scheme}//${loc.host}/api/v1/subscribe/${topic}`;
+
+  const socket = new WebSocket(ws_uri);
+  socket.onmessage = (event) => {
+    console.log(`[ws] Message from ${topic}`, event);
+    try {
+      const msg = JSON.parse(event.data)
+      on_message(msg)
+    } catch (err) {
+      console.error(`unexpected websocket ${topic} notification`, err, event);
+    }
+  };
+  socket.onerror = (event) => {
+    console.log(`[ws] Error in ${topic}`, event);
+  };
+  socket.onclose = (event) => {
+    console.log(`[ws] Closed ${topic}`, event);
+    on_close();
+  };
+  console.log(`[ws] ${topic} opening`);
+  return socket;
+}
+
+async function subscribe(topic, on_message) {
+  let socket;
+  let opened = true;
+  function onClose() {
+    if (opened) {
+      socket = createWebsocket(topic, on_message, onClose);
+      socket.onopen = _ => {
+        console.log(`[ws] ${topic} opened`);
+      };
+    }
+  }
+  socket = createWebsocket(topic, on_message, onClose);
+  await new Promise((resolve, reject) => {
+    socket.onopen = _ => {
+      console.log(`[ws] ${topic} opened`);
+      resolve();
+    };
+  });
+  return () => {
+    opened = false;
+    socket.close();
+    console.log(`[ws] ${topic} unsubscribed`);
+  };
+}
+
 const api = {
   post: async (path, body) => {
     try {
@@ -41,33 +97,7 @@ const api = {
     }
   },
 
-  subscribe: async (topic, on_message) => {
-    const loc = window.location;
-    let scheme;
-    if (loc.protocol === "https:") {
-        scheme = "wss:";
-    } else {
-        scheme = "ws:";
-    }
-    const ws_uri = `${scheme}//${loc.host}/api/v1/subscribe/${topic}`;
-    console.log(ws_uri);
-    const socket = new WebSocket(ws_uri);
-    socket.onmessage = (event) => {
-      console.log(`Message from ${topic}`, event);
-      try {
-        const msg = JSON.parse(event.data)
-        on_message(msg)
-      } catch (err) {
-        console.error(`unexpected websocket ${topic} notification`, err, event);
-      }
-    }
-    await new Promise((resolve, reject) => {
-      socket.onopen = _ => {
-        console.log(`Websocket ${topic} opened`);
-        resolve();
-      };
-    });
-  }
+  subscribe: subscribe
 };
 
 window.onError = function(message, source, lineno, colno, error) {

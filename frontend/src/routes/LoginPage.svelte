@@ -1,4 +1,5 @@
 <script>
+  import {onDestroy} from "svelte";
   import Lnurl from "../lib/Lnurl.svelte";
   import Button from "../lib/Button.svelte";
   import QRCode from "../lib/QRCode.svelte";
@@ -11,10 +12,17 @@
 
   export let navigate;
   let lnurl;
+  let unsubscribe = null;
+  onDestroy(() => {
+    if (unsubscribe !== null) {
+      unsubscribe();
+    }
+  });
 
   async function load() {
     await me.init();
-    api.subscribe(`donator:${$me.donator.id}`, async (token) => {
+    unsubscribe = await api.subscribe(`donator:${$me.donator.id}`, async (token) => {
+      unsubscribe();
       await api.post('update-session', {creds_jwt: token['message']});
       await me.load();
       navigate(-1);

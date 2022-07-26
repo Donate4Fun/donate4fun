@@ -7,7 +7,8 @@ from urllib.parse import urlencode
 
 import bugsnag
 import ecdsa
-from fastapi import APIRouter, WebSocket, Request, Response, Depends, HTTPException, Query
+import anyio
+from fastapi import APIRouter, WebSocket, Request, Response, Depends, HTTPException, Query, WebSocketDisconnect
 from fastapi.routing import APIRoute
 from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.datastructures import URL
@@ -411,21 +412,29 @@ async def lnauth_callback(
 
 @router.websocket('/subscribe/{topic}')
 async def subscribe(websocket: WebSocket, topic: str):
+    async with anyio.create_task_group() as tg:
+        await tg.start(pump_pubsub_to_websocket, websocket, topic)
+        while True:
+            try:
+                msg = await websocket.receive_json()
+            except WebSocketDisconnect:
+                logger.debug(f"Websocket {topic} disconnected")
+                break
+            else:
+                logger.debug(f"Received '{msg}' from websocket for topic {topic}")
+        tg.cancel_scope.cancel()
+
+
+async def pump_pubsub_to_websocket(websocket: WebSocket, topic: str, *, task_status: TaskStatus):
     db: Database = websocket.app.db
-    try:
-        async with db.pubsub() as sub:
-            async for msg in sub.listen(topic):
-                if msg is None:
-                    await websocket.accept()
-                    logger.debug(f"Accepted ws connection for {topic}")
-                else:
-                    await websocket.send_text(msg.json())
-    except Exception as exc:
-        logger.exception("Exception in ws handler")
-        await websocket.send_json(dict(status='error', error=repr(exc)))
-    finally:
-        logger.debug(f"Closing ws connection for {topic}")
-        await websocket.close()
+    async with db.pubsub() as sub:
+        async for msg in sub.listen(topic):
+            if msg is None:
+                await websocket.accept()
+                logger.debug(f"Accepted ws connection for {topic}")
+                task_status.started()
+            else:
+                await websocket.send_text(msg.json())
 
 
 class UpdateSessionRequest(BaseModel):

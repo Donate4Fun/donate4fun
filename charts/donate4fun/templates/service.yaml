@@ -28,4 +28,5 @@ metadata:
 spec:
   logging:
     enable: true
+  timeoutSec: 1800  # This is needed for websocket
 {{- end }}

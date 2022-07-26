@@ -1,5 +1,5 @@
 <script>
-  import {createEventDispatcher} from "svelte";
+  import {createEventDispatcher, onDestroy} from "svelte";
   import {link, useResolve, navigate} from "svelte-navigator";
   import Loading from "../lib/Loading.svelte";
   import Donation from "../lib/Donation.svelte";
@@ -28,6 +28,12 @@
   const min_withdraw = 100;
   const dispatch = createEventDispatcher();
   const resolve = useResolve();
+  let unsubscribe = null;
+  onDestroy(() => {
+    if (unsubscribe !== null) {
+      unsubscribe();
+    }
+  });
 
   async function load() {
     const base = `youtube-channel/${channel_id}`;
@@ -37,7 +43,8 @@
       lnurl = response.lnurl;
       amount = response.amount;
       title.set(`Withdraw ${amount} sats for ${youtube_channel.title} [${youtube_channel.id}]`);
-      api.subscribe(`withdrawal:${channel_id}`, (msg) => {
+      unsubscribe = await api.subscribe(`withdrawal:${channel_id}`, (msg) => {
+        unsubscribe();
         if (msg.status === 'ERROR') {
           notify(msg.message);
         }

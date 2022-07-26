@@ -21,7 +21,7 @@ jwt = "^1.3.1"
 aiogoogle = "^4.1.0"
 databases = {extras = ["asyncpg"], version = "^0.5.5"}
 asyncpg = "^0.25.0"
-hypercorn = "^0.13.2"
+hypercorn = {git = "https://gitlab.com/nikicat/hypercorn", rev = "main"}
 email-validator = "^1.2.1"
 fastapi-debug-toolbar = "^0.2.1"
 PyJWT = "^2.4.0"

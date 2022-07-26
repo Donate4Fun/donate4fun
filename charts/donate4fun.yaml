@@ -23,6 +23,7 @@ backend:
     hypercorn:
       use_reloader: false
       bind: '[::]:8080'
+      websocket_ping_interval: 10
     youtube:
       oauth:
         redirect_base_url: https://donate4.fun
@@ -50,10 +51,10 @@ backend:
       loggers:
         donate4fun:
           level: DEBUG
-        vcr:
-          level: WARNING
         sqlalchemy.engine.Engine:
           level: INFO
+        hypercorn:
+          level: DEBUG
       root:
         level: DEBUG
         propagate: true
