@@ -81,10 +81,6 @@ main > :global(.message) {
 main > :global(.copy-button) {
   margin-bottom: 20px;
 }
-.youtube_channel_thumbnail {
-  width: 3em;
-  height: 3em;
-}
 .header {
   font-weight: 900;
   font-size: 24px;
