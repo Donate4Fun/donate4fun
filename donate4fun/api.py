@@ -192,7 +192,7 @@ async def status(db=Depends(get_db_session), lnd=Depends(get_lnd)):
 
 class MeResponse(BaseModel):
     donator: Donator
-    youtube_channels: list[UUID]
+    youtube_channels: list[YoutubeChannel]
 
 
 @router.get("/donator/me", response_model=MeResponse)
@@ -201,7 +201,7 @@ async def me(request: Request, db=Depends(get_db_session), donator: Donator = De
         donator = await db.query_donator(donator.id)
     except NoResultFound:
         pass
-    linked_youtube_channels = await db.query_donator_youtube_channels(donator.id)
+    linked_youtube_channels: list[YoutubeChannel] = await db.query_donator_youtube_channels(donator.id)
     return MeResponse(donator=donator, youtube_channels=linked_youtube_channels)
 
 
@@ -334,8 +334,8 @@ class GoogleAuthState(BaseModel):
     donator_id: UUID
 
 
-@router.get('/youtube-channel/{channel_id}/login', response_class=JSONResponse)
-async def login_via_google(request: Request, channel_id: UUID, donator=Depends(get_donator)):
+@router.get('/link-youtube-channel', response_class=JSONResponse)
+async def login_via_google(request: Request, donator=Depends(get_donator)):
     aiogoogle = Aiogoogle()
     url = aiogoogle.oauth2.authorization_url(
         client_creds=dict(
@@ -364,15 +364,20 @@ async def auth_google(
             'error_description': error_description
         }
     elif code:
-        channel_info: ChannelInfo = await fetch_user_channel(request, code)
-        youtube_channel = YoutubeChannel(
-            channel_id=channel_info.id,
-            title=channel_info.title,
-            thumbnail_url=channel_info.thumbnail,
-        )
-        await db_session.save_youtube_channel(youtube_channel)
-        await db_session.link_youtube_channel(youtube_channel, donator)
-        return RedirectResponse(auth_state.last_url)
+        try:
+            channel_info: ChannelInfo = await fetch_user_channel(request, code)
+        except Exception:
+            # TODO: add exception info to last_url hash param and show it using toast
+            return RedirectResponse(auth_state.last_url)
+        else:
+            youtube_channel = YoutubeChannel(
+                channel_id=channel_info.id,
+                title=channel_info.title,
+                thumbnail_url=channel_info.thumbnail,
+            )
+            await db_session.save_youtube_channel(youtube_channel)
+            await db_session.link_youtube_channel(youtube_channel, donator)
+            return RedirectResponse(f'/youtube/{youtube_channel.id}')
     else:
         # Should either receive a code or an error
         raise Exception("Something's probably wrong with your callback")

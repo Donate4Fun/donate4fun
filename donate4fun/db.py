@@ -221,12 +221,13 @@ class DbSession(BaseDbSession):
         scalar = result.scalars().one()
         return Donator.from_orm(scalar)
 
-    async def query_donator_youtube_channels(self, donator_id: UUID) -> list[UUID]:
+    async def query_donator_youtube_channels(self, donator_id: UUID) -> list[YoutubeChannel]:
         result = await self.execute(
-            select(YoutubeChannelLink.youtube_channel_id)
+            select(YoutubeChannelDb)
+            .join(YoutubeChannelLink, YoutubeChannelDb.id == YoutubeChannelLink.youtube_channel_id)
             .where(YoutubeChannelLink.donator_id == donator_id)
         )
-        return result.scalars().all()
+        return [YoutubeChannel.from_orm(obj) for obj in result.unique().scalars()]
 
     async def query_donations(self, where, limit=20):
         result = await self.execute(

@@ -66,7 +66,7 @@
     <div class="controls">
     {#if balance >= min_withdraw}
       <div class="available">Available BTC to withdraw: <Amount amount={balance} /></div>
-      {#if $me.youtube_channels.includes(channel_id)}
+      {#if $me.youtube_channels.filter(elem => elem.id === channel_id).length > 0}
         <Button class="withdraw" link='{resolve("withdraw")}'>Withdraw</Button>
       {:else}
         <Infobox>You can withdraw donations if the channel belongs to you. Confirm by linking your Youtube channel.</Infobox>

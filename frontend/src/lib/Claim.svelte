@@ -1,15 +1,20 @@
 <script>
-  import { navigate } from "svelte-navigator";
+  import {navigate, useResolve} from "svelte-navigator";
 
   import Section from "../lib/Section.svelte";
   import Input from "../lib/Input.svelte";
   import Button from "../lib/Button.svelte";
   import Spinner from "../lib/Spinner.svelte";
+  import Infobox from "../lib/Infobox.svelte";
+  import YoutubeChannel from "../lib/YoutubeChannel.svelte";
+  import ChannelLogo from "../lib/ChannelLogo.svelte";
   import api from "../lib/api.js";
+  import { me } from "../lib/session.js";
 
   let donatee;
   let spin = false;
   let error = null;
+  const resolve = useResolve();
 
   async function claim() {
     spin = true;
@@ -23,11 +28,25 @@
     }
     spin = false;
   }
+  async function link_youtube() {
+    const response = await api.get(`link-youtube-channel`);
+    window.location.href = response.url;
+  }
 </script>
 
 <Section class="claim">
   <h1>Claim donations</h1>
   <span>Check donations for your YouTube channel</span>
+  <div>Linked YouTube channels:</div>
+  {#await me.init() then}
+  <ul>
+  {#each $me.youtube_channels as channel}
+    <li><ChannelLogo url={channel.thumbnail_url} size=28px /><YoutubeChannel {...channel} linkto=withdraw /></li>
+  {/each}
+  </ul>
+  {/await}
+  <Infobox>Until this app is verified by Google you will see a warning message. It's OK to bypass it. <a href="">More info</a></Infobox>
+  <div class="link"><Button on:click={link_youtube}>Link your Youtube channel</Button></div>
   <form on:submit|preventDefault={claim}>
     <div class=url><Input type=url placeholder="Paste YouTube URL" bind:value={donatee} bind:error={error} logo=url(/static/youtube.svg) required/></div>
     <Button type=submit class="submit white">
@@ -57,6 +76,12 @@
     margin-bottom: 25px;
   }
 }
+.link {
+  margin-top: 16px;
+}
+.link,.link > :global(*) {
+  width: 100%;
+}
 h1 {
   margin-top: 0px;
   margin-bottom: 16px;
@@ -64,6 +89,16 @@ h1 {
 span {
   font-size: 14px;
   line-height: 17px;
+}
+ul {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 @media (min-width: 641px) {
   :global(.claim) {
