@@ -101,13 +101,13 @@ let unsubscribeVideoWS;
         label: 'Default comment',
         type: 'text',
         size: 100,
-        default: 'Hi! I like your video! I’ve donated you %amount% sats. You can take it on "donate 4 fun"'
+        default: 'Hi! I like your video! I’ve donated you on "donate 4 fun", google it'
       },
       defaultComment_ru: {
         label: 'Default comment RU',
         type: 'text',
         size: 100,
-        default: 'Классное видео, спасибо! Задонатил тебе на "donate 4 fun"'
+        default: 'Классное видео, спасибо! Задонатил тебе на "donate 4 fun", загугли'
       },
       amount: {
         label: 'Amount (sats)',
