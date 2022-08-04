@@ -51,7 +51,9 @@
         <Lnurl lnurl="{lnurl}" class="lnurl" />
         <Button class="grey" on:click={() => navigate(-1)}>Cancel</Button>
       </div>
-      <div class=waiting><Spinner />Waiting for you...</div>
+      <div class=waiting>
+        <Spinner /><span>Waiting for you...</span>
+      </div>
     </Section>
   </div>
   {/await}

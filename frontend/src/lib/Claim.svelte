@@ -55,7 +55,7 @@
       {#if spin}
       <Spinner class="spinner" size=20px width=3px/>
       {/if}
-      Check donation
+      <span>Check donation</span>
     </Button>
   </form>
 </Section>
