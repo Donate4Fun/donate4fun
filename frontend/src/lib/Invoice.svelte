@@ -1,7 +1,6 @@
 <script>
   import {createEventDispatcher, onMount, onDestroy} from 'svelte';
   import Button from "../lib/Button.svelte";
-  import Spinner from "../lib/Spinner.svelte";
   import QRCode from "../lib/QRCode.svelte";
   import Loading from "../lib/Loading.svelte";
   import Lnurl from "../lib/Lnurl.svelte";
