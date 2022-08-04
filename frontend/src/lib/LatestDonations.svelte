@@ -27,13 +27,17 @@
         <div>Who</div><div>When</div><div>Amount</div><div>Blogger</div>
       </div>
       {#each donations as donation}
-        <Donator user={donation.donator} class="ellipsis" />
-        <div class=vcenter><Datetime dt={donation.paid_at} /></div>
-        <div class=vcenter><Amount amount={donation.amount} /></div>
         <div class=blogger>
           <ChannelLogo url={donation.youtube_channel.thumbnail_url} size=28px />
+          {#if donation.youtube_video}
+          <div class=vcenter title="{donation.youtube_video.title}"><a href="/donate/{donation.youtube_channel.id}" class="ellipsis" use:link>{donation.youtube_channel.title}</a></div>
+          {:else}
           <div class=vcenter><a href="/donate/{donation.youtube_channel.id}" class="ellipsis" use:link>{donation.youtube_channel.title}</a></div>
+          {/if}
         </div>
+        <div class=vcenter><Datetime dt={donation.paid_at} /></div>
+        <div class=vcenter><Amount amount={donation.amount} /></div>
+        <Donator user={donation.donator} class="ellipsis" />
       {/each}
     </div>
     <div class=fadeout></div>
@@ -44,7 +48,7 @@
 :global(.donations) {
   width: 537px;
   height: 501px;
-  padding: 36px 40px 0 36px;
+  padding: 36px 12px 0 36px;
   display: grid;
   overflow: hidden;
   position: relative;
@@ -78,7 +82,7 @@ h1 {
 }
 .table {
   display: grid;
-  grid-template-columns: 128px 109px 80px 98px;
+  grid-template-columns: 158px 109px 80px 168px;
   column-gap: 20px;
   row-gap: 26px;
   font-size: 12px;
