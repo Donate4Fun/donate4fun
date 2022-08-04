@@ -9,6 +9,9 @@ class ApiError extends Error {
   }
 }
 
+class ApiClientError extends Error {
+}
+
 function handle_response(response) {
   if (response.status === 200) {
     console.log(`received response for ${response.request.responseURL}`, response);
@@ -16,6 +19,15 @@ function handle_response(response) {
   } else {
     console.error(`API error in ${response.request.responseURL}`, response);
     throw new ApiError(response);
+  }
+}
+
+function handle_error(error) {
+  if (error.response) {
+    return handle_response(error.response);
+  } else {
+    console.error('API error', error);
+    throw new ApiClientError(error);
   }
 }
 
@@ -85,7 +97,7 @@ const api = {
       const resp = await axios.post(fullpath(path), body);
       return handle_response(resp);
     } catch (error) {
-      return handle_response(error.response);
+      return handle_error(error);
     }
   },
 
@@ -93,7 +105,7 @@ const api = {
     try {
       return handle_response(await axios.get(fullpath(path)));
     } catch (error) {
-      return handle_response(error.response);
+      return handle_error(error);
     }
   },
 
