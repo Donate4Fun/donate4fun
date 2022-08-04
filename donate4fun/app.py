@@ -41,7 +41,7 @@ async def create_app(settings: Settings):
         allow_credentials=True,
     )
     # same_site = None is needed for CORS auth
-    app.add_middleware(AuthlibMiddleware, secret_key=settings.jwt_secret, same_site="None")
+    app.add_middleware(AuthlibMiddleware, secret_key=settings.jwt_secret, same_site="None", https_only=True)
     app.mount("/static", StaticFiles(directory="donate4fun/static"), name="static")
     app.include_router(api.router, prefix="/api/v1")
     app.include_router(web.router, prefix="")
