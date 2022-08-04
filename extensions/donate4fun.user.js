@@ -2,7 +2,7 @@
 // @name         Donate4.Fun
 // @namespace    https://donate4.fun/
 // @homepage     https://donate4.fun/
-// @version      0.1
+// @version      0.2
 // @description  Donate4.Fun YouTube helper
 // @author       nbryskin
 // @match        *://*.youtube.com/*
@@ -63,6 +63,43 @@ const styles = `
   fill: var(--iron-icon-fill-color,currentcolor);
   stroke: var(--iron-icon-stroke-color,none);
 }
+
+#donate4fun-button .dff-loading {
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: bottom;
+  animation: donate4fun-ellipsis steps(3,end) 600ms infinite;
+  --width: 0.6em;
+}
+
+@keyframes donate4fun-ellipsis {
+  from {
+    margin-left: 0;
+    margin-right: var(--width);
+    width: 0;
+  }
+  50% {
+    margin-left: 0;
+    margin-right: 0;
+    width: var(--width);
+  }
+  to {
+    margin-left: var(--width);
+    margin-right: 0;
+    width: 0;
+  }
+}
+
+#donate4fun-button .dff-icon-animate {
+  animation: 600ms cubic-bezier(.7,.09,.93,.68) 0s infinite donate4fun-beat;
+}
+
+@keyframes donate4fun-beat {
+  to {
+    transform: scale(2);
+    opacity: 0%;
+  }
+}
 `;
 
 const donateButtonHtml = `
@@ -75,7 +112,7 @@ const donateButtonHtml = `
         </g>
       </svg>
     </div>
-    <div class="dff-text">...</div>
+    <div class="dff-text dff-loading">…</div>
   </div>
 </div>
 `;
@@ -101,13 +138,13 @@ let unsubscribeVideoWS;
         label: 'Default comment',
         type: 'text',
         size: 100,
-        default: 'Hi! I like your video! I’ve donated you on "donate 4 fun", google it'
+        default: 'Hi! I like your video! I’ve donated you on "donate 4 fun", just google it'
       },
       defaultComment_ru: {
         label: 'Default comment RU',
         type: 'text',
         size: 100,
-        default: 'Классное видео, спасибо! Задонатил тебе на "donate 4 fun", загугли'
+        default: 'Классное видео, спасибо! Задонатил тебе на "donate 4 fun"'
       },
       amount: {
         label: 'Amount (sats)',
@@ -128,7 +165,7 @@ let unsubscribeVideoWS;
       apiHost: {
         label: 'API host (for testing)',
         type: 'text',
-        default: 'donate4.fun'
+        default: 'stage.donate4.fun'
       },
       checkInterval: {
         label: 'Check interval (ms)',
@@ -203,7 +240,7 @@ async function patchButtons() {
   await fetchStats();
 }
 
-async function subscribe(topic, on_message) {
+function createWebsocket(topic, on_message, on_close) {
   const apiHost = GM_config.get('apiHost');
   const ws_uri = `wss://${apiHost}/api/v1/subscribe/${topic}`;
   const socket = new WebSocket(ws_uri);
@@ -220,25 +257,34 @@ async function subscribe(topic, on_message) {
     cLog(`WebSocket ${topic} error`, event);
     subscribe(topic, on_message);
   };
-  let opened = true;
   socket.onclose = (event) => {
     cLog(`WebSocket ${topic} closed`, event);
+    on_close();
+  };
+  return socket;
+}
+
+async function subscribe(topic, on_message) {
+  let opened = true;
+  let socket = null;
+  function onClose() {
     if (opened) {
       cLog(`WebSocket ${topic} reconnect`);
-      subscribe(topic, on_message);
+      socket = createWebsocket(topic, on_message, onClose);
     }
-  };
+  }
+  function unsubscribe() {
+    opened = false;
+    cLog(`Closing WebSocket ${topic}`);
+    socket.close();
+  }
+  socket = createWebsocket(topic, on_message, onClose);
   await new Promise((resolve, reject) => {
     socket.onopen = _ => {
       cLog(`WebSocket ${topic} opened`);
       resolve();
     };
   });
-  function unsubscribe() {
-    opened = false;
-    cLog(`Closing WebSocket ${topic}`);
-    socket.close();
-  }
   return unsubscribe;
 }
 
@@ -269,6 +315,7 @@ async function fetchStats() {
   const videoInfo = await apiGet(`youtube-video/${videoId}`);
   cLog("video info", videoInfo);
   totalDonatedNode.innerText = videoInfo.total_donated;
+  totalDonatedNode.classList.remove("dff-loading");
 }
 
 function sleep(ms) {
@@ -308,6 +355,8 @@ async function onDonateClick(evt) {
     showError("Install compatible Bitcoin Lightning wallet");
     return;
   }
+  const boltElement = document.querySelector("#donate4fun-button .dff-icon");
+  boltElement.classList.add("dff-icon-animate");
   if (!webln.enabled) {
     // Show connect dialog
     await webln.enable();
@@ -329,6 +378,7 @@ async function onDonateClick(evt) {
   let unsubscribeWs = await subscribe(`donation:${response.donation.id}`, async (msg) => {
     cLog("donation updated", msg);
     unsubscribeWs();
+    boltElement.classList.remove("dff-icon-animate");
     if (GM_config.get("enableComment")) {
       await postComment(defaultComment.replace('%amount%', amount));
     }
