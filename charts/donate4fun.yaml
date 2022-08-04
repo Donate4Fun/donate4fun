@@ -24,6 +24,7 @@ backend:
       use_reloader: false
       bind: '[::]:8080'
       websocket_ping_interval: 10
+      access_log_format: '%(h)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"'
     youtube:
       oauth:
         redirect_base_url: https://donate4.fun
@@ -33,6 +34,7 @@ backend:
     min_withdraw: 10
     fee_limit: 10
     withdraw_timeout: 10
+    ownership_message: "I confirm that donate 4 fun account {donator_id} could withdraw my donations."
     fastapi:
       debug: false
       root_path: ""

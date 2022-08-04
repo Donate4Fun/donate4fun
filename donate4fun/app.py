@@ -69,10 +69,11 @@ async def serve():
             bugsnag.configure(**settings.bugsnag.dict(), project_root=os.path.dirname(__file__))
         lnd = LndClient(settings.lnd)
         db = Database(settings.db)
-        hyper_config = Config.from_mapping(settings.hypercorn)
         app.db = db
         app.lnd = lnd
         app.task_group = tg
         tg.start_soon(monitor_invoices_loop, lnd, db)
+        hyper_config = Config.from_mapping(settings.hypercorn)
+        hyper_config.accesslog = logging.getLogger('hypercorn.acceslog')
         await hypercorn_serve(BugsnagMiddleware(app), hyper_config)
         tg.cancel_scope.cancel()
