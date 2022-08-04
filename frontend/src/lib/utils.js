@@ -1,6 +1,10 @@
 function copy(content) {
-  navigator.clipboard.writeText(content);
-  console.log("Copied to clipboard", content);
+  if (window.isSecureContext) {
+    navigator.clipboard.writeText(content);
+    console.log("Copied to clipboard", content);
+  } else {
+    console.error("Could not use clipboard in insecure context");
+  }
 }
 
 function partial(func, ...args) {
