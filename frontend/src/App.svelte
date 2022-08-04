@@ -7,6 +7,7 @@
   import YoutubeChannelPage from "./routes/YoutubeChannelPage.svelte";
   import WithdrawPage from "./routes/WithdrawPage.svelte";
   import YoutubeLinkPage from "./routes/YoutubeLinkPage.svelte";
+  import YoutubeProvePage from "./routes/YoutubeProvePage.svelte";
   import LoginPage from "./routes/LoginPage.svelte";
   import Test from "./routes/Test.svelte";
   import title from "./lib/title.js";
@@ -26,8 +27,9 @@
   <Route path="youtube/:channel_id/withdraw" component="{WithdrawPage}" />
   <Route path="youtube/:channel_id/link" component="{YoutubeLinkPage}" />
   <Route path="donate/:channel_id" component="{DonatePage}" />
+  <Route path="prove/youtube" component={YoutubeProvePage} />
   <Route path="login" component={LoginPage} />
-  <Route path="/" component="{Main}" />
+  <Route path="/" component={Main} />
   <Route path="/test" component={Test} />
 </Router>
 

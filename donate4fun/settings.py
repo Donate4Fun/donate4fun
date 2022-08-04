@@ -106,6 +106,7 @@ class Settings(BaseSettings):
     donator_name_seed: int
     fee_limit: int
     withdraw_timeout: int
+    ownership_message: str
 
     class Config:
         env_nested_delimiter = '__'

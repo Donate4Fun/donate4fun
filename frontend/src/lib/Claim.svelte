@@ -5,7 +5,6 @@
   import Input from "../lib/Input.svelte";
   import Button from "../lib/Button.svelte";
   import Spinner from "../lib/Spinner.svelte";
-  import Infobox from "../lib/Infobox.svelte";
   import YoutubeChannel from "../lib/YoutubeChannel.svelte";
   import ChannelLogo from "../lib/ChannelLogo.svelte";
   import api from "../lib/api.js";
@@ -28,10 +27,6 @@
     }
     spin = false;
   }
-  async function link_youtube() {
-    const response = await api.get(`link-youtube-channel`);
-    window.location.href = response.url;
-  }
 </script>
 
 <Section class="claim">
@@ -47,8 +42,7 @@
   {/each}
   </ul>
   {/await}
-  <Infobox>Until this app is verified by Google you will see a warning message. It's OK to bypass it. <a href="">More info</a></Infobox>
-  <div class="link"><Button on:click={link_youtube}>Link your Youtube channel</Button></div>
+  <div class="link"><Button link={resolve("/prove/youtube")}>Link your Youtube channel</Button></div>
   <form on:submit|preventDefault={claim}>
     <div class=url><Input type=url placeholder="Paste YouTube URL" bind:value={donatee} bind:error={error} logo=url(/static/youtube.svg) required/></div>
     <Button type=submit class="submit white">

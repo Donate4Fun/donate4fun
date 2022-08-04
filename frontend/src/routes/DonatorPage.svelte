@@ -6,6 +6,7 @@
   import YoutubeChannel from "../lib/YoutubeChannel.svelte";
   import Amount from "../lib/Amount.svelte";
   import Datetime from "../lib/Datetime.svelte";
+  import Separator from "../lib/Separator.svelte";
   import {me} from "../lib/session.js";
   import api from "../lib/api.js";
 
@@ -28,7 +29,7 @@
   {:then}
     <Userpic {...donator} class="userpic" />
     <div class="name">{donator.name}</div>
-    <div class="transactions"><span>Transactions<span></div>
+    <div class=transactions><Separator>Transactions</Separator></div>
     <div class="table">
       <div class="head">
         <div>When</div>
@@ -76,21 +77,9 @@
   font-size: 16px;
 }
 .transactions {
-  background: linear-gradient(180deg, 
-    rgba(0,0,0,0) calc(50% - 1px), 
-    rgba(0,0,0,0.1) calc(50%), 
-    rgba(0,0,0,0) calc(50% + 1px)
-  );
   margin-top: 64px;
   margin-bottom: 32px;
   width: 100%;
-  text-align: center;
-}
-.transactions > span {
-  background: white;
-  padding: 0 6px;
-  font-weight: 500;
-  font-size: 16px;
 }
 .table .head {
   color: rgba(0, 0, 0, 0.6);

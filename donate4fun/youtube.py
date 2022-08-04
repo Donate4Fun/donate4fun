@@ -170,3 +170,15 @@ async def validate_target_url(target: Url):
         return await validate_youtube_url(parsed)
     else:
         raise UnsupportedTarget("URL is invalid")
+
+
+@withyoutube
+async def find_comment(aiogoogle, youtube, video_id: str, comment: str) -> list[ChannelId]:
+    req = youtube.commentThreads.list(part='snippet', videoId=video_id, searchTerms=comment)
+    res = await aiogoogle.as_api_key(req)
+    channels = []
+    for item in res.get('items', []):
+        snippet = item['snippet']['topLevelComment']['snippet']
+        if snippet['textOriginal'] == comment:
+            channels.append(snippet['authorChannelId']['value'])
+    return channels

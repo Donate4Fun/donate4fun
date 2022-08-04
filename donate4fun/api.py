@@ -27,7 +27,7 @@ from .models import (
     WithdrawalToken, BaseModel, Notification, Credentials,
 )
 from .types import ValidationError, RequestHash, PaymentRequest
-from .youtube import YoutubeDonatee, ChannelInfo, fetch_user_channel, validate_target
+from .youtube import YoutubeDonatee, ChannelInfo, fetch_user_channel, validate_target, find_comment, fetch_channel
 from .db import Database, NoResultFound, DonationDb
 from .settings import settings
 
@@ -334,7 +334,7 @@ class GoogleAuthState(BaseModel):
     donator_id: UUID
 
 
-@router.get('/link-youtube-channel', response_class=JSONResponse)
+@router.get('/me/youtube/oauth', response_class=JSONResponse)
 async def login_via_google(request: Request, donator=Depends(get_donator)):
     aiogoogle = Aiogoogle()
     url = aiogoogle.oauth2.authorization_url(
@@ -367,6 +367,7 @@ async def auth_google(
         try:
             channel_info: ChannelInfo = await fetch_user_channel(request, code)
         except Exception:
+            logger.exception("Failed to fetch user's chnanel")
             # TODO: add exception info to last_url hash param and show it using toast
             return RedirectResponse(auth_state.last_url)
         else:
@@ -465,3 +466,32 @@ async def youtube_video_info(video_id: str, db=Depends(get_db_session)):
         return YoutubeVideoResponse(id=video.id, total_donated=video.total_donated)
     except NoResultFound:
         return YoutubeVideoResponse(id=None, total_donated=0)
+
+
+class OwnershipMessage(BaseModel):
+    message: str
+
+
+@router.get('/me/youtube/ownership-message', response_model=OwnershipMessage)
+async def ownership_message(donator=Depends(get_donator)):
+    return OwnershipMessage(message=settings.ownership_message.format(donator_id=donator.id))
+
+
+@router.post('/me/youtube/check-ownership', response_model=list[YoutubeChannel])
+async def ownership_check(donator=Depends(get_donator), db=Depends(get_db_session)):
+    channel_ids = await find_comment(
+        video_id='J2Tz2jGQjHE',
+        comment=settings.ownership_message.format(donator_id=donator.id),
+    )
+    channels = []
+    for channel_id in channel_ids:
+        channel_info: ChannelInfo = await fetch_channel(channel_id=channel_id)
+        youtube_channel = YoutubeChannel(
+            channel_id=channel_info.id,
+            title=channel_info.title,
+            thumbnail_url=channel_info.thumbnail,
+        )
+        await db.save_youtube_channel(youtube_channel)
+        await db.link_youtube_channel(youtube_channel, donator)
+        channels.append(youtube_channel)
+    return channels
