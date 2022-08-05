@@ -2,13 +2,13 @@
 // @name         Donate4.Fun
 // @namespace    https://donate4.fun/
 // @homepage     https://donate4.fun/
-// @version      0.2
+// @version      0.3
 // @description  Donate4.Fun YouTube helper
 // @author       nbryskin
 // @match        *://*.youtube.com/*
 // @exclude      *://music.youtube.com/*
 // @exclude      *://*.music.youtube.com/*
-// @icon64URL    https://stage.donate4.fun/static/D.svg
+// @icon64URL    https://stage.donate4.fun/static/D-64.png
 // @grant        GM_xmlhttpRequest
 // @grant        GM_addStyle
 // @grant        GM_getValue
@@ -16,6 +16,7 @@
 // @grant        GM_registerMenuCommand
 // @run-at       document-end
 // @connect      donate4.fun
+// @connect      stage.donate4.fun
 // @require      https://openuserjs.org/src/libs/sizzle/GM_config.js
 // @downloadURL  https://github.com/Donate4Fun/donate4fun/raw/master/extensions/donate4fun.user.js
 // @updateURL    https://github.com/Donate4Fun/donate4fun/raw/master/extensions/donate4fun.user.js
@@ -175,7 +176,6 @@ let unsubscribeVideoWS;
     }
   });
   GM_registerMenuCommand("Settings", (event) => GM_config.open());
-  GM_registerMenuCommand("Login", (event) => login());
 
   if (isMobile()) {
     getButtons = getButtons_mobile;
@@ -185,11 +185,6 @@ let unsubscribeVideoWS;
     getButtons = getButtons_main;
   }
 })();
-
-async function login() {
-  const response = await apiGet("/lnauth");
-  cLog("lnurl", response.lnurl);
-}
 
 function load(evt) {
   cLog("Setting up...", evt);
@@ -290,23 +285,36 @@ async function subscribe(topic, on_message) {
 
 async function apiGet(path) {
   const apiHost = GM_config.get('apiHost');
-  const response = await fetch(`https://${apiHost}/api/v1/${path}`, {
-    credentials: 'include',
+  return await new Promise((resolve, reject) => {
+    GM_xmlhttpRequest({
+      method: 'GET',
+      url: `https://${apiHost}/api/v1/${path}`,
+      responseType: 'json',
+      onload: response => {
+        cLog("response", response);
+        resolve(response.response);
+      },
+    });
   });
-  return await response.json();
 }
 
 async function apiPost(path, data) {
   const apiHost = GM_config.get('apiHost');
-  const response = await fetch(`https://${apiHost}/api/v1/${path}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(data),
-    credentials: 'include',
+  return await new Promise((resolve, reject) => {
+    GM_xmlhttpRequest({
+      method: 'POST',
+      url: `https://${apiHost}/api/v1/${path}`,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      responseType: 'json',
+      data: JSON.stringify(data),
+      onload: response => {
+        cLog("response", response);
+        resolve(response.response);
+      },
+    });
   });
-  return await response.json();
 }
 
 async function fetchStats() {
