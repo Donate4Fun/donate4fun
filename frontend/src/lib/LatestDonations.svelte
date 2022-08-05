@@ -24,7 +24,7 @@
   {:then}
     <div class="table">
       <div class="head">
-        <div>Who</div><div>When</div><div>Amount</div><div>Blogger</div>
+        <div>Blogger</div><div>When</div><div>Amount</div><div>Donator</div>
       </div>
       {#each donations as donation}
         <div class=blogger>
