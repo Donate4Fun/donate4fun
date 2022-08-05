@@ -9,6 +9,7 @@
   import Spinner from "../lib/Spinner.svelte";
   import Infobox from "../lib/Infobox.svelte";
   import Separator from "../lib/Separator.svelte";
+  import LinkedYoutubeChannels from "../lib/LinkedYoutubeChannels.svelte";
   import {me} from "../lib/session.js";
   import api from "../lib/api.js";
   import title from "../lib/title.js";
@@ -38,11 +39,14 @@
 <Page>
   <Section>
     <main>
-      To prove that you own YouTube channel
+      <h1>Prove that you own YouTube channel</h1>
       <ol>
         <li>
+          <summary>
+            <div class=index></div>
+            <span>Copy this comment</span>
+          </summary>
           <div>
-            Copy this comment
             {#await loadProveMessage()}
             <Editable />
             {:then}
@@ -54,30 +58,35 @@
           </div>
         </li>
         <li>
-          Place it under <a href="https://youtu.be/J2Tz2jGQjHE" target=_blank>this video</a> <b>using the account you want to prove ownership for</b>.
+          <summary>
+            <div class=index></div>
+            <span>Place it under <a href="https://youtu.be/J2Tz2jGQjHE" target=_blank>this video</a> using the account you want to prove ownership for.</span>
+          </summary>
         </li>
         <li>
-          <div>
-            <Button on:click={check}>
-              {#if spin}
-              <Spinner class="spinner" size=20px width=3px />
-              {/if}
-              <span>Check</span>
-            </Button>
-          </div>
+          <summary>
+            <div class=index></div>
+            <div class=press>
+              <span>Press</span>
+              <Button on:click={check} class=white>
+                {#if spin}
+                <Spinner class="spinner" size=20px width=3px />
+                {/if}
+                <span class=check>Check</span>
+              </Button>
+            </div>
+          </summary>
         </li>
       </ol>
+      <div>
       {#if proved_channels === null}
       {:else if proved_channels.length}
-        Found channels:
-        <ul>
-        {#each proved_channels as channel}
-          <li><ChannelLogo url={channel.thumbnail_url} size=28px /><YoutubeChannel {...channel} /></li>
-        {/each}
-        </ul>
+        <h2>Youtube channel successfully linked</h2>
+        <LinkedYoutubeChannels youtube_channels={proved_channels} />
       {:else}
         No comments found, try again.
       {/if}
+      </div>
       <Separator>OR</Separator>
       <Button on:click={useOAuth}>Use Google OAuth instead</Button>
       <Infobox>Until this app is verified by Google you will see a warning message. It's OK to bypass it. <a href="https://donate4fun.notion.site/How-to-prove-ownership-of-your-YouTube-channel-c514b950fef74ef8a5886af2926f9392">More info</a></Infobox>
@@ -90,29 +99,75 @@
 main {
   display: flex;
   flex-direction: column;
-  gap: 1em;
-  padding: 3em;
+  gap: 32px;
+  padding: 36px 85px 40px 85px;
   width: 640px;
+}
+h1 {
+  text-align: center;
+  margin: 0;
 }
 ol {
   display: flex;
   flex-direction: column;
-  gap: 1em;
+  gap: 44px;
+  list-style: none;
+  counter-reset: item;
+  margin: 0;
+  padding: 0;
 }
-ul {
-  list-style-type: none;
+li {
+  counter-increment: item;
+}
+li summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+  font-weight: 400;
+}
+li .index {
+  width: 40px;
+  height: 40px;
+
+  background: linear-gradient(90deg, rgba(249, 240, 62, 0.15) 0%, rgba(157, 237, 162, 0.15) 100%), #FFFFFF;
+  border: 1px solid rgba(26, 41, 82, 0.05);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+li .index::before {
+  content: counter(item);
+  background: radial-gradient(74.17% 74.17% at 65% 25.83%, rgba(255, 220, 220, 0.58) 0%, rgba(254, 207, 207, 0) 100%) /* warning: gradient uses a rotation that is not supported by CSS and may not behave as expected */, #000000;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 38px;
+  text-align: center;
+  display: inline-block;
+  width: 100%;
+  font-weight: 900;
+  font-size: 20px;
 }
 li > div {
   display: flex;
-}
-ol > li > div {
   flex-direction: column;
   width: 100%;
   gap: 1em;
+  margin-top: 24px;
 }
-ul > li {
+.press {
   display: flex;
   align-items: center;
-  gap: 0.3em;
+  gap: 12px;
+}
+.check {
+  width: 150px;
+}
+h2 {
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.8);
+  margin: 0;
 }
 </style>

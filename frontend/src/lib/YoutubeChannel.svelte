@@ -19,6 +19,3 @@
     Invalid linkto:
   {/if}
 </span>
-
-<style>
-</style>

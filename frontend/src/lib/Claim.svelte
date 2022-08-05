@@ -7,6 +7,7 @@
   import Spinner from "../lib/Spinner.svelte";
   import YoutubeChannel from "../lib/YoutubeChannel.svelte";
   import ChannelLogo from "../lib/ChannelLogo.svelte";
+  import LinkedYoutubeChannels from "../lib/LinkedYoutubeChannels.svelte";
   import api from "../lib/api.js";
   import { me } from "../lib/session.js";
 
@@ -31,16 +32,12 @@
 
 <Section class="claim">
   <h1>Claim donations</h1>
-  <span>Check donations for your YouTube channel</span>
+  <p>Check donations for your YouTube channel</p>
   {#await me.init() then}
   {#if $me.youtube_channels.length > 0}
-  <div>Linked YouTube channels:</div>
+  <h2>Linked YouTube channels:</h2>
   {/if}
-  <ul>
-  {#each $me.youtube_channels as channel}
-    <li><ChannelLogo url={channel.thumbnail_url} size=28px /><YoutubeChannel {...channel} linkto=withdraw /></li>
-  {/each}
-  </ul>
+  <LinkedYoutubeChannels youtube_channels={$me.youtube_channels} />
   {/await}
   <div class="link"><Button link={resolve("/prove/youtube")}>Link your Youtube channel</Button></div>
   <form on:submit|preventDefault={claim}>
@@ -82,19 +79,15 @@ h1 {
   margin-top: 0px;
   margin-bottom: 16px;
 }
-span {
+p {
   font-size: 14px;
   line-height: 17px;
+  margin-bottom: 32px;
 }
-ul {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+h2 {
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 11px;
 }
 @media (min-width: 641px) {
   :global(.claim) {

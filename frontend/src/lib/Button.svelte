@@ -56,6 +56,7 @@ button.white {
 button.white div {
   background: white;
   border-radius: inherit;
+  padding: 5px 20px;
 }
 button.grey {
   background: #E9E9E9;
