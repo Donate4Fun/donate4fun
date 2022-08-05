@@ -2,13 +2,13 @@
 // @name         Donate4.Fun
 // @namespace    https://donate4.fun/
 // @homepage     https://donate4.fun/
-// @version      0.3
+// @version      0.4
 // @description  Donate4.Fun YouTube helper
 // @author       nbryskin
 // @match        *://*.youtube.com/*
 // @exclude      *://music.youtube.com/*
 // @exclude      *://*.music.youtube.com/*
-// @icon64URL    https://stage.donate4.fun/static/D-64.png
+// @icon         https://donate4.fun/static/D.svg
 // @grant        GM_xmlhttpRequest
 // @grant        GM_addStyle
 // @grant        GM_getValue
@@ -16,7 +16,7 @@
 // @grant        GM_registerMenuCommand
 // @run-at       document-end
 // @connect      donate4.fun
-// @connect      stage.donate4.fun
+// @connect      donate4.fun
 // @require      https://openuserjs.org/src/libs/sizzle/GM_config.js
 // @downloadURL  https://github.com/Donate4Fun/donate4fun/raw/master/extensions/donate4fun.user.js
 // @updateURL    https://github.com/Donate4Fun/donate4fun/raw/master/extensions/donate4fun.user.js
@@ -117,9 +117,11 @@ const donateButtonHtml = `
   </div>
 </div>
 `;
+const buttonId = "donate4fun-button";
 
 let getButtons;
 let unsubscribeVideoWS;
+let isCommentPosted;
 
 (() => {
   'use strict';
@@ -139,13 +141,13 @@ let unsubscribeVideoWS;
         label: 'Default comment',
         type: 'text',
         size: 100,
-        default: 'Hi! I like your video! I’ve donated you on "donate 4 fun", just google it'
+        default: 'Hi! I like your video! I’ve donated you some crypto, you can take it on "donate 4 fun"'
       },
       defaultComment_ru: {
         label: 'Default comment RU',
         type: 'text',
         size: 100,
-        default: 'Классное видео, спасибо! Задонатил тебе на "donate 4 fun"'
+        default: 'Классное видео, спасибо! Я задонатил тебе немного сатоши на "donate 4 fun", загугли чтобы забрать'
       },
       amount: {
         label: 'Amount (sats)',
@@ -166,7 +168,7 @@ let unsubscribeVideoWS;
       apiHost: {
         label: 'API host (for testing)',
         type: 'text',
-        default: 'stage.donate4.fun'
+        default: 'donate4.fun'
       },
       checkInterval: {
         label: 'Check interval (ms)',
@@ -188,7 +190,7 @@ let unsubscribeVideoWS;
 
 function load(evt) {
   cLog("Setting up...", evt);
-  //window.removeEventListener("yt-navigate-finish", load, true);
+  isCommentPosted = false;
   checkLoaded();
 }
 
@@ -222,11 +224,15 @@ function checkLoaded() {
 async function patchButtons() {
   const buttons = getButtons();
   cLog("buttons", buttons);
-  const placeholder = document.createElement("div");
-  placeholder.innerHTML = donateButtonHtml;
-  const node = placeholder.firstElementChild;
-  buttons.insertBefore(node, buttons.children[0]);
-  node.addEventListener("click", onDonateClick, true);
+  if (document.getElementById(buttonId) === null) {
+    // Donate button could be already created after user navigated back to youtube video
+    const placeholder = document.createElement("div");
+    placeholder.id = buttonId;
+    placeholder.innerHTML = donateButtonHtml;
+    const node = placeholder.firstElementChild;
+    buttons.insertBefore(node, buttons.children[0]);
+    node.addEventListener("click", onDonateClick, true);
+  }
   const videoId = getVideoId();
   unsubscribeVideoWS = await subscribe(`youtube-video-by-vid:${videoId}`, (msg) => {
     cLog("youtube video updated", msg);
@@ -332,15 +338,16 @@ function sleep(ms) {
 
 async function waitElement(id) {
   do {
-    await sleep(100);
     const element = document.getElementById(id);
     if (element) {
       return element;
     }
+    await sleep(100);
   } while (true);
 }
 
 async function postComment(message) {
+  if (isCommentPosted) return;
   // Scroll to comments section
   const comments = await waitElement("comments");
   comments.scrollIntoView({behavior: "smooth", block: "end"});
@@ -355,6 +362,13 @@ async function postComment(message) {
   // Enter comment text
   commentInput.textContent = message;
   commentInput.dispatchEvent(new Event('input', {bubbles: true}));
+
+  const submitButton = await waitElement('submit-button');
+  cLog("patching click for", submitButton);
+  submitButton.addEventListener("click", () => {
+    cLog("comment posted");
+    isCommentPosted = true;
+  }, true);
 }
 
 async function onDonateClick(evt) {
