@@ -107,6 +107,7 @@ class Settings(BaseSettings):
     fee_limit: int
     withdraw_timeout: int
     ownership_message: str
+    cookie_domain: str | None = None
 
     class Config:
         env_nested_delimiter = '__'

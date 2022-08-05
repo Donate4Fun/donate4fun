@@ -35,6 +35,7 @@ backend:
     fee_limit: 10
     withdraw_timeout: 10
     ownership_message: "I confirm that donate 4 fun account {donator_id} could withdraw my donations."
+    cookie_domain: donate4.fun
     fastapi:
       debug: false
       root_path: ""
