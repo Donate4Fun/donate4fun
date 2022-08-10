@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 from uuid import UUID
 
@@ -52,20 +53,23 @@ async def test_donation_paid(db_session, unpaid_donation_fixture):
     assert donation.paid_at != None  # noqa
 
 
-async def test_listen_notify(db):
+async def test_listen_notify(db, pubsub):
     messages = ['123', 'qwe', 'asd']
+    received = []
+    sent = []
     channel = 'channel'
 
-    i = 0
-    async with db.pubsub() as sub:
-        async for received in sub.listen(channel):
-            if received is not None:
-                assert received.message == messages[i - 1]
-            if i == len(messages):
-                break
-            async with db.pubsub() as pub:
-                await pub.notify(channel, Notification(id=UUID(int=0), status='OK', message=messages[i]))
-            i += 1
+    def callback(notification: Notification):
+        received.append(notification)
+
+    async with pubsub.subscribe(channel, callback):
+        for message in messages:
+            async with db.session() as db_session:
+                notification = Notification(id=UUID(int=0), status='OK', message=message)
+                sent.append(notification)
+                await db_session.notify(channel, notification)
+        await asyncio.sleep(0.1)
+    assert received == sent
 
 
 async def test_db(db_session):
@@ -76,6 +80,7 @@ async def test_db(db_session):
 async def test_link_youtube_channel(db_session):
     donator = Donator(id=UUID(int=0))
     await db_session.login_donator(donator.id, 'lnauth_pub_key')
+    reference_channels = []
     for i in range(3):
         youtube_channel = YoutubeChannel(
             id=UUID(int=i),
@@ -83,7 +88,8 @@ async def test_link_youtube_channel(db_session):
             title="channel_title",
             thumbnail_url="https://thumbnail.url/asd",
         )
+        reference_channels.append(youtube_channel)
         await db_session.save_youtube_channel(youtube_channel)
         await db_session.link_youtube_channel(youtube_channel, donator)
-    youtube_channels: list[UUID] = await db_session.query_donator_youtube_channels(donator.id)
-    assert youtube_channels == [UUID(int=i) for i in range(3)]
+    youtube_channels: list[YoutubeChannel] = await db_session.query_donator_youtube_channels(donator.id)
+    assert youtube_channels == reference_channels

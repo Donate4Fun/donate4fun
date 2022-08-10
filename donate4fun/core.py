@@ -2,7 +2,7 @@ import io
 from base64 import b64encode
 
 import qrcode
-from fastapi import Request
+from fastapi import Request, WebSocket
 from qrcode.image.pure import PymagingImage
 
 from .types import PaymentRequest
@@ -19,6 +19,10 @@ async def get_db(request: Request):
 
 async def get_lnd(request: Request):
     return request.app.lnd
+
+
+async def get_pubsub(websocket: WebSocket):
+    return websocket.app.pubsub
 
 
 def payreq_to_datauri(pay_req: PaymentRequest):

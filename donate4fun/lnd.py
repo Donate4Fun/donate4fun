@@ -140,31 +140,48 @@ class LndClient:
         return resp['state']
 
 
+@asynccontextmanager
+async def monitor_invoices(lnd_client, db):
+    task = asyncio.create_task(monitor_invoices_loop(lnd_client, db))
+    try:
+        yield
+    finally:
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+
+
 async def monitor_invoices_loop(lnd_client, db):
     while True:
         try:
-            await monitor_invoices(lnd_client, db)
+            await monitor_invoices_step(lnd_client, db)
         except Exception as exc:
             logger.error(f"Exception in monitor_invoices task: {exc}")
             await asyncio.sleep(5)
 
 
-async def monitor_invoices(lnd_client, db, *, task_status: TaskStatus = TASK_STATUS_IGNORED):
+async def monitor_invoices_step(lnd_client, db, *, task_status: TaskStatus = TASK_STATUS_IGNORED):
     logger.debug("Start monitoring invoices")
-    async for data in lnd_client.subscribe("/v1/invoices/subscribe"):
-        logger.debug(f"monitor_invoices {data}")
-        if data is None:
-            task_status.started()
-            continue
-        invoice: Invoice = Invoice(**data['result'])
-        if invoice.state == 'SETTLED':
-            logger.debug(f"donation paid {data}")
-            try:
-                async with db.session() as sess:
-                    await sess.donation_paid(
-                        r_hash=invoice.r_hash,
-                        paid_at=invoice.settle_date,
-                        amount=invoice.amt_paid_sat,
-                    )
-            except Exception:
-                logger.exception("Error while handling donation notification from lnd")
+    try:
+        async for data in lnd_client.subscribe("/v1/invoices/subscribe"):
+            logger.debug(f"monitor_invoices {data}")
+            if data is None:
+                task_status.started()
+                logger.debug("Connected to LND")
+                continue
+            invoice: Invoice = Invoice(**data['result'])
+            if invoice.state == 'SETTLED':
+                logger.debug(f"donation paid {data}")
+                try:
+                    async with db.session() as sess:
+                        await sess.donation_paid(
+                            r_hash=invoice.r_hash,
+                            paid_at=invoice.settle_date,
+                            amount=invoice.amt_paid_sat,
+                        )
+                except Exception:
+                    logger.exception("Error while handling donation notification from lnd")
+    finally:
+        logger.debug("Stopped monitoring invoices")

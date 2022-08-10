@@ -1,6 +1,4 @@
-import asyncio
 import logging
-import json
 from uuid import UUID
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -118,47 +116,30 @@ class Database:
 
     @asynccontextmanager
     async def session(self) -> 'DbSession':
-        async with self.session_maker() as session, session.begin():
+        async with self.raw_session() as session, session.begin():
             db_session = DbSession(self, session)
-            await session.connection(execution_options=dict(logging_token=id(db_session)))
+            await session.connection(execution_options=dict(logging_token=str(db_session)))
             yield db_session
 
     @asynccontextmanager
-    async def pubsub(self) -> 'PubSubSession':
-        async with self.session_maker() as session, session.begin():
-            pubsub = PubSubSession(self, session)
-            await session.connection(execution_options=dict(logging_token=id(pubsub)))
-            yield pubsub
-
-    @asynccontextmanager
-    async def transaction(self):
-        async with self.session() as session, session.transaction():
+    async def raw_session(self):
+        async with self.session_maker() as session:
             yield session
 
 
-class BaseDbSession:
+class DbSession:
     def __init__(self, db, session):
         self.db = db
         self.session = session
 
+    def __str__(self):
+        return f'{type(self).__name__}<{hex(id(self))}>'
+
     async def execute(self, query):
         return await self.session.execute(query)
 
-
-class DbSession(BaseDbSession):
-    @asynccontextmanager
-    async def transaction(self):
-        if self.session.in_transaction():
-            async with self.savepoint():
-                yield self
-        else:
-            async with self.session.begin():
-                yield self
-
-    @asynccontextmanager
-    async def savepoint(self):
-        async with self.session.begin_nested():
-            yield self
+    async def notify(self, channel: str, notification: Notification):
+        await self.execute(select(func.pg_notify(channel, notification.json())))
 
     async def query_youtube_channel(self, youtube_channel_id: UUID) -> YoutubeChannel:
         resp = await self.execute(
@@ -369,6 +350,7 @@ class DbSession(BaseDbSession):
             )
             .where(YoutubeChannelDb.id == youtube_channel_id)
         )
+        await self.notify(f'donation:{donation_id}', Notification(id=donation_id, status='OK'))
         if youtube_video_id:
             video_update_resp = await self.execute(
                 update(YoutubeVideoDb)
@@ -377,11 +359,9 @@ class DbSession(BaseDbSession):
                 .returning(YoutubeVideoDb.video_id)
             )
             (vid,) = video_update_resp.fetchone()
-        async with self.db.pubsub() as pub:
-            await pub.notify(f'donation:{donation_id}', Notification(id=donation_id, status='OK'))
             if youtube_video_id:
-                await pub.notify(f'youtube-video:{youtube_video_id}', Notification(id=youtube_video_id, status='OK'))
-                await pub.notify(f'youtube-video-by-vid:{vid}', Notification(id=youtube_video_id, status='OK'))
+                await self.notify(f'youtube-video:{youtube_video_id}', Notification(id=youtube_video_id, status='OK'))
+                await self.notify(f'youtube-video-by-vid:{vid}', Notification(id=youtube_video_id, status='OK'))
 
     async def commit(self):
         return await self.session.commit()
@@ -418,12 +398,11 @@ class DbSession(BaseDbSession):
             registered_donator_id: UUID = resp.scalar()
             if registered_donator_id is None:
                 registered_donator_id = donator_id
-        async with self.db.pubsub() as pub:
-            await pub.notify(f'donator:{donator_id}', Notification(
-                id=donator_id,
-                status='ok',
-                message=Credentials(donator_id=registered_donator_id, lnauth_pubkey=key).to_jwt()),
-            )
+        await self.notify(f'donator:{donator_id}', Notification(
+            id=donator_id,
+            status='ok',
+            message=Credentials(donator_id=registered_donator_id, lnauth_pubkey=key).to_jwt()
+        ))
 
     async def link_youtube_channel(self, youtube_channel: YoutubeChannel, donator: Donator):
         await self.execute(
@@ -441,33 +420,3 @@ class DbSession(BaseDbSession):
             .where(YoutubeVideoDb.video_id == video_id)
         )
         return YoutubeVideo.from_orm(resp.scalars().one())
-
-
-class PubSubSession(BaseDbSession):
-    async def notify(self, channel: str, notification: Notification):
-        await self.execute(select(func.pg_notify(channel, notification.json())))
-
-    async def listen(self, channel: str):
-        connection = await self.session.connection()
-        raw_connection = await connection.get_raw_connection()
-        asyncpg_connection = raw_connection.connection._connection
-        queue = asyncio.Queue()
-
-        async def listener(con_ref, pid, channel, payload):
-            await queue.put(payload)
-
-        await asyncpg_connection.add_listener(channel, listener)
-        logger.debug(f"[{id(self)}] Added listener for '{channel}'")
-        try:
-            yield None
-            while True:
-                msg: str = await queue.get()
-                try:
-                    notification = Notification(**json.loads(msg))
-                except Exception:
-                    logger.exception(f"Exception while deserializing '{msg}'")
-                else:
-                    logger.debug(f"[{id(self)}] Notification from '{channel}': {notification}")
-                    yield notification
-        finally:
-            await asyncpg_connection.remove_listener(channel, listener)

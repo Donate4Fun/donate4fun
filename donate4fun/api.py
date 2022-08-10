@@ -7,7 +7,6 @@ from urllib.parse import urlencode
 
 import bugsnag
 import ecdsa
-import anyio
 from fastapi import APIRouter, WebSocket, Request, Response, Depends, HTTPException, Query, WebSocketDisconnect
 from fastapi.routing import APIRoute
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -21,14 +20,14 @@ from lnpayencode import lndecode, LnAddr
 from aiogoogle import Aiogoogle
 from anyio.abc import TaskStatus
 
-from .core import get_db_session, get_lnd, get_db
+from .core import get_db_session, get_lnd, get_db, get_pubsub
 from .models import (
     Donation, Donator, Invoice, DonateResponse, DonateRequest, YoutubeChannelRequest, YoutubeChannel, YoutubeVideo,
     WithdrawalToken, BaseModel, Notification, Credentials,
 )
 from .types import ValidationError, RequestHash, PaymentRequest
 from .youtube import YoutubeDonatee, ChannelInfo, fetch_user_channel, validate_target, find_comment, fetch_channel
-from .db import Database, NoResultFound, DonationDb
+from .db import NoResultFound, DonationDb
 from .settings import settings
 
 logger = logging.getLogger(__name__)
@@ -225,9 +224,10 @@ class WithdrawResponse(BaseModel):
 
 @router.get('/youtube-channel/{channel_id}/withdraw', response_model=WithdrawResponse)
 async def withdraw(request: Request, channel_id: UUID, db=Depends(get_db_session), donator: Donator = Depends(get_donator)):
-    linked_youtube_channels = await db.query_donator_youtube_channels(donator.id)
+    linked_youtube_channels: list[YoutubeChannel] = await db.query_donator_youtube_channels(donator.id)
+    linked_youtube_channel_ids = [channel.id for channel in linked_youtube_channels]
 
-    if channel_id not in linked_youtube_channels:
+    if channel_id not in linked_youtube_channel_ids:
         raise HTTPException(status_code=403, detail="You should prove that you own YouTube channel")
     youtube_channel = await db.query_youtube_channel(youtube_channel_id=channel_id)
     if youtube_channel.balance < settings.min_withdraw:
@@ -317,16 +317,24 @@ async def send_withdrawal(
                     f"{youtube_channel!r} balance {youtube_channel.balance} is insufficient (invoiced {amount})"
                 )
             task_status.started()
-            await lnd.pay_invoice(payment_request)
-            await db_session.withdraw(youtube_channel_id=youtube_channel_id, amount=amount)
-            status = 'OK'
+            try:
+                await lnd.pay_invoice(payment_request)
+            except Exception as exc:
+                logger.exception("Failed to send withdrawal payment")
+                bugsnag.notify(exc)
+                status = 'ERROR'
+                message = str(exc)
+            else:
+                await db_session.withdraw(youtube_channel_id=youtube_channel_id, amount=amount)
+                status = 'OK'
+            await db_session.notify(
+                f'withdrawal:{youtube_channel_id}',
+                Notification(id=youtube_channel_id, status=status, message=message),
+            )
     except Exception as exc:
-        logger.exception("Failed to send withdrawal payment")
+        logger.exception("Internal error in send_withdrawal")
         bugsnag.notify(exc)
-        status = 'ERROR'
-        message = str(exc)
-    async with db.pubsub() as pub:
-        await pub.notify(f'withdrawal:{youtube_channel_id}', Notification(id=youtube_channel_id, status=status, message=message))
+        raise
 
 
 class GoogleAuthState(BaseModel):
@@ -417,9 +425,12 @@ async def lnauth_callback(
 
 
 @router.websocket('/subscribe/{topic}')
-async def subscribe(websocket: WebSocket, topic: str):
-    async with anyio.create_task_group() as tg:
-        await tg.start(pump_pubsub_to_websocket, websocket, topic)
+async def subscribe(websocket: WebSocket, topic: str, pubsub=Depends(get_pubsub)):
+    async def send_to_websocket(msg: Notification):
+        await websocket.send_text(msg.json())
+
+    await websocket.accept()
+    async with pubsub.subscribe(topic, send_to_websocket):
         while True:
             try:
                 msg = await websocket.receive_json()
@@ -428,19 +439,6 @@ async def subscribe(websocket: WebSocket, topic: str):
                 break
             else:
                 logger.debug(f"Received '{msg}' from websocket for topic {topic}")
-        tg.cancel_scope.cancel()
-
-
-async def pump_pubsub_to_websocket(websocket: WebSocket, topic: str, *, task_status: TaskStatus):
-    db: Database = websocket.app.db
-    async with db.pubsub() as sub:
-        async for msg in sub.listen(topic):
-            if msg is None:
-                await websocket.accept()
-                logger.debug(f"Accepted ws connection for {topic}")
-                task_status.started()
-            else:
-                await websocket.send_text(msg.json())
 
 
 class UpdateSessionRequest(BaseModel):

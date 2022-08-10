@@ -20,6 +20,7 @@ from donate4fun.lnd import LndClient
 from donate4fun.settings import load_settings, Settings, DbSettings
 from donate4fun.db import DbSession, Database
 from donate4fun.models import RequestHash, PaymentRequest, YoutubeChannel, Donator, BaseModel, YoutubeVideo
+from donate4fun.pubsub import PubSubBroker
 
 
 logger = logging.getLogger(__name__)
@@ -136,6 +137,13 @@ async def app(db, settings, lnd_server):
         app.db = db
         app.lnd = LndClient(settings.lnd)
         yield app
+
+
+@pytest.fixture
+async def pubsub(app, db):
+    app.pubsub = PubSubBroker()
+    async with app.pubsub.run(db):
+        yield app.pubsub
 
 
 @pytest.fixture

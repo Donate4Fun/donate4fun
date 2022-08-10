@@ -90,14 +90,11 @@ optional = false
 python-versions = "^3.7"
 develop = false
 
-[package.dependencies]
-anyio = "^3.6.1"
-
 [package.source]
 type = "git"
 url = "https://github.com/nikicat/asgi-testClient"
 reference = "fix-busy-loop"
-resolved_reference = "a2aa53b3f5d2ca6d9bca5c9205261d52c5e119fe"
+resolved_reference = "cbef62ad6c31626f6725a273b60f07b8dcd3d321"
 
 [[package]]
 name = "asgiref"

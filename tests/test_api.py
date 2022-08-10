@@ -130,7 +130,7 @@ async def test_cancel_donation(client, app, db_session, freeze_donation_id):
 
 async def test_donate_full(
     client, app, freeze_donation_id, freeze_youtube_channel_id, payer_lnd: LndClient,
-    freeze_request_hash_json,
+    freeze_request_hash_json, pubsub,
 ):
     video_id = 'rq2SVMXEMPI'
     donate_response: DonateResponse = await client.post(
@@ -142,8 +142,7 @@ async def test_donate_full(
     payment_request = donate_response.json()['payment_request']
     donation_ws_ctx = client.ws_session(f"/api/v1/subscribe/donation:{freeze_donation_id}")
     youtube_video_ws_ctx = client.ws_session(f"/api/v1/subscribe/youtube-video-by-vid:{video_id}")
-    async with anyio.create_task_group() as tg, donation_ws_ctx as donation_ws, youtube_video_ws_ctx as youtube_video_ws:
-        await tg.start(monitor_invoices, app.lnd, app.db)
+    async with monitor_invoices(app.lnd, app.db), donation_ws_ctx as donation_ws, youtube_video_ws_ctx as youtube_video_ws:
         await payer_lnd.pay_invoice(payment_request)
         with anyio.fail_after(5):
             donation_notification = Notification.parse_obj(await donation_ws.receive_json())
@@ -152,20 +151,24 @@ async def test_donate_full(
         with anyio.fail_after(5):
             youtube_video_notification = Notification.parse_obj(await youtube_video_ws.receive_json())
         assert youtube_video_notification.status == 'OK'
-        tg.cancel_scope.cancel()
     donation_response = await client.get(f"/api/v1/donation/{freeze_donation_id}")
     check_response(donation_response, 200)
     assert donation_response.json()['donation']['paid_at'] != None  # noqa
 
 
 @pytest.mark.freeze_time('2022-02-02 22:22:22')
-async def test_websocket(client, unpaid_donation_fixture, db, freeze_request_hash_json):
+async def test_websocket(client, unpaid_donation_fixture, db, freeze_request_hash_json, pubsub):
     messages = []
-    async with client.ws_session(f'/api/v1/subscribe/donation:{unpaid_donation_fixture.id}') as ws:
+    # Test with two concurrent websockets (there were bugs with it)
+    donation_ws_ctx_1 = client.ws_session(f'/api/v1/subscribe/donation:{unpaid_donation_fixture.id}')
+    donation_ws_ctx_2 = client.ws_session(f'/api/v1/subscribe/donation:{unpaid_donation_fixture.id}')
+    async with donation_ws_ctx_1 as ws_1, donation_ws_ctx_2 as ws_2:
         async with db.session() as db_session:
             await db_session.donation_paid(r_hash=unpaid_donation_fixture.r_hash, amount=100, paid_at=datetime.utcnow())
-        msg = await ws.receive_json()
-        messages.append(msg)
+        msg_1 = await ws_1.receive_json()
+        msg_2 = await ws_2.receive_json()
+        assert msg_1 == msg_2
+        messages.append(msg_1)
     verify_fixture(messages, "websocket-messages")
 
 
@@ -215,7 +218,7 @@ def login_youtuber(client, client_session, youtube_channel):
 ])
 async def test_withdraw(
     client, paid_donation_fixture, client_session, payer_lnd, balance, amount_diff, balance_diff, status,
-    message, is_ok, settings, db,
+    message, is_ok, settings, db, pubsub,
 ):
     channel_id = paid_donation_fixture.youtube_channel.id
     # Update balance to target value
@@ -269,11 +272,14 @@ async def registered_donator(db):
         await db_session.login_donator(UUID(int=1), key=pubkey)  # Should differ from doantor_id fixture
 
 
-@pytest.mark.parametrize('case_name,donator', [
+@pytest.mark.parametrize('case_name,_registered_donator', [
     ('signup', None),
     ('signin', pytest.lazy_fixture('registered_donator')),
 ])
-async def test_lnauth(client, case_name, donator, donator_id):
+async def test_lnauth(client, case_name, _registered_donator, donator_id, pubsub):
+    """
+    donator_id: temporary donator id (like those given to user when he opens the site without session)
+    """
     lnauth_response = await client.get('/api/v1/lnauth')
     lnurl = _lnurl_decode(lnauth_response.json()['lnurl'])
     lnurl_parsed = urlparse(lnurl)
