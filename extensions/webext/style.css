@@ -1,0 +1,76 @@
+#donate4fun-button {
+  display: inline-block;
+  --yt-button-icon-padding: 6px;
+  color: var(--yt-spec-icon-inactive);
+}
+#donate4fun-button .flex-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding-right: var(--yt-button-icon-padding,8px);
+}
+
+#donate4fun-button .dff-icon {
+  line-height: 1;
+  padding: var(--yt-button-icon-padding,8px);
+  width: var(--yt-button-icon-size,var(--yt-icon-width,40px));
+  height: var(--yt-button-icon-size,var(--yt-icon-height,40px));
+  color: var(--yt-button-color,inherit);
+  background-color: transparent;
+  text-transform: var(--yt-button-text-transform,inherit);
+  display: inline-block;
+  position: relative;
+  box-sizing: border-box;
+  font-size: 0;
+}
+
+#donate4fun-button .dff-text {
+  color: var(--yt-button-icon-button-text-color,var(--yt-spec-text-secondary));
+  font-size: var(--ytd-tab-system-font-size);
+  font-weight: var(--ytd-tab-system-font-weight);
+  letter-spacing: var(--ytd-tab-system-letter-spacing);
+  text-transform: var(--ytd-tab-system-text-transform);
+}
+
+#donate4fun-button .dff-bolt {
+  fill: var(--iron-icon-fill-color,currentcolor);
+  stroke: var(--iron-icon-stroke-color,none);
+}
+
+#donate4fun-button .dff-loading {
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: bottom;
+  animation: donate4fun-ellipsis steps(3,end) 600ms infinite;
+  --width: 0.6em;
+}
+
+@keyframes donate4fun-ellipsis {
+  from {
+    margin-left: 0;
+    margin-right: var(--width);
+    width: 0;
+  }
+  50% {
+    margin-left: 0;
+    margin-right: 0;
+    width: var(--width);
+  }
+  to {
+    margin-left: var(--width);
+    margin-right: 0;
+    width: 0;
+  }
+}
+
+#donate4fun-button .dff-icon-animate {
+  animation: 600ms cubic-bezier(.7,.09,.93,.68) 0s infinite donate4fun-beat;
+}
+
+@keyframes donate4fun-beat {
+  to {
+    transform: scale(2);
+    opacity: 0%;
+  }
+}

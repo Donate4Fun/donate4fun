@@ -1,0 +1,49 @@
+{
+  "manifest_version":  2,
+  "name":  "Donate4.Fun",
+  "description":  "Donate4.Fun YouTube helper",
+  "homepage_url": "https://donate4.fun",
+  "author": "Nikolay Bryskin",
+  "version":  "0.4",
+  "icons":  {
+    "48":  "D.svg",
+    "96":  "D.svg"
+  },
+  "applications":  {
+    "gecko":  {
+      "id":  "donate4fun@donate4.fun"
+    }
+  },
+  "permissions": [
+    "storage",
+    "https://*.donate4.fun/*"
+  ],
+  "background": {
+    "scripts": [
+      "browser-polyfill.js",
+      "background.js"
+    ]
+  },
+  "content_scripts":  [
+    {
+      "js":  [
+        "browser-polyfill.js",
+        "contentscript.js"
+      ],
+      "css": [
+        "style.css"
+      ],
+      "run_at":  "document_end",
+      "matches":  [
+        "https://*.youtube.com/*"
+      ]
+    }
+  ],
+  "browser_action":  {
+    "default_icon":  "D.svg",
+    "default_title":  "Donate4.Fun"
+  },
+  "options_ui": {
+    "page": "options.html"
+  }
+}
