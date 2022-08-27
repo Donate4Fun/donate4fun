@@ -1,0 +1,6 @@
+/*.crx
+/*.pem
+/*.zip
+/firefox/src
+/chrome/src
+/src/node_modules

@@ -25,6 +25,20 @@
   font-size: 0;
 }
 
+@keyframes dff-glow {
+  to {
+    filter: drop-shadow(0px 0px 5px);
+  }
+}
+
+#donate4fun-button .dff-icon:hover {
+  animation-name: dff-glow;
+  animation-duration: 0.8s;
+  animation-direction: alternate;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-out;
+}
+
 #donate4fun-button .dff-text {
   color: var(--yt-button-icon-button-text-color,var(--yt-spec-text-secondary));
   font-size: var(--ytd-tab-system-font-size);
@@ -42,11 +56,11 @@
   overflow: hidden;
   display: inline-block;
   vertical-align: bottom;
-  animation: donate4fun-ellipsis steps(3,end) 600ms infinite;
+  animation: dff-ellipsis steps(3,end) 600ms infinite;
   --width: 0.6em;
 }
 
-@keyframes donate4fun-ellipsis {
+@keyframes dff-ellipsis {
   from {
     margin-left: 0;
     margin-right: var(--width);
@@ -65,10 +79,10 @@
 }
 
 #donate4fun-button .dff-icon-animate {
-  animation: 600ms cubic-bezier(.7,.09,.93,.68) 0s infinite donate4fun-beat;
+  animation: 600ms cubic-bezier(.7,.09,.93,.68) 0s infinite dff-beat !important;
 }
 
-@keyframes donate4fun-beat {
+@keyframes dff-beat {
   to {
     transform: scale(2);
     opacity: 0%;

@@ -1,3 +1,5 @@
+import { registerHandlers, worker } from "./common.js";
+
 const donateButtonHtml = `
 <div id="donate4fun-button">
   <div class=flex-container>
@@ -13,32 +15,6 @@ const donateButtonHtml = `
 </div>
 `;
 const buttonId = "donate4fun-button";
-
-
-const configDefaults = {
-  checkInterval: 111,
-  apiHost: "stage.donate4.fun",
-  defaultComment_en: 'Hi! I like your video! I’ve donated you some crypto, you can take it on "donate 4 fun"',
-  defaultComment_ru: 'Классное видео, спасибо! Я задонатил тебе немного сатоши на "donate 4 fun", загугли чтобы забрать',
-  amount: 100,
-  enableComment: true
-};
-
-async function getConfig(name) {
-  return await new Promise((resolve, reject) => {
-    chrome.storage.sync.get(name, items => {
-      let value = items[name];
-      if (value === undefined)
-        value = configDefaults[name];
-      if (value === undefined) {
-        cLog(`No saved or default value for ${name} config key`);
-        reject();
-      } else {
-        resolve(value);
-      }
-    });
-  });
-}
 
 let getButtons;
 let unsubscribeVideoWS;
@@ -58,6 +34,9 @@ function cLog() {
 function init() {
   cLog("init");
   injectPageScript();
+  registerHandlers({
+    postComment: postComment,
+  });
   if (isMobile()) {
     getButtons = getButtons_mobile;
   } else if (isShorts()) {
@@ -77,7 +56,7 @@ function init() {
 async function load(evt) {
   cLog("Setting up...", evt);
   isCommentPosted = false;
-  checkIntervalId = setInterval(checkLoaded, await getConfig("checkInterval"));
+  checkIntervalId = setInterval(checkLoaded, await worker.getConfig("checkInterval"));
 }
 
 function isShorts() {
@@ -111,6 +90,7 @@ async function patchButtons() {
   const buttons = getButtons();
   cLog("buttons", buttons);
   if (document.getElementById(buttonId) === null) {
+    cLog("creating button");
     // Donate button could be already created after user navigated back to youtube video
     const placeholder = document.createElement("div");
     placeholder.id = buttonId;
@@ -119,8 +99,12 @@ async function patchButtons() {
     placeholder.appendChild(parsed.body.firstChild);
     const node = placeholder.firstElementChild;
     buttons.insertBefore(node, buttons.children[0]);
-    node.addEventListener("click", onDonateClick, true);
+  } else {
+    cLog("button is already created");
   }
+  const node = buttons.children[0];
+  node.removeEventListener("click", onDonateClick, true);
+  node.addEventListener("click", onDonateClick, true);
   const videoId = getVideoId();
   unsubscribeVideoWS = await subscribe(`youtube-video-by-vid:${videoId}`, (msg) => {
     cLog("youtube video updated", msg);
@@ -130,7 +114,7 @@ async function patchButtons() {
 }
 
 async function createWebsocket(topic, on_message, on_close) {
-  const apiHost = await getConfig('apiHost');
+  const apiHost = await worker.getConfig('apiHost');
   const ws_uri = `wss://${apiHost}/api/v1/subscribe/${topic}`;
   const socket = new WebSocket(ws_uri);
   socket.onmessage = (event) => {
@@ -194,31 +178,53 @@ function sleep(ms) {
 }
 
 async function waitElement(id) {
+  let timeout = 3000;
+  const step = 100;
   do {
     const element = document.getElementById(id);
-    if (element) {
+    if (element)
       return element;
-    }
-    await sleep(100);
+    if (timeout <= 0)
+      throw new Error(`No such element #${id}`);
+    await sleep(step);
+    timeout -= step;
   } while (true);
 }
 
-async function postComment(message) {
+async function postComment(language, amount) {
   if (isCommentPosted) return;
+
+  let defaultComment;
+  try {
+    defaultComment = await worker.getConfig(`defaultComment_${language}`);
+  } catch (exc) {
+    defaultComment = await worker.getConfig("defaultComment_en");
+  }
+
+  defaultComment.replace('%amount%', amount);
+
   // Scroll to comments section
   const comments = await waitElement("comments");
-  comments.scrollIntoView({behavior: "smooth", block: "end"});
+  comments.scrollIntoView({behavior: "smooth"});
 
   // "Click" on a comment input placeholder
   const commentPlaceholder = await waitElement("simplebox-placeholder");
-  commentPlaceholder.dispatchEvent(new Event("focus", {bubble: true}));
+  commentPlaceholder.scrollIntoView({behavior: "smooth"});
+  commentPlaceholder.click();
+  //commentPlaceholder.dispatchEvent(new Event("focus", {bubble: true}));
 
   const commentInput = await waitElement("contenteditable-root");
   commentInput.scrollIntoView({behavior: "smooth", block: "center"});
 
   // Enter comment text
-  commentInput.textContent = message;
+  commentInput.dispatchEvent(new Event('focus', {bubbles: true}));
+  commentInput.textContent = defaultComment;
+  // Thanks to https://github.com/keepassxreboot/keepassxc-browser/blob/d7e34662637b869500e8bb6344cdd642c2fb079b/keepassxc-browser/content/keepassxc-browser.js#L659-L663
   commentInput.dispatchEvent(new Event('input', {bubbles: true}));
+  commentInput.dispatchEvent(new Event('change', {bubbles: true}));
+  commentInput.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: false, key: '', char: '' }));
+  commentInput.dispatchEvent(new KeyboardEvent('keypress', { bubbles: true, cancelable: false, key: '', char: '' }));
+  commentInput.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, cancelable: false, key: '', char: '' }));
 
   const submitButton = await waitElement('submit-button');
   cLog("patching click for", submitButton);
@@ -229,23 +235,11 @@ async function postComment(message) {
 }
 
 function injectPageScript() {
-   const scriptElement = document.createElement('script');
-  //appending text to a function to convert it's src to string only works in Chrome
-  const func = function () { 
-    window.addEventListener("message", async (event) => {
-      if (event.source !== window) return;
-      if (event.data.type !== "donate4.fun") return;
-      console.log("event", event);
-      if (event.data.method === 'webln.sendPayment') {
-        if (!webln.enabled) {
-          // Show connect dialog
-          await webln.enable();
-        }
-        webln.sendPayment(...event.data.args);
-      }
-    });
-  }
-  scriptElement.textContent = '(' + func + ')();';
+  // page script is needed only for webln to work
+  const scriptUrl = chrome.runtime.getURL('src/pagescript.js');
+  cLog("scriptUrl", scriptUrl);
+  const scriptElement = document.createElement('script');
+  scriptElement.setAttribute("src", scriptUrl);
   (document.head || document.documentElement).appendChild(scriptElement);
   window.postMessage({type: "donate4.fun", test: "test"});
 }
@@ -254,7 +248,7 @@ function sendPayment(paymentRequest) {
   window.postMessage({
     type: "donate4.fun",
     method: "webln.sendPayment",
-    args: [paymentRequest]
+    args: [paymentRequest],
   });
 }
 
@@ -283,26 +277,20 @@ async function getUnsafeWindow() {
 async function onDonateClick(evt) {
   const boltElement = document.querySelector("#donate4fun-button .dff-icon");
   boltElement.classList.add("dff-icon-animate");
-  const amount = await getConfig("amount");
+  const amount = await worker.getConfig("amount");
   // Make a donation
   const response = await apiPost('donate', {
     amount: amount,
     target: window.location.href
   });
   cLog("donate response", response);
-  const videoLanguage = response.donation.youtube_video.default_audio_language;
-  let defaultComment;
-  try {
-    defaultComment = await getConfig(`defaultComment_${videoLanguage}`);
-  } catch (exc) {
-    defaultComment = await getConfig("defaultComment_en");
-  }
   let unsubscribeWs = await subscribe(`donation:${response.donation.id}`, async (msg) => {
     cLog("donation updated", msg);
     unsubscribeWs();
     boltElement.classList.remove("dff-icon-animate");
-    if (await getConfig("enableComment")) {
-      await postComment(defaultComment.replace('%amount%', amount));
+    if (await worker.getConfig("enableComment")) {
+      const videoLanguage = response.donation.youtube_video.default_audio_language;
+      await postComment(videoLanguage, amount);
     }
   });
   const paymentRequest = response.payment_request;
@@ -374,30 +362,11 @@ function isVideoLoaded() {
 }
 
 async function apiPost(path, data) {
-  return await apiFetch(path, "post", data);
+  return await worker.fetch("post", path, data);
 }
 
 async function apiGet(path) {
-  return await apiFetch(path, "get");
-}
-
-async function apiFetch(path, method, data) {
-  const apiHost = await getConfig('apiHost');
-  return await new Promise((resolve, reject) => {
-    chrome.runtime.sendMessage({
-      method: method
-      , data: data
-      , url: `https://${apiHost}/api/v1/${path}`,
-    }, response => {
-      if (response === undefined) {
-        reject(chrome.runtime.lastError);
-      } else if (response.status === "error") {
-        reject(response.response);
-      } else {
-        resolve(response.response);
-      }
-    });
-  });
+  return await worker.fetch("get", path);
 }
 
 init();

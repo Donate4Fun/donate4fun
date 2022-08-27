@@ -6,8 +6,8 @@
   "author": "Nikolay Bryskin",
   "version":  "0.4",
   "icons":  {
-    "48":  "D.svg",
-    "96":  "D.svg"
+    "48":  "src/D.svg",
+    "96":  "src/D.svg"
   },
   "applications":  {
     "gecko":  {
@@ -16,22 +16,19 @@
   },
   "permissions": [
     "storage",
+    "activeTab",
     "https://*.donate4.fun/*"
   ],
   "background": {
-    "scripts": [
-      "browser-polyfill.js",
-      "background.js"
-    ]
+    "page": "background-page.html"
   },
   "content_scripts":  [
     {
       "js":  [
-        "browser-polyfill.js",
-        "contentscript.js"
+        "src/contentscript_loader.js"
       ],
       "css": [
-        "style.css"
+        "src/style.css"
       ],
       "run_at":  "document_end",
       "matches":  [
@@ -40,10 +37,11 @@
     }
   ],
   "browser_action":  {
-    "default_icon":  "D.svg",
-    "default_title":  "Donate4.Fun"
+    "default_icon":  "src/D.svg",
+    "default_title":  "Donate4.Fun",
+    "default_popup": "src/popup.html"
   },
   "options_ui": {
-    "page": "options.html"
+    "page": "src/options-svelte.html"
   }
 }

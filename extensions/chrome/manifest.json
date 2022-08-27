@@ -1,0 +1,60 @@
+{
+  "manifest_version":  3,
+  "name":  "Donate4.Fun",
+  "description":  "Donate4.Fun YouTube helper",
+  "homepage_url": "https://donate4.fun",
+  "author": "Nikolay Bryskin",
+  "version":  "0.4",
+  "icons":  {
+    "48":  "src/D-48.png",
+    "128":  "src/D-128.png"
+  },
+  "permissions": [
+    "storage",
+    "scripting",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://*.donate4.fun/*"
+  ],
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "minimum_chrome_version": "99",
+  "content_scripts":  [{
+    "js":  [
+      "src/contentscript_loader.js"
+    ],
+    "css": [
+      "src/style.css"
+    ],
+    "matches": [
+      "*://youtube.com/*",
+      "*://www.youtube.com/*",
+      "*://m.youtube.com/*"
+    ],
+    "exclude_matches": [ "*://*.music.youtube.com/*" ]
+  }],
+  "action":  {
+    "default_icon":  {
+      "16": "src/D-16.png",
+      "24": "src/D-24.png",
+      "32": "src/D-32.png"
+    },
+    "default_title":  "Donate4.Fun",
+    "default_popup": "src/popup.html"
+  },
+  "options_ui": {
+    "page": "src/options-svelte.html",
+    "open_in_tab": false
+  },
+  "web_accessible_resources": [{
+    "resources": [
+      "src/pagescript.js",
+      "src/contentscript.js",
+      "src/common.js"
+    ],
+    "matches": [ "https://*.youtube.com/*" ]
+  }]
+}
