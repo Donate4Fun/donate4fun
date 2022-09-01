@@ -3,6 +3,7 @@
   import Claim from '../lib/Claim.svelte';
   import LatestDonations from "../lib/LatestDonations.svelte";
   import Header from "../lib/Header.svelte";
+  import Extensions from "../lib/Extensions.svelte";
   import Footer from "../lib/Footer.svelte";
   import Section from "../lib/Section.svelte";
   import Page from "../lib/Page.svelte";
@@ -16,6 +17,24 @@
     <h1>Donate anyone on YouTube</h1>
     Instant delivery with Lightning network. No KYC. Any amount.
   </header>
+  <ol>
+    <li>
+      <Extensions />
+    </li>
+    <li>
+      <div class="flex-column font-large">
+        Bolt icon will appear under YouTube videos
+        <img alt="instruction-youtube-button" src="/static/instruction-youtube-button.png">
+        Click on it to give a tip to the author for this video
+      </div>
+    </li>
+    <li>
+      <div class="flex-column font-large">
+        Post a comment to give author a hint how to take your tip.
+        <img alt="instruction-youtube-comment" src="/static/instruction-youtube-comment.png">
+      </div>
+    </li>
+  </ol>
   <main>
     <div class="forms">
       <Donate />
@@ -83,5 +102,11 @@ article {
 }
 ul {
   box-sizing: border-box;
+}
+img {
+  height: auto;
+  width: auto;
+  max-width: 400px;
+  max-height: 300px;
 }
 </style>

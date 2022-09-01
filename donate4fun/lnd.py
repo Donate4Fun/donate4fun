@@ -176,8 +176,9 @@ async def monitor_invoices_step(lnd_client, db, *, task_status: TaskStatus = TAS
                 logger.debug(f"donation paid {data}")
                 try:
                     async with db.session() as sess:
+                        donation = await sess.query_donation(r_hash=invoice.r_hash)
                         await sess.donation_paid(
-                            r_hash=invoice.r_hash,
+                            donation_id=donation.id,
                             paid_at=invoice.settle_date,
                             amount=invoice.amt_paid_sat,
                         )

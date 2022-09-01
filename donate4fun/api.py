@@ -1,24 +1,24 @@
 import logging
 import math
 from uuid import UUID, uuid4
-from typing import Callable, Literal
+from typing import Literal
 from functools import partial
 from urllib.parse import urlencode
+from datetime import datetime
 
 import bugsnag
 import ecdsa
-from fastapi import APIRouter, WebSocket, Request, Response, Depends, HTTPException, Query, WebSocketDisconnect
-from fastapi.routing import APIRoute
+from fastapi import APIRouter, WebSocket, Request, Depends, HTTPException, Query, WebSocketDisconnect
 from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.datastructures import URL
-from pydantic import ValidationError as PydanticValidationError, AnyHttpUrl, Field, AnyUrl
-from httpx import HTTPStatusError
+from pydantic import AnyHttpUrl, Field, AnyUrl
 from lnurl.models import LnurlResponseModel
 from lnurl.types import MilliSatoshi
 from lnurl.core import _url_encode as lnurl_encode
 from lnpayencode import lndecode, LnAddr
 from aiogoogle import Aiogoogle
 from anyio.abc import TaskStatus
+from rollbar.contrib.fastapi.routing import RollbarLoggingRoute
 
 from .core import get_db_session, get_lnd, get_db, get_pubsub
 from .models import (
@@ -27,50 +27,12 @@ from .models import (
 )
 from .types import ValidationError, RequestHash, PaymentRequest
 from .youtube import YoutubeDonatee, ChannelInfo, fetch_user_channel, validate_target, find_comment, fetch_channel
-from .db import NoResultFound, DonationDb
+from .db import NoResultFound, DonationDb, DbSession
 from .settings import settings
 
 logger = logging.getLogger(__name__)
-
-
-class CustomRoute(APIRoute):
-    def get_route_handler(self) -> Callable:
-        original_route_handler = super().get_route_handler()
-
-        async def custom_route_handler(request: Request) -> Response:
-            try:
-                return await original_route_handler(request)
-            except HTTPStatusError as exc:
-                logger.debug(f"{request.url}: Upstream error", exc_info=exc)
-                status_code = exc.response.status_code
-                body = exc.response.json()
-                return JSONResponse(status_code=500, content={"message": f"Upstream server returned {status_code}: {body}"})
-            except NoResultFound:
-                return JSONResponse(status_code=404, content=dict(message="Item not found"))
-            except ValidationError as exc:
-                return JSONResponse(
-                    status_code=400,
-                    content=dict(
-                        status="error",
-                        type=type(exc).__name__,
-                        error=str(exc),
-                    ),
-                )
-            except PydanticValidationError as exc:
-                logger.debug(f"{request.url}: Validation error", exc_info=exc)
-                return JSONResponse(
-                    status_code=400,
-                    content=dict(
-                        status="error",
-                        type=type(exc).__name__,
-                        error=exc.errors()[0]['msg'],
-                    ),
-                )
-
-        return custom_route_handler
-
-
-router = APIRouter(route_class=CustomRoute)
+router = APIRouter()
+router.route_class = RollbarLoggingRoute
 
 
 def get_donator(request: Request):
@@ -82,8 +44,16 @@ def get_donator(request: Request):
     return donator
 
 
-def make_memo(youtube_channel: YoutubeChannel) -> str:
-    return f"Donate4.fun to {youtube_channel.title}"
+def make_memo(donation: Donation) -> str:
+    if donation.youtube_channel:
+        return f"Donate4.fun to {donation.youtube_channel.title}"
+    elif donation.receiver:
+        if donation.receiver == donation.donator:
+            return f"[Donate4.fun] fulfillment for {donation.receiver.name}"
+        else:
+            return f"[Donate4.fun] donation to {donation.receiver.name}"
+    else:
+        raise ValueError(f"Could not make a memo for donation {donation}")
 
 
 @router.post("/donate", response_model=DonateResponse)
@@ -91,38 +61,47 @@ async def donate(
     request: DonateRequest, donator: Donator = Depends(get_donator), db_session=Depends(get_db_session), lnd=Depends(get_lnd),
  ) -> DonateResponse:
     logger.debug(f"Donator {donator.id} wants to donate {request.amount} to {request.target or request.channel_id}")
-    if request.channel_id:
-        youtube_channel: YoutubeChannel = await db_session.query_youtube_channel(youtube_channel_id=request.channel_id)
-        youtube_video = None
+    donation = Donation(
+        amount=request.amount,
+        donator=donator,
+    )
+    if request.receiver_id:
+        # Donation to a donator - possibly just an own balance fulfillment
+        receiver = await load_donator(db_session, request.receiver_id)
+        if receiver.lnauth_pubkey is None:
+            raise ValidationError("Money receiver should have a connected wallet")
+        donation.receiver = receiver
+    elif request.channel_id:
+        donation.youtube_channel = await db_session.query_youtube_channel(youtube_channel_id=request.channel_id)
     else:
         donatee: YoutubeDonatee = await validate_target(request.target)
-        youtube_channel = YoutubeChannel(
+        donation.youtube_channel = YoutubeChannel(
             channel_id=donatee.channel.id,
             title=donatee.channel.title,
             thumbnail_url=donatee.channel.thumbnail,
         )
-        await db_session.save_youtube_channel(youtube_channel)
+        await db_session.save_youtube_channel(donation.youtube_channel)
         if video := donatee.video:
-            youtube_video = YoutubeVideo(
-                youtube_channel=youtube_channel,
+            donation.youtube_video = YoutubeVideo(
+                youtube_channel=donation.youtube_channel,
                 video_id=video.id,
                 title=video.title,
                 thumbnail_url=video.thumbnail,
                 default_audio_language=video.default_audio_language,
             )
-            await db_session.save_youtube_video(youtube_video)
-        else:
-            youtube_video = None
-    invoice: Invoice = await lnd.create_invoice(memo=make_memo(youtube_channel), value=request.amount)
-    donation = Donation(
-        r_hash=invoice.r_hash,
-        amount=invoice.value,
-        youtube_channel=youtube_channel,
-        youtube_video=youtube_video,
-        donator=donator,
-    )
+            await db_session.save_youtube_video(donation.youtube_video)
+    donator = await load_donator(db_session, donator.id)
+    if donator.balance < request.amount:
+        invoice: Invoice = await lnd.create_invoice(memo=make_memo(donation), value=request.amount)
+        donation.r_hash = invoice.r_hash  # This hash is needed to find and complete donation after payment succeeds
     await db_session.create_donation(donation)
-    return DonateResponse(donation=donation, payment_request=invoice.payment_request)
+    if donator.balance >= request.amount:
+        # If donator has enough money - try to pay donation instantly
+        await db_session.donation_paid(donation_id=donation.id, amount=request.amount, paid_at=datetime.utcnow())
+        donation = await db_session.query_donation(id=donation.id)
+        return DonateResponse(donation=donation, payment_request=None)
+    else:
+        return DonateResponse(donation=donation, payment_request=invoice.payment_request)
 
 
 @router.post("/donatee", response_model=YoutubeChannel)
@@ -144,7 +123,7 @@ async def donation(donation_id: UUID, db_session=Depends(get_db_session), lnd=De
         invoice: Invoice = await lnd.lookup_invoice(donation.r_hash)
         if invoice is None or invoice.state == 'CANCELED':
             logger.debug(f"Invoice {invoice} cancelled, recreating")
-            invoice = await lnd.create_invoice(memo=make_memo(donation.youtube_channel), value=donation.amount)
+            invoice = await lnd.create_invoice(memo=make_memo(donation), value=donation.amount)
             await db_session.update_donation(donation_id=donation_id, r_hash=invoice.r_hash)
         payment_request = invoice.payment_request
     else:
@@ -163,7 +142,7 @@ async def cancel_donation(donation_id: UUID, db=Depends(get_db_session), lnd=Dep
 
 @router.get("/donations/latest", response_model=list[Donation])
 async def latest_donations(db=Depends(get_db_session)):
-    return await db.query_donations(DonationDb.paid_at.isnot(None), limit=25)
+    return await db.query_donations(DonationDb.paid_at.isnot(None) & DonationDb.youtube_channel_id.isnot(None), limit=25)
 
 
 @router.get("/donations/by-donator/{donator_id}", response_model=list[Donation])
@@ -194,22 +173,26 @@ class MeResponse(BaseModel):
     youtube_channels: list[YoutubeChannel]
 
 
+async def load_donator(db: DbSession, donator_id: UUID):
+    try:
+        return await db.query_donator(donator_id)
+    except NoResultFound:
+        return Donator(id=donator_id)
+
+
 @router.get("/donator/me", response_model=MeResponse)
 async def me(request: Request, db=Depends(get_db_session), donator: Donator = Depends(get_donator)):
-    try:
-        donator = await db.query_donator(donator.id)
-    except NoResultFound:
-        pass
+    donator = await load_donator(db, donator.id)
     linked_youtube_channels: list[YoutubeChannel] = await db.query_donator_youtube_channels(donator.id)
     return MeResponse(donator=donator, youtube_channels=linked_youtube_channels)
 
 
 @router.get("/donator/{donator_id}", response_model=Donator)
-async def donator(request: Request, donator_id: UUID, db=Depends(get_db_session)):
-    try:
-        return await db.query_donator(donator_id=donator_id)
-    except NoResultFound:
-        return Donator(id=donator_id)
+async def donator(request: Request, donator_id: UUID, db=Depends(get_db_session), me: Donator = Depends(get_donator)):
+    donator = await load_donator(db, donator_id)
+    if donator.id != me.id:
+        donator.balance = 0  # Do not show balance to others
+    return donator
 
 
 @router.get("/youtube-channel/{channel_id}", response_model=YoutubeChannel)
@@ -493,3 +476,8 @@ async def ownership_check(donator=Depends(get_donator), db=Depends(get_db_sessio
         await db.link_youtube_channel(youtube_channel, donator)
         channels.append(youtube_channel)
     return channels
+
+
+@router.post('/me/fulfill')
+async def fulfill(donator=Depends(get_donator), db=Depends(get_db_session)):
+    pass

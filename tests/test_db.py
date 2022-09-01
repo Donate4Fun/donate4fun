@@ -48,7 +48,7 @@ async def test_create_donation(db_session):
 
 
 async def test_donation_paid(db_session, unpaid_donation_fixture):
-    await db_session.donation_paid(r_hash=unpaid_donation_fixture.r_hash, paid_at=datetime.utcnow(), amount=100)
+    await db_session.donation_paid(donation_id=unpaid_donation_fixture.id, paid_at=datetime.utcnow(), amount=100)
     donation: Donation = await db_session.query_donation(r_hash=unpaid_donation_fixture.r_hash)
     assert donation.paid_at != None  # noqa
 

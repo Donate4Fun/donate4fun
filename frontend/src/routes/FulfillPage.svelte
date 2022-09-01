@@ -2,22 +2,24 @@
   import { navigate } from "svelte-navigator";
 
   import api from "../lib/api.js";
+  import {me} from "../lib/session.js";
   import Donate from '../lib/Donate.svelte';
+  import Donator from '../lib/Donator.svelte';
   import Page from "../lib/Page.svelte";
   import Section from "../lib/Section.svelte";
   import YoutubeChannel from "../lib/YoutubeChannel.svelte";
   import Input from "../lib/Input.svelte";
   import FiatAmount from "../lib/FiatAmount.svelte";
   import Button from "../lib/Button.svelte";
-  import Spinner from "../lib/Spinner.svelte";
   import Loading from "../lib/Loading.svelte";
   import ChannelLogo from "../lib/ChannelLogo.svelte";
 
-  export let channel_id;
+  export let donator_id;
+
+  let donator;
 
   let amount = 100;
   let spin = false;
-  let youtube_channel;
 
   const amountMin = 10;
   const amountMax = 1000000;
@@ -33,14 +35,15 @@
   })();
 
   async function load() {
-    youtube_channel = await api.get(`youtube-channel/${channel_id}`);
+    await me.init();
+    donator = await api.get(`donator/${donator_id}`);
   }
 
   async function donate(e) {
     spin = true;
     const response = await api.post('donate', {
         amount: amount,
-        channel_id: youtube_channel.id,
+        receiver_id: donator.id,
     });
     navigate(`/donation/${response.donation.id}`, {state: response});
     spin = false;
@@ -51,33 +54,35 @@
 
 <svelte:head>
   {#await loadPromise then}
-  <title>Donate4Fun to {youtube_channel.title}</title>
+  <title>Donate4Fun to {donator.name}</title>
   {/await}
 </svelte:head>
 
 <Page>
   <header>
-    <h1>Donate your favorite blogger</h1>
-    Instant delivery with Lightning network. No KYC.
+    {#await loadPromise then}
+      {#if $me.donator.id === donator_id}
+      <h1>Fulfill your balance</h1>
+      {:else}
+      <h1>Donate to {donator.name}</h1>
+      {/if}
+    {/await}
   </header>
   <Section>
     {#await loadPromise}
     <Loading />
     {:then}
-    <form on:submit|preventDefault={donate}>
-      <h1>Donate to <YoutubeChannel {...youtube_channel} /></h1>
-      <ChannelLogo url={youtube_channel.thumbnail_url} />
+    <main>
+      <h1>Donate to</h1>
+      <Donator user={donator} />
       <div>
         <span class="i-want">Donate</span>
         <div class="amount"><Input type=number placeholder="Enter amount" bind:value={amount} min={amountMin} max={amountMax} bind:error={amountError} suffix=sats /></div><FiatAmount bind:amount={amount} class="fiat-amount" />
       </div>
-      <Button class="submit" type=submit disabled={!isValid}>
-        {#if spin}
-        <Spinner class="spinner" size=20px width=3px/>
-        {/if}
+      <Button on:click={donate} disabled={!isValid}>
         <span>Donate</span>
       </Button>
-    </form>
+    </main>
     {/await}
   </Section>
 </Page>
@@ -92,7 +97,7 @@ header > h1 {
   font-size: 44px;
   font-weight: 900;
 }
-form {
+main {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -100,24 +105,23 @@ form {
   width: 640px;
   box-sizing: border-box;
 }
-form > h1 {
+main > h1 {
   margin-top: 0;
   margin-bottom: 24px;
 }
-form > div {
+main > div {
   display: flex;
   align-items: center;
   margin-top: 32px;
   margin-bottom: 36px;
   font-size: 18px;
-  width: 100%;
 }
 .amount {
   width: 250px;
   margin-left: 16px;
   margin-right: 20px;
 }
-form :global(button) {
+main :global(button) {
   width: 204px;
 }
 </style>

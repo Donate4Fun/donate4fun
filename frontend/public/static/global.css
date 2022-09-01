@@ -1,0 +1,7 @@
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+.font-large {
+  font-size: 20px;
+}

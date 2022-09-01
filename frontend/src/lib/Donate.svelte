@@ -66,9 +66,6 @@
       <span class=to>To</span>
       <div class="url"><Input type="text" placeholder="Paste YouTube URL" bind:value={target} bind:error={error} logo=url(/static/youtube.svg) required /></div>
       <Button class="submit" type=submit>
-        {#if spin}
-        <Spinner class="spinner" size=20px width=3px/>
-        {/if}
         <span>Donate</span>
       </Button>
     </div>
@@ -162,8 +159,5 @@ form > div {
 }
 form :global(.submit) {
   width: 180px;
-}
-form :global(.spinner) {
-  left: -30px;
 }
 </style>

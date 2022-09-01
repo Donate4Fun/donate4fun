@@ -34,6 +34,7 @@ lnurl = "^0.3.6"
 bugsnag = "^4.2.1"
 lightning-payencode = {git = "https://github.com/donate4fun/lightning-payencode"}
 ecdsa = "^0.17.0"
+rollbar = "^0.16.3"
 
 [tool.poetry.dev-dependencies]
 ipython = "^8.3.0"

@@ -61,3 +61,7 @@ class ValidationError(Exception):
 
 class UnsupportedTarget(ValidationError):
     pass
+
+
+class NotEnoughBalance(Exception):
+    pass

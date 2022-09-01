@@ -43,22 +43,22 @@
   <ChannelLogo url={youtube_channel.thumbnail_url} size=72px />
   <div class="header">Great! You've sent <Amount amount={amount}/> to <YoutubeChannel {...youtube_channel}/></div>
   {#if $me.donator.id === donator_id}
-  <Infobox>Copy and share the message with the link or just tell {youtube_channel.title} to receive the donation here at «Donate4Fun»</Infobox>
-  <call-to-action>
-  {#if youtube_video}
-  Now leave a comment on <a href="{youtube_video_url(youtube_video.video_id)}" target=_blank>his video</a> to make him know of donation:
-  {:else}
-  Now leave a comment on his video to make him know of donation:
-  {/if}
-  </call-to-action>
-  <ol>
-    <li>Press "Copy and Share" - commend will be copied to clipboard and YouTube video tab will open</li>
-    <li>Scroll to comments section and focus "Add a comment..." field</li>
-    <li>Paste a comment from clipboard and post it</li>
-  </ol>
-  <Editable class=message message={message} />
-  <Button on:click={copyAndShare} class="copy-button">Copy and Share</Button>
-  <Button on:click={() => dispatch("close")} class="grey">Back</Button>
+    <Infobox>Copy and share the message with the link or just tell {youtube_channel.title} to receive the donation here at «Donate4Fun»</Infobox>
+    <call-to-action>
+      {#if youtube_video}
+      Now leave a comment on <a href="{youtube_video_url(youtube_video.video_id)}" target=_blank>his video</a> to make him know of donation:
+      {:else}
+      Now leave a comment on his video to make him know of donation:
+      {/if}
+    </call-to-action>
+    <ol>
+      <li>Press "Copy and Share" - commend will be copied to clipboard and YouTube video tab will open</li>
+      <li>Scroll to comments section and focus "Add a comment..." field</li>
+      <li>Paste a comment from clipboard and post it</li>
+    </ol>
+    <Editable class=message message={message} />
+    <Button on:click={copyAndShare} class="copy-button">Copy and Share</Button>
+    <Button on:click={() => dispatch("close")} class="grey">Back</Button>
   {/if}
 {/await}
 </main>

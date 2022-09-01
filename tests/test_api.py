@@ -1,7 +1,9 @@
+import json
 from uuid import UUID
 from datetime import datetime
 from functools import partial
 from urllib.parse import urlparse, parse_qs, urlunparse
+from contextlib import asynccontextmanager
 
 import anyio
 import pytest
@@ -17,6 +19,7 @@ from donate4fun.models import Donation, YoutubeChannel, Donator
 from donate4fun.db import Notification
 
 from tests.test_util import verify_fixture, verify_response, check_response, freeze_time
+from tests.fixtures import Session, Settings
 
 
 @pytest.fixture
@@ -128,6 +131,16 @@ async def test_cancel_donation(client, app, db_session, freeze_donation_id):
         verify_fixture(ws_response, "cancel-donation-subscribe")
 
 
+@asynccontextmanager
+async def check_notification(client, topic: str, id_: UUID):
+    async with client.ws_session(f"/api/v1/subscribe/{topic}:{id_}") as ws:
+        yield
+        with anyio.fail_after(5):
+            notification = Notification.parse_obj(await ws.receive_json())
+        assert notification.status == 'OK'
+        assert notification.id == id_
+
+
 async def test_donate_full(
     client, app, freeze_donation_id, freeze_youtube_channel_id, payer_lnd: LndClient,
     freeze_request_hash_json, pubsub,
@@ -140,20 +153,43 @@ async def test_donate_full(
     check_response(donate_response, 200)
     assert donate_response.json()['donation']['id'] == str(freeze_donation_id)
     payment_request = donate_response.json()['payment_request']
-    donation_ws_ctx = client.ws_session(f"/api/v1/subscribe/donation:{freeze_donation_id}")
-    youtube_video_ws_ctx = client.ws_session(f"/api/v1/subscribe/youtube-video-by-vid:{video_id}")
-    async with monitor_invoices(app.lnd, app.db), donation_ws_ctx as donation_ws, youtube_video_ws_ctx as youtube_video_ws:
+    check_donation_notification = check_notification(client, 'donation', freeze_donation_id)
+    check_video_notification = check_notification(client, 'youtube-video-by-vid', video_id)
+    async with monitor_invoices(app.lnd, app.db), check_donation_notification, check_video_notification:
         await payer_lnd.pay_invoice(payment_request)
-        with anyio.fail_after(5):
-            donation_notification = Notification.parse_obj(await donation_ws.receive_json())
-        assert donation_notification.status == 'OK'
-        assert donation_notification.id == freeze_donation_id
-        with anyio.fail_after(5):
-            youtube_video_notification = Notification.parse_obj(await youtube_video_ws.receive_json())
-        assert youtube_video_notification.status == 'OK'
     donation_response = await client.get(f"/api/v1/donation/{freeze_donation_id}")
     check_response(donation_response, 200)
     assert donation_response.json()['donation']['paid_at'] != None  # noqa
+
+
+def login_to(client, settings: Settings, donator: Donator):
+    # Relogin to rich donator (with balance > 0)
+    client.cookies = dict(session=Session(donator=donator.id, jwt_secret=settings.jwt_secret).to_jwt())
+
+
+async def test_fulfill(
+    client, app, freeze_donation_id, payer_lnd: LndClient, settings,
+    freeze_request_hash_json, pubsub, registered_donator,
+):
+    amount = 30
+    donate_response: DonateResponse = await client.post(
+        "/api/v1/donate",
+        json=json.loads(DonateRequest(amount=amount, receiver_id=registered_donator.id).json()),
+    )
+    check_response(donate_response, 200)
+    assert donate_response.json()['donation']['id'] == str(freeze_donation_id)
+    payment_request = donate_response.json()['payment_request']
+    check_donation_notification = check_notification(client, 'donation', freeze_donation_id)
+    check_donator_notification = check_notification(client, 'donator', registered_donator.id)
+    async with monitor_invoices(app.lnd, app.db), check_donation_notification, check_donator_notification:
+        await payer_lnd.pay_invoice(payment_request)
+    donation_response = await client.get(f"/api/v1/donation/{freeze_donation_id}")
+    check_response(donation_response, 200)
+    assert donation_response.json()['donation']['paid_at'] != None  # noqa
+    login_to(client, settings, registered_donator)
+    me_response = await client.get("/api/v1/donator/me")
+    check_response(me_response, 200)
+    assert me_response.json()['donator']['balance'] == amount
 
 
 @pytest.mark.freeze_time('2022-02-02 22:22:22')
@@ -164,7 +200,7 @@ async def test_websocket(client, unpaid_donation_fixture, db, freeze_request_has
     donation_ws_ctx_2 = client.ws_session(f'/api/v1/subscribe/donation:{unpaid_donation_fixture.id}')
     async with donation_ws_ctx_1 as ws_1, donation_ws_ctx_2 as ws_2:
         async with db.session() as db_session:
-            await db_session.donation_paid(r_hash=unpaid_donation_fixture.r_hash, amount=100, paid_at=datetime.utcnow())
+            await db_session.donation_paid(donation_id=unpaid_donation_fixture.id, amount=100, paid_at=datetime.utcnow())
         msg_1 = await ws_1.receive_json()
         msg_2 = await ws_2.receive_json()
         assert msg_1 == msg_2
@@ -264,14 +300,6 @@ async def test_withdraw(
         assert youtube_channel.balance == -amount_diff if is_ok else balance
 
 
-@pytest.fixture
-async def registered_donator(db):
-    sk = ecdsa.SigningKey.generate(entropy=ecdsa.util.PRNG(b'seed'), curve=ecdsa.SECP256k1)
-    pubkey = sk.verifying_key.to_string().hex()
-    async with db.session() as db_session:
-        await db_session.login_donator(UUID(int=1), key=pubkey)  # Should differ from doantor_id fixture
-
-
 @pytest.mark.parametrize('case_name,_registered_donator', [
     ('signup', None),
     ('signin', pytest.lazy_fixture('registered_donator')),
@@ -323,3 +351,28 @@ async def test_youtube_video_no_cors(client):
     response = await client.get(f"/api/v1/youtube-video/{youtube_videoid}", headers=dict(origin="https://unallowed.com"))
     check_response(response, 200)
     assert 'Access-Control-Allow-Origin' not in response.headers
+
+
+async def test_donate_from_balance(
+    client, app, freeze_donation_id, freeze_youtube_channel_id, pubsub, rich_donator, settings,
+):
+    login_to(client, settings, rich_donator)
+    video_id = 'rq2SVMXEMPI'
+    amount = 30
+    check_donation_notification = check_notification(client, 'donation', freeze_donation_id)
+    check_video_notification = check_notification(client, 'youtube-video-by-vid', video_id)
+    async with check_donation_notification, check_video_notification:
+        donate_response: DonateResponse = await client.post(
+            "/api/v1/donate",
+            json=DonateRequest(amount=amount, target=f'https://www.youtube.com/watch?v={video_id}').dict(),
+        )
+        check_response(donate_response, 200)
+        donation = donate_response.json()['donation']
+        assert donation['id'] == str(freeze_donation_id)
+        assert donation['r_hash'] == None  # noqa
+    donation_response = await client.get(f"/api/v1/donation/{freeze_donation_id}")
+    check_response(donation_response, 200)
+    assert donation_response.json()['donation']['paid_at'] != None  # noqa
+    me_response = await client.get('/api/v1/donator/me')
+    check_response(me_response, 200)
+    assert me_response.json()['donator']['balance'] == rich_donator.balance - amount

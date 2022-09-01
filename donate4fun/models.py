@@ -49,6 +49,7 @@ class LoginToken(BaseModel):
 
 class DonateRequest(BaseModel):
     amount: int
+    receiver_id: UUID | None
     channel_id: UUID | None
     target: HttpUrl | None
     message: str | None
@@ -101,6 +102,7 @@ class Donator(BaseModel):
     name: str | None
     avatar_url: str | None
     lnauth_pubkey: str | None
+    balance: int = Field(default=0)
 
     @validator('name', always=True)
     def generate_name(cls, v, values):
@@ -123,10 +125,11 @@ class Donator(BaseModel):
 
 class Donation(BaseModel):
     id: UUID = Field(default_factory=uuid4)
-    r_hash: RequestHash
+    r_hash: RequestHash | None
     donator_id: UUID
     donator: Donator
-    youtube_channel: YoutubeChannel
+    youtube_channel: YoutubeChannel | None
+    receiver: Donator | None
     amount: int
     youtube_video: YoutubeVideo | None
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -159,7 +162,7 @@ class DonateResponse(BaseModel):
 
 
 class Notification(BaseModel):
-    id: UUID
+    id: UUID | str
     status: str
     message: str | None
 

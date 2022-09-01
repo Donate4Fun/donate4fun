@@ -2,16 +2,19 @@ import { writable, derived } from "svelte/store";
 
 const notifications = writable([]);
 
-function notify(title, message, type = "default", timeout = 3000) {
+function notify(title, message, type = "default", timeout = 300000) {
   notifications.update(state => {
     const id_ = id();
-    setTimeout(() => {
+
+    function close() {
       notifications.update(state => {
         return state.filter(notification => notification.id !== id_);
       });
-    }, timeout);
+    }
 
-    return [...state, { id: id_, type, title, message }];
+    setTimeout(close, timeout);
+
+    return [...state, { id: id_, type, title, message, close }];
   });
 }
 

@@ -6,6 +6,8 @@ backend:
   config:
     bugsnag:
       release_stage: staging
+    rollbar:
+      environment: staging
     youtube:
       oauth:
         redirect_base_url: https://stage.donate4.fun

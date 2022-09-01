@@ -10,7 +10,7 @@ from sqlalchemy.orm.exc import NoResultFound  # noqa
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 
 from .models import Donation, Donator, YoutubeChannel, YoutubeVideo, Notification, Credentials
-from .types import RequestHash
+from .types import RequestHash, NotEnoughBalance
 from .settings import DbSettings
 
 logger = logging.getLogger(__name__)
@@ -51,6 +51,7 @@ class DonatorDb(Base):
     name = Column(String)
     avatar_url = Column(String)
     lnauth_pubkey = Column(String, unique=True)
+    balance = Column(BigInteger, nullable=False, server_default=text('0'))
 
     linked_youtube_channels = relationship(
         YoutubeChannelDb,
@@ -70,16 +71,18 @@ class DonationDb(Base):
     __tablename__ = 'donation'
 
     id = Column(Uuid(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4())
-    r_hash = Column(String, unique=True, nullable=False)
+    r_hash = Column(String, unique=True)
     amount = Column(BigInteger, nullable=False)
     donator_id = Column(Uuid(as_uuid=True), ForeignKey(DonatorDb.id), nullable=False)
-    youtube_channel_id = Column(Uuid(as_uuid=True), ForeignKey(YoutubeChannelDb.id), nullable=False)
+    youtube_channel_id = Column(Uuid(as_uuid=True), ForeignKey(YoutubeChannelDb.id))
     youtube_video_id = Column(Uuid(as_uuid=True), ForeignKey(YoutubeVideoDb.id))
+    receiver_id = Column(Uuid(as_uuid=True), ForeignKey(DonatorDb.id))
     created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
     paid_at = Column(TIMESTAMP)
     cancelled_at = Column(TIMESTAMP)
 
-    donator = relationship(DonatorDb, lazy='joined')
+    donator = relationship(DonatorDb, lazy='joined', foreign_keys=[donator_id])
+    receiver = relationship(DonatorDb, lazy='joined', foreign_keys=[receiver_id])
     youtube_channel = relationship(YoutubeChannelDb, lazy='joined')
     youtube_video = relationship(YoutubeVideoDb, lazy='joined')
 
@@ -293,11 +296,12 @@ class DbSession:
             .values(
                 id=donation.id,
                 created_at=donation.created_at,
-                youtube_channel_id=donation.youtube_channel.id,
+                youtube_channel_id=donation.youtube_channel and donation.youtube_channel.id,
                 youtube_video_id=donation.youtube_video and donation.youtube_video.id,
+                receiver_id=donation.receiver and donation.receiver.id,
                 donator_id=donation.donator.id,
                 amount=donation.amount,
-                r_hash=donation.r_hash.as_base64,
+                r_hash=donation.r_hash and donation.r_hash.as_base64,
             )
         )
         return donation
@@ -325,43 +329,68 @@ class DbSession:
         )
         return resp.scalar()
 
-    async def donation_paid(self, r_hash: RequestHash, amount: int, paid_at: datetime):
+    async def donation_paid(self, donation_id: UUID, amount: int, paid_at: datetime):
         resp = await self.execute(
             update(DonationDb)
-            .where((DonationDb.r_hash == r_hash.as_base64) & DonationDb.paid_at.is_(None))
+            .where((DonationDb.id == donation_id) & DonationDb.paid_at.is_(None))
             .values(
                 amount=amount,
                 paid_at=paid_at,
             )
-            .returning(DonationDb.id, DonationDb.youtube_channel_id, DonationDb.youtube_video_id)
+            .returning(
+                DonationDb.id,
+                DonationDb.donator_id,
+                DonationDb.youtube_channel_id,
+                DonationDb.youtube_video_id,
+                DonationDb.receiver_id,
+                DonationDb.r_hash,
+            )
         )
         row = resp.fetchone()
         if row is None:
             # Row could be already updated in another replica
-            logger.debug(f"Donation {r_hash} was already handled, skipping")
+            logger.debug(f"Donation {donation_id} was already handled, skipping")
             return
 
-        donation_id, youtube_channel_id, youtube_video_id = row
-        await self.execute(
-            update(YoutubeChannelDb)
-            .values(
-                balance=YoutubeChannelDb.balance + amount,
-                total_donated=YoutubeChannelDb.total_donated + amount,
+        donation_id, donator_id, youtube_channel_id, youtube_video_id, receiver_id, r_hash = row
+        if youtube_channel_id:
+            await self.execute(
+                update(YoutubeChannelDb)
+                .values(
+                    balance=YoutubeChannelDb.balance + amount,
+                    total_donated=YoutubeChannelDb.total_donated + amount,
+                )
+                .where(YoutubeChannelDb.id == youtube_channel_id)
             )
-            .where(YoutubeChannelDb.id == youtube_channel_id)
-        )
-        await self.notify(f'donation:{donation_id}', Notification(id=donation_id, status='OK'))
-        if youtube_video_id:
-            video_update_resp = await self.execute(
-                update(YoutubeVideoDb)
-                .values(total_donated=YoutubeVideoDb.total_donated + amount)
-                .where(YoutubeVideoDb.id == youtube_video_id)
-                .returning(YoutubeVideoDb.video_id)
-            )
-            (vid,) = video_update_resp.fetchone()
             if youtube_video_id:
+                video_update_resp = await self.execute(
+                    update(YoutubeVideoDb)
+                    .values(total_donated=YoutubeVideoDb.total_donated + amount)
+                    .where(YoutubeVideoDb.id == youtube_video_id)
+                    .returning(YoutubeVideoDb.video_id)
+                )
+                (vid,) = video_update_resp.fetchone()
                 await self.notify(f'youtube-video:{youtube_video_id}', Notification(id=youtube_video_id, status='OK'))
-                await self.notify(f'youtube-video-by-vid:{vid}', Notification(id=youtube_video_id, status='OK'))
+                await self.notify(f'youtube-video-by-vid:{vid}', Notification(id=vid, status='OK'))
+        elif receiver_id:
+            await self.execute(
+                update(DonatorDb)
+                .values(balance=DonatorDb.balance + amount)
+                .where(DonatorDb.id == receiver_id)
+            )
+            await self.notify(f'donator:{receiver_id}', Notification(id=receiver_id, status='OK'))
+        else:
+            raise ValueError(f"Donation has no youtube_channel_id nor receiver_id: {donation_id}")
+        if r_hash is None:
+            # donation without invoice, use donator balance
+            resp = await self.execute(
+                update(DonatorDb)
+                .where((DonatorDb.id == donator_id) & (DonatorDb.balance >= amount))
+                .values(balance=DonatorDb.balance - amount)
+            )
+            if resp.rowcount != 1:
+                raise NotEnoughBalance(f"Donator {donator_id} hasn't enough money")
+        await self.notify(f'donation:{donation_id}', Notification(id=donation_id, status='OK'))
 
     async def commit(self):
         return await self.session.commit()

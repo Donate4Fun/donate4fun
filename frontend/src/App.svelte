@@ -3,6 +3,7 @@
   import Main from "./routes/Main.svelte";
   import DonatorPage from "./routes/DonatorPage.svelte";
   import DonatePage from "./routes/DonatePage.svelte";
+  import FulfillPage from "./routes/FulfillPage.svelte";
   import DonationPage from "./routes/DonationPage.svelte";
   import YoutubeChannelPage from "./routes/YoutubeChannelPage.svelte";
   import WithdrawPage from "./routes/WithdrawPage.svelte";
@@ -17,6 +18,7 @@
 
 <svelte:head>
   <link href="https://fonts.googleapis.com/css?family=Inter:400,500,600,700,900" rel="stylesheet">
+  <link href="/static/global.css" rel="stylesheet">
   <title>{$title}</title>
 </svelte:head>
 
@@ -27,6 +29,7 @@
   <Route path="youtube/:channel_id/withdraw" component="{WithdrawPage}" />
   <Route path="youtube/:channel_id/link" component="{YoutubeLinkPage}" />
   <Route path="donate/:channel_id" component="{DonatePage}" />
+  <Route path="fulfill/:donator_id" component="{FulfillPage}" />
   <Route path="prove/youtube" component={YoutubeProvePage} />
   <Route path="login" component={LoginPage} />
   <Route path="/" component={Main} />

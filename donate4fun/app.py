@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 import anyio
 import bugsnag
+import rollbar
 from bugsnag.asgi import BugsnagMiddleware
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -13,14 +14,52 @@ from hypercorn.asyncio import serve as hypercorn_serve
 from hypercorn.config import Config
 from debug_toolbar.middleware import DebugToolbarMiddleware
 from starlette_authlib.middleware import AuthlibMiddleware
+from fastapi.responses import JSONResponse
+from httpx import HTTPStatusError
+from pydantic import ValidationError as PydanticValidationError
 
 from .settings import load_settings, Settings
-from .db import Database
+from .db import Database, NoResultFound
 from .lnd import monitor_invoices, LndClient
 from .pubsub import PubSubBroker
+from .types import ValidationError
 from . import api, web
 
 logger = logging.getLogger(__name__)
+
+
+def http_status_error_handler(request, exc):
+    logger.debug(f"{request.url}: Upstream error", exc_info=exc)
+    status_code = exc.response.status_code
+    body = exc.response.json()
+    return JSONResponse(status_code=500, content={"message": f"Upstream server returned {status_code}: {body}"})
+
+
+def no_result_found_handler(request, exc):
+    return JSONResponse(status_code=404, content=dict(message="Item not found"))
+
+
+def validation_error_handler(request, exc):
+    return JSONResponse(
+        status_code=400,
+        content=dict(
+            status="error",
+            type=type(exc).__name__,
+            error=str(exc),
+        ),
+    )
+
+
+def pydantic_validation_error_handler(request, exc):
+    logger.debug(f"{request.url}: Validation error", exc_info=exc)
+    return JSONResponse(
+        status_code=400,
+        content=dict(
+            status="error",
+            type=type(exc).__name__,
+            error=exc.errors()[0]['msg'],
+        ),
+    )
 
 
 @asynccontextmanager
@@ -31,7 +70,18 @@ async def create_app(settings: Settings):
         "https://m/youtube.com",
     ]
 
-    app = FastAPI(debug=settings.fastapi.debug, root_path=settings.fastapi.root_path)
+    app = FastAPI(
+        debug=settings.fastapi.debug,
+        root_path=settings.fastapi.root_path,
+        exception_handlers={
+            HTTPStatusError: http_status_error_handler,
+            NoResultFound: no_result_found_handler,
+            ValidationError: validation_error_handler,
+            PydanticValidationError: pydantic_validation_error_handler,
+        },
+    )
+    if settings.rollbar:
+        rollbar.init(**settings.rollbar.dict())
     if settings.fastapi.debug:
         app.add_middleware(DebugToolbarMiddleware)
     app.add_middleware(
@@ -68,7 +118,7 @@ async def create_db():
 
 async def serve():
     async with load_settings() as settings, create_app(settings) as app:
-        if settings.bugsnag.api_key:
+        if settings.bugsnag:
             bugsnag.configure(**settings.bugsnag.dict(), project_root=os.path.dirname(__file__))
         lnd = LndClient(settings.lnd)
         db = Database(settings.db)

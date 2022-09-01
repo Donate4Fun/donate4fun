@@ -11,6 +11,7 @@ from uuid import UUID
 
 import anyio
 import pytest
+import ecdsa
 from authlib.jose import jwt
 from asgi_testclient import TestClient
 
@@ -18,7 +19,7 @@ from donate4fun.app import create_app
 from donate4fun.models import Invoice, Donation
 from donate4fun.lnd import LndClient
 from donate4fun.settings import load_settings, Settings, DbSettings
-from donate4fun.db import DbSession, Database
+from donate4fun.db import DbSession, Database, update, DonatorDb
 from donate4fun.models import RequestHash, PaymentRequest, YoutubeChannel, Donator, BaseModel, YoutubeVideo
 from donate4fun.pubsub import PubSubBroker
 
@@ -148,9 +149,12 @@ async def pubsub(app, db):
 
 @pytest.fixture
 def freeze_request_hash_json(monkeypatch):
+    r_hash = urlsafe_b64encode(b'hash').decode()
+
     def mock_to_json(self):
-        return urlsafe_b64encode(b'hash').decode()
+        return r_hash
     monkeypatch.setattr(RequestHash, 'to_json', mock_to_json)
+    return r_hash
 
 
 @pytest.fixture
@@ -207,7 +211,7 @@ async def unpaid_donation_fixture(app, db, donator_id, freeze_donation_id, freez
 async def paid_donation_fixture(db, unpaid_donation_fixture) -> Donation:
     async with db.session() as db_session:
         await db_session.donation_paid(
-            r_hash=unpaid_donation_fixture.r_hash,
+            donation_id=unpaid_donation_fixture.id,
             amount=unpaid_donation_fixture.amount,
             paid_at=datetime.now(),
         )
@@ -239,3 +243,24 @@ def client_session(donator_id, settings):
 @pytest.fixture
 def client(app, client_session):
     return TestClient(app, cookies=dict(session=client_session.to_jwt()))
+
+
+@pytest.fixture
+async def registered_donator(db):
+    sk = ecdsa.SigningKey.generate(entropy=ecdsa.util.PRNG(b'seed'), curve=ecdsa.SECP256k1)
+    pubkey = sk.verifying_key.to_string().hex()
+    async with db.session() as db_session:
+        donator_id = UUID(int=1)  # Should differ from doantor_id fixture
+        await db_session.login_donator(donator_id, key=pubkey)
+        return await db_session.query_donator(donator_id)
+
+
+@pytest.fixture
+async def rich_donator(db, registered_donator):
+    async with db.session() as db_session:
+        await db_session.execute(
+            update(DonatorDb)
+            .values(balance=100)
+            .where(DonatorDb.id == registered_donator.id)
+        )
+        return await db_session.query_donator(registered_donator.id)

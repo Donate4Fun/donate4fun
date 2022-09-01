@@ -2,7 +2,6 @@
   import {useResolve} from "svelte-navigator";
   import Logo from "../lib/Logo.svelte";
   import Social from "../lib/Social.svelte";
-  import Extensions from "../lib/Extensions.svelte";
   import Userpic from "../lib/Userpic.svelte";
   import Loading from "../lib/Loading.svelte";
   import Button from "../lib/Button.svelte";
@@ -14,7 +13,6 @@
 <header {...$$restProps}>
   <div class="logo"><Logo /></div>
   <Social class="onlylarge" />
-  <Extensions class="onlylarge" />
   <div class="right">
     {#await me.init()}
     <Loading/>

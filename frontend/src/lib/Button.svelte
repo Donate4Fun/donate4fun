@@ -1,12 +1,39 @@
 <script>
-  import { createEventDispatcher } from "svelte";
   import { navigate } from "svelte-navigator";
+  import { custom_event, get_current_component } from 'svelte/internal'
+  import Spinner from "../lib/Spinner.svelte";
 
   export let link = null;
   export let target = null;
+  export let spin = false;
+  export let nospin = false;
+
+  function createEventDispatcher() {
+      const component = get_current_component();
+
+      return (type, detail) => {
+          const callbacks = component.$$.callbacks[type];
+
+          if (callbacks) {
+              // TODO are there situations where events could be dispatched
+              // in a server (non-DOM) environment?
+              const arr = [];
+              const hasCallbacks = !!callbacks.length;
+              const event = custom_event(type, detail);
+              callbacks.slice().forEach(fn => {
+                  const res = fn.call(component, event);
+                  if (res instanceof Promise) {
+                      arr.push(res);
+                  }
+              });
+              return Promise.all(arr).then(() => hasCallbacks);
+          }
+          return new Promise((resolve) => resolve(false));
+      };
+  }
 
   const dispatch = createEventDispatcher();
-  function click(ev) {
+  async function click(ev) {
     if (link !== null) {
       if (target !== null) {
         window.open(link, target).focus();
@@ -14,13 +41,22 @@
         navigate(link);
       }
     } else {
-      dispatch("click", ev);
+      if (!nospin)
+        spin = true;
+      try {
+        await dispatch("click", ev);
+      } catch (err) {
+      }
+      spin = false;
     }
   }
 </script>
 
-<button {...$$restProps} on:click={click}>
+<button {...$$restProps} on:click={click} disabled={spin}>
   <div>
+    {#if spin}
+      <Spinner class="spinner" size=20px width=3px />
+    {/if}
     <slot />
   </div>
 </button>
@@ -66,5 +102,8 @@ button:disabled {
 }
 button:hover:enabled {
   box-shadow: 0px 8px 20px rgba(185, 192, 204, 0.6);
+}
+.spinner {
+  left: -30px;
 }
 </style>

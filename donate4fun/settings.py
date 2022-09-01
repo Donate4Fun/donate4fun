@@ -89,6 +89,12 @@ class BugsnagSettings(BaseModel):
     app_version: str
 
 
+class RollbarSettings(BaseModel):
+    access_token: str
+    environment: str
+    code_version: str
+
+
 def yaml_config_source(settings: BaseSettings) -> dict[str, Any]:
     return yaml.safe_load(open(os.getenv('DONATE4FUN_CONFIG', 'config.yaml')))
 
@@ -99,7 +105,8 @@ class Settings(BaseSettings):
     db: DbSettings
     log: LoggingConfig
     fastapi: FastApiSettings
-    bugsnag: BugsnagSettings
+    bugsnag: BugsnagSettings | None
+    rollbar: RollbarSettings | None
     hypercorn: dict[str, Any]
     jwt_secret: str
     min_withdraw: int  # Limit in sats for claiming

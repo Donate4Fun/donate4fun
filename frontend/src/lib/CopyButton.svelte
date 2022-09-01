@@ -13,7 +13,7 @@
   }
 </script>
 
-<Button on:click={doCopy}>
+<Button on:click={doCopy} nospin>
   {#if copied}
   Copied
   {:else}

@@ -2,6 +2,8 @@
   import { flip } from "svelte/animate";
   import { fly } from "svelte/transition";
   import { notifications } from "./notifications.js";
+
+  import Button from "../lib/Button.svelte";
 </script>
 
 <div class="notifications">
@@ -10,8 +12,9 @@
     <img src="/static/exclamation-red.svg" alt="exclamation">
     <div class="text">
       <div class="title">{notification.title}</div>
-      <div class="message">{notification.message}</div>
-      <div class="support">Contact us in <a href="https://discord.gg/VvqUaFeQZU">Discord</a> or <a href="https://t.me/+XZmgmy8iLYFiZDRi">Telegram</a></div>
+      <pre class="message">{notification.message}</pre>
+      <div class="support">If it persists contact us using <a href="https://discord.gg/VvqUaFeQZU" target=_blank>Discord</a> or <a href="https://t.me/+XZmgmy8iLYFiZDRi" target=_blank>Telegram</a></div>
+      <Button class=white on:click={notification.close}>Close</Button>
     </div>
   </div>
 {/each}
@@ -40,6 +43,14 @@
   line-height: 20px;
   font-size: 14px;
   width: 509px;
+}
+div.text {
+  min-width: 0;
+}
+pre.message {
+  font-size: 10px;
+  overflow: auto;
+  max-height: 400px;
 }
 img {
   margin-top: 9px;
