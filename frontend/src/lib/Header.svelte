@@ -2,6 +2,7 @@
   import {useResolve} from "svelte-navigator";
   import Logo from "../lib/Logo.svelte";
   import Social from "../lib/Social.svelte";
+  import Extensions from "../lib/Extensions.svelte";
   import Userpic from "../lib/Userpic.svelte";
   import Loading from "../lib/Loading.svelte";
   import Button from "../lib/Button.svelte";
@@ -13,7 +14,7 @@
 <header {...$$restProps}>
   <div class="logo"><Logo /></div>
   <Social class="onlylarge" />
-  <a class="onlylarge" href=https://donate4fun.notion.site/How-to-install-browser-integration-a4cf34af2b5c4cc4a48ac0e5ff5afb51 target="_blank">Add to browser</a>
+  <Extensions class="onlylarge" />
   <div class="right">
     {#await me.init()}
     <Loading/>

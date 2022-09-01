@@ -20,7 +20,7 @@
     "https://*.donate4.fun/*"
   ],
   "background": {
-    "page": "background-page.html"
+    "page": "background.html"
   },
   "content_scripts":  [
     {

@@ -1,5 +1,8 @@
 import axios from "axios";
 import {notify} from "../lib/notifications.js";
+import {writable, get} from 'svelte/store';
+
+export const apiOrigin = writable(window.location.origin);
 
 class ApiError extends Error {
   constructor(response) {
@@ -17,7 +20,11 @@ function handle_response(response) {
     console.log(`received response for ${response.request.responseURL}`, response);
     return response.data;
   } else {
-    console.error(`API error in ${response.request.responseURL}`, response);
+    console.error(`Server error in ${response.request.responseURL}`, response);
+    let message = response.data;
+    if (typeof message !== "string")
+      message = message.message || message.error || JSON.stringify(message);
+    notify("Server Error", message, "error");
     throw new ApiError(response);
   }
 }
@@ -26,25 +33,19 @@ function handle_error(error) {
   if (error.response) {
     return handle_response(error.response);
   } else {
-    console.error('API error', error);
+    console.error('HTTP error', error);
+    notify("HTTP Error", error, "error");
     throw new ApiClientError(error);
   }
 }
 
 function fullpath(path) {
-  return `/api/v1/${path}`
+  return get(apiOrigin) + `/api/v1/${path}`;
 }
 
 function createWebsocket(topic, on_message, on_close) {
-  const loc = window.location;
-  let scheme;
-  if (loc.protocol === "https:") {
-      scheme = "wss:";
-  } else {
-      scheme = "ws:";
-  }
-  const ws_uri = `${scheme}//${loc.host}/api/v1/subscribe/${topic}`;
-
+  const origin = $apiOrigin.replace('http', 'ws');
+  const ws_uri = `${origin}/api/v1/subscribe/${topic}`;
   const socket = new WebSocket(ws_uri);
   socket.onmessage = (event) => {
     console.log(`[ws] Message from ${topic}`, event);
@@ -109,12 +110,12 @@ const api = {
     }
   },
 
-  subscribe: subscribe
+  subscribe: subscribe,
 };
 
 window.onError = function(message, source, lineno, colno, error) {
   console.log("onerror");
-  notify("Error", message, "error"); 
+  notify("Error", message, "error");
 }
 
 export default api;

@@ -1,9 +1,7 @@
 <script>
   import { Link } from "svelte-navigator";
-  import logo from '../assets/svelte.png';
 </script>
 
-<!-- img src={logo} alt="Donate4.Fun Logo" / -->
 <Link to="/" style="text-decoration: none;">
   <div class="parent">
     <img class=bolt src="/static/ln-icon.svg" alt="bolt">
