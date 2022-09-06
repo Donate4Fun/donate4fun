@@ -85,6 +85,8 @@ async def settings():
         settings.lnd.url = 'http://localhost:10001'
         settings.lnd.macaroon_by_network = None
         settings.fastapi.debug = False  # We need to disable Debug Toolbar to avoid zero-division error (because of freezegun)
+        settings.rollbar = None
+        settings.bugsnag = None
         yield settings
 
 
