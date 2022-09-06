@@ -80,6 +80,7 @@
       </ol>
       <div>
       {#if proved_channels === null}
+        <!-- should be empty -->
       {:else if proved_channels.length}
         <h2>Youtube channel successfully linked</h2>
         <LinkedYoutubeChannels youtube_channels={proved_channels} />

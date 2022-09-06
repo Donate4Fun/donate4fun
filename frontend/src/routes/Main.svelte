@@ -9,6 +9,8 @@
   import Page from "../lib/Page.svelte";
   import title from "../lib/title.js";
 
+  const showInstruction = false;
+
   title.clear();
 </script>
 
@@ -17,6 +19,7 @@
     <h1>Donate anyone on YouTube</h1>
     Instant delivery with Lightning network. No KYC. Any amount.
   </header>
+  {#if showInstruction}
   <ol>
     <li>
       <Extensions />
@@ -35,6 +38,7 @@
       </div>
     </li>
   </ol>
+  {/if}
   <main>
     <div class="forms">
       <Donate />

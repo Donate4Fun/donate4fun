@@ -41,14 +41,16 @@ const contentScript = new Proxy({}, {
       const tab = await getCurrentTab();
       const msg = {command: prop, args: Array.from(arguments)};
       console.log("sending to tab", tab, msg);
-      return await browser.tabs.sendMessage(tab.id, msg);
+      const result = await browser.tabs.sendMessage(tab.id, msg);
+      console.log("received from tab", tab, result);
+      return result.response;
     };
   }
 });
 
 async function handleMessage(handler, args) {
   try {
-    const response = await handler(...args);
+    const response = (handler.constructor.name === 'AsyncFunction') ? await handler(...args) : handler(...args);
     return {status: "success", response: response};
   } catch (error) {
     console.error(`error in handler ${handler}`, error);
@@ -74,9 +76,68 @@ async function registerHandlers(handlers) {
   });
 }
 
+async function createWebsocket(topic, on_message, on_close) {
+  const apiHost = await worker.getConfig('apiHost');
+  const ws_uri = `wss://${apiHost}/api/v1/subscribe/${topic}`;
+  const socket = new WebSocket(ws_uri);
+  socket.onmessage = (event) => {
+    cLog(`Message from ${topic}`, event);
+    try {
+      const msg = JSON.parse(event.data);
+      on_message(msg);
+    } catch (err) {
+      console.error(`unexpected websocket ${topic} notification`, err, event);
+    }
+  };
+  socket.onerror = (event) => {
+    cLog(`WebSocket ${topic} error`, event);
+  };
+  socket.onclose = (event) => {
+    cLog(`WebSocket ${topic} closed`, event);
+    on_close();
+  };
+  return socket;
+}
+
+async function subscribe(topic, on_message) {
+  let opened = true;
+  let socket = null;
+  let delay = 1000;
+  async function onClose() {
+    if (opened) {
+      cLog(`WebSocket ${topic} closed, reconnecting in ${delay}ms`);
+      await sleep(delay);
+      if (delay < 30000)
+        delay = delay * 1.5;
+      socket = await createWebsocket(topic, on_message, onClose);
+    }
+  }
+  function unsubscribe() {
+    opened = false;
+    cLog(`Closing WebSocket ${topic}`);
+    socket.close();
+  }
+  socket = await createWebsocket(topic, on_message, onClose);
+  await new Promise((resolve, reject) => {
+    socket.onopen = _ => {
+      cLog(`WebSocket ${topic} opened`);
+      resolve();
+    };
+  });
+  return unsubscribe;
+}
+
+function cLog() {
+  arguments[0] = `[donate4fun] ${arguments[0]}`;
+  console.log(...arguments);
+}
+
 export {
   worker,
   registerHandlers,
   browser,
   contentScript,
+  getCurrentTab,
+  subscribe,
+  cLog,
 };

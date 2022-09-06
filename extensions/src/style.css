@@ -9,6 +9,7 @@
   justify-content: center;
   cursor: pointer;
   padding-right: var(--yt-button-icon-padding,8px);
+  position: relative; // for tooltip absolute
 }
 
 #donate4fun-button .dff-icon {
@@ -23,6 +24,40 @@
   position: relative;
   box-sizing: border-box;
   font-size: 0;
+}
+
+#donate4fun-button .dff-tooltip {
+  visibility: hidden;
+
+  margin: 8px;
+  text-transform: none;
+  font-size: 1.2rem;
+  line-height: 1.8rem;
+  font-weight: 400;
+  display: block;
+  outline: none;
+  -webkit-font-smoothing: antialiased;
+  background-color: var(--paper-tooltip-background, #616161);
+  color: var(--paper-tooltip-text-color, white);
+  padding: 8px;
+  border-radius: 2px;
+ 
+  position: absolute;
+  z-index: 1;
+  top: calc(100% + 8px);
+  white-space: nowrap;
+}
+
+#donate4fun-button:hover .dff-tooltip {
+  visibility: visible;
+
+  opacity: 0;
+  animation-delay: var(--paper-tooltip-delay-in, 500ms);
+  animation-name: keyFrameFadeInOpacity;
+  animation-iteration-count: 1;
+  animation-timing-function: ease-in;
+  animation-duration: var(--paper-tooltip-duration-in, 500ms);
+  animation-fill-mode: forwards;
 }
 
 @keyframes dff-glow {

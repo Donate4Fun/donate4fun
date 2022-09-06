@@ -9,27 +9,27 @@
   export let nospin = false;
 
   function createEventDispatcher() {
-      const component = get_current_component();
+    const component = get_current_component();
 
-      return (type, detail) => {
-          const callbacks = component.$$.callbacks[type];
+    return (type, detail) => {
+      const callbacks = component.$$.callbacks[type];
 
-          if (callbacks) {
-              // TODO are there situations where events could be dispatched
-              // in a server (non-DOM) environment?
-              const arr = [];
-              const hasCallbacks = !!callbacks.length;
-              const event = custom_event(type, detail);
-              callbacks.slice().forEach(fn => {
-                  const res = fn.call(component, event);
-                  if (res instanceof Promise) {
-                      arr.push(res);
-                  }
-              });
-              return Promise.all(arr).then(() => hasCallbacks);
+      if (callbacks) {
+        // TODO are there situations where events could be dispatched
+        // in a server (non-DOM) environment?
+        const arr = [];
+        const hasCallbacks = !!callbacks.length;
+        const event = custom_event(type, detail);
+        callbacks.slice().forEach(fn => {
+          const res = fn.call(component, event);
+          if (res instanceof Promise) {
+            arr.push(res);
           }
-          return new Promise((resolve) => resolve(false));
-      };
+        });
+        return Promise.all(arr).then(() => hasCallbacks);
+      }
+      return new Promise((resolve) => resolve(false));
+    };
   }
 
   const dispatch = createEventDispatcher();
@@ -53,7 +53,7 @@
 </script>
 
 <button {...$$restProps} on:click={click} disabled={spin}>
-  <div>
+  <div class="flex-row align-center">
     {#if spin}
       <Spinner class="spinner" size=20px width=3px />
     {/if}
@@ -63,7 +63,7 @@
 
 <style>
 button {
-  background: linear-gradient(90deg, #F9F03E 0%, #9DEDA2 100%);
+  background-image: linear-gradient(90deg, #F9F03E 0%, #9DEDA2 100%);
   font-weight: 700;
   font-size: 16px;
   line-height: 19px;
@@ -79,8 +79,6 @@ button {
   letter-spacing: 0.02em;
 }
 button div {
-  display: flex;
-  align-items: center;
   justify-content: center;
   height: 100%;
   width: 100%;

@@ -1,3 +1,14 @@
+import {useResolve} from "svelte-navigator";
+import {writable, get} from 'svelte/store';
+
+export const webOrigin = writable(window.location.origin);
+
+
+function resolve(path) {
+  const origin = get(webOrigin);
+  return `${origin}${path}`;
+}
+
 function copy(content) {
   if (window.isSecureContext) {
     navigator.clipboard.writeText(content);
@@ -36,4 +47,5 @@ export {
   youtube_studio_url,
   youtube_video_url,
   youtube_channel_url,
+  resolve,
 };

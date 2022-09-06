@@ -9,7 +9,7 @@
   {#each youtube_channels as channel}
   <li>
     <ChannelLogo url={channel.thumbnail_url} size=40px />
-    <YoutubeChannel linkto=withdraw {...channel} />
+    <YoutubeChannel linkto=withdraw channel={channel} />
   </li>
   {/each}
 </ul>

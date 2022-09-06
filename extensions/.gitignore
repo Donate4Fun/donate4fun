@@ -3,6 +3,8 @@
 /*.zip
 /firefox/src
 /chrome/src
+/firefox/static
+/chrome/static
 /src/node_modules
 # Auto-generated files
 /src/*.map

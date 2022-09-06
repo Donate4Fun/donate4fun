@@ -1,12 +1,10 @@
 <script>
   import {link} from "svelte-navigator";
 
-  export let name;
-  export let avatar_url;
-  export let id;
+  export let user;
 </script>
 
-<a href="/donator/{id}" use:link {...$$restProps}><img src="{avatar_url}" alt="user logo"></a>
+<a href="/donator/{user.id}" use:link {...$$restProps}><img src="{user.avatar_url}" alt="user logo"></a>
 
 <style>
 a {

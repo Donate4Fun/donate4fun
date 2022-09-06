@@ -2,8 +2,8 @@
   export let amount;
 </script>
 
-<span>
-<span class="amount">{amount}</span> sats
+<span {...$$restProps}>
+  <span class="amount">{amount}</span> sats
 </span>
 
 <style>

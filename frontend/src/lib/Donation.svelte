@@ -41,7 +41,7 @@
   <Loading/>
 {:then}
   <ChannelLogo url={youtube_channel.thumbnail_url} size=72px />
-  <div class="header">Great! You've sent <Amount amount={amount}/> to <YoutubeChannel {...youtube_channel}/></div>
+  <div class="header">Great! You've sent <Amount amount={amount}/> to <YoutubeChannel channel={youtube_channel}/></div>
   {#if $me.donator.id === donator_id}
     <Infobox>Copy and share the message with the link or just tell {youtube_channel.title} to receive the donation here at «Donate4Fun»</Infobox>
     <call-to-action>

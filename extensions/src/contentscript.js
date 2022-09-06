@@ -1,4 +1,4 @@
-import { registerHandlers, worker } from "./common.js";
+import {registerHandlers, worker, subscribe, cLog} from "./common.js";
 
 const donateButtonHtml = `
 <div id="donate4fun-button">
@@ -11,6 +11,9 @@ const donateButtonHtml = `
       </svg>
     </div>
     <div class="dff-text dff-loading">…</div>
+    <div class="dff-tooltip" style-target="tooltip">
+      Donate sats
+    </div>
   </div>
 </div>
 `;
@@ -26,16 +29,15 @@ function showError(message) {
   cLog(message);
 }
 
-function cLog() {
-  arguments[0] = `[donate4fun] ${arguments[0]}`;
-  console.log(...arguments);
-}
-
 function init() {
   cLog("init");
   injectPageScript();
   registerHandlers({
     postComment: postComment,
+    getVideoId: getVideoId,
+    getChannelTitle: getChannelTitle,
+    getChannelLogo: getChannelLogo,
+    sendPayment: sendPayment,
   });
   if (isMobile()) {
     getButtons = getButtons_mobile;
@@ -111,57 +113,6 @@ async function patchButtons() {
     fetchStats();
   });
   await fetchStats();
-}
-
-async function createWebsocket(topic, on_message, on_close) {
-  const apiHost = await worker.getConfig('apiHost');
-  const ws_uri = `wss://${apiHost}/api/v1/subscribe/${topic}`;
-  const socket = new WebSocket(ws_uri);
-  socket.onmessage = (event) => {
-    cLog(`Message from ${topic}`, event);
-    try {
-      const msg = JSON.parse(event.data);
-      on_message(msg);
-    } catch (err) {
-      console.error(`unexpected websocket ${topic} notification`, err, event);
-    }
-  };
-  socket.onerror = (event) => {
-    cLog(`WebSocket ${topic} error`, event);
-  };
-  socket.onclose = (event) => {
-    cLog(`WebSocket ${topic} closed`, event);
-    on_close();
-  };
-  return socket;
-}
-
-async function subscribe(topic, on_message) {
-  let opened = true;
-  let socket = null;
-  let delay = 1000;
-  async function onClose() {
-    if (opened) {
-      cLog(`WebSocket ${topic} closed, reconnecting in ${delay}ms`);
-      await sleep(delay);
-      if (delay < 30000)
-        delay = delay * 1.5;
-      socket = await createWebsocket(topic, on_message, onClose);
-    }
-  }
-  function unsubscribe() {
-    opened = false;
-    cLog(`Closing WebSocket ${topic}`);
-    socket.close();
-  }
-  socket = await createWebsocket(topic, on_message, onClose);
-  await new Promise((resolve, reject) => {
-    socket.onopen = _ => {
-      cLog(`WebSocket ${topic} opened`);
-      resolve();
-    };
-  });
-  return unsubscribe;
 }
 
 async function fetchStats() {
@@ -281,11 +232,9 @@ async function onDonateClick(evt) {
   // Make a donation
   const response = await apiPost('donate', {
     amount: amount,
-    target: window.location.href
+    target: window.location.href,
   });
-  cLog("donate response", response);
   let unsubscribeWs = await subscribe(`donation:${response.donation.id}`, async (msg) => {
-    cLog("donation updated", msg);
     unsubscribeWs();
     boltElement.classList.remove("dff-icon-animate");
     if (await worker.getConfig("enableComment")) {
@@ -293,9 +242,12 @@ async function onDonateClick(evt) {
       await postComment(videoLanguage, amount);
     }
   });
-  const paymentRequest = response.payment_request;
-  // Show payment dialog (or pay silently if budget allows)
-  sendPayment(paymentRequest);
+  if (!response.donation.paid_at) {
+    // If donation is not paid using balance
+    const paymentRequest = response.payment_request;
+    // Show payment dialog (or pay silently if budget allows)
+    sendPayment(paymentRequest);
+  }
 }
 
 function isInViewport(element) {
@@ -337,17 +289,25 @@ function getButtons_main() {
   }
 }
 
-function getVideoId() {
-  const urlObject = new URL(window.location.href);
+function getVideoId(url) {
+  url = url || window.location.href;
+  const urlObject = new URL(url);
   const pathname = urlObject.pathname;
   if (pathname.startsWith("/clip")) {
     return document.querySelector("meta[itemprop='videoId']").content;
+  } else if (pathname.startsWith("/shorts")) {
+    return pathname.slice(8);
   } else {
-    if (pathname.startsWith("/shorts")) {
-      return pathname.slice(8);
-    }
     return urlObject.searchParams.get("v");
   }
+}
+
+function getChannelLogo() {
+   return document.querySelector("ytd-video-owner-renderer #avatar > img").getAttribute("src");
+}
+
+function getChannelTitle() {
+   return document.querySelector("ytd-video-owner-renderer #channel-name a").text;
 }
 
 function isVideoLoaded() {

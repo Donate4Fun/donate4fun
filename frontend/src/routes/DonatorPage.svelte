@@ -33,7 +33,7 @@
   {#await load()}
     <Loading/>
   {:then}
-    <Userpic {...donator} class="userpic" />
+    <Userpic user={donator} class="userpic" />
     {#if $me.donator.id === donator.id}
       <div class="balance">Balance: <Amount amount={donator.balance} /> <Button link="/fulfill/{donator_id}">Fulfill</Button></div>
     {:else}
@@ -57,7 +57,7 @@
           {/if}
         </a>
         {#if donation.youtube_channel}
-          <YoutubeChannel {...donation.youtube_channel} linkto=donate class="ellipsis" />
+          <YoutubeChannel channel={donation.youtube_channel} linkto=donate class="ellipsis" />
         {:else}
           <Donator user={donation.receiver} class=ellipsis />
         {/if}

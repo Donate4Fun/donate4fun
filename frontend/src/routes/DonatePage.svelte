@@ -65,7 +65,7 @@
     <Loading />
     {:then}
     <form on:submit|preventDefault={donate}>
-      <h1>Donate to <YoutubeChannel {...youtube_channel} /></h1>
+      <h1>Donate to <YoutubeChannel channel={youtube_channel} /></h1>
       <ChannelLogo url={youtube_channel.thumbnail_url} />
       <div>
         <span class="i-want">Donate</span>

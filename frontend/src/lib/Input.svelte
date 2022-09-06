@@ -13,7 +13,7 @@
 
 <div class=root>
   <div class="wrapper">
-    <input value={value} {...$$restProps} class:error="{error !== null}" class:logo={logo !== null}  on:input={handleInput} style:background-image={logo} on:change >
+    <input value={value} {...$$restProps} class:error="{error !== null}" class:logo={logo !== null} on:input={handleInput} style:background-image={logo} on:change >
     {#if suffix}
     <div class="suffix">{suffix}</div>
     {/if}

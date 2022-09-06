@@ -1,17 +1,11 @@
-<script>
-  import { Link } from "svelte-navigator";
-</script>
-
-<Link to="/" style="text-decoration: none;">
-  <div class="parent">
-    <img class=bolt src="/static/ln-icon.svg" alt="bolt">
-    <img class=text src="/static/D.svg" alt="D">
-    <div class=text>
-      <span class="stroke"><span>Donate4Fun</span></span>
-      <span class="gradient"><span>Donate4Fun</span></span>
-    </div>
+<div class="parent">
+  <img class=bolt src="/static/ln-icon.svg" alt="bolt">
+  <img class=text src="/static/D.svg" alt="D">
+  <div class=text>
+    <span class="stroke"><span>Donate4Fun</span></span>
+    <span class="gradient"><span>Donate4Fun</span></span>
   </div>
-</Link>
+</div>
 
 <style>
 :root {

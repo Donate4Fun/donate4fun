@@ -38,7 +38,7 @@
     <Loading />
   {:then}
     {#if donation.youtube_channel}
-      <h1>Donate <Amount amount={donation.amount} /> to <YoutubeChannel {...donation.youtube_channel} /></h1>
+      <h1>Donate <Amount amount={donation.amount} /> to <YoutubeChannel channel={donation.youtube_channel} /></h1>
     {:else if donation.receiver}
       <h1>Donate <Amount amount={donation.amount} /> to <span class=font-normal><Donator user={donation.receiver} /></span></h1>
     {/if}
