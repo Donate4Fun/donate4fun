@@ -61,7 +61,7 @@
   {#await load()}
     <Loading />
   {:then}
-    <h1>Donations to <a href={youtube_channel_url}>{youtube_channel.title}</a></h1>
+    <h1>Donations to <a href={youtube_channel_url} target=_blank>{youtube_channel.title}</a></h1>
     <ChannelLogo url={youtube_channel.thumbnail_url} />
     <div class="controls">
     {#if balance >= min_withdraw}
@@ -74,7 +74,7 @@
       {/if}
     {:else}
       <div class="available">Available BTC: <Amount amount={balance} /></div>
-      <Infobox class="red">Minimum amount to withdraw is: {min_withdraw} sats</Infobox>
+      <Infobox class="red">Minimum amount to withdraw: {min_withdraw} sats</Infobox>
     {/if}
       <Button class="want-more white" link={resolve("link")}>Want more donations?</Button>
     </div>

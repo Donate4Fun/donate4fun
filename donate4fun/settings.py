@@ -1,6 +1,7 @@
 import yaml
 import os
 import logging
+import socket
 from typing import Any
 from contextvars import ContextVar
 from contextlib import asynccontextmanager, contextmanager
@@ -162,4 +163,10 @@ async def load_settings():
         log_config = _settings.log.dict(by_alias=True)
         logging.config.dictConfig(log_config)
         logger.debug('setting loaded: %s', _settings.json())
+        if settings.lnd.lnurl_base_url.startswith('http://localnetwork:'):
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+                sock.connect(("8.8.8.8", 80))
+                localaddr = sock.getsockname()[0]
+                settings.lnd.lnurl_base_url = settings.lnd.lnurl_base_url.replace('localnetwork', localaddr)
+                logger.info('using autodetected address %s for lnd url', settings.lnd.lnurl_base_url)
         yield _settings

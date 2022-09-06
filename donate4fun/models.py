@@ -41,6 +41,7 @@ class WithdrawalToken(BaseModel):
     max_amount: int
     description: str
     youtube_channel_id: UUID
+    withdrawal_id: UUID
 
 
 class LoginToken(BaseModel):

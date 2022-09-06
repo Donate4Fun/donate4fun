@@ -44,7 +44,7 @@ function fullpath(path) {
 }
 
 function createWebsocket(topic, on_message, on_close) {
-  const origin = $apiOrigin.replace('http', 'ws');
+  const origin = get(apiOrigin).replace('http', 'ws');
   const ws_uri = `${origin}/api/v1/subscribe/${topic}`;
   const socket = new WebSocket(ws_uri);
   socket.onmessage = (event) => {

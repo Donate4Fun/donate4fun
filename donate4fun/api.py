@@ -203,6 +203,7 @@ async def youtube_channel(channel_id: UUID, db=Depends(get_db_session)):
 class WithdrawResponse(BaseModel):
     lnurl: str
     amount: int
+    withdrawal_id: UUID
 
 
 @router.get('/youtube-channel/{channel_id}/withdraw', response_model=WithdrawResponse)
@@ -217,17 +218,20 @@ async def withdraw(request: Request, channel_id: UUID, db=Depends(get_db_session
         raise ValidationError(
             f"You can't withdraw less than {settings.min_withdraw}, but available only {youtube_channel.balance}"
         )
+    withdrawal_id: UUID = await db.create_withdrawal(youtube_channel_id=youtube_channel.id, donator_id=donator.id)
     token = WithdrawalToken(
         min_amount=settings.min_withdraw,
         max_amount=youtube_channel.balance,
         description=f'Donate4.Fun withdrawal for "{youtube_channel.title}"',
         youtube_channel_id=youtube_channel.id,
+        withdrawal_id=withdrawal_id,
     )
     url = request.app.url_path_for('lnurl_withdraw').make_absolute_url(settings.lnd.lnurl_base_url)
     withdraw_url = URL(url).include_query_params(token=token.to_jwt())
     return WithdrawResponse(
         lnurl=lnurl_encode(str(withdraw_url)),
         amount=youtube_channel.balance,
+        withdrawal_id=withdrawal_id,
     )
 
 
@@ -277,6 +281,7 @@ async def withdraw_callback(request: Request, k1: str, pr: str, db=Depends(get_d
         await request.app.task_group.start(partial(
             send_withdrawal,
             youtube_channel_id=token.youtube_channel_id,
+            withdrawal_id=token.withdrawal_id,
             amount=invoice_amount_sats,
             payment_request=pr,
             lnd=lnd,
@@ -294,12 +299,14 @@ async def payment_callback(request: Request, ):
 
 
 async def send_withdrawal(
-    *, youtube_channel_id: UUID, payment_request: PaymentRequest, amount: int, lnd, db, task_status: TaskStatus
+    *, youtube_channel_id: UUID, withdrawal_id: UUID, payment_request: PaymentRequest, amount: int, lnd, db,
+    task_status: TaskStatus,
 ):
     message = None
     try:
         async with db.session() as db_session:
             youtube_channel: YoutubeChannel = await db_session.lock_youtube_channel(youtube_channel_id=youtube_channel_id)
+            await db_session.lock_withdrawal(withdrawal_id=withdrawal_id)
             if amount > youtube_channel.balance:
                 raise ValidationError(
                     f"{youtube_channel!r} balance {youtube_channel.balance} is insufficient (invoiced {amount})"
@@ -313,7 +320,7 @@ async def send_withdrawal(
                 status = 'ERROR'
                 message = str(exc)
             else:
-                await db_session.withdraw(youtube_channel_id=youtube_channel_id, amount=amount)
+                await db_session.withdraw(withdrawal_id=withdrawal_id, youtube_channel_id=youtube_channel_id, amount=amount)
                 status = 'OK'
             await db_session.notify(
                 f'withdrawal:{youtube_channel_id}',

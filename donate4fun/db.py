@@ -8,9 +8,10 @@ from sqlalchemy.dialects.postgresql import insert, UUID as Uuid
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 from sqlalchemy.orm.exc import NoResultFound  # noqa
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy_utils.functions import get_referencing_foreign_keys
 
 from .models import Donation, Donator, YoutubeChannel, YoutubeVideo, Notification, Credentials
-from .types import RequestHash, NotEnoughBalance
+from .types import RequestHash, NotEnoughBalance, NotFound
 from .settings import DbSettings
 
 logger = logging.getLogger(__name__)
@@ -87,6 +88,21 @@ class DonationDb(Base):
     youtube_video = relationship(YoutubeVideoDb, lazy='joined')
 
 
+class WithdrawalDb(Base):
+    __tablename__ = 'withdrawal'
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4())
+    donator_id = Column(Uuid(as_uuid=True), ForeignKey(DonatorDb.id), nullable=False)
+    youtube_channel_id = Column(Uuid(as_uuid=True), ForeignKey(YoutubeChannelDb.id), nullable=False)
+    amount = Column(BigInteger)
+
+    created_at = Column(TIMESTAMP, nullable=False)
+    paid_at = Column(TIMESTAMP)
+
+    donator = relationship(DonatorDb, lazy='joined')
+    youtube_channel = relationship(YoutubeChannelDb, lazy='joined')
+
+
 Base.registry.configure()  # Create backrefs
 
 
@@ -97,12 +113,13 @@ class Database:
 
     async def create_tables(self):
         async with self.engine.begin() as conn:
-            await conn.execute(text('CREATE EXTENSION "uuid-ossp"'))
+            await conn.execute(text('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"'))
             await conn.run_sync(Base.metadata.create_all)
-            await conn.execute(text(f'ALTER TABLE {DonationDb.__table__} DROP CONSTRAINT donation_donator_id_fkey'))
-            await conn.execute(text(
-                f'ALTER TABLE {YoutubeChannelLink.__table__} DROP CONSTRAINT youtube_channel_link_donator_id_fkey'
-            ))
+            for foreign_key in get_referencing_foreign_keys(DonatorDb):
+                table_name = foreign_key.parent.table.name
+                await conn.execute(text(
+                    f'ALTER TABLE {table_name} DROP CONSTRAINT IF EXISTS {table_name}_{foreign_key.parent.key}_fkey'
+                ))
 
     async def execute(self, query: str):
         async with self.engine.connect() as connection:
@@ -172,14 +189,51 @@ class DbSession:
         )
         return YoutubeChannel.from_orm(result.scalars().one())
 
-    async def withdraw(self, youtube_channel_id: UUID, amount: int) -> int:
-        resp = await self.execute(
+    async def create_withdrawal(self, youtube_channel_id: UUID, donator_id: UUID) -> UUID:
+        result = await self.execute(
+            insert(WithdrawalDb)
+            .values(dict(
+                donator_id=donator_id,
+                youtube_channel_id=youtube_channel_id,
+                created_at=datetime.utcnow(),
+            ))
+            .returning(WithdrawalDb.id)
+        )
+        return result.scalars().one()
+
+    async def lock_withdrawal(self, withdrawal_id: UUID):
+        result = await self.execute(
+            select(WithdrawalDb)
+            .with_for_update(of=WithdrawalDb)
+            .where(
+                (WithdrawalDb.id == withdrawal_id)
+                & WithdrawalDb.paid_at.is_(None)
+            )
+        )
+        return result.scalars().one()
+
+    async def withdraw(self, withdrawal_id: UUID, youtube_channel_id: UUID, amount: int) -> int:
+        """
+        return new balance
+        """
+        result = await self.execute(
             update(YoutubeChannelDb)
-            .where(YoutubeChannelDb.id == youtube_channel_id)
+            .where((YoutubeChannelDb.id == youtube_channel_id) & (YoutubeChannelDb.balance >= amount))
             .values(balance=YoutubeChannelDb.balance - amount)
             .returning(YoutubeChannelDb.balance)
         )
-        return resp.scalars().one()
+        new_balance = result.scalars().one()
+        result = await self.execute(
+            update(WithdrawalDb)
+            .values(
+                paid_at=datetime.utcnow(),
+                amount=amount,
+            )
+            .where(WithdrawalDb.id == withdrawal_id)
+        )
+        if result.rowcount != 1:
+            raise NotFound(f"Withdrawal {withdrawal_id} does not exist")
+        return new_balance
 
     async def save_donator(self, donator: Donator):
         await self.execute(

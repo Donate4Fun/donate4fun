@@ -262,7 +262,12 @@ async def test_withdraw(
         await db_session.link_youtube_channel(
             donator=Donator(id=client_session.donator), youtube_channel=paid_donation_fixture.youtube_channel,
         )
-        await db_session.withdraw(youtube_channel_id=channel_id, amount=paid_donation_fixture.amount - balance)
+        withdrawal_id: UUID = await db_session.create_withdrawal(
+            youtube_channel_id=channel_id, donator_id=client_session.donator,
+        )
+        await db_session.withdraw(
+            youtube_channel_id=channel_id, withdrawal_id=withdrawal_id, amount=paid_donation_fixture.amount - balance,
+        )
     resp = await client.get(f'/api/v1/youtube-channel/{channel_id}/withdraw')
     check_response(resp, 200)
     response = WithdrawResponse(**resp.json())
@@ -278,7 +283,7 @@ async def test_withdraw(
     )
     if balance_diff:
         async with db.session() as db_session:
-            await db_session.withdraw(youtube_channel_id=channel_id, amount=-balance_diff)
+            await db_session.withdraw(youtube_channel_id=channel_id, withdrawal_id=response.withdrawal_id, amount=-balance_diff)
     async with anyio.create_task_group() as tg:
         client.app.task_group = tg
         if is_ok:
