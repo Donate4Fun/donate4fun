@@ -36,6 +36,11 @@ header {
   padding: 23px 40px 23px 40px;
   box-sizing: border-box;
   font-size: 15px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(247, 249, 255, 0.8);
+  backdrop-filter: blur(12px);
 }
 .right :global(.connected) {
   padding: 0 45px;
