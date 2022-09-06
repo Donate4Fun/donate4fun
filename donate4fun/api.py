@@ -263,7 +263,7 @@ async def lnurl_withdraw(request: Request, token: str):
     )
 
 
-@router.get('/lnurl/callback', response_class=JSONResponse)
+@router.get('/lnurl/withdraw-callback', response_class=JSONResponse)
 async def withdraw_callback(request: Request, k1: str, pr: str, db=Depends(get_db), lnd=Depends(get_lnd)):
     try:
         token = WithdrawalToken.from_jwt(k1)
@@ -286,6 +286,11 @@ async def withdraw_callback(request: Request, k1: str, pr: str, db=Depends(get_d
         return dict(status="ERROR", reason=f"Exception while initiating payment: {type(exc)}({exc})")
     else:
         return dict(status="OK")
+
+
+@router.get('/lnurl/payment-callback', response_class=JSONResponse)
+async def payment_callback(request: Request, ):
+    pass
 
 
 async def send_withdrawal(
@@ -476,8 +481,3 @@ async def ownership_check(donator=Depends(get_donator), db=Depends(get_db_sessio
         await db.link_youtube_channel(youtube_channel, donator)
         channels.append(youtube_channel)
     return channels
-
-
-@router.post('/me/fulfill')
-async def fulfill(donator=Depends(get_donator), db=Depends(get_db_session)):
-    pass

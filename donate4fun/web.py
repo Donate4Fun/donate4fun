@@ -1,4 +1,5 @@
 import datetime
+import json
 from uuid import UUID
 from xml.etree import ElementTree as ET
 
@@ -148,8 +149,6 @@ async def donations(request: Request, db_session=Depends(get_db_session)):
 
 
 @router.get('/sitemap.xml')
-@router.get('/sitemap3.xml')
-@router.get('/sitemap4.xml')
 async def sitemap(request: Request, db_session=Depends(get_db_session)):
     base_url = settings.youtube.oauth.redirect_base_url
     urlset = ET.Element('urlset', xmlns="http://www.sitemaps.org/schemas/sitemap/0.9")
@@ -179,3 +178,18 @@ async def donate_redirect(request: Request, channel_id: str, db=Depends(get_db_s
         await db.save_youtube_channel(youtube_channel)
 
     return RedirectResponse(request.url.replace(path=f'/donate/{youtube_channel.id}'), status_code=302)
+
+
+@router.get('/.well-known/lnurlp/{username}')
+async def lightning_address(request: Request, username: str):
+    return dict(
+        callback=request.app.url_path_for('payment_callback').make_absolute_url(settings.lnd.lnurl_base_url),
+        maxSendable=1000000,
+        minSendable=100,
+        metadata=json.dumps([
+            ("text/identifier", f'{username}@{request.host}'),
+            ("text/plain", f"Sats for {username}"),
+        ]),
+        commentAllowed=255,
+        tag="payRequest",
+    )
