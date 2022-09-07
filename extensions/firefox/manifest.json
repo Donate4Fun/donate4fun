@@ -1,13 +1,13 @@
 {
   "manifest_version":  2,
   "name":  "Donate4.Fun",
-  "description":  "Donate4.Fun YouTube helper",
+  "description":  "Support creators instantly using Bitcoin Lightning Network",
   "homepage_url": "https://donate4.fun",
   "author": "Nikolay Bryskin",
-  "version":  "0.4",
+  "version":  "0.5",
   "icons":  {
-    "48":  "src/D.svg",
-    "96":  "src/D.svg"
+    "48":  "static/D.svg",
+    "96":  "static/D.svg"
   },
   "applications":  {
     "gecko":  {
@@ -37,7 +37,7 @@
     }
   ],
   "browser_action":  {
-    "default_icon":  "src/D.svg",
+    "default_icon":  "static/D.svg",
     "default_title":  "Donate4.Fun",
     "default_popup": "src/popup.html"
   },

@@ -7,7 +7,7 @@
 
 <a href="/donator/{user.id}" use:link {...$$restProps}>
   <Userpic user={user}/>
-  {user.name}
+  <span>{user.name}</span>
 </a>
 
 <style>

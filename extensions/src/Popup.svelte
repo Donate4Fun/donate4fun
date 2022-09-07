@@ -7,7 +7,6 @@
   import {worker, getCurrentTab, browser, contentScript} from "./common.js";
 
   let showYoutube = false;
-  let showDev = false;
 
   async function load() {
     const host = await worker.getConfig("apiHost");
@@ -18,7 +17,6 @@
     if (tab.url)
       showYoutube = tab.url.match('^https\:\/\/(www\.)?youtube\.com');
     await me.init();
-    showDev = await worker.getConfig('enableDevCommands');
   }
 </script>
 
@@ -29,14 +27,6 @@
   {:else}
     <PopupDefault />
   {/if}
-  <div class="flex-row justify-space-around">
-    <a class="font-20 text-decoration-none" href={'#'} on:click={() => browser.runtime.openOptionsPage()}>⚙</a>
-    {#if showDev}
-      <a class="font-20 text-decoration-none" href={'#'} on:click={() => worker.inject()}>💉</a>
-      <a class="font-20 text-decoration-none" href={'#'} on:click={() => contentScript.postComment("en", 100)}>💬</a>
-    {/if}
-    <a class="font-20 text-decoration-none" href="https://donate4.fun" id=website target="_blank">🌐</a>
-  </div>
 {/await}
 </div>
 

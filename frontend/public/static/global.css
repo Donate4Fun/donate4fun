@@ -110,3 +110,20 @@
 .color-blue {
   color: #004EE7;
 }
+.grid-column-2 {
+  grid-column: 2;
+}
+.popup {
+  visibility: hidden;
+  position: absolute; 
+  z-index: 1;
+}
+.position-relative {
+  position: relative;
+}
+.cursor-pointer {
+  cursor: pointer;
+}
+.text-decoration-none {
+  text-decoration: none;
+}

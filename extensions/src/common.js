@@ -132,6 +132,10 @@ function cLog() {
   console.log(...arguments);
 }
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export {
   worker,
   registerHandlers,
@@ -140,4 +144,5 @@ export {
   getCurrentTab,
   subscribe,
   cLog,
+  sleep,
 };

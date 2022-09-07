@@ -96,7 +96,7 @@
 
 <style>
 :global(.youtube-channel) {
-  padding: 20px 120px 74px 120px;
+  padding: 20px 70px 74px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -120,8 +120,6 @@ h1 {
   margin-top: 20px;
   width: 100%;
 }
-.available {
-}
 .table {
   font-size: 12px;
 }
@@ -141,7 +139,7 @@ h1 {
 .table {
   font-size: 12px;
   display: grid;
-  grid-template-columns: 99px 99px 99px;
+  grid-template-columns: 200px 120px 99px;
   column-gap: 20px;
   row-gap: 26px;
 }

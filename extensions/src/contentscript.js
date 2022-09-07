@@ -1,4 +1,4 @@
-import {registerHandlers, worker, subscribe, cLog} from "./common.js";
+import {registerHandlers, worker, subscribe, cLog, sleep} from "./common.js";
 
 const donateButtonHtml = `
 <div id="donate4fun-button">
@@ -122,10 +122,6 @@ async function fetchStats() {
   cLog("video info", videoInfo);
   totalDonatedNode.innerText = videoInfo.total_donated;
   totalDonatedNode.classList.remove("dff-loading");
-}
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function waitElement(id) {

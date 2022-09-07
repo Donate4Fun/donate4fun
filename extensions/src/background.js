@@ -1,4 +1,4 @@
-import { registerHandlers, browser } from "./common.js";
+import { registerHandlers, browser, getCurrentTab } from "./common.js";
 
 async function handleFetch(method, path, data) {
   let response;
