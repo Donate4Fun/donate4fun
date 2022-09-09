@@ -76,6 +76,7 @@ h1 {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  min-width: 0;
 }
 :global(.amount) {
   margin: 0;
