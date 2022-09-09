@@ -127,3 +127,18 @@
 .text-decoration-none {
   text-decoration: none;
 }
+.circular {
+  border-radius: 50%;
+}
+.grid {
+  display: grid;
+}
+.grid-columns-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+.grid-columns-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+.grid-span-2 {
+  grid-column: span 2;
+}

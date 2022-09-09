@@ -1,4 +1,10 @@
-import { registerHandlers, browser, getCurrentTab } from "./common.js";
+import {
+  registerHandlers,
+  browser,
+  getCurrentTab,
+  injectContentScript,
+  createPopup,
+} from "./common.js";
 
 async function handleFetch(method, path, data) {
   let response;
@@ -121,39 +127,14 @@ async function resetConfig() {
   await chrome.storage.sync.set(getDefaults());
 }
 
-async function inject() {
-  const tab = await getCurrentTab();
-  console.log("injecting to", tab);
-  if (chrome.scripting) {
-    return await new Promise((resolve, reject) => {
-      function getTitle() {
-        console.log("title", document.title);
-      }
-      // Chrome Mv3
-      chrome.scripting.executeScript({
-        target: {tabId: tab.id},
-        files: ['common.js', 'contentscript.js'],
-      }, (injectionResults) => {
-        for (const frameResult of injectionResults)
-          console.log('Frame Title: ' + frameResult.result);
-        resolve();
-      });
-    });
-  } else {
-    await browser.tabs.executeScript({
-      file: ['/common.js'],
-    });
-  }
-}
-
-const handlers = {
+registerHandlers({
   fetch: handleFetch,
-  loadOptions: loadOptions,
-  saveOptions: saveOptions,
-  getConfig: getConfig,
-  setConfig: setConfig,
-  resetConfig: resetConfig,
-  inject: inject,
-};
+  loadOptions,
+  saveOptions,
+  getConfig,
+  setConfig,
+  resetConfig,
+  injectContentScript,
+  createPopup,
+});
 
-registerHandlers(handlers);

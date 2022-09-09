@@ -2,33 +2,45 @@
   import "inter-ui/inter.css";
   import PopupDefault from "./PopupMain.svelte";
   import PopupYoutube from "./PopupYoutube.svelte";
+  import PopupHeader from "./PopupHeader.svelte";
+  import PopupNoWebln from "./PopupNoWebln.svelte";
   import {apiOrigin} from "../../frontend/src/lib/api.js";
   import {webOrigin} from "../../frontend/src/lib/utils.js";
   import {me} from "../../frontend/src/lib/session.js";
-  import {worker, getCurrentTab, browser, contentScript} from "./common.js";
+  import {worker, getCurrentTab, browser, contentScript, isTest} from "./common.js";
 
   let showYoutube = false;
+  let showWeblnHelp = false;
 
   async function load() {
     const host = await worker.getConfig("apiHost");
     apiOrigin.set(`https://${host}`);
     webOrigin.set(`https://${host}`);
 
-    const tab = await getCurrentTab();
-    if (tab.url)
-      showYoutube = tab.url.match('^https\:\/\/(www\.)?youtube\.com');
+    if (isTest()) {
+      showYoutube = true;
+    } else {
+      const tab = await getCurrentTab();
+      if (tab.url)
+        showYoutube = tab.url.match('^https\:\/\/(www\.)?youtube\.com');
+    }
     await me.init();
   }
 </script>
 
 <div class="flex-column height-full justify-space-between gradient">
-{#await load() then}
-  {#if showYoutube}
-    <PopupYoutube />
-  {:else}
-    <PopupDefault />
-  {/if}
-{/await}
+  <main class="flex-column gap-28 height-full">
+    {#await load() then}
+      <PopupHeader />
+      {#if showYoutube}
+        <PopupYoutube on:weblnFailed={showWeblnHelp = true} />
+      {:else if showWeblnHelp}
+        <PopupNoWebln />
+      {:else}
+        <PopupDefault />
+      {/if}
+    {/await}
+  </main>
 </div>
 
 <style>

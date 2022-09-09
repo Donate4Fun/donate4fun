@@ -35,15 +35,84 @@ async function getCurrentTab() {
   return tab;
 }
 
+async function injectContentScript() {
+  const tab = await getCurrentTab();
+  console.log("injecting to", tab);
+  if (chrome.scripting) {
+    return await new Promise((resolve, reject) => {
+      function getTitle() {
+        console.log("title", document.title);
+      }
+      // Chrome Mv3
+      chrome.scripting.executeScript({
+        target: {tabId: tab.id},
+        files: ["src/contentscript_loader.js"],
+      }, (injectionResults) => {
+        console.log("injection result", injectionResults, chrome.runtime.lastError);
+        if (chrome.runtime.lastError)
+          reject(chrome.runtime.lastError);
+        else {
+          for (const frameResult of injectionResults)
+            console.log('Frame Title: ' + frameResult.result);
+          resolve();
+        }
+      });
+    });
+  } else {
+    await browser.tabs.executeScript({
+      file: ['/common.js'],
+    });
+  }
+}
+
 const contentScript = new Proxy({}, {
   get(obj, prop) {
     return async function () {
       const tab = await getCurrentTab();
       const msg = {command: prop, args: Array.from(arguments)};
       console.log("sending to tab", tab, msg);
-      const result = await browser.tabs.sendMessage(tab.id, msg);
+      let result;
+      try {
+        result = await browser.tabs.sendMessage(tab.id, msg);
+      } catch (err) {
+        console.log("[dff] error while sending to contentScript, injecting script and retrying", err);
+        await injectContentScript();
+        result = await browser.tabs.sendMessage(tab.id, msg);
+      }
       console.log("received from tab", tab, result);
-      return result.response;
+      if (result.status === "error")
+        throw new Error(result.message);
+      else
+        return result.response;
+    };
+  }
+});
+
+const pageScript = new Proxy({}, {
+  get(obj, prop) {
+    return async function () {
+      const message = {
+        type: "donate4.fun-request",
+        method: prop,
+        args: Array.from(arguments),
+      };
+      console.log("sending to pageScript", message);
+      window.postMessage(message);
+      return await new Promise((resolve, reject) => {
+        async function handleResponse(event) {
+          console.log("received from pageScript", event);
+          if (event.source !== window)
+            return;
+          if (event.data.type === "donate4.fun-response") {
+            window.removeEventListener("message", handleResponse);
+            resolve(event.data.result);
+          } else if (event.data.type === "donate4.fun-exception") {
+            window.removeEventListener("message", handleResponse);
+            reject(event.data.error);
+          }
+        }
+        window.addEventListener("message", handleResponse);
+      });
     };
   }
 });
@@ -53,7 +122,6 @@ async function handleMessage(handler, args) {
     const response = (handler.constructor.name === 'AsyncFunction') ? await handler(...args) : handler(...args);
     return {status: "success", response: response};
   } catch (error) {
-    console.error(`error in handler ${handler}`, error);
     return {
       status: "error",
       error: error.toString(),
@@ -136,6 +204,26 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function isTest() {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.has('test');
+}
+
+async function createPopup() {
+  const window = await new Promise((resolve, reject) => {
+    browser.windows.create({
+      focused: true,
+      url: browser.runtime.getURL('src/window.html'),
+      type: "popup",
+      width: 400,
+      height: 600,
+    }, (window) => {
+      resolve(window);
+    });
+  });
+  console.log("opened popup", window);
+}
+
 export {
   worker,
   registerHandlers,
@@ -145,4 +233,8 @@ export {
   subscribe,
   cLog,
   sleep,
+  isTest,
+  pageScript,
+  injectContentScript,
+  createPopup,
 };

@@ -1,4 +1,11 @@
-import {registerHandlers, worker, subscribe, cLog, sleep} from "./common.js";
+import {
+  registerHandlers,
+  worker,
+  subscribe,
+  cLog,
+  sleep,
+  pageScript,
+} from "./common.js";
 
 const donateButtonHtml = `
 <div id="donate4fun-button">
@@ -24,6 +31,7 @@ let unsubscribeVideoWS;
 let isCommentPosted;
 let checkIntervalId;
 let unsafeWindow;
+let boltElement;
 
 function showError(message) {
   cLog(message);
@@ -37,7 +45,7 @@ function init() {
     getVideoId: getVideoId,
     getChannelTitle: getChannelTitle,
     getChannelLogo: getChannelLogo,
-    sendPayment: sendPayment,
+    sendPayment: pageScript.sendPayment,
   });
   if (isMobile()) {
     getButtons = getButtons_mobile;
@@ -104,9 +112,10 @@ async function patchButtons() {
   } else {
     cLog("button is already created");
   }
+  boltElement = document.querySelector("#donate4fun-button .dff-icon");
   const node = buttons.children[0];
-  node.removeEventListener("click", onDonateClick, true);
-  node.addEventListener("click", onDonateClick, true);
+  node.removeEventListener("click", onDonateClicked, true);
+  node.addEventListener("click", onDonateClicked, true);
   const videoId = getVideoId();
   unsubscribeVideoWS = await subscribe(`youtube-video-by-vid:${videoId}`, (msg) => {
     cLog("youtube video updated", msg);
@@ -191,14 +200,6 @@ function injectPageScript() {
   window.postMessage({type: "donate4.fun", test: "test"});
 }
 
-function sendPayment(paymentRequest) {
-  window.postMessage({
-    type: "donate4.fun",
-    method: "webln.sendPayment",
-    args: [paymentRequest],
-  });
-}
-
 async function getUnsafeWindow() {
   // inject code into "the other side" to talk back to this side;
   const scriptElement = document.createElement('script');
@@ -221,9 +222,22 @@ async function getUnsafeWindow() {
   unsafeWindow = await promise;
 }
 
-async function onDonateClick(evt) {
-  const boltElement = document.querySelector("#donate4fun-button .dff-icon");
+function paymentStarted() {
   boltElement.classList.add("dff-icon-animate");
+}
+
+function paymentSucceeded() {
+  boltElement.classList.remove("dff-icon-animate");
+  // TODO: show confetti
+}
+
+function paymentFailed() {
+  boltElement.classList.remove("dff-icon-animate");
+}
+
+async function onDonateClicked(evt) {
+  return worker.createPopup();
+  paymentStarted();
   const amount = await worker.getConfig("amount");
   // Make a donation
   const response = await apiPost('donate', {
@@ -232,7 +246,7 @@ async function onDonateClick(evt) {
   });
   let unsubscribeWs = await subscribe(`donation:${response.donation.id}`, async (msg) => {
     unsubscribeWs();
-    boltElement.classList.remove("dff-icon-animate");
+    paymentSucceeded();
     if (await worker.getConfig("enableComment")) {
       const videoLanguage = response.donation.youtube_video.default_audio_language;
       await postComment(videoLanguage, amount);
@@ -242,7 +256,12 @@ async function onDonateClick(evt) {
     // If donation is not paid using balance
     const paymentRequest = response.payment_request;
     // Show payment dialog (or pay silently if budget allows)
-    sendPayment(paymentRequest);
+    try {
+      await pageScript.sendPayment(paymentRequest);
+    } catch (err) {
+      console.log("Payment failed", err);
+      paymentFailed();
+    }
   }
 }
 

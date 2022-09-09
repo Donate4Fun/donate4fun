@@ -1,7 +1,7 @@
 <script>
   import {get} from 'svelte/store';
   import Fa from 'svelte-fa/src/fa.svelte';
-  import {faGear, faGlobe, faSyringe, faComment} from '@fortawesome/free-solid-svg-icons';
+  import {faGear, faGlobe, faSyringe, faComment, faWindowRestore} from '@fortawesome/free-solid-svg-icons';
   import {me} from "../../frontend/src/lib/session.js";
   import {apiOrigin} from "../../frontend/src/lib/api.js";
   import Userpic from "../../frontend/src/lib/Userpic.svelte";
@@ -10,7 +10,7 @@
   import Button from "../../frontend/src/lib/Button.svelte";
   import WalletLogin from "../../frontend/src/lib/WalletLogin.svelte";
   import DonateYoutube from "./DonateYoutube.svelte";
-  import {worker, browser, contentScript} from "./common.js";
+  import {worker, browser, contentScript, createPopup} from "./common.js";
 
   const fulfillLink = get(apiOrigin) + '/fulfill/' + get(me).donator.id;
   let popupVisible = false;
@@ -20,6 +20,7 @@
   async function load() {
     showDev = await worker.getConfig('enableDevCommands');
   }
+
 </script>
 
 <main class="flex-column gap-41">
@@ -59,9 +60,13 @@
                   <Fa icon={faComment} size=2x color={iconColor} />
                   <span>Insert comment</span>
                 </div>
-                <div on:click={() => worker.inject()}>
+                <div on:click={() => worker.injectContentScript()}>
                   <Fa icon={faSyringe} size=2x color={iconColor} />
                   <span>Inject script</span>
+                </div>
+                <div on:click={createPopup}>
+                  <Fa icon={faWindowRestore} size=2x color={iconColor} />
+                  <span>Create popup</span>
                 </div>
               {/if}
             </div>

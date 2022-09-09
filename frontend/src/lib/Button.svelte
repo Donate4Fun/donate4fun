@@ -7,6 +7,7 @@
   export let target = null;
   export let spin = false;
   export let nospin = false;
+  export let selected = false;
 
   function createEventDispatcher() {
     const component = get_current_component();
@@ -52,7 +53,7 @@
   }
 </script>
 
-<button {...$$restProps} on:click={click} disabled={spin}>
+<button {...$$restProps} on:click={click} disabled={spin} class:selected>
   <div class="flex-row align-center">
     {#if spin}
       <Spinner class="spinner" size=20px width=3px />
@@ -103,5 +104,8 @@ button:hover:enabled {
 }
 .spinner {
   left: -30px;
+}
+.selected {
+  border: 2px solid #FF8A00;
 }
 </style>
