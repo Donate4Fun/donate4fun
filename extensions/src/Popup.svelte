@@ -1,4 +1,5 @@
 <script>
+  import "inter-ui/inter.css";
   import PopupDefault from "./PopupMain.svelte";
   import PopupYoutube from "./PopupYoutube.svelte";
   import {apiOrigin} from "../../frontend/src/lib/api.js";

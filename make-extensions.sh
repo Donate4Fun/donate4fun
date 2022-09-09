@@ -5,6 +5,8 @@
   (
     cd src
     npm run build
+    rm -rf ../firefox/src
+    rm -rf ../chrome/src
     cp -r . ../firefox/src
     cp -r . ../chrome/src
   )
