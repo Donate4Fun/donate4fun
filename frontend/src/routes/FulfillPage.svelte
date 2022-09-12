@@ -64,7 +64,7 @@
       {#if $me.donator.id === donator_id}
       <h1>Fulfill your balance</h1>
       {:else}
-      <h1>Donate to {donator.name}</h1>
+      <h1>Fulfill {donator.name} balance</h1>
       {/if}
     {/await}
   </header>
@@ -73,14 +73,14 @@
     <Loading />
     {:then}
     <main>
-      <h1>Donate to</h1>
+      <h1>Fulfill balance for</h1>
       <Donator user={donator} />
       <div>
-        <span class="i-want">Donate</span>
+        <span class="i-want">Fulfill</span>
         <div class="amount"><Input type=number placeholder="Enter amount" bind:value={amount} min={amountMin} max={amountMax} bind:error={amountError} suffix=sats /></div><FiatAmount bind:amount={amount} class="fiat-amount" />
       </div>
       <Button on:click={donate} disabled={!isValid}>
-        <span>Donate</span>
+        <span>Fulfill</span>
       </Button>
     </main>
     {/await}

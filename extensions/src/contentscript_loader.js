@@ -1,3 +1,1 @@
-(() => {
-  import(chrome.runtime.getURL("src/contentscript.js"));
-})();
+import(chrome.runtime.getURL("src/contentscript.js"));

@@ -50,12 +50,12 @@ const options = {
   },
   defaultComment_en: {
     type: "text",
-    default: 'Hi! I like your video! I’ve donated you some crypto, you can take it on "donate 4 fun"',
+    default: 'Nice video! I’ve donated you some 🪙₿, you can take it on "donate 4 fun" 🤑',
     description: "Default comment",
   },
   defaultComment_ru: {
     type: "text",
-    default: 'Классное видео, спасибо! Я задонатил тебе немного сатоши на "donate 4 fun", загугли чтобы забрать',
+    default: 'Классное видео! Я задонатил тебе 🪙₿ на "donate 4 fun", загугли чтобы забрать 🤑',
     description: "Default comment (RU)",
   },
   amount: {

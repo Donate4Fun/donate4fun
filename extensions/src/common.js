@@ -20,7 +20,7 @@ async function callBackground(request) {
 const worker = new Proxy({}, {
   get(obj, prop) {
     return async function () {
-      return await callBackground({command: prop, args: Array.from(arguments)});
+      return await callBackground({type: "donate4fun-request", command: prop, args: Array.from(arguments)});
     };
   }
 });
@@ -69,7 +69,11 @@ const contentScript = new Proxy({}, {
   get(obj, prop) {
     return async function () {
       const tab = await getCurrentTab();
-      const msg = {command: prop, args: Array.from(arguments)};
+      const msg = {
+        type: "donate4fun-request",
+        command: prop,
+        args: Array.from(arguments),
+      };
       console.log("sending to tab", tab, msg);
       let result;
       try {
@@ -131,8 +135,17 @@ async function handleMessage(handler, args) {
   }
 }
 
+async function handleMessageWrapper(request, sendResponse) {
+    const [moduleName, funcName] = request.command.split('.');
+    const module = await import(moduleName);
+    const func = module[funcName];
+    sendResponse(await handleMessage(func, request.args));
+}
+
 async function registerHandlers(handlers) {
   browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.type !== 'donate4fun-request')
+      return false;
     const handler = handlers[request.command];
     if (!handler) {
       console.error(`Unexpected command ${request.command}`);
@@ -224,6 +237,55 @@ async function createPopup() {
   console.log("opened popup", window);
 }
 
+async function waitElement(id) {
+  let timeout = 3000;
+  const step = 100;
+  do {
+    const element = document.getElementById(id);
+    if (element)
+      return element;
+    if (timeout <= 0)
+      throw new Error(`No such element #${id}`);
+    await sleep(step);
+    timeout -= step;
+  } while (true);
+}
+
+function getStatic(filename) {
+  return browser.runtime.getURL(`static/${filename}`);
+}
+
+async function apiPost(path, data) {
+  return await worker.fetch("post", path, data);
+}
+
+async function donate(amount, target) {
+  // Make a donation
+  const response = await apiPost('donate', {
+    amount: amount,
+    target: target,
+  });
+  const donation = response.donation;
+  if (donation.paid_at) {
+    return donation;
+  } else {
+    return await new Promise(async (resolve, reject) => {
+      // If donation is not paid using balance then try to use WebLN
+      const unsubscribeWs = await subscribe(`donation:${donation.id}`, async (msg) => {
+        unsubscribeWs();
+        resolve(donation);
+      });
+      const paymentRequest = response.payment_request;
+      // Show payment dialog (or pay silently if budget allows)
+      try {
+        await pageScript.sendPayment(paymentRequest);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+}
+
 export {
   worker,
   registerHandlers,
@@ -237,4 +299,7 @@ export {
   pageScript,
   injectContentScript,
   createPopup,
+  waitElement,
+  getStatic,
+  donate,
 };

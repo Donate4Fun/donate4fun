@@ -3,26 +3,31 @@
   "version": "1.0.0",
   "description": "Donate4Fun Firefox extension.",
   "homepage": "https://donate4.fun",
+  "type": "module",
   "scripts": {
-    "build": "rollup -c",
+    "build": "npx vite build && rollup -c",
     "dev": "rollup -c -w",
     "start": "sirv public"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^17.0.0",
     "@rollup/plugin-node-resolve": "^11.0.0",
+    "@sveltejs/vite-plugin-svelte": "^1.0.5",
     "rollup": "^2.3.4",
     "rollup-plugin-css-only": "^3.1.0",
     "rollup-plugin-livereload": "^2.0.0",
     "rollup-plugin-svelte": "^7.0.0",
     "rollup-plugin-terser": "^7.0.0",
     "svelte": "^3.0.0",
+    "vite": "^3.1.0",
     "webextension-polyfill": "^0.7.0"
   },
   "dependencies": {
     "@fortawesome/free-regular-svg-icons": "^6.2.0",
     "@fortawesome/free-solid-svg-icons": "^6.2.0",
+    "@lottiefiles/svelte-lottie-player": "^0.2.0",
     "sirv-cli": "^1.0.0",
+    "svelte-confetti": "^1.2.0",
     "svelte-fa": "^3.0.3",
     "svelte-navigator": "^3.2.2"
   }

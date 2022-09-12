@@ -65,13 +65,14 @@
 <style>
 button {
   background-image: linear-gradient(90deg, #F9F03E 0%, #9DEDA2 100%);
-  font-weight: 700;
-  font-size: 16px;
+  font-weight: var(--font-weight, 700);
+  font-size: var(--font-size, 16px);
   line-height: 19px;
   color: black;
-  padding: 5px 20px;
+  padding: var(--padding, 5px 20px);
   cursor: pointer;
-  height: 40px;
+  height: var(--height, 40px);
+  width: var(--width, auto);
 
   border: 0;
   border-radius: 100px;

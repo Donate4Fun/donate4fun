@@ -8,13 +8,11 @@
 <div style="--width:{width}; --color:{color}; --size:{size}" {...$$restProps}></div>
 
 <style>
-:root {
+div {
   --width: 4px;
   --color: white;
   --size: 28px;
-}
 
-div {
   width: var(--size);
   height: var(--size);
   animation: spin 1.5s infinite linear;

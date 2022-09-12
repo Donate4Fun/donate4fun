@@ -27,37 +27,14 @@
   }
 
   async function donate() {
-    console.log("paying", amount);
-    const response = await worker.fetch('post', 'donate', {
-      amount: amount,
-      target: `https://youtube.com/watch?v=${videoId}`,
-    });
-    if (response.payment_request) {
-      console.log("Not enough balance, try to trigger webln payment");
-      try {
-        await new Promise(async (resolve, reject) => {
-          let unsubscribeWs = await subscribe(`donation:${response.donation.id}`, async (msg) => {
-            unsubscribeWs();
-            resolve();
-          });
-          try {
-            await contentScript.sendPayment(response.payment_request);
-          } catch (err) {
-            unsubscribeWs();
-            reject(err);
-          }
-        });
-      } catch (err) {
-        console.error("Failed to donate using webln", err);
-        showWeblnMessage = true;
-        // TODO: open next page
-        return;
-      }
-    }
-    console.log("Successefuly donated");
-    if (await worker.getConfig("enableComment")) {
-      const videoLanguage = response.donation.youtube_video.default_audio_language;
-      await contentScript.postComment(videoLanguage, amount);
+    try {
+      contentScript.onPaid(await contentScript.donate(amount, `https://youtube.com/watch?v=${videoId}`));
+    } catch (err) {
+      console.error("Failed to donate", err);
+      if (err.message === "No webln found")
+      showWeblnMessage = true;
+      // TODO: open next page
+      return;
     }
   }
 
@@ -76,9 +53,9 @@
           <span class="color-blue font-weight-700">{channelTitle}</span>
         </div>
       </div>
-      <div class="flex-row justify-center gap-16">
+      <div class="flex-row justify-space-between width-full">
       {#each amounts as amount_}
-        <Button on:click={() => amount = amount_} class="width-120" selected={amount_ === amount}>{toText(amount_)} ⚡</Button>
+        <Button on:click={() => amount = amount_} --width=120px selected={amount_ === amount}>{toText(amount_)} ⚡</Button>
       {/each}
       </div>
       <div class="flex-row gap-20 align-center width-full">
@@ -87,7 +64,7 @@
         </div>
         <FiatAmount bind:amount={amount} class="fiat-amount min-width-70" />
       </div>
-      <Button class="width-full" on:click={donate}>Donate</Button>
+      <Button --width=100% on:click={donate}>Donate</Button>
     </div>
   </section>
 {/await}

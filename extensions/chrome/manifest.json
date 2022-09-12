@@ -53,7 +53,11 @@
     "resources": [
       "src/pagescript.js",
       "src/contentscript.js",
-      "src/common.js"
+      "src/common.js",
+      "src/youtube.js",
+      "src/dist/dff-bolt.js",
+      "static/success.png",
+      "static/global.css"
     ],
     "matches": [ "https://*.youtube.com/*" ]
   }]

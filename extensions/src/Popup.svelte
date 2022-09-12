@@ -1,5 +1,4 @@
 <script>
-  import "inter-ui/inter.css";
   import PopupDefault from "./PopupMain.svelte";
   import PopupYoutube from "./PopupYoutube.svelte";
   import PopupHeader from "./PopupHeader.svelte";
@@ -21,8 +20,7 @@
       showYoutube = true;
     } else {
       const tab = await getCurrentTab();
-      if (tab.url)
-        showYoutube = tab.url.match('^https\:\/\/(www\.)?youtube\.com');
+      showYoutube = tab.url?.match('^https\:\/\/(www\.)?youtube\.com') && await contentScript.isVideoLoaded();
     }
     await me.init();
   }

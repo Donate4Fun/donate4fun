@@ -8,10 +8,6 @@
 </div>
 
 <style>
-:root {
-  --stroke-width: 0.1em;
-  --stroke-color: #2E6CFF;
-}
 @media only screen and (max-width: 640px) {
   img.bolt,div.text {
     display: None;
@@ -31,6 +27,8 @@
 div.parent {
   display: flex;
   gap: 0.5em;
+  --stroke-width: 0.1em;
+  --stroke-color: #2E6CFF;
 }
 div.text {
   font-weight: 900;
