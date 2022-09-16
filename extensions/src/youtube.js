@@ -1,4 +1,4 @@
-import {cLog, worker, waitElement, sleep} from "./common.js";
+import {cLog, worker, waitElement, sleep, pageScript} from "./common.js";
 
 function isInViewport(element) {
   const rect = element.getBoundingClientRect();
@@ -31,6 +31,7 @@ function getButtons_mobile() {
 
 function getButtons_main() {
   if (document.getElementById("menu-container")?.offsetParent === null) {
+    // Patching this element causes errors in console on window resize
     return document.querySelector("ytd-menu-renderer.ytd-watch-metadata > div");
   } else {
     return document
@@ -99,7 +100,7 @@ async function waitLoaded(checkInterval) {
   const is_shorts = isShorts();
 
   while (true) {
-    const offset_parent = getButtons()?.offsetParent;
+    const offset_parent = getButtons();//?.offsetParent;
     const is_video_loaded = isVideoLoaded();
     cLog(`Checking for load isShorts=${is_shorts} getButtons=${offset_parent} isVideoLoaded=${is_video_loaded}`);
     if (is_shorts || (offset_parent && is_video_loaded)) {
@@ -110,14 +111,14 @@ async function waitLoaded(checkInterval) {
 }
 
 async function postComment(language, amount) {
-  let defaultComment;
+  let comment;
   try {
-    defaultComment = await worker.getConfig(`defaultComment_${language}`);
+    comment = await worker.getConfig(`defaultComment_${language}`);
   } catch (exc) {
-    defaultComment = await worker.getConfig("defaultComment_en");
+    comment = await worker.getConfig("defaultComment_en");
   }
 
-  defaultComment.replace('%amount%', amount);
+  comment.replace('%amount%', amount);
 
   // Scroll to comments section
   const comments = await waitElement("comments");
@@ -133,14 +134,23 @@ async function postComment(language, amount) {
   commentInput.scrollIntoView({behavior: "smooth", block: "center"});
 
   // Enter comment text
-  commentInput.dispatchEvent(new Event('focus', {bubbles: true}));
-  commentInput.textContent = defaultComment;
-  // Thanks to https://github.com/keepassxreboot/keepassxc-browser/blob/d7e34662637b869500e8bb6344cdd642c2fb079b/keepassxc-browser/content/keepassxc-browser.js#L659-L663
-  commentInput.dispatchEvent(new Event('input', {bubbles: true}));
-  commentInput.dispatchEvent(new Event('change', {bubbles: true}));
-  commentInput.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: false, key: '', char: '' }));
-  commentInput.dispatchEvent(new KeyboardEvent('keypress', { bubbles: true, cancelable: false, key: '', char: '' }));
-  commentInput.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, cancelable: false, key: '', char: '' }));
+  //commentInput.dispatchEvent(new Event('focus', {bubbles: true}));
+  commentInput.textContent = comment;
+  await pageScript.emulateKeypresses("#contenteditable-root");
+
+  const pattern = /<.+>/g;
+  const selection = window.getSelection();
+  const textNode = commentInput.childNodes[0];
+  let match;
+  selection.removeAllRanges();
+  while (match = pattern.exec(comment)) {
+    // Select customizable part of text
+    const range = document.createRange();
+    range.setStart(textNode, match.index);
+    range.setEnd(textNode, pattern.lastIndex);
+    selection.addRange(range);
+  }
+  commentInput.focus();
 
   const submitButton = await waitElement('submit-button');
   cLog("patching click for", submitButton);

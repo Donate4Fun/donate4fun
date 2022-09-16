@@ -13,7 +13,7 @@
   let unsubscribeVideoWS;
   let confetti = false;
   let showCommentTip = false;
-  let donation;
+  let donation = {amount: null};
   let commentTipElement;
 
   async function fetchStats() {
@@ -48,7 +48,6 @@
       donation = donation_;
       showCommentTip = true;
       await tick();
-      console.log("show popup", commentTipElement);
       hideOnClickOutside(commentTipElement);
     }
   }
@@ -91,40 +90,42 @@
 
 <div class="root" id="donate4fun-button">
   <link rel="stylesheet" href={getStatic("global.css")}>
-  <div class="flex-container" on:click={onDonateClicked}>
+  <div class="flex-column align-center">
     {#if confetti}
       <Confetti />
     {/if}
-    <div class="icon" class:animate>
-      <svg viewBox="60 60 160 160" xmlns="http://www.w3.org/2000/svg">
-        <g>
-          <path class="bolt" d="M79.7609 144.047L173.761 63.0466C177.857 60.4235 181.761 63.0466 179.261 67.5466L149.261 126.547H202.761C202.761 126.547 211.261 126.547 202.761 133.547L110.261 215.047C103.761 220.547 99.261 217.547 103.761 209.047L132.761 151.547H79.7609C79.7609 151.547 71.2609 151.547 79.7609 144.047Z" stroke-width="10"></path>
-        </g>
-      </svg>
+    <div class="flex-row align-center bolt-button" on:click={onDonateClicked}>
+      <div class="icon" class:animate>
+        <svg viewBox="60 60 160 160" xmlns="http://www.w3.org/2000/svg">
+          <g>
+            <path class="bolt" d="M79.7609 144.047L173.761 63.0466C177.857 60.4235 181.761 63.0466 179.261 67.5466L149.261 126.547H202.761C202.761 126.547 211.261 126.547 202.761 133.547L110.261 215.047C103.761 220.547 99.261 217.547 103.761 209.047L132.761 151.547H79.7609C79.7609 151.547 71.2609 151.547 79.7609 144.047Z" stroke-width="10"></path>
+          </g>
+        </svg>
+      </div>
+      <div class="text" class:loading>{text}</div>
     </div>
-    <div class="text" class:loading>{text}</div>
     <div class="tooltip" style-target="tooltip">
       Donate sats
     </div>
-    {#if showCommentTip}
-      <CommentTip bind:element={commentTipElement} amount={donation.amount} on:comment={onCommentClick} />
-    {/if}
   </div>
+  <CommentTip bind:element={commentTipElement} amount={donation.amount} on:comment={onCommentClick} --dff-display={showCommentTip ? "block" : "none"}/>
 </div>
 
 <style>
+:global(ytd-menu-renderer[has-flexible-items]) {
+  overflow-y: visible !important; /* show our absolutely positioned popups */
+  width: 99.999% !important; /* trigger youtube action buttons recalculation (they use ResizeObserver)*/
+}
 .root {
   display: inline-block;
+  position: relative;
   --yt-button-icon-padding: 6px;
   color: var(--yt-spec-icon-inactive);
 }
-.flex-container {
-  display: flex;
-  align-items: center;
+.bolt-button {
   justify-content: center;
   cursor: pointer;
   padding-right: var(--yt-button-icon-padding,8px);
-  position: relative;
 }
 .icon {
   line-height: 1;
@@ -140,9 +141,6 @@
   font-size: 0;
 }
 .tooltip {
-  visibility: hidden;
-
-  margin: 8px;
   text-transform: none;
   font-size: 1.2rem;
   line-height: 1.8rem;
@@ -152,16 +150,19 @@
   -webkit-font-smoothing: antialiased;
   background-color: var(--paper-tooltip-background, #616161);
   color: var(--paper-tooltip-text-color, white);
-  padding: 8px;
-  border-radius: 2px;
  
   position: absolute;
-  z-index: 1;
-  top: calc(100% + 8px);
+  z-index: var(--ytd-z-index-toggle-button-tooltip);
+  top: calc(100% + 4px); /* try to mimic youtube popups */
   white-space: nowrap;
+
+  display: none;
+  margin: 8px;
+  padding: 8px;
+  border-radius: 2px;
 }
-.root:hover .tooltip {
-  visibility: visible;
+.bolt-button:hover + .tooltip {
+  display: block;
 
   opacity: 0;
   animation-delay: var(--paper-tooltip-delay-in, 500ms);
@@ -176,7 +177,7 @@
     filter: drop-shadow(0px 0px 5px);
   }
 }
-.icon:hover {
+.bolt-button:hover .icon {
   animation-name: dff-glow;
   animation-duration: 0.8s;
   animation-direction: alternate;

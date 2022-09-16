@@ -34,7 +34,19 @@ if (!window.donate4funPageScriptLoaded) {
     console.log("webln.sendPayment result", result);
   }
 
+  async function emulateKeypresses(selector) {
+    const element = document.querySelector(selector);
+    // Thanks to https://github.com/keepassxreboot/keepassxc-browser/blob/d7e34662637b869500e8bb6344cdd642c2fb079b/keepassxc-browser/content/keepassxc-browser.js#L659-L663
+    // This code is here because if call it from content script warnings will occur "Permission denied to access property X". (YouTube overrides event handles and tries to access event attributes)
+    element.dispatchEvent(new Event('input', {bubbles: true}));
+    element.dispatchEvent(new Event('change', {bubbles: true}));
+    element.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: false, key: '', char: '' }));
+    element.dispatchEvent(new KeyboardEvent('keypress', { bubbles: true, cancelable: false, key: '', char: '' }));
+    element.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, cancelable: false, key: '', char: '' }));
+  }
+
   const handlers = {
-    sendPayment: sendPayment,
+    sendPayment,
+    emulateKeypresses,
   }
 }

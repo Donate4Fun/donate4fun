@@ -57,6 +57,7 @@ async function load(evt) {
 }
 
 async function patchButtons() {
+  if (!await worker.getConfig("enableBoltButton")) return;
   const buttons = getButtons();
   cLog("buttons", buttons);
   if (document.getElementById(buttonId) === null) {

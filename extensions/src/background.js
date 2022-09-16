@@ -4,6 +4,7 @@ import {
   getCurrentTab,
   injectContentScript,
   createPopup,
+  cLog,
 } from "./common.js";
 
 async function handleFetch(method, path, data) {
@@ -50,12 +51,12 @@ const options = {
   },
   defaultComment_en: {
     type: "text",
-    default: 'Nice video! I’ve donated you some 🪙₿, you can take it on "donate 4 fun" 🤑',
+    default: '<WRITE YOUR COMMENT> I’ve donated you some 🪙₿, you can take it on "donate 4 fun" 🤑',
     description: "Default comment",
   },
   defaultComment_ru: {
     type: "text",
-    default: 'Классное видео! Я задонатил тебе 🪙₿ на "donate 4 fun", загугли чтобы забрать 🤑',
+    default: '<НАПИШИ СВОЙ КОММЕНТ> Я задонатил тебе 🪙₿ на "donate 4 fun", загугли чтобы забрать 🤑',
     description: "Default comment (RU)",
   },
   amount: {
@@ -67,7 +68,12 @@ const options = {
   enableComment: {
     type: "checkbox",
     default: true,
-    description: "Enable auto-comment",
+    description: "Enable 'Post a comment' popup",
+  },
+  enableBoltButton: {
+    type: "checkbox",
+    default: true,
+    description: "Enable bolt button on YouTube",
   },
   enableDevCommands: {
     type: "checkbox",
@@ -94,10 +100,8 @@ async function getConfig(name) {
     chrome.storage.sync.get(getDefaults(), items => {
       const value = items[name];
       if (value === undefined) {
-        cLog(`No saved or default value for ${name} config key`);
-        reject();
+        reject(new Error(`No saved or default value for ${name} config key`));
       } else {
-        //console.log("sync.get", name, value);  // trace
         resolve(value);
       }
     });
@@ -111,7 +115,6 @@ async function saveOptions(values) {
 async function setConfig(key, value) {
   return await new Promise((resolve, reject) => {
     const keys = {[key]: value};
-    // console.log("sync.set", keys);  // trace
     chrome.storage.sync.set(keys, resolve);
   });
 }

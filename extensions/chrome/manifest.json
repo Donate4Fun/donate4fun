@@ -57,7 +57,8 @@
       "src/youtube.js",
       "src/dist/dff-bolt.js",
       "static/success.png",
-      "static/global.css"
+      "static/global.css",
+      "static/lottie-arrow.json"
     ],
     "matches": [ "https://*.youtube.com/*" ]
   }]

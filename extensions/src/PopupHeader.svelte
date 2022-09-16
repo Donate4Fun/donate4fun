@@ -60,13 +60,17 @@
                   <Fa icon={faComment} size=2x color={iconColor} />
                   <span>Insert comment</span>
                 </div>
+                <div on:click={() => contentScript.onPaid({amount: 333})}>
+                  <Fa icon={faComment} size=2x color={iconColor} />
+                  <span>Show comment popup</span>
+                </div>
                 <div on:click={() => worker.injectContentScript()}>
                   <Fa icon={faSyringe} size=2x color={iconColor} />
                   <span>Inject script</span>
                 </div>
                 <div on:click={createPopup}>
                   <Fa icon={faWindowRestore} size=2x color={iconColor} />
-                  <span>Create popup</span>
+                  <span>Create popup window</span>
                 </div>
               {/if}
             </div>
