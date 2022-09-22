@@ -34,8 +34,8 @@
         target = "<Unexpected donation target>";
     }
     if (donation.paid_at && donation.receiver) {
-      notify("Congrats!", "Your donation is paid");
       navigate(`/donator/${donation.receiver.id}`);
+      notify("Success", `You've paid ${donation.amount} sats`, "info");
     }
   }
 
@@ -60,14 +60,16 @@
   {:then}
     {#if donation.paid_at}
       {#if !donation.receiver}
-        <Donation {...donation} on:close={() => navigate(-1)} />
+        <Donation donation={donation} on:close={() => navigate(-1)} />
       {:else}
-        {#if donation.receiver.id === $me.donator.id}
-          You successfuly fulfilled your balance.
-        {:else}
-          You successfuly donated to <Donator user={donation.receiver} />.
-        {/if}
-        <Button class=white on:click={() => navigate(-2)}>Close</Button>
+        <div>
+          {#if donation.receiver.id === $me.donator.id}
+            You successfuly fulfilled your balance.
+          {:else}
+            You successfuly donated to <Donator user={donation.receiver} />.
+          {/if}
+          <Button class=white on:click={() => navigate(-2)}>Close</Button>
+        </div>
       {/if}
     {:else}
       <Invoice donation={donation} payment_request={payment_request} on:cancel={() => navigate(-1)} on:paid={paid} />

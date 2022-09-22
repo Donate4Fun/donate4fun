@@ -9,6 +9,7 @@
   import Spinner from "../lib/Spinner.svelte";
   import api from "../lib/api.js";
   import {me} from "../lib/session.js";
+  import {notify} from "../lib/notifications.js";
 
   export let navigate;
   let lnurl;
@@ -25,10 +26,18 @@
       unsubscribe();
       await api.post('update-session', {creds_jwt: token['message']});
       await me.load();
-      navigate(-1);
+      navigate(`/donator/${$me.donator.id}`);
+      if ($me.donator.lnauth_pubkey)
+        notify("Success", `You've successefully connected your wallet`, "success");
+      else
+        notify("Success", `You've successefully disconnected your wallet`, "success");
     });
     const response = await api.get('lnauth');
     lnurl = response.lnurl;
+  }
+
+  async function logout() {
+    await api.post('logout');
   }
 </script>
 
@@ -47,9 +56,12 @@
       </h1>
       <a href="lightning:{lnurl}" class="qrcode"><QRCode value={lnurl} /></a>
       <div class="buttons">
-        <a href="lightning:{lnurl}" class="open-in-wallet"><Button>Open in wallet</Button></a>
+        <a href="lightning:{lnurl}" class="open-in-wallet"><Button --width=100%>Open in wallet</Button></a>
         <Lnurl lnurl="{lnurl}" class="lnurl" />
-        <Button class="grey" on:click={() => navigate(-1)}>Cancel</Button>
+        {#if $me.donator.lnauth_pubkey}
+          <Button class="white" on:click={logout} --width=100%>Logout</Button>
+        {/if}
+        <Button class="grey" on:click={() => navigate(-1)} --width=100%>Cancel</Button>
       </div>
       <div class=waiting>
         <Spinner /><span>Waiting for you...</span>
@@ -82,10 +94,7 @@ div.buttons {
   align-items: center;
   margin-bottom: 40px;
 }
-.buttons > :global(*) {
-  width: 100%;
-}
-.buttons > a > :global(*) {
+.buttons > a {
   width: 100%;
 }
 div.waiting {

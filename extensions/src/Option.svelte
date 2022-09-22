@@ -3,6 +3,7 @@
   import Slider from "./Slider.svelte";
   import Input from "../../frontend/src/lib/Input.svelte";
 
+  export let key;
   export let option;
 
   const dispatch = createEventDispatcher();
@@ -13,39 +14,35 @@
   }
 </script>
 
-<div>
-  <label for={option.name}><span>{option.description}</span><span class=reset on:click={reset} title="Reset to default">⟲</span></label>
-  {#if option.type === 'text'}
-  <input bind:value={option.value} on:change type=text name={option.name} />
+<div class="flex-column width-full">
+  <div class="label flex-row align-center width-full gap-8">
+    <span>{option.description || key}</span>
+    {#if option.default}
+      <span class=action on:click={reset} title="Reset to default">⟲</span>
+    {:else}
+      <span class=action on:click={() => dispatch("remove")} title="Remove">❌</span>
+    {/if}
+  </div>
+  {#if !option.type || option.type === 'text'}
+  <input bind:value={option.value} on:change type=text />
   {:else if option.type === 'number'}
   <Input bind:value={option.value} on:change type=number suffix={option.suffix} />
   {:else if option.type === 'checkbox'}
-  <Slider bind:value={option.value} on:change name={option.name} />
+  <Slider bind:value={option.value} on:change />
   {/if}
 </div>
 
 <style>
-div {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-label {
-  width: 100%;
-  font-family: 'Inter';
+.label {
   font-weight: 400;
   font-size: 16px;
   margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
-span.reset {
+span.action {
   cursor: pointer;
   font-size: 18px;
 }
 input {
-  box-sizing: border-box;
   width: 100%;
   background: #F8F8F8;
   border: 1px solid #E7E7E7;

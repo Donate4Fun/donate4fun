@@ -34,6 +34,7 @@
   }
 
   const dispatch = createEventDispatcher();
+
   async function click(ev) {
     if (link !== null) {
       if (target !== null) {
@@ -64,14 +65,13 @@
 
 <style>
 button {
-  background-image: linear-gradient(90deg, #F9F03E 0%, #9DEDA2 100%);
+  background-image: var(--background-image, linear-gradient(90deg, #F9F03E 0%, #9DEDA2 100%));
   font-weight: var(--font-weight, 700);
   font-size: var(--font-size, 16px);
-  line-height: 19px;
   color: black;
-  padding: var(--padding, 5px 20px);
+  padding: var(--padding, 12px 25px);
   cursor: pointer;
-  height: var(--height, 40px);
+  height: var(--height, auto);
   width: var(--width, auto);
 
   border: 0;
@@ -85,14 +85,19 @@ button div {
   height: 100%;
   width: 100%;
 }
-button.white {
+button.white,button.light {
   background-image: linear-gradient(to right, #F9F03E 0%, #9DEDA2 100%);
   padding: 2px;
 }
+button.white div,button.light div {
+  border-radius: inherit;
+  padding: var(--padding, 10px 23px);  /* parent padding - 2px (pseudo-border) */
+}
 button.white div {
   background: white;
-  border-radius: inherit;
-  padding: 5px 20px;
+}
+button.light div {
+  background: linear-gradient(105.38deg, rgba(249, 240, 62, 0.2) 1.16%, rgba(157, 237, 162, 0.2) 95.37%), #FFFFFF;
 }
 button.grey {
   background: #E9E9E9;

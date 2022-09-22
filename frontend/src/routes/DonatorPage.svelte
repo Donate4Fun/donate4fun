@@ -6,9 +6,12 @@
   import YoutubeChannel from "../lib/YoutubeChannel.svelte";
   import Donator from "../lib/Donator.svelte";
   import Amount from "../lib/Amount.svelte";
+  import FiatAmount from "../lib/FiatAmount.svelte";
   import Button from "../lib/Button.svelte";
   import Datetime from "../lib/Datetime.svelte";
   import Separator from "../lib/Separator.svelte";
+  import MeNamePubkey from "../lib/MeNamePubkey.svelte";
+  import MeBalance from "../lib/MeBalance.svelte";
   import {me} from "../lib/session.js";
   import api from "../lib/api.js";
 
@@ -29,17 +32,20 @@
 </script>
 
 <Page>
-  <Section class="donator-main">
+  <Section class="donator-main flex-column align-center gap-8">
   {#await load()}
     <Loading/>
   {:then}
-    <Userpic user={donator} class="userpic" />
+    <Userpic user={donator} class="userpic" --width=88px/>
     {#if $me.donator.id === donator.id}
-      <div class="balance">Balance: <Amount amount={donator.balance} /> <Button link="/fulfill/{donator_id}">Fulfill</Button></div>
+      <div style="height: 21px;"></div>
+      <MeNamePubkey />
+      <div style="height: 32px;"></div>
+      <MeBalance />
     {:else}
-      <div class="balance"><Button link="/fulfill/{donator_id}">Fulfill</Button></div>
+      <p>{donator.name}</p>
+      <Button link="/fulfill/{donator_id}">Donate</Button>
     {/if}
-    <div class="name">{donator.name}</div>
     <div class=transactions><Separator>Transactions</Separator></div>
     <div class="table">
       <div class="head">
@@ -59,7 +65,7 @@
         {#if donation.youtube_channel}
           <YoutubeChannel channel={donation.youtube_channel} linkto=donate class="ellipsis" />
         {:else}
-          <Donator user={donation.receiver} class=ellipsis />
+          <Donator user={donation.receiver} ellipsis --gap=5px />
         {/if}
         <Amount amount={donation.amount}/>
         <div>
@@ -77,22 +83,11 @@
 
 <style>
 :global(.donator-main) {
-  padding: 36px 158px 123px 158px;
-  width: 718px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-:global(.donator-main .userpic img) {
-  width: 88px;
-}
-.name {
-  margin-top: 24px;
-  font-weight: 500;
-  font-size: 16px;
+  padding: 36px 119px 123px;
+  width: 640px;
 }
 .transactions {
-  margin-top: 64px;
+  margin-top: 56px;
   margin-bottom: 32px;
   width: 100%;
 }
@@ -104,7 +99,7 @@
 .table {
   font-size: 12px;
   display: grid;
-  grid-template-columns: 109px 69px 83px 69px;
+  grid-template-columns: 109px 99px 83px 45px;
   column-gap: 20px;
   row-gap: 26px;
 }

@@ -1,25 +1,38 @@
 <script>
   import Button from "../../frontend/src/lib/Button.svelte";
   import Arrow2 from "./Arrow2.svelte";
-	import {createEventDispatcher} from 'svelte';
+	import {createEventDispatcher, onMount} from 'svelte';
   import {getStatic} from "./common.js";
+  import {isCommentEnabled} from "./youtube.js";
 
   export let element;
   export let amount;
 
 	const dispatch = createEventDispatcher();
+
+  let textElement;
+  let invert = 0;
+  onMount(() => {
+    if (isCommentEnabled()) {
+      const color = window.getComputedStyle(textElement).getPropertyValue("color");
+      console.log("color", color);
+      invert = color === "rgb(255, 255, 255)" ? 100 : 0;
+    }
+  });
 </script>
 
 <div bind:this={element} class="comment">
-  <div class="flex-row inner-comment">
+  <div class="flex-row inner-comment justify-center">
     <div class="flex-column gap-3">
-      <p class="text-align-center margin-0">Donated ⚡{amount} sats</p>
-      <button class="flex-row align-center button" on:click={() => dispatch("comment")}  >
-          <span>Post a comment</span>
-          <div class="arrow">
+      <p class="text-align-center margin-0 nowrap">Donated ⚡{amount} sats</p>
+      {#if isCommentEnabled()}
+        <button class="flex-row align-center button" on:click={() => dispatch("comment")}  >
+          <span bind:this={textElement}>Post a comment</span>
+          <div class="arrow" style="filter: invert({invert}%)">
             <Arrow2 />
           </div>
-      </button>
+        </button>
+      {/if}
     </div>
   </div>
 </div>
@@ -37,7 +50,6 @@
   animation: moveit 900ms ease forwards;
   z-index: var(--ytd-z-index-toggle-button-tooltip);
   opacity: 1;
-  display: var(--dff-display, none);
   border: 1px solid var(--yt-spec-call-to-action);
 }
 .inner-comment {
@@ -50,18 +62,15 @@
 button {
   border: 0;
   gap: 10px;
-  /*width: 161px;
-  font-size: 12px;
-  padding-left: 15px;
-  height: 24px;
-  padding: 0;*/
   background-color: var(--yt-spec-call-to-action);
   color: var(--yt-spec-text-primary-inverse);
   border-radius: var(--yt-button-border-radius,3px);
   font-size: var(--ytd-tab-system-font-size);
   font-weight: var(--ytd-tab-system-font-weight);
+  font-family: inherit;
   letter-spacing: var(--ytd-tab-system-letter-spacing);
-  padding: var(--yt-button-padding,0.7em 0.57em);
+  padding: var(--yt-button-padding-minus-border);
+  text-transform: uppercase;
   user-select: none;
   cursor: pointer;
 }

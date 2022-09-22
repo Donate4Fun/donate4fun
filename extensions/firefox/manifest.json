@@ -17,7 +17,8 @@
   "permissions": [
     "storage",
     "activeTab",
-    "https://*.donate4.fun/*"
+    "https://*.donate4.fun/*",
+    "http://localhost:3000"
   ],
   "background": {
     "page": "background.html"

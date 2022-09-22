@@ -456,11 +456,13 @@ class DbSession:
         response = await self.execute(select(literal('ok')))
         return response.scalars().one()
 
-    async def login_donator(self, donator_id: UUID, key: str):
-        resp = await self.execute(
-            select(DonatorDb.id).where(DonatorDb.lnauth_pubkey == key)
-        )
-        registered_donator_id = resp.scalar()
+    async def login_donator(self, donator_id: UUID, key: str | None):
+        registered_donator_id = None
+        if key is not None:
+            resp = await self.execute(
+                select(DonatorDb.id).where(DonatorDb.lnauth_pubkey == key)
+            )
+            registered_donator_id = resp.scalar()
         if registered_donator_id is None:
             # No existing donator with lnauth_pubkey
             resp = await self.execute(

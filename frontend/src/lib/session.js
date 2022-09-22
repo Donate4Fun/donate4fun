@@ -3,7 +3,6 @@ import api from "../lib/api.js";
 
 
 const { subscribe, update, set } = writable({});
-
 let loadPromise = null;
 
 async function init() {
@@ -28,9 +27,8 @@ async function load() {
   set(resp);
 }
 
-
 export const me = {
   subscribe,
-  init: init,
-  load: load
+  init,
+  load,
 }

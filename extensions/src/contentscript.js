@@ -18,7 +18,7 @@ import {
   getChannelLogo,
 } from "./youtube.js";
 
-import {Bolt} from  "./dist/dff-bolt.js";
+import Bolt from "./Bolt.svelte";
 
 const buttonId = "donate4fun-button";
 
@@ -76,7 +76,7 @@ async function patchButtons() {
 
 function injectPageScript() {
   // page script is needed only for webln to work
-  const scriptUrl = chrome.runtime.getURL('src/pagescript.js');
+  const scriptUrl = chrome.runtime.getURL('dist/pagescript.js');
   cLog("scriptUrl", scriptUrl);
   const scriptElement = document.createElement('script');
   scriptElement.setAttribute("src", scriptUrl);

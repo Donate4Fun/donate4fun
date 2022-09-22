@@ -10,11 +10,13 @@
 
   let showYoutube = false;
   let showWeblnHelp = false;
+  let amount;
+  let balance;
 
   async function load() {
     const host = await worker.getConfig("apiHost");
-    apiOrigin.set(`https://${host}`);
-    webOrigin.set(`https://${host}`);
+    apiOrigin.set(host);
+    webOrigin.set(host);
 
     if (isTest()) {
       showYoutube = true;
@@ -27,13 +29,14 @@
 </script>
 
 <div class="flex-column height-full justify-space-between gradient">
-  <main class="flex-column gap-28 height-full">
+  <main class="flex-column gap-28 height-full position-relative">
     {#await load() then}
-      <PopupHeader />
+      {#if showWeblnHelp}
+        <PopupNoWebln on:close={() => {showWeblnHelp = false;}} neededAmount={amount - balance}/>
+      {/if}
+      <PopupHeader bind:balance={balance} />
       {#if showYoutube}
-        <PopupYoutube on:weblnFailed={showWeblnHelp = true} />
-      {:else if showWeblnHelp}
-        <PopupNoWebln />
+        <PopupYoutube bind:amount={amount} on:weblnerror={() => {showWeblnHelp = true}} />
       {:else}
         <PopupDefault />
       {/if}

@@ -37,21 +37,25 @@
   {#await subscribe()}
     <Loading />
   {:then}
+    <h1>Donate <Amount amount={donation.amount} /> to</h1>
     {#if donation.youtube_channel}
-      <h1>Donate <Amount amount={donation.amount} /> to <YoutubeChannel channel={donation.youtube_channel} /></h1>
+      <YoutubeChannel channel={donation.youtube_channel} />
     {:else if donation.receiver}
-      <h1>Donate <Amount amount={donation.amount} /> to <span class=font-normal><Donator user={donation.receiver} /></span></h1>
+      <span class=font-normal><Donator user={donation.receiver} /></span>
     {/if}
     <a href="lightning:{payment_request}"><QRCode value={payment_request} /></a>
-    <div class="suggestion">Pay with a Wallet like
+    <div class="suggestion font-weight-700 text-align-center">
+      <span>Pay with a Wallet like</span>
       <a href="https://getalby.com" target="_blank">Alby</a>,
       <a href="https://phoenix.acinq.co" target="_blank">Phoenix</a>,
       <a href="https://sbw.app" target="_blank">SBW</a> or
       <a href="https://blixtwallet.github.io" target="_blank">Blixt</a>
     </div>
-    <a href="lightning:{payment_request}"><Button>Open in Wallet</Button></a>
-    <Lnurl lnurl={payment_request} class="lnurl" />
-    <Button on:click={partial(dispatch, "cancel")} class="grey">Back</Button>
+    <div class="buttons flex-column gap-20">
+      <Button link="lightning:{payment_request}" --width=100%>Open in Wallet</Button>
+      <Lnurl lnurl={payment_request} --width=100% />
+      <Button on:click={partial(dispatch, "cancel")} class="grey" --width=100%>Back</Button>
+    </div>
   {/await}
 </main>
 
@@ -60,7 +64,7 @@ main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 36px 119px 40px 119px;
+  margin: 36px 0 40px 0;
   gap: 20px;
 }
 h1 {
@@ -78,18 +82,7 @@ h1 {
   margin-top: 4px;
   margin-bottom: 8px;
 }
-.suggestion a {
-  font-weight: 700;
-}
-main :global(button) {
-  width: 402px;
-  height: 44px;
-  font-weight: 700;
-}
-main :global(.lnurl) {
-  width: 402px;
-}
-main div {
-  text-align: center;
+.buttons {
+  width: 295px;
 }
 </style>

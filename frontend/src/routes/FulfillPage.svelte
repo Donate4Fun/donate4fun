@@ -18,7 +18,7 @@
 
   let donator;
 
-  let amount = 100;
+  let amount = 100_000; // sats
   let spin = false;
 
   const amountMin = 10;
@@ -37,6 +37,9 @@
   async function load() {
     await me.init();
     donator = await api.get(`donator/${donator_id}`);
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has("amount"))
+      amount = parseInt(urlParams.get("amount"));
   }
 
   async function donate(e) {
@@ -54,32 +57,27 @@
 
 <svelte:head>
   {#await loadPromise then}
-  <title>Donate4Fun to {donator.name}</title>
+  <title>[Donate4Fun] Fulfill balance for {donator.name}</title>
   {/await}
 </svelte:head>
 
 <Page>
-  <header>
-    {#await loadPromise then}
-      {#if $me.donator.id === donator_id}
-      <h1>Fulfill your balance</h1>
-      {:else}
-      <h1>Fulfill {donator.name} balance</h1>
-      {/if}
-    {/await}
-  </header>
   <Section>
     {#await loadPromise}
     <Loading />
     {:then}
     <main>
-      <h1>Fulfill balance for</h1>
+      {#if $me.donator.id === donator_id}
+        <h1 class="text-align-center">Fulfill your balance</h1>
+      {:else}
+        <h1 class="text-align-center">Fulfill {donator.name} balance</h1>
+      {/if}
       <Donator user={donator} />
       <div>
-        <span class="i-want">Fulfill</span>
+        <span>Amount:</span>
         <div class="amount"><Input type=number placeholder="Enter amount" bind:value={amount} min={amountMin} max={amountMax} bind:error={amountError} suffix=sats /></div><FiatAmount bind:amount={amount} class="fiat-amount" />
       </div>
-      <Button on:click={donate} disabled={!isValid}>
+      <Button on:click={donate} disabled={!isValid} --padding="10px 41px">
         <span>Fulfill</span>
       </Button>
     </main>
@@ -88,15 +86,6 @@
 </Page>
 
 <style>
-header {
-  margin-bottom: 56px;
-  font-size: 24px;
-}
-header > h1 {
-  margin-bottom: 16px;
-  font-size: 44px;
-  font-weight: 900;
-}
 main {
   display: flex;
   flex-direction: column;

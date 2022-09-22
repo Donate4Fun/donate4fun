@@ -1,16 +1,17 @@
 <script>
   import {link} from "svelte-navigator";
+  import {webOrigin} from "../lib/utils.js";
 
   export let user;
 </script>
 
-<a href="/donator/{user.id}" use:link {...$$restProps}><img src="{user.avatar_url}" alt="user logo"></a>
+<a href="{$webOrigin}/donator/{user.id}" use:link {...$$restProps}><img src="{user.avatar_url}" alt="user logo"></a>
 
 <style>
 a {
   display: flex;
 }
 img {
-  width: 3em;
+  width: var(--width, 3em);
 }
 </style>

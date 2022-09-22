@@ -1,8 +1,9 @@
-import { writable, derived } from "svelte/store";
+import { writable, derived, get } from "svelte/store";
+import { globalHistory } from "svelte-navigator";
 
 const notifications = writable([]);
 
-function notify(title, message, type = "default", timeout = 300000) {
+function notify(title, message, type = "error", timeout = 3000, hasClose = false) {
   notifications.update(state => {
     const id_ = id();
 
@@ -12,14 +13,23 @@ function notify(title, message, type = "default", timeout = 300000) {
       });
     }
 
-    setTimeout(close, timeout);
+    function shown() {
+      notification.isShown = true;
+    }
 
-    return [...state, { id: id_, type, title, message, close }];
+    return [...state, { id: id_, type, title, message, close, hasClose, timeout, isShown: false }];
   });
 }
 
 function id() {
   return '_' + Math.random().toString(36).substr(2, 9);
 }
+
+globalHistory.listen(() => {
+  for (const notification of get(notifications)) {
+    if (notification.isShown)
+      notification.close()
+  }
+});
 
 export { notifications, notify };

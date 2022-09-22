@@ -10,7 +10,7 @@ import {
 async function handleFetch(method, path, data) {
   let response;
   const apiHost = await getConfig('apiHost');
-  const url = `https://${apiHost}/api/v1/${path}`;
+  const url = `${apiHost}/api/v1/${path}`;
   if (method === "get") {
     response = await fetch(url, {
       headers: {
@@ -29,36 +29,15 @@ async function handleFetch(method, path, data) {
   } else {
     throw new Error(`Unexpected method ${method}`);
   }
-  if (response.status !== 200)
-    throw response;
-  else
+  if (response.status !== 200) {
+    const body = await response.text();
+    console.error("Server error", body);
+    throw new Error(`Server returned error: ${response.statusText} [${response.status}] ${body}`);
+  } else
     return await response.json();
 }
 
-const options = {
-  checkInterval: {
-    type: "number",
-    default: 111,
-    description: "Check interval when waiting for YouTube loading",
-    dev: true,
-    suffix: "ms",
-  },
-  apiHost: {
-    type: "text",
-    default: "donate4.fun",
-    description: "API host",
-    dev: true,
-  },
-  defaultComment_en: {
-    type: "text",
-    default: '<WRITE YOUR COMMENT> I’ve donated you some 🪙₿, you can take it on "donate 4 fun" 🤑',
-    description: "Default comment",
-  },
-  defaultComment_ru: {
-    type: "text",
-    default: '<НАПИШИ СВОЙ КОММЕНТ> Я задонатил тебе 🪙₿ на "donate 4 fun", загугли чтобы забрать 🤑',
-    description: "Default comment (RU)",
-  },
+const Options = {
   amount: {
     type: "number",
     default: 100,
@@ -70,29 +49,67 @@ const options = {
     default: true,
     description: "Enable 'Post a comment' popup",
   },
+  defaultComment: {
+    type: "text",
+    default: '<WRITE YOUR COMMENT> I’ve donated you some 🪙₿, you can take it on "donate 4 fun" 🤑',
+    description: "Default comment",
+  },
+  otherCommentLanguages: {
+    type: "section",
+    name: "Default comments by language",
+    extendable: true,
+    prefix: "defaultComment_",
+    options: {
+      defaultComment_ru: {
+        type: "text",
+        default: '<НАПИШИ СВОЙ КОММЕНТ> Я задонатил тебе 🪙₿ на "donate 4 fun", загугли чтобы забрать 🤑',
+        description: "RU",
+      },
+    },
+  },
   enableBoltButton: {
     type: "checkbox",
     default: true,
     description: "Enable bolt button on YouTube",
   },
-  enableDevCommands: {
-    type: "checkbox",
-    default: false,
-    description: "Enable development menu items in popup",
-    dev: true,
+  dev: {
+    type: "section",
+    name: "Developer options",
+    options: {
+      enableDevCommands: {
+        type: "checkbox",
+        default: false,
+        description: "Enable development menu items in popup",
+      },
+      checkInterval: {
+        type: "number",
+        default: 111,
+        description: "Check interval when waiting for YouTube loading",
+        suffix: "ms",
+      },
+      apiHost: {
+        type: "text",
+        default: "https://donate4.fun",
+        description: "API host",
+      },
+    },
   },
 };
 
+function assignOptionValues(options, values) {
+  for (const [key, option] of Object.entries(options))
+    if (option.type === 'section')
+      assignOptionValues(option.options, values)
+    else
+      option.value = Object.hasOwn(values, key) ? values[key] : option.default;
+}
+
 async function loadOptions() {
-  const result = [];
-  const values = await browser.storage.sync.get(getDefaults());
-  for (const [key, value] of Object.entries(options)) {
-    const item = {name: key, value: values[key]};
-    Object.assign(item, value);
-    item.dev = !!item.dev;
-    result.push(item);
-  }
-  return result;
+  const values = await browser.storage.sync.get();
+  console.log("config values", values);
+  const options = JSON.parse(JSON.stringify(Options));
+  assignOptionValues(options, values);
+  return options;
 }
 
 async function getConfig(name) {
@@ -121,8 +138,12 @@ async function setConfig(key, value) {
 
 function getDefaults() {
   const defaults = {};
-  for (const key in options)
-    defaults[key] = options[key].default;
+  for (const [key, option] of Object.entries(Options))
+    if (option.type === 'section')
+      for (const [sectionKey, sectionOption] of Object.entries(option.options))
+        defaults[sectionKey] = sectionOption.default;
+    else
+      defaults[key] = option.default;
   return defaults;
 }
 

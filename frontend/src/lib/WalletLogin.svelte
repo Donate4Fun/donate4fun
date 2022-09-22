@@ -7,11 +7,11 @@
 </script>
 
 {#if $me.donator.lnauth_pubkey}
-<Button class="connect connected" link={resolve('/login')}>
-  <span class="ellipsis">@{$me.donator.lnauth_pubkey}</span>
-</Button>
-{:else}
-<Button class="connect" link={resolve('/login')} target={target}>
-  Connect Wallet
-</Button>
+  <Button {...$$restProps} link={resolve('/login')} --padding="11px 45px" --background-image="linear-gradient(90deg, #66E4FF 0%, #F68EFF 100%)">
+    <span class="ellipsis">@{$me.donator.lnauth_pubkey}</span>
+  </Button>
+  {:else}
+  <Button {...$$restProps} link={resolve('/login')} target={target}>
+    Connect Wallet
+  </Button>
 {/if}

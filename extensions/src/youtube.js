@@ -110,12 +110,17 @@ async function waitLoaded(checkInterval) {
   }
 }
 
+function isCommentEnabled() {
+  const comments = document.getElementById("comments");
+  return comments.offsetParent !== null;
+}
+
 async function postComment(language, amount) {
   let comment;
   try {
     comment = await worker.getConfig(`defaultComment_${language}`);
   } catch (exc) {
-    comment = await worker.getConfig("defaultComment_en");
+    comment = await worker.getConfig("defaultComment");
   }
 
   comment.replace('%amount%', amount);
@@ -171,4 +176,5 @@ export {
   waitLoaded,
   getButtons,
   postComment,
+  isCommentEnabled,
 }

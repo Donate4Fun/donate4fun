@@ -170,4 +170,4 @@ class Notification(BaseModel):
 
 class Credentials(BaseModel):
     donator_id: UUID
-    lnauth_pubkey: str
+    lnauth_pubkey: str | None

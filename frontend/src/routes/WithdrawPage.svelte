@@ -2,7 +2,6 @@
   import {createEventDispatcher, onDestroy} from "svelte";
   import {link, useResolve, navigate} from "svelte-navigator";
   import Loading from "../lib/Loading.svelte";
-  import Donation from "../lib/Donation.svelte";
   import Donator from "../lib/Donator.svelte";
   import Amount from "../lib/Amount.svelte";
   import Error from "../lib/Error.svelte";

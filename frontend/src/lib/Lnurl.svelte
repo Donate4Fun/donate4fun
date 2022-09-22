@@ -20,6 +20,7 @@ div {
   border-style: solid;
   box-sizing: border-box;
   padding-left: 24px;
+  width: 100%;
 }
 div span {
   overflow: hidden;

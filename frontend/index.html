@@ -1,1 +1,60 @@
-index-green.html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/D-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/D-16.png">
+    <link rel="manifest" href="/static/site.webmanifest">
+    <meta name="msapplication-config" content="/browserconfig.xml">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="theme-color" content="#ffffff">
+
+    <meta name="description" content="Donate any YouTuber with Bitcoin Lightning">
+
+    <!-- Facebook Meta Tags -->
+    <meta property="og:image" content="https://%HOST%/static/sharing.png">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://%HOST%">
+    <meta property="og:title" content="Donate4.Fun">
+    <meta property="og:description" content="Donate any YouTuber with Bitcoin Lightning">
+    <meta property="og:image:width" content="1600">
+    <meta property="og:image:height" content="836">
+
+    <!-- Twitter Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta property="twitter:domain" content="%HOST%">
+    <meta property="twitter:url" content="https://%HOST%">
+    <meta name="twitter:title" content="Donate4.Fun">
+    <meta name="twitter:description" content="Donate any YouTuber with Bitcoin Lightning">
+    <meta name="twitter:image" content="https://%HOST%/static/sharing.png">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "url": "https://donate4.fun",
+      "logo": "https://donate4.fun/static/D.svg"
+    }
+    </script>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-K9B229WW3F"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-K9B229WW3F');
+    </script>
+    <!-- End gtag.js code -->
+
+    <!-- Plausible -->
+    <script defer data-api="/proxy/event" data-domain="donate4.fun" src="/js/script.js"></script>
+
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

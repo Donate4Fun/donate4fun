@@ -1,15 +1,6 @@
 /*.crx
 /*.pem
 /*.zip
-/firefox/src
-/chrome/src
-/firefox/static
-/chrome/static
+dist/
 /src/node_modules
-# Auto-generated files
-/src/*.map
-/src/popup.css
-/src/popup.js
-/src/options.css
-/src/options.js
-/src/dist/
+/src/static

@@ -17,8 +17,8 @@
 </script>
 
 <svelte:head>
-  <link href="https://fonts.googleapis.com/css?family=Inter:400,500,600,700,900" rel="stylesheet">
   <link href="/static/global.css" rel="stylesheet">
+  <link href="/static/inter.css" rel="stylesheet">
   <title>{$title}</title>
 </svelte:head>
 
@@ -60,5 +60,7 @@
 }
 :global(*) {
   box-sizing: border-box;
+  margin: 0;
+  font-family: "Inter var experimental", "system-ui";
 }
 </style>

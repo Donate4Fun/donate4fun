@@ -91,12 +91,13 @@ async def donate(
             )
             await db_session.save_youtube_video(donation.youtube_video)
     donator = await load_donator(db_session, donator.id)
-    if donator.balance < request.amount:
+    # If donator has enough money (and not fulfilling his own balance) - try to pay donation instantly
+    use_balance = request.receiver_id != donator.id and donator.balance >= request.amount
+    if not use_balance:
         invoice: Invoice = await lnd.create_invoice(memo=make_memo(donation), value=request.amount)
         donation.r_hash = invoice.r_hash  # This hash is needed to find and complete donation after payment succeeds
     await db_session.create_donation(donation)
-    if donator.balance >= request.amount:
-        # If donator has enough money - try to pay donation instantly
+    if use_balance:
         await db_session.donation_paid(donation_id=donation.id, amount=request.amount, paid_at=datetime.utcnow())
         donation = await db_session.query_donation(id=donation.id)
         return DonateResponse(donation=donation, payment_request=None)
@@ -417,6 +418,11 @@ async def lnauth_callback(
         return dict(status="ERROR", reason=str(exc))
     else:
         return dict(status="OK")
+
+
+@router.post('/logout')
+async def logout(db=Depends(get_db_session), donator=Depends(get_donator)):
+    await db.login_donator(donator.id, key=None)
 
 
 @router.websocket('/subscribe/{topic}')

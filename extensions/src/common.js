@@ -159,8 +159,8 @@ async function registerHandlers(handlers) {
 
 async function createWebsocket(topic, on_message, on_close) {
   const apiHost = await worker.getConfig('apiHost');
-  const ws_uri = `wss://${apiHost}/api/v1/subscribe/${topic}`;
-  const socket = new WebSocket(ws_uri);
+  const wsHost = apiHost.replace('http', 'ws');
+  const socket = new WebSocket(`${wsHost}/api/v1/subscribe/${topic}`);
   socket.onmessage = (event) => {
     cLog(`Message from ${topic}`, event);
     try {

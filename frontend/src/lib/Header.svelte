@@ -19,10 +19,10 @@
   <Social class="onlylarge" />
   <div class="right">
     {#await me.init()}
-    <Loading/>
+      <Loading/>
     {:then}
-    <WalletLogin />
-    <Userpic user={$me.donator} class="userpic" />
+      <WalletLogin class="connect" />
+      <Userpic user={$me.donator} class="userpic" />
     {/await}
   </div>
 </header>
@@ -41,10 +41,6 @@ header {
   z-index: 100;
   background: rgba(247, 249, 255, 0.8);
   backdrop-filter: blur(12px);
-}
-.right :global(.connected) {
-  padding: 0 45px;
-  background: linear-gradient(90deg, #66E4FF 0%, #F68EFF 100%);
 }
 @media (max-width: 1280px) {
   :global(.onlylarge) {

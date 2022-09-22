@@ -3,20 +3,18 @@
   import {link} from "svelte-navigator";
 
   export let user;
+  export let ellipsis = false;
 </script>
 
 <a href="/donator/{user.id}" use:link {...$$restProps}>
-  <Userpic user={user}/>
-  <span>{user.name}</span>
+  <Userpic user={user} --width=2em />
+  <span class:ellipsis>{user.name}</span>
 </a>
 
 <style>
 a {
   display: flex;
   align-items: center;
-  gap: 1em;
-}
-a :global(img) {
-  width: 2em;
+  gap: var(--gap, 1em);
 }
 </style>

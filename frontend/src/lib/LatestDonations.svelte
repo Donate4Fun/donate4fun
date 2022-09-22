@@ -1,7 +1,6 @@
 <script>
   import { link } from "svelte-navigator";
   import Loading from "../lib/Loading.svelte";
-  import Donation from "../lib/Donation.svelte";
   import Section from "../lib/Section.svelte";
   import Amount from "../lib/Amount.svelte";
   import YoutubeChannel from "../lib/YoutubeChannel.svelte";
@@ -30,9 +29,9 @@
         <div class=blogger>
           <ChannelLogo url={donation.youtube_channel.thumbnail_url} size=28px />
           {#if donation.youtube_video}
-          <div class=vcenter title="{donation.youtube_video.title}"><a href="/donate/{donation.youtube_channel.id}" class="ellipsis" use:link>{donation.youtube_channel.title}</a></div>
+          <div class=vcenter title="{donation.youtube_video.title}"><a href="/donate/{donation.youtube_channel.id}" class="ellipsis" use:link>{donation.youtube_video.title}</a></div>
           {:else}
-          <div class=vcenter><a href="/donate/{donation.youtube_channel.id}" class="ellipsis" use:link>{donation.youtube_channel.title}</a></div>
+          <div class=vcenter title="{donation.youtube_channel.title}"><a href="/donate/{donation.youtube_channel.id}" class="ellipsis" use:link>{donation.youtube_channel.title}</a></div>
           {/if}
         </div>
         <div class=vcenter><Datetime dt={donation.paid_at} /></div>
@@ -94,11 +93,6 @@ h1 {
 .head {
   color: rgba(0, 0, 0, 0.6);
   display: contents;
-}
-:global(.ellipsis) {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .fadeout {
   position : absolute;

@@ -1,7 +1,7 @@
 <script>
   import {onMount, onDestroy, tick} from 'svelte';
   import {Confetti} from "svelte-confetti";
-  import {worker, subscribe, pageScript, cLog, sleep, getStatic, donate} from "./common.js";
+  import {worker, subscribe, pageScript, cLog, sleep, donate} from "./common.js";
   import {getVideoId, postComment} from "./youtube.js";
   import CommentTip from "./CommentTip.svelte";
 
@@ -89,7 +89,6 @@
 </script>
 
 <div class="root" id="donate4fun-button">
-  <link rel="stylesheet" href={getStatic("global.css")}>
   <div class="flex-column align-center">
     {#if confetti}
       <Confetti />
@@ -108,7 +107,9 @@
       Donate sats
     </div>
   </div>
-  <CommentTip bind:element={commentTipElement} amount={donation.amount} on:comment={onCommentClick} --dff-display={showCommentTip ? "block" : "none"}/>
+  {#if showCommentTip}
+    <CommentTip bind:element={commentTipElement} amount={donation.amount} on:comment={onCommentClick} />
+  {/if}
 </div>
 
 <style>

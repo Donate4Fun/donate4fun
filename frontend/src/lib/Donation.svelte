@@ -13,24 +13,17 @@
 
   const dispatch = createEventDispatcher();
 
-  export let amount;
-  export let donator_id;
-  export let id;
-  export let trigger;
-  export let paid_at;
-  export let created_at;
-  export let youtube_channel;
-  export let youtube_video;
+  export let donation;
 
-  let message = `Hi! I like your video! I’ve donated you ${amount} sats. You can take it on "donate 4 fun"`;
+  let message = `Hi! I like your video! I’ve donated you ${donation.amount} sats. You can take it on "donate 4 fun"`;
 
   function copyAndShare() {
     copy(message);
     let url;
-    if (youtube_video !== null) {
-      url = youtube_video_url(youtube_video.video_id);
+    if (donation.youtube_video !== null) {
+      url = youtube_video_url(donation.youtube_video.video_id);
     } else {
-      url = youtube_channel_url(youtube_channel.channel_id);
+      url = youtube_channel_url(donation.youtube_channel.channel_id);
     }
     window.open(url, '_blank').focus();
   }
@@ -40,13 +33,13 @@
 {#await me.init()}
   <Loading/>
 {:then}
-  <ChannelLogo url={youtube_channel.thumbnail_url} size=72px />
-  <div class="header">Great! You've sent <Amount amount={amount}/> to <YoutubeChannel channel={youtube_channel}/></div>
-  {#if $me.donator.id === donator_id}
-    <Infobox>Copy and share the message with the link or just tell {youtube_channel.title} to receive the donation here at «Donate4Fun»</Infobox>
+  <ChannelLogo url={donation.youtube_channel.thumbnail_url} size=72px />
+  <div class="header">Great! You've sent <Amount amount={donation.amount}/> to <YoutubeChannel channel={donation.youtube_channel}/></div>
+  {#if $me.donator.id === donation.donator_id}
+    <Infobox>Copy and share the message with the link or just tell {donation.youtube_channel.title} to receive the donation here at «Donate4Fun»</Infobox>
     <call-to-action>
-      {#if youtube_video}
-      Now leave a comment on <a href="{youtube_video_url(youtube_video.video_id)}" target=_blank>his video</a> to make him know of donation:
+      {#if donation.youtube_video}
+      Now leave a comment on <a href="{donation.youtube_video_url(donation.youtube_video.video_id)}" target=_blank>his video</a> to make him know of donation:
       {:else}
       Now leave a comment on his video to make him know of donation:
       {/if}
@@ -56,7 +49,7 @@
       <li>Scroll to comments section and focus "Add a comment..." field</li>
       <li>Paste a comment from clipboard and post it</li>
     </ol>
-    <Editable class=message message={message} />
+    <Editable class=message message={donation.message} />
     <Button on:click={copyAndShare} class="copy-button">Copy and Share</Button>
     <Button on:click={() => dispatch("close")} class="grey">Back</Button>
   {/if}

@@ -1,5 +1,5 @@
 <script>
-  import Donate from '../lib/Donate.svelte';
+  import Donate from '$lib/Donate.svelte';
   import Claim from '../lib/Claim.svelte';
   import LatestDonations from "../lib/LatestDonations.svelte";
   import Header from "../lib/Header.svelte";

@@ -1,7 +1,6 @@
 <script>
   import {link, useResolve} from "svelte-navigator";
   import Loading from "../lib/Loading.svelte";
-  import Donation from "../lib/Donation.svelte";
   import Donator from "../lib/Donator.svelte";
   import Datetime from "../lib/Datetime.svelte";
   import Amount from "../lib/Amount.svelte";

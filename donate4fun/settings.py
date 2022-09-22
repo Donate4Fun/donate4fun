@@ -116,6 +116,7 @@ class Settings(BaseSettings):
     withdraw_timeout: int
     ownership_message: str
     cookie_domain: str | None = None
+    cookie_https_only: bool = True
 
     class Config:
         env_nested_delimiter = '__'

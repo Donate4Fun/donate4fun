@@ -1,4 +1,5 @@
 <script>
+  import {createEventDispatcher} from "svelte";
   import {worker, contentScript, browser, subscribe, isTest} from "./common.js";
   import Button from "../../frontend/src/lib/Button.svelte";
   import Input from "../../frontend/src/lib/Input.svelte";
@@ -7,12 +8,12 @@
   let videoId;
   let channelTitle;
   let channelLogo;
-  let amount = 100;
-  export let showWeblnMessage = false;
+  export let amount = 100;
 
   const amounts = [100, 1000, 10000];
   const amountMin = 10;
   const amountMax = 1000000;
+  const dispatch = createEventDispatcher();
 
   async function load() {
     if (isTest()) {
@@ -32,9 +33,7 @@
     } catch (err) {
       console.error("Failed to donate", err);
       if (err.message === "No webln found")
-      showWeblnMessage = true;
-      // TODO: open next page
-      return;
+        dispatch("weblnerror", err);
     }
   }
 
