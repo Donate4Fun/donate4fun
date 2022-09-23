@@ -16,7 +16,7 @@
     "@sveltejs/vite-plugin-svelte": "^1.0.5",
     "@vitejs/plugin-react": "~1.2.0",
     "@web/rollup-plugin-html": "^1.11.0",
-    "rollup": "^2.3.4",
+    "rollup": "^2.79.0",
     "rollup-plugin-copy": "^3.4.0",
     "rollup-plugin-css-only": "^3.1.0",
     "rollup-plugin-livereload": "^2.0.0",

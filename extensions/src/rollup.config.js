@@ -3,12 +3,11 @@ import commonjs from "@rollup/plugin-commonjs";
 import resolve from "@rollup/plugin-node-resolve";
 import alias from '@rollup/plugin-alias';
 import html from '@web/rollup-plugin-html';
-import livereload from "rollup-plugin-livereload";
 import css from "rollup-plugin-css-only";
 import copy from 'rollup-plugin-copy';
 import path from "path";
 
-const production = !process.env.ROLLUP_WATCH;
+const dev = process.env.ROLLUP_WATCH;
 
 function serve() {
   let server;
@@ -54,8 +53,7 @@ function makeConfig(name) {
     plugins: [
       svelte({
         compilerOptions: {
-          // enable run-time checks when not in production
-          dev: !production,
+          dev: dev,
         },
       }),
       // we'll extract any component CSS out into
@@ -82,14 +80,6 @@ function makeConfig(name) {
           { src: `${name}.html`, dest: ["../chrome/dist", "../firefox/dist"] },
         ],
       }),
-
-      // In dev mode, call `npm run start` once
-      // the bundle has been generated
-      //!production && serve(),
-
-      // Watch the `public` directory and refresh the
-      // browser on changes when not in production
-      //!production && livereload("public"),
     ],
     watch: {
       clearScreen: false,
@@ -119,13 +109,32 @@ function makeHtmlConfig() {
   }
 }
 
-
 function staticFile(filename) {
   return {
     src: `static/${filename}`,
     dest: ["../chrome/dist/static", "../firefox/dist/static"],
   }
 }
+
+function manifestFile(src, dest, transform) {
+  return {
+    src: src,
+    dest: path.dirname(dest),
+    rename: "manifest.json",
+    transform: (contents, filename) => JSON.stringify(transform(JSON.parse(contents))),
+  }
+}
+
+function patchChromeManifest(json) {
+  json.host_permissions = [...json.host_permissions, 'http://localhost/*'];
+  return json;
+}
+
+function patchFirefoxManifest(json) {
+  json.permissions = [...json.permissions, 'http://localhost/*'];
+  return json;
+}
+
 
 export default [
   makeConfig('options'),
@@ -151,6 +160,8 @@ export default [
           staticFile("global.css"),
           staticFile("inter.css"),
           staticFile("D-*.png"),
+          manifestFile("manifest-firefox.json", "../firefox/dist/manifest.json", patchFirefoxManifest),
+          manifestFile("manifest-chrome.json", "../chrome/dist/manifest.json", patchChromeManifest),
         ],
         verbose: true,
       }),

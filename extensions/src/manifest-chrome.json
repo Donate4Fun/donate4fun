@@ -6,8 +6,8 @@
   "author": "Nikolay Bryskin",
   "version":  "0.5",
   "icons":  {
-    "48":  "dist/static/D-48.png",
-    "128":  "dist/static/D-128.png"
+    "48":  "static/D-48.png",
+    "128":  "static/D-128.png"
   },
   "permissions": [
     "storage",
@@ -18,17 +18,17 @@
     "https://*.donate4.fun/*"
   ],
   "background": {
-    "service_worker": "dist/background.js",
+    "service_worker": "background.js",
     "type": "module"
   },
   "minimum_chrome_version": "99",
   "content_scripts":  [{
     "js":  [
-      "dist/contentscript.js"
+      "contentscript.js"
     ],
     "css": [
-      "dist/contentscript.css",
-      "dist/static/global.css"
+      "contentscript.css",
+      "static/global.css"
     ],
     "matches": [
       "*://youtube.com/*",
@@ -39,24 +39,24 @@
   }],
   "action":  {
     "default_icon":  {
-      "16": "dist/static/D-16.png",
-      "24": "dist/static/D-24.png",
-      "32": "dist/static/D-32.png"
+      "16": "static/D-16.png",
+      "24": "static/D-24.png",
+      "32": "static/D-32.png"
     },
     "default_title":  "Donate4.Fun",
-    "default_popup": "dist/popup.html"
+    "default_popup": "popup.html"
   },
   "options_ui": {
-    "page": "dist/options.html",
+    "page": "options.html",
     "open_in_tab": false
   },
   "web_accessible_resources": [{
     "resources": [
-      "dist/pagescript.js",
-      "dist/contentscript.js",
-      "dst/static/success.png",
-      "dist/static/global.css",
-      "dist/static/lottie-arrow.json"
+      "pagescript.js",
+      "contentscript.js",
+      "static/success.png",
+      "static/global.css",
+      "static/lottie-arrow.json"
     ],
     "matches": [ "https://*.youtube.com/*" ]
   }]

@@ -22,7 +22,7 @@
       showYoutube = true;
     } else {
       const tab = await getCurrentTab();
-      showYoutube = tab.url?.match('^https\:\/\/(www\.)?youtube\.com') && await contentScript.isVideoLoaded();
+      showYoutube = tab?.url?.match('^https\:\/\/(www\.)?youtube\.com') && await contentScript.isVideoLoaded();
     }
     await me.init();
   }

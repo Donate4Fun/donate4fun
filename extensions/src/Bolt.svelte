@@ -36,6 +36,7 @@
     } catch (err) {
       animate = false;
       console.error("Payment failed", err);
+      openPopup("nowebln");
     }
   }
 

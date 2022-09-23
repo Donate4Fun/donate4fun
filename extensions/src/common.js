@@ -30,8 +30,6 @@ async function getCurrentTab() {
   // `tab` will either be a `tabs.Tab` instance or `undefined`.
   // NOTE: chrome.tabs.query doesn't work here - it returns undefined
   const [tab] = await browser.tabs.query(queryOptions);
-  if (tab === undefined)
-    throw new Error("could not find current tab");
   return tab;
 }
 
@@ -46,7 +44,7 @@ async function injectContentScript() {
       // Chrome Mv3
       chrome.scripting.executeScript({
         target: {tabId: tab.id},
-        files: ["src/contentscript_loader.js"],
+        files: ["contentscript.js"],
       }, (injectionResults) => {
         console.log("injection result", injectionResults, chrome.runtime.lastError);
         if (chrome.runtime.lastError)
@@ -60,7 +58,7 @@ async function injectContentScript() {
     });
   } else {
     await browser.tabs.executeScript({
-      file: ['/common.js'],
+      file: ['common.js'],
     });
   }
 }
@@ -284,6 +282,13 @@ async function donate(amount, target) {
       }
     });
   }
+}
+
+async function openPopup() {
+  await browser.windows.open({
+    url: "popup.html",
+    type: "popup",
+  });
 }
 
 export {
