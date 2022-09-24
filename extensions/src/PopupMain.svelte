@@ -1,8 +1,26 @@
 <script>
+  import { useNavigate } from "svelte-navigator";
   import Button from "$lib/Button.svelte";
   import NumberedItem from "$lib/NumberedItem.svelte";
+  import {getCurrentTab, contentScript, isTest} from "./common.js";
+
+	const navigate = useNavigate();
+
+  async function load() {
+    console.log("load main", window.location.hash);
+    let showYoutube;
+    if (isTest()) {
+      showYoutube = true;
+    } else {
+      const tab = await getCurrentTab();
+      showYoutube = tab?.url?.match('^https\:\/\/(www\.)?youtube\.com') && await contentScript.isVideoLoaded();
+    }
+    if (showYoutube)
+      navigate("youtube");
+  }
 </script>
 
+{#await load() then}
 <section class="flex-column align-center">
   <NumberedItem number=1>
     <span>
@@ -17,21 +35,8 @@
       Click a ⚡ icon under video or use this popup
     </span>
   </NumberedItem>
-  <!--
-  <h1>Supported services</h1>
-  <ul class="flex-column width-full gap-8">
-    <li class="block font-20">
-      <a href="https://youtube.com" target=_blank class="flex-row align-center gap-8">
-        <img src="youtube.svg" width=40 alt="youtube logo">
-        YouTube
-      </a>
-    </li>
-    <li class="italic block font-15">
-      More coming soon
-    </li>
-  </ul>
-  -->
 </section>
+{/await}
 
 <style>
 .services {

@@ -1,4 +1,6 @@
 <script>
+  import { onDestroy } from "svelte";
+  import { Router, Link, Route, navigate, createHistory } from "svelte-navigator";
   import PopupDefault from "./PopupMain.svelte";
   import PopupYoutube from "./PopupYoutube.svelte";
   import PopupHeader from "./PopupHeader.svelte";
@@ -7,6 +9,10 @@
   import {webOrigin} from "../../frontend/src/lib/utils.js";
   import {me} from "../../frontend/src/lib/session.js";
   import {worker, getCurrentTab, browser, contentScript, isTest} from "./common.js";
+  import createHashSource from "./hashHistory.js";
+
+  const hashSource = createHashSource();
+  const hashHistory = createHistory(hashSource);
 
   let showYoutube = false;
   let showWeblnHelp = false;
@@ -18,29 +24,34 @@
     apiOrigin.set(host);
     webOrigin.set(host);
 
-    if (isTest()) {
-      showYoutube = true;
-    } else {
-      const tab = await getCurrentTab();
-      showYoutube = tab?.url?.match('^https\:\/\/(www\.)?youtube\.com') && await contentScript.isVideoLoaded();
-    }
     await me.init();
   }
+
+  function onNavigate(event) {
+    console.log("navigate", event.location.pathname, event.action);
+  }
+  const unlisten = hashHistory.listen(onNavigate);
+	onDestroy(unlisten);
 </script>
 
 <div class="flex-column height-full justify-space-between gradient">
   <main class="flex-column gap-28 height-full position-relative">
-    {#await load() then}
-      {#if showWeblnHelp}
-        <PopupNoWebln on:close={() => {showWeblnHelp = false;}} neededAmount={amount - balance}/>
-      {/if}
+{#await load() then}
+  <Router history={hashHistory}>
+    <Route path="">
       <PopupHeader bind:balance={balance} />
-      {#if showYoutube}
-        <PopupYoutube bind:amount={amount} on:weblnerror={() => {showWeblnHelp = true}} />
-      {:else}
-        <PopupDefault />
-      {/if}
-    {/await}
+      <PopupDefault />
+    </Route>
+    <Route path="youtube">
+      <PopupHeader bind:balance={balance} />
+      <PopupYoutube bind:amount={amount} />
+    </Route>
+    <Route path="nowebln/:amount" let:params>
+      <PopupHeader bind:balance={balance} />
+      <PopupNoWebln amount={params.amount} historySource={hashSource}/>
+    </Route>
+  </Router>
+{/await}
   </main>
 </div>
 

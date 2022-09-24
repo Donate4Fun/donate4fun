@@ -1,6 +1,7 @@
 /*.crx
 /*.pem
 /*.zip
-dist/
+/chrome/
+/firefox/
 /src/node_modules
 /src/static

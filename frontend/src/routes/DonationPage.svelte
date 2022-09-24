@@ -62,7 +62,7 @@
       {#if !donation.receiver}
         <Donation donation={donation} on:close={() => navigate(-1)} />
       {:else}
-        <div>
+        <div class="flex-column">
           {#if donation.receiver.id === $me.donator.id}
             You successfuly fulfilled your balance.
           {:else}

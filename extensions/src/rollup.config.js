@@ -2,9 +2,10 @@ import svelte from "rollup-plugin-svelte";
 import commonjs from "@rollup/plugin-commonjs";
 import resolve from "@rollup/plugin-node-resolve";
 import alias from '@rollup/plugin-alias';
+import replace from "@rollup/plugin-replace";
 import html from '@web/rollup-plugin-html';
-import css from "rollup-plugin-css-only";
-import copy from 'rollup-plugin-copy';
+import copy from '@guanghechen/rollup-plugin-copy';
+import styles from "rollup-plugin-styles";
 import path from "path";
 
 const dev = process.env.ROLLUP_WATCH;
@@ -39,7 +40,8 @@ function makeOutput(browser) {
     sourcemap: true,
     format: "iife",
     name: "app",
-    dir: `../${browser}/dist`,
+    dir: `../${browser}`,
+    assetFileNames: "[name][extname]",
   }
 }
 
@@ -58,7 +60,8 @@ function makeConfig(name) {
       }),
       // we'll extract any component CSS out into
       // a separate file - better for performance
-      css({ output: `${name}.css` }),
+      //css({ output: `${name}.css` }),
+      styles({mode: ["extract", `${name}.css`]}),
 
       // If you have external dependencies installed from
       // npm, you'll most likely need these plugins. In
@@ -75,9 +78,13 @@ function makeConfig(name) {
           '$lib': path.resolve(__dirname, '../../frontend/src/lib'),
         },
       }),
+      replace({
+        "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV),
+        preventAssignment: false,
+      }),
       copy({
         targets: [
-          { src: `${name}.html`, dest: ["../chrome/dist", "../firefox/dist"] },
+          { src: `${name}.html`, dest: ["../chrome", "../firefox"] },
         ],
       }),
     ],
@@ -87,32 +94,10 @@ function makeConfig(name) {
   }
 }
 
-function makeHtmlConfig() {
-  return {
-    input: 'popup.html',
-    output: { dir: '../chrome/dist' },
-    plugins: [
-      svelte(),
-      css({ output: `popup.css` }),
-      resolve({
-        browser: true,
-        dedupe: ["svelte"],
-      }),
-      commonjs(),
-      alias({
-        entries: {
-          '$lib': path.resolve(__dirname, '../../frontend/src/lib'),
-        },
-      }),
-      html(),
-    ],
-  }
-}
-
 function staticFile(filename) {
   return {
     src: `static/${filename}`,
-    dest: ["../chrome/dist/static", "../firefox/dist/static"],
+    dest: ["../chrome/static", "../firefox/static"],
   }
 }
 
@@ -160,8 +145,10 @@ export default [
           staticFile("global.css"),
           staticFile("inter.css"),
           staticFile("D-*.png"),
-          manifestFile("manifest-firefox.json", "../firefox/dist/manifest.json", patchFirefoxManifest),
-          manifestFile("manifest-chrome.json", "../chrome/dist/manifest.json", patchChromeManifest),
+          staticFile("lottie-arrow.json"),
+          { src: "background.html", dest: "../firefox" },
+          manifestFile("manifest-firefox.json", "../firefox/manifest.json", patchFirefoxManifest),
+          manifestFile("manifest-chrome.json", "../chrome/manifest.json", patchChromeManifest),
         ],
         verbose: true,
       }),

@@ -76,7 +76,7 @@ async function patchButtons() {
 
 function injectPageScript() {
   // page script is needed only for webln to work
-  const scriptUrl = chrome.runtime.getURL('dist/pagescript.js');
+  const scriptUrl = chrome.runtime.getURL('pagescript.js');
   cLog("scriptUrl", scriptUrl);
   const scriptElement = document.createElement('script');
   scriptElement.setAttribute("src", scriptUrl);

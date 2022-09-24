@@ -35,6 +35,8 @@ async function getCurrentTab() {
 
 async function injectContentScript() {
   const tab = await getCurrentTab();
+  if (!tab)
+    return;
   console.log("injecting to", tab);
   if (chrome.scripting) {
     return await new Promise((resolve, reject) => {
@@ -220,13 +222,14 @@ function isTest() {
   return urlParams.has('test');
 }
 
-async function createPopup() {
+async function createPopup(path) {
+  const baseUrl = browser.runtime.getURL('popup.html');
   const window = await new Promise((resolve, reject) => {
     browser.windows.create({
       focused: true,
-      url: browser.runtime.getURL('src/window.html'),
+      url: `${baseUrl}#${path}`,
       type: "popup",
-      width: 400,
+      width: 446,  // must match popup.html size
       height: 600,
     }, (window) => {
       resolve(window);
@@ -282,13 +285,6 @@ async function donate(amount, target) {
       }
     });
   }
-}
-
-async function openPopup() {
-  await browser.windows.open({
-    url: "popup.html",
-    type: "popup",
-  });
 }
 
 export {

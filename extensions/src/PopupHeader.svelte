@@ -1,7 +1,8 @@
 <script>
   import {get} from 'svelte/store';
+  import { useNavigate } from "svelte-navigator";
   import Fa from 'svelte-fa/src/fa.svelte';
-  import {faGear, faGlobe, faSyringe, faComment, faWindowRestore} from '@fortawesome/free-solid-svg-icons';
+  import {faGear, faGlobe, faSyringe, faComment, faWindowRestore, faHashtag} from '@fortawesome/free-solid-svg-icons';
   import {me} from "$lib/session.js";
   import {apiOrigin} from "$lib/api.js";
   import Userpic from "$lib/Userpic.svelte";
@@ -18,6 +19,7 @@
   let popupVisible = false;
   let showDev = false;
   const iconColor = '#787981';
+  const navigate = useNavigate();
 
   async function load() {
     showDev = await worker.getConfig('enableDevCommands');
@@ -62,6 +64,10 @@
           <div on:click={createPopup}>
             <Fa icon={faWindowRestore} size=2x color={iconColor} />
             <span>Create popup window</span>
+          </div>
+          <div on:click={() => navigate('/nowebln')}>
+            <Fa icon={faHashtag} size=2x color={iconColor} />
+            <span>Open NoWebLN page</span>
           </div>
         {/if}
       </div>

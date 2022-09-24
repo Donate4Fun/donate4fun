@@ -1,16 +1,28 @@
 <script>
-  import {createEventDispatcher} from "svelte";
+  import { get } from "svelte/store";
   import Button from "../../frontend/src/lib/Button.svelte";
-  import {webOrigin} from "../../frontend/src/lib/utils.js";
-  import {me} from "../../frontend/src/lib/session.js";
+  import { webOrigin } from "../../frontend/src/lib/utils.js";
+  import { me } from "../../frontend/src/lib/session.js";
+  import { useNavigate } from "svelte-navigator";
 
-  const dispatch = createEventDispatcher();
-  export let neededAmount;
+  export let amount;
+  export let historySource;
+  const navigate = useNavigate();
+  const balance = get(me).donator.balance || 0;
+
+  function onClose() {
+    const state = historySource.history.state;
+    console.log("state", state);
+    if (state)
+      navigate(-1);
+    else
+      window.close();
+  }
 </script>
 
 <section class="popup flex-column">
   <Button
-    on:click={() => dispatch("close")}
+    on:click={onClose}
     --width=90px
     --padding="6.5px 26px"
     --font-size=16px
@@ -45,7 +57,7 @@
     <Button
       --height=100%
       target=_blank
-      link="{$webOrigin}/fulfill/{$me.donator.id}?amount={neededAmount + 1000}"
+      link="{$webOrigin}/fulfill/{$me.donator.id}?amount={amount - balance + 1000}"
       class=white
       style="
         grid-row: fulfill;

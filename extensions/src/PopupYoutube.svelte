@@ -1,5 +1,5 @@
 <script>
-  import {createEventDispatcher} from "svelte";
+  import { useNavigate } from "svelte-navigator";
   import {worker, contentScript, browser, subscribe, isTest} from "./common.js";
   import Button from "../../frontend/src/lib/Button.svelte";
   import Input from "../../frontend/src/lib/Input.svelte";
@@ -13,9 +13,10 @@
   const amounts = [100, 1000, 10000];
   const amountMin = 10;
   const amountMax = 1000000;
-  const dispatch = createEventDispatcher();
+  const navigate = useNavigate();
 
   async function load() {
+    console.log("load youtube", window.location.hash);
     if (isTest()) {
       videoId = 'JB2-DmUqtS8';
       channelTitle = 'Alby - Send and Receive Bitcoin on the Web';
@@ -33,7 +34,7 @@
     } catch (err) {
       console.error("Failed to donate", err);
       if (err.message === "No webln found")
-        dispatch("weblnerror", err);
+        navigate(`/nowebln/${amount}`);
     }
   }
 

@@ -54,6 +54,8 @@
     "resources": [
       "pagescript.js",
       "contentscript.js",
+      "pagescript.js.map",
+      "contentscript.js.map",
       "static/success.png",
       "static/global.css",
       "static/lottie-arrow.json"

@@ -30,13 +30,13 @@
 
   async function onDonateClicked(evt) {
     animate = true;
-
+    const amount = await worker.getConfig("amount");
     try {
-      onPaid(await donate(await worker.getConfig("amount"), window.location.href));
+      onPaid(await donate(amount, window.location.href));
     } catch (err) {
       animate = false;
-      console.error("Payment failed", err);
-      openPopup("nowebln");
+      console.log("Payment failed", err);
+      worker.createPopup(`nowebln/${amount}`);
     }
   }
 
