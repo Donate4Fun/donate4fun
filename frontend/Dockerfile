@@ -8,7 +8,7 @@ RUN pnpm install
 COPY jsconfig.json vite.config.js /app/
 COPY public /app/public
 COPY src /app/src
-COPY index-green.html /app/index.html
+COPY index.html /app/index.html
 RUN pnpm build
 
 FROM nginx:alpine
