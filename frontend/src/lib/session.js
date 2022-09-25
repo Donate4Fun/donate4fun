@@ -23,6 +23,9 @@ async function load() {
   const pubkey = resp.donator.lnauth_pubkey;
   if (pubkey) {
     resp.shortkey = `@${pubkey.slice(0, 4)}…${pubkey.slice(-4)}`;
+    resp.connected = true;
+  } else {
+    resp.connected = false;
   }
   set(resp);
 }

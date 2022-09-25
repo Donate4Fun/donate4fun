@@ -39,7 +39,6 @@
 <style>
 :global(body) {
   background: #F7F9FF;
-  font-family: Inter;
   font-weight: 400;
   color: #000000;
   margin: 0;

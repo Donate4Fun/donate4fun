@@ -3,7 +3,7 @@
 </script>
 
 <span {...$$restProps}>
-  <span class="amount">{amount}</span> sats
+  <span class="amount">{amount.toLocaleString('ru')}</span> sats
 </span>
 
 <style>

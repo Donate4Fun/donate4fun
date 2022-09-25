@@ -30,7 +30,7 @@
         {/if}
       </div>
     </div>
-    <div class="progress" style="--duration: {notification.timeout}ms" on:animationstart={notification.shown} on:animationend={notification.close}></div>
+    <div class="progress" style="--duration: {notification.timeout}ms" on:animationstart={() => notification.isShown = true} on:animationend={notification.close}></div>
   </div>
 {/each}
 </div>

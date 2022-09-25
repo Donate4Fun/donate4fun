@@ -36,6 +36,11 @@ export default defineConfig({
       '/d/': {
         target: 'http://localhost:8000',
       },
+      '/js/script.js': {
+        target: 'https://plausible.io/js/script.js',
+        changeOrigin: true,
+        ignorePath: true,
+      },
     },
   },
 })

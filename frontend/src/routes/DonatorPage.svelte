@@ -22,12 +22,17 @@
   let donator;
 
   async function load() {
-    donator = await api.get(`donator/${donator_id}`)
+    if (donator_id === $me.donator?.id) {
+      await me.load();
+      donator = $me.donator;
+    } else {
+      donator = await api.get(`donator/${donator_id}`)
+    }
     donations = await api.get(`donations/by-donator/${donator_id}`);
   }
 
   async function donate() {
-    navigate(`/fulfill/${donator.id}`, {state: response});
+    navigate(`/fulfill/${donator.id}`);
   }
 </script>
 
@@ -55,13 +60,11 @@
         <div>Status</div>
       </div>
       {#each donations as donation}
-        <a href="/donation/{donation.id}" use:link>
-          {#if donation.paid_at}
-            <Datetime dt={donation.paid_at}/>
-          {:else}
-            <Datetime dt={donation.created_at}/>
-          {/if}
-        </a>
+        {#if donation.paid_at}
+          <Datetime dt={donation.paid_at}/>
+        {:else}
+          <Datetime dt={donation.created_at}/>
+        {/if}
         {#if donation.youtube_channel}
           <YoutubeChannel channel={donation.youtube_channel} linkto=donate class="ellipsis" />
         {:else}
@@ -70,9 +73,13 @@
         <Amount amount={donation.amount}/>
         <div>
           {#if donation.paid_at}
-          Paid
+            {#if donation.donator.id === donation.receiver?.id}
+              Received
+            {:else}
+              Paid
+            {/if}
           {:else}
-          Unpaid
+            Unpaid
           {/if}
         </div>
       {/each}

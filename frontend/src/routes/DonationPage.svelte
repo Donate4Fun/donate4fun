@@ -33,15 +33,15 @@
       else
         target = "<Unexpected donation target>";
     }
-    if (donation.paid_at && donation.receiver) {
-      navigate(`/donator/${donation.receiver.id}`);
-      notify("Success", `You've paid ${donation.amount} sats`, "info");
-    }
   }
 
   function paid(event) {
     console.log("paid", event.detail);
     donation = event.detail;
+    if (donation.paid_at && donation.receiver) {
+      navigate(`/donator/${donation.receiver.id}`);
+      notify("Success", `You've paid ${donation.amount} sats`, "success");
+    }
   }
 
   const loadPromise = load();

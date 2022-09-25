@@ -37,11 +37,11 @@
   {#await subscribe()}
     <Loading />
   {:then}
-    <h1>Donate <Amount amount={donation.amount} /> to</h1>
     {#if donation.youtube_channel}
+      <h1>Donate <Amount amount={donation.amount} /> to</h1>
       <YoutubeChannel channel={donation.youtube_channel} />
     {:else if donation.receiver}
-      <span class=font-normal><Donator user={donation.receiver} /></span>
+      <h1>Fulfill <Amount amount={donation.amount} /> to your wallet</h1>
     {/if}
     <a href="lightning:{payment_request}"><QRCode value={payment_request} /></a>
     <div class="suggestion font-weight-700 text-align-center">

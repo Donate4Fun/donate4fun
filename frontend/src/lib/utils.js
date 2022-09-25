@@ -1,12 +1,14 @@
-import {useResolve} from "svelte-navigator";
-import {writable, get} from 'svelte/store';
+import { writable, get } from 'svelte/store';
 
 export const webOrigin = writable(window.location.origin);
 export const isExtension = !window.location.origin.startsWith('http');
 
 function resolve(path) {
   const origin = get(webOrigin);
-  return `${origin}${path}`;
+  if (origin === location.origin)
+    return path;
+  else
+    return origin + path;
 }
 
 function copy(content) {

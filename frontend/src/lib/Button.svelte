@@ -8,6 +8,7 @@
   export let spin = false;
   export let nospin = false;
   export let selected = false;
+  export let disabled = false;
 
   function createEventDispatcher() {
     const component = get_current_component();
@@ -54,7 +55,7 @@
   }
 </script>
 
-<button {...$$restProps} on:click={click} disabled={spin} class:selected>
+<button {...$$restProps} on:click={click} disabled={disabled || spin} class:selected>
   <div class="flex-row align-center">
     {#if spin}
       <Spinner class="spinner" size=20px width=3px />

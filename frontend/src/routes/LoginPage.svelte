@@ -1,5 +1,6 @@
 <script>
   import {onDestroy} from "svelte";
+  import { useLocation } from "svelte-navigator";
   import Lnurl from "../lib/Lnurl.svelte";
   import Button from "../lib/Button.svelte";
   import QRCode from "../lib/QRCode.svelte";
@@ -12,8 +13,11 @@
   import {notify} from "../lib/notifications.js";
 
   export let navigate;
+
   let lnurl;
   let unsubscribe = null;
+  const location = useLocation();
+
   onDestroy(() => {
     if (unsubscribe !== null) {
       unsubscribe();
@@ -22,12 +26,14 @@
 
   async function load() {
     await me.init();
+    const params = new URLSearchParams($location.search);
+    const return_ = params.get('return');
     unsubscribe = await api.subscribe(`donator:${$me.donator.id}`, async (token) => {
       unsubscribe();
       await api.post('update-session', {creds_jwt: token['message']});
       await me.load();
-      navigate(`/donator/${$me.donator.id}`);
-      if ($me.donator.lnauth_pubkey)
+      navigate(return_ || `/donator/${$me.donator.id}`);
+      if ($me.connected)
         notify("Success", `You've successefully connected your wallet`, "success");
       else
         notify("Success", `You've successefully disconnected your wallet`, "success");

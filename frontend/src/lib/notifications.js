@@ -13,10 +13,6 @@ function notify(title, message, type = "error", timeout = 3000, hasClose = false
       });
     }
 
-    function shown() {
-      notification.isShown = true;
-    }
-
     return [...state, { id: id_, type, title, message, close, hasClose, timeout, isShown: false }];
   });
 }

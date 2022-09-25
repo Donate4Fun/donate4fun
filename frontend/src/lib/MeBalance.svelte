@@ -3,7 +3,7 @@
   import FiatAmount from "../lib/FiatAmount.svelte";
   import Button from "../lib/Button.svelte";
   import {me} from "../lib/session.js";
-  import {webOrigin, isExtension} from "../lib/utils.js";
+  import {resolve, isExtension} from "../lib/utils.js";
 </script>
 
 <main>
@@ -15,8 +15,8 @@
     class="font-12 font-weight-400 text-align-center" amount={$me.donator.balance} />
   <Button
     style="grid-row: fulfill;"
-    target={isExtension ? "_blank" : "_self"}
-    link="{$webOrigin}/fulfill/{$me.donator.id}"
+    target={isExtension ? "_blank" : null}
+    link={resolve(`/fulfill/${$me.donator.id}`)}
     class=white
     --padding="10px 41px"
   >Fulfill</Button>
