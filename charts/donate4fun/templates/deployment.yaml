@@ -72,6 +72,7 @@ spec:
             path: /
             port: http-frontend
           periodSeconds: 5
+          timeoutSeconds: 3
         resources:
           {{- toYaml .Values.frontend.resources | nindent 10 }}
       volumes:
