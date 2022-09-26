@@ -73,9 +73,6 @@ h1 {
   margin-bottom: 20px;
   text-align: center;
 }
-.font-normal {
-  font-size: 18px;
-}
 .suggestion {
   font-size: 16px;
   width: 402px;
