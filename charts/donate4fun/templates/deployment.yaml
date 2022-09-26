@@ -67,6 +67,7 @@ spec:
           httpGet:
             path: /
             port: http-frontend
+          timeoutSeconds: 3
         readinessProbe:
           httpGet:
             path: /
