@@ -1,13 +1,17 @@
 {
   "name": "browser-extension-donate4fun-firefox",
-  "version": "1.0.0",
+  "version": "0.6.0",
   "description": "Donate4Fun Firefox extension.",
   "homepage": "https://donate4.fun",
   "type": "module",
   "scripts": {
-    "build": "npx vite build && rollup -c",
+    "build": "rollup -c",
     "dev": "rollup -c -w",
-    "start": "sirv public"
+    "start": "sirv public",
+    "package-chrome": "rm -f ../chrome.zip && cd ../chrome && zip -r ../chrome.zip .",
+    "package-firefox": "rm -f ../firefox.zip && cd ../firefox && zip -r ../firefox.zip .",
+    "package": "npm run package-chrome && npm run package-firefox",
+    "package-clean": "rm -rf ../firefox ../chrome && npm run build && npm run package"
   },
   "devDependencies": {
     "@guanghechen/rollup-plugin-copy": "^2.1.0",
@@ -17,7 +21,6 @@
     "@rollup/plugin-replace": "^4.0.0",
     "@sveltejs/vite-plugin-svelte": "^1.0.5",
     "@vitejs/plugin-react": "~1.2.0",
-    "@web/rollup-plugin-html": "^1.11.0",
     "history": "^5.3.0",
     "rollup": "^2.79.0",
     "rollup-plugin-css-only": "^3.1.0",
@@ -33,7 +36,7 @@
   "dependencies": {
     "@fortawesome/free-regular-svg-icons": "^6.2.0",
     "@fortawesome/free-solid-svg-icons": "^6.2.0",
-    "@lottiefiles/svelte-lottie-player": "github:bastiaanv/svelte-lottie-player",
+    "@lottiefiles/svelte-lottie-player": "github:donate4fun/svelte-lottie-player",
     "lottie-web": "^5.9.6",
     "sirv-cli": "^1.0.0",
     "svelte-confetti": "^1.2.0",

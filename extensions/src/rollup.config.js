@@ -3,10 +3,10 @@ import commonjs from "@rollup/plugin-commonjs";
 import resolve from "@rollup/plugin-node-resolve";
 import alias from '@rollup/plugin-alias';
 import replace from "@rollup/plugin-replace";
-import html from '@web/rollup-plugin-html';
 import copy from '@guanghechen/rollup-plugin-copy';
 import styles from "rollup-plugin-styles";
 import path from "path";
+import fs from "fs";
 
 const dev = process.env.ROLLUP_WATCH;
 
@@ -37,7 +37,7 @@ function serve() {
 
 function makeOutput(browser) {
   return {
-    sourcemap: true,
+    sourcemap: dev,
     format: "iife",
     name: "app",
     dir: `../${browser}`,
@@ -110,13 +110,19 @@ function manifestFile(src, dest, transform) {
   }
 }
 
+function getVersion() {
+  return JSON.parse(fs.readFileSync("package.json")).version;
+}
+
 function patchChromeManifest(json) {
   json.host_permissions = [...json.host_permissions, 'http://localhost/*'];
+  json.version = getVersion();
   return json;
 }
 
 function patchFirefoxManifest(json) {
   json.permissions = [...json.permissions, 'http://localhost/*'];
+  json.version = getVersion();
   return json;
 }
 
