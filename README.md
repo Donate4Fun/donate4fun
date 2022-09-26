@@ -11,6 +11,9 @@ Directory structure:
 
 Development
 ==
+
+Website
+===
 For developing you need a Docker and docker-compose (see /docker dir).
 It's recommended to use some virtual env manager, for example direnv.
  - Create config.yaml
@@ -30,6 +33,18 @@ Sometimes channel could not start after starting all services.
 
 If you are getting an error 'database "donate4fun-test" already exists' then connect to local postgresql and drop this database
 `psql -U postgres -c 'drop database "donate4fun-test"'`
+
+Browser extension
+===
+It's pretty simple
+```
+cd extensions/src
+npm i
+npm run dev
+```
+Then open browser and install unpacked extension from `extensions/chrome` or `extensions/firefox`.
+
+To build extension for webstore run `npm run package-clean`.
 
 Deploy
 ==
