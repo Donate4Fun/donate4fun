@@ -58,7 +58,8 @@
       "contentscript.js.map",
       "static/success.png",
       "static/global.css",
-      "static/lottie-arrow.json"
+      "static/lottie-arrow.json",
+      "static/youtube.svg"
     ],
     "matches": [ "https://*.youtube.com/*" ]
   }]

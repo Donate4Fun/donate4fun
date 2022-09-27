@@ -86,15 +86,21 @@ button div {
   height: 100%;
   width: 100%;
 }
+/* border */
 button.white,button.light {
   background-image: linear-gradient(to right, #F9F03E 0%, #9DEDA2 100%);
   padding: 2px;
 }
-button.white div,button.light div {
+button.blue {
+  background: rgba(46, 108, 255, 0.2);
+  padding: 2px;
+}
+button.white div,button.light div, button.blue div {
   border-radius: inherit;
   padding: var(--padding, 10px 23px);  /* parent padding - 2px (pseudo-border) */
 }
-button.white div {
+/* background */
+button.white div,button.blue div {
   background: white;
 }
 button.light div {

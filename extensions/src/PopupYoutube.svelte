@@ -1,9 +1,10 @@
 <script>
   import { useNavigate } from "svelte-navigator";
+  import PopupSection from "./PopupSection.svelte";
   import {worker, contentScript, browser, subscribe, isTest} from "./common.js";
-  import Button from "../../frontend/src/lib/Button.svelte";
-  import Input from "../../frontend/src/lib/Input.svelte";
-  import FiatAmount from "../../frontend/src/lib/FiatAmount.svelte";
+  import Button from "$lib/Button.svelte";
+  import Input from "$lib/Input.svelte";
+  import FiatAmount from "$lib/FiatAmount.svelte";
 
   let videoId;
   let channelTitle;
@@ -43,44 +44,27 @@
   }
 </script>
  
-{#await load() then}
-  <section class="flex-grow-1">
-    <div class="flex-column align-center justify-space-between">
-      <div class="grid grid-columns-3 width-full">
-        <span class="font-weight-900 font-20 flex-row align-center">Donate to</span>
-        <div class="flex-row align-center gap-16 grid-span-2">
-          <img width=48px height=48px class="circular" src={channelLogo} alt="channel logo">
-          <span class="color-blue font-weight-700">{channelTitle}</span>
-        </div>
+<PopupSection --justify-content=space-between>
+  {#await load() then}
+    <div class="flex-row align-center justify-center gap-8 width-full">
+      <img src="./static/youtube.svg" height=24px alt="youtube logo">
+      <span class="flex-shrink-0 font-weight-900 font-20 line-height-24">Donate to</span>
+      <div class="flex-shrink-1 flex-row align-center gap-16 grid-span-2">
+        <img width=48px height=48px class="circular" src={channelLogo} alt="channel logo">
+        <span class="color-blue font-weight-700">{channelTitle}</span>
       </div>
-      <div class="flex-row justify-space-between width-full">
-      {#each amounts as amount_}
-        <Button on:click={() => amount = amount_} --width=120px selected={amount_ === amount}>{toText(amount_)} ⚡</Button>
-      {/each}
-      </div>
-      <div class="flex-row gap-20 align-center width-full">
-        <div class="flex-grow">
-          <Input type=number bind:value={amount} min={amountMin} max={amountMax} suffix=sats required />
-        </div>
-        <FiatAmount bind:amount={amount} class="fiat-amount min-width-70" />
-      </div>
-      <Button --width=100% on:click={donate}>Donate</Button>
     </div>
-  </section>
-{/await}
-
-<style>
-section {
-  background-image: linear-gradient(to right, #F9F03E 0%, #9DEDA2 100%);
-  border-radius: 20px;
-  padding: 2px;
-  height: 100%;
-}
-section > div {
-  width: 100%;
-  height: 100%;
-  background: white;
-  border-radius: 20px;
-  padding: 40px 32px 36px 32px;
-}
-</style>
+    <div class="flex-row justify-space-between width-full">
+    {#each amounts as amount_}
+      <Button on:click={() => amount = amount_} --width=120px selected={amount_ === amount}>{toText(amount_)} ⚡</Button>
+    {/each}
+    </div>
+    <div class="flex-row gap-20 align-center width-full">
+      <div class="flex-grow">
+        <Input type=number bind:value={amount} min={amountMin} max={amountMax} suffix=sats required />
+      </div>
+      <FiatAmount bind:amount={amount} class="fiat-amount min-width-70" />
+    </div>
+    <Button --width=100% on:click={donate}>Donate</Button>
+  {/await}
+</PopupSection>
