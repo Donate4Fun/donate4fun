@@ -115,13 +115,15 @@ function getVersion() {
 }
 
 function patchChromeManifest(json) {
-  json.host_permissions = [...json.host_permissions, 'http://localhost/*'];
+  if (dev)
+    json.host_permissions = [...json.host_permissions, 'http://localhost/*'];
   json.version = getVersion();
   return json;
 }
 
 function patchFirefoxManifest(json) {
-  json.permissions = [...json.permissions, 'http://localhost/*'];
+  if (dev)
+    json.permissions = [...json.permissions, 'http://localhost/*'];
   json.version = getVersion();
   return json;
 }
