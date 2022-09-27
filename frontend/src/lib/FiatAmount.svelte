@@ -1,21 +1,13 @@
 <script>
-  import axios from "axios";
+  import { btcUsdRate } from "$lib/ticker.js";
 
   export let amount;
-  let rate;
   const format = new Intl.NumberFormat('en-US', { style: "currency", maximumSignificantDigits: 5, currency: "USD", notation: "compact" });
-  $: usd_amount = format.format(amount * rate);
-
-  async function load() {
-    const resp = await axios.get("https://api.alternative.me/v2/ticker/bitcoin/");
-    rate = resp.data.data["1"].quotes.USD.price / 100000000;
-  }
+  $: usd_amount = format.format(amount * $btcUsdRate);
 </script>
 
 <span {...$$restProps}>
-≈{#await load() then}
-{usd_amount}
-{/await}
+≈{usd_amount}
 </span>
 
 <style>
