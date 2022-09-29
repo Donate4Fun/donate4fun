@@ -1,10 +1,13 @@
+import { cLog } from "./common.js";
+
 if (!window.donate4funPageScriptLoaded) {
   window.donate4funPageScriptLoaded = true;
+  cLog("loading page script");
 
   window.addEventListener("message", async (event) => {
     if (event.source !== window) return;
     if (event.data.type !== "donate4.fun-request") return;
-    console.log("[dff] pageScript received event", event);
+    cLog("[dff] pageScript received event", event);
     const handler = handlers[event.data.method];
     let message;
     try {
@@ -19,7 +22,7 @@ if (!window.donate4funPageScriptLoaded) {
         error: err,
       };
     }
-    console.log("[dff] pagescript responding with", message);
+    cLog("[dff] pagescript responding with", message);
     window.postMessage(message);
   });
 
@@ -31,7 +34,7 @@ if (!window.donate4funPageScriptLoaded) {
       await webln.enable();
     }
     const result = await webln.sendPayment(request);
-    console.log("webln.sendPayment result", result);
+    cLog("webln.sendPayment result", result);
   }
 
   async function emulateKeypresses(selector) {
@@ -50,4 +53,6 @@ if (!window.donate4funPageScriptLoaded) {
     emulateKeypresses,
     ping: () => "pong",
   }
+} else {
+  cLog("page script already loaded");
 }
