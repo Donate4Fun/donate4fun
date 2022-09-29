@@ -56,45 +56,47 @@
 </script>
 
 <Page>
-  <Section class="youtube-channel">
-  {#await load()}
-    <Loading />
-  {:then}
-    <h1>Donations to <a href={youtube_channel_url} target=_blank>{youtube_channel.title}</a></h1>
-    <ChannelLogo url={youtube_channel.thumbnail_url} />
-    <div class="controls">
-    {#if balance >= min_withdraw}
-      <div class="available">Available BTC to withdraw: <Amount amount={balance} /></div>
-      {#if $me.youtube_channels.filter(elem => elem.id === channel_id).length > 0}
-        <Button class="withdraw" link='{resolve("withdraw")}'>Withdraw</Button>
-      {:else}
-        <Infobox>You can withdraw donations if the channel belongs to you. Confirm by linking your Youtube channel.</Infobox>
-        <Button on:click={link_youtube}>Link your Youtube channel</Button>
-      {/if}
-    {:else}
-      <div class="available">Available BTC: <Amount amount={balance} /></div>
-      <Infobox class="red">Minimum amount to withdraw: {min_withdraw} sats</Infobox>
-    {/if}
-      <Button class="want-more white" link={resolve("link")}>Want more donations?</Button>
+  <Section>
+    <div class="youtube-channel">
+      {#await load()}
+        <Loading />
+      {:then}
+        <h1>Donations to <a href={youtube_channel_url} target=_blank>{youtube_channel.title}</a></h1>
+        <ChannelLogo url={youtube_channel.thumbnail_url} />
+        <div class="controls">
+        {#if balance >= min_withdraw}
+          <div class="available">Available BTC to withdraw: <Amount amount={balance} /></div>
+          {#if $me.youtube_channels.filter(elem => elem.id === channel_id).length > 0}
+            <Button class="withdraw" link='{resolve("withdraw")}'>Withdraw</Button>
+          {:else}
+            <Infobox>You can withdraw donations if the channel belongs to you. Confirm by linking your Youtube channel.</Infobox>
+            <Button on:click={link_youtube}>Link your Youtube channel</Button>
+          {/if}
+        {:else}
+          <div class="available">Available BTC: <Amount amount={balance} /></div>
+          <Infobox class="red">Minimum amount to withdraw: {min_withdraw} sats</Infobox>
+        {/if}
+          <Button class="want-more white" link={resolve("link")}>Want more donations?</Button>
+        </div>
+        <div class="table">
+          <div class="head">
+            <div>Name</div><div>Date</div><div>Amount</div>
+          </div>
+          <div class="body">
+          {#each donations as donation}
+            <Donator user={donation.donator} class="ellipsis"/>
+            <Datetime dt={donation.paid_at} />
+            <Amount amount={donation.amount} />
+          {/each}
+          </div>
+        </div>
+      {/await}
     </div>
-    <div class="table">
-      <div class="head">
-        <div>Name</div><div>Date</div><div>Amount</div>
-      </div>
-      <div class="body">
-      {#each donations as donation}
-        <Donator user={donation.donator} class="ellipsis"/>
-        <Datetime dt={donation.paid_at} />
-        <Amount amount={donation.amount} />
-      {/each}
-      </div>
-    </div>
-  {/await}
   </Section>
 </Page>
 
 <style>
-:global(.youtube-channel) {
+.youtube-channel {
   padding: 20px 70px 74px;
   display: flex;
   flex-direction: column;

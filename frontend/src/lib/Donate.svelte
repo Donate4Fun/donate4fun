@@ -54,33 +54,34 @@
   }
 </script>
 
-<Section class="donate">
-  <h1><img src="/static/coin.png" alt="coin"><span>Donate</span></h1>
-  <form on:submit|preventDefault={donate}>
-    <div class="first-line">
-      <span class="i-want">I want to donate</span>
-      <div class="amount"><Input type=number placeholder="Enter amount" bind:value={amount} min={amountMin} max={amountMax} bind:error={amountError} suffix=sats required /></div>
-      <FiatAmount bind:amount={amount} class="fiat-amount" />
-    </div>
-    <div class="second-line">
-      <span class=to>To</span>
-      <div class="url"><Input type="text" placeholder="Paste YouTube URL" bind:value={target} bind:error={error} logo=url(/static/youtube.svg) required /></div>
-      <Button class="submit" type=submit>
-        <span>Donate</span>
-      </Button>
-    </div>
-  </form>
+<Section>
+  <div class="donate">
+    <h1><img src="/static/coin.png" alt="coin"><span>Donate</span></h1>
+    <form on:submit|preventDefault={donate}>
+      <div class="first-line">
+        <span class="i-want">I want to donate</span>
+        <div class="amount"><Input type=number placeholder="Enter amount" bind:value={amount} min={amountMin} max={amountMax} bind:error={amountError} suffix=sats required /></div>
+        <FiatAmount bind:amount={amount} class="fiat-amount" />
+      </div>
+      <div class="second-line">
+        <span class=to>To</span>
+        <div class="url"><Input type="text" placeholder="Paste YouTube URL" bind:value={target} bind:error={error} logo=url(/static/youtube.svg) required /></div>
+        <Button class="submit" type=submit>
+          <span>Donate</span>
+        </Button>
+      </div>
+    </form>
+  </div>
 </Section>
 
 <style>
-:global(.donate) {
-  box-sizing: border-box;
+.donate {
   width: 640px;
   height: 265px;
   padding: 36px 36px 40px 36px;
 }
 @media only screen and (max-width: 640px) {
-  :global(.donate) {
+  .donate {
     width: 100%;
     height: 413px;
     padding: 20px 36px 20px 24px;

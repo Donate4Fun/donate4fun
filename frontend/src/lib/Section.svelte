@@ -15,5 +15,6 @@ section {
   letter-spacing: 0.015em;
 
   box-sizing: border-box;
+  padding: var(--padding);
 }
 </style>

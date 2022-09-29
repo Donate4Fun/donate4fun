@@ -16,35 +16,37 @@
   }
 </script>
 
-<Section class="donations">
-  <h1>Donations <span class="annotation">Last <b>24 hours</b></span></h1>
-  {#await loadDonations()}
-    <Loading />
-  {:then}
-    <div class="table">
-      <div class="head">
-        <div>Blogger</div><div>When</div><div>Amount</div><div>Donator</div>
-      </div>
-      {#each donations as donation}
-        <div class=blogger>
-          <ChannelLogo url={donation.youtube_channel.thumbnail_url} size=28px />
-          {#if donation.youtube_video}
-          <div class=vcenter title="{donation.youtube_video.title}"><a href="/donate/{donation.youtube_channel.id}" class="ellipsis" use:link>{donation.youtube_video.title}</a></div>
-          {:else}
-          <div class=vcenter title="{donation.youtube_channel.title}"><a href="/donate/{donation.youtube_channel.id}" class="ellipsis" use:link>{donation.youtube_channel.title}</a></div>
-          {/if}
+<Section>
+  <div class="donations">
+    <h1>Donations <span class="annotation">Last <b>24 hours</b></span></h1>
+    {#await loadDonations()}
+      <Loading />
+    {:then}
+      <div class="table">
+        <div class="head">
+          <div>Blogger</div><div>When</div><div>Amount</div><div>Donator</div>
         </div>
-        <div class=vcenter><Datetime dt={donation.paid_at} /></div>
-        <div class=vcenter><Amount amount={donation.amount} /></div>
-        <Donator user={donation.donator} class="ellipsis" />
-      {/each}
-    </div>
-    <div class=fadeout></div>
-  {/await}
+        {#each donations as donation}
+          <div class=blogger>
+            <ChannelLogo url={donation.youtube_channel.thumbnail_url} size=28px />
+            {#if donation.youtube_video}
+            <div class=vcenter title="{donation.youtube_video.title}"><a href="/donate/{donation.youtube_channel.id}" class="ellipsis" use:link>{donation.youtube_video.title}</a></div>
+            {:else}
+            <div class=vcenter title="{donation.youtube_channel.title}"><a href="/donate/{donation.youtube_channel.id}" class="ellipsis" use:link>{donation.youtube_channel.title}</a></div>
+            {/if}
+          </div>
+          <div class=vcenter><Datetime dt={donation.paid_at} /></div>
+          <div class=vcenter><Amount amount={donation.amount} /></div>
+          <Donator user={donation.donator} class="ellipsis" />
+        {/each}
+      </div>
+      <div class=fadeout></div>
+    {/await}
+  </div>
 </Section>
 
 <style>
-:global(.donations) {
+.donations {
   width: 537px;
   height: 501px;
   padding: 36px 12px 0 36px;
@@ -53,7 +55,7 @@
   position: relative;
 }
 @media only screen and (max-width: 1280px) {
-  :global(.donations) {
+  .donations {
     width: 640px;
   }
 }

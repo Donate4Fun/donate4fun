@@ -30,30 +30,32 @@
   }
 </script>
 
-<Section class="claim">
-  <h1>Claim donations</h1>
-  <p>Check donations for your YouTube channel</p>
-  {#await me.init() then}
-  {#if $me.youtube_channels.length > 0}
-  <h2>Linked YouTube channels:</h2>
-  {/if}
-  <LinkedYoutubeChannels youtube_channels={$me.youtube_channels} />
-  {/await}
-  <div class="link"><Button link={resolve("/prove/youtube")}>Link your Youtube channel</Button></div>
-  <form on:submit|preventDefault={claim}>
-    <div class=url><Input type=url placeholder="Paste YouTube URL" bind:value={donatee} bind:error={error} logo=url(/static/youtube.svg) required/></div>
-    <Button type=submit class="submit white">
-      {#if spin}
-      <Spinner class="spinner" size=20px width=3px/>
+<Section>
+  <div class="claim">
+    <h1>Claim donations</h1>
+    <p>Check donations for your YouTube channel</p>
+    {#await $me.loaded then}
+      {#if $me.youtube_channels.length > 0}
+        <h2>Linked YouTube channels:</h2>
       {/if}
-      <span>Check donation</span>
-    </Button>
-  </form>
+      <LinkedYoutubeChannels youtube_channels={$me.youtube_channels} />
+    {/await}
+    <div class="link"><Button link={resolve("/prove/youtube")}>Link your Youtube channel</Button></div>
+    <form on:submit|preventDefault={claim}>
+      <div class=url><Input type=url placeholder="Paste YouTube URL" bind:value={donatee} bind:error={error} logo=url(/static/youtube.svg) required/></div>
+      <Button type=submit class="submit white">
+        {#if spin}
+        <Spinner class="spinner" size=20px width=3px/>
+        {/if}
+        <span>Check donation</span>
+      </Button>
+    </form>
+  </div>
 </Section>
 
 <style>
 @media (max-width: 640px) {
-  :global(.claim) {
+  .claim {
     width: 100%;
     padding: 20px 36px 20px 24px;
   }

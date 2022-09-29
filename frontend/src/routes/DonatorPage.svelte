@@ -37,7 +37,7 @@
 </script>
 
 <Page>
-  <Section class="donator-main flex-column align-center gap-8">
+  <Section class="flex-column align-center gap-8" --padding="36px 119px 123px">
   {#await load()}
     <Loading/>
   {:then}
@@ -89,10 +89,6 @@
 </Page>
 
 <style>
-:global(.donator-main) {
-  padding: 36px 119px 123px;
-  width: 640px;
-}
 .transactions {
   margin-top: 56px;
   margin-bottom: 32px;
