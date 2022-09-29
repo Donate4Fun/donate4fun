@@ -48,5 +48,6 @@ if (!window.donate4funPageScriptLoaded) {
   const handlers = {
     sendPayment,
     emulateKeypresses,
+    ping: () => "pong",
   }
 }

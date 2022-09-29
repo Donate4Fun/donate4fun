@@ -1,7 +1,7 @@
 <script>
   import { useNavigate } from "svelte-navigator";
   import PopupSection from "./PopupSection.svelte";
-  import {worker, contentScript, browser, subscribe, isTest} from "./common.js";
+  import {  worker, connectToPage, browser, subscribe, cLog } from "./common.js";
   import Button from "$lib/Button.svelte";
   import Input from "$lib/Input.svelte";
   import FiatAmount from "$lib/FiatAmount.svelte";
@@ -9,6 +9,7 @@
   let videoId;
   let channelTitle;
   let channelLogo;
+  let contentScript;
   export let amount = 100;
 
   const amounts = [100, 1000, 10000];
@@ -17,16 +18,17 @@
   const navigate = useNavigate();
 
   async function load() {
-    console.log("load youtube", window.location.hash);
-    if (isTest()) {
-      videoId = 'JB2-DmUqtS8';
-      channelTitle = 'Alby - Send and Receive Bitcoin on the Web';
-      channelLogo = 'https://yt3.ggpht.com/1D4XwPDDBz5-6YYDp_bYryT5HOQao13w3pi32q9KlV12lpDqyg3NOc07-oKIiLQZpc_UUdl9hYo=s88-c-k-c0x00ffffff-no-rj'
-    } else {
-      videoId = await contentScript.getVideoId();
-      channelTitle = await contentScript.getChannelTitle();
-      channelLogo = await contentScript.getChannelLogo();
+    cLog("load youtube", window.location.hash);
+    try {
+      contentScript = await connectToPage();
+    } catch (error) {
+      cLog("couldn't connect to content script", error);
+      navigate("/");
+      return;
     }
+    videoId = await contentScript.getVideoId();
+    channelTitle = await contentScript.getChannelTitle();
+    channelLogo = await contentScript.getChannelLogo();
   }
 
   async function donate() {

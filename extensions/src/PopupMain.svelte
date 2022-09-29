@@ -3,21 +3,23 @@
   import Button from "$lib/Button.svelte";
   import NumberedItem from "$lib/NumberedItem.svelte";
   import PopupSection from "./PopupSection.svelte";
-  import {getCurrentTab, contentScript, isTest} from "./common.js";
+  import {getCurrentTab, connectToPage} from "./common.js";
 
 	const navigate = useNavigate();
 
   async function load() {
     console.log("load main", window.location.hash);
-    let showYoutube;
-    if (isTest()) {
-      showYoutube = true;
-    } else {
-      const tab = await getCurrentTab();
-      showYoutube = tab?.url?.match('^https\:\/\/(www\.)?youtube\.com') && await contentScript.isVideoLoaded();
+    const tab = await getCurrentTab();
+    if (!tab?.url?.match('^https\:\/\/(www\.)?youtube\.com'))
+      return;
+    try {
+      const contentScript = await connectToPage();
+      const showYoutube =  await contentScript.isVideoLoaded();
+      if (showYoutube)
+        navigate("youtube");
+    } catch (error) {
+      console.log("error connecting to tab", error);
     }
-    if (showYoutube)
-      navigate("youtube");
   }
 </script>
 

@@ -24,9 +24,9 @@ const buttonId = "donate4fun-button";
 
 let bolt = null;
 
-function init() {
+async function init() {
   cLog("init");
-  injectPageScript();
+  await injectPageScript();
   window.addEventListener("yt-navigate-finish", load, true);
   window.addEventListener("yt-navigate-start", () => {
     bolt?.$destroy();
@@ -42,9 +42,13 @@ function init() {
     sendPayment: pageScript.sendPayment,
     donate,
     onPaid: donation => { bolt?.onPaid(donation) },
+    ping: () => "pong",
   });
 
-  browser.runtime.connect().onDisconnect.addListener(() => {
+  cLog("connecting to background script");
+  const port = browser.runtime.connect();
+  port.onDisconnect.addListener(() => {
+    cLog("onDisconnect", browser.runtime.lastError);
     bolt?.$destroy();
     bolt = null;
   });
@@ -74,14 +78,22 @@ async function patchButtons() {
   }
 }
 
-function injectPageScript() {
+async function injectPageScript() {
   // page script is needed only for webln to work
   const scriptUrl = chrome.runtime.getURL('pagescript.js');
-  cLog("scriptUrl", scriptUrl);
+  cLog("injecting page script", scriptUrl);
   const scriptElement = document.createElement('script');
-  scriptElement.setAttribute("src", scriptUrl);
+  scriptElement.src = scriptUrl;
+  scriptElement.async = false;
   (document.head || document.documentElement).appendChild(scriptElement);
-  window.postMessage({type: "donate4.fun", test: "test"});
+  await new Promise((resolve, reject) => {
+    scriptElement.addEventListener("load", resolve);
+  });
+  cLog("page script loaded");
+  const pong = await pageScript.ping();
+  if (pong !== "pong")
+    throw new Error("unexpected pong from page script", pong);
+  cLog("page script responded");
 }
 
 init();

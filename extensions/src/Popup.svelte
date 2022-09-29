@@ -8,7 +8,7 @@
   import {apiOrigin} from "../../frontend/src/lib/api.js";
   import {webOrigin} from "../../frontend/src/lib/utils.js";
   import {me} from "../../frontend/src/lib/session.js";
-  import {worker, getCurrentTab, browser, contentScript, isTest} from "./common.js";
+  import {worker, getCurrentTab, browser} from "./common.js";
   import createHashSource from "./hashHistory.js";
 
   const hashSource = createHashSource();

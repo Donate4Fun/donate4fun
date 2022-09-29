@@ -1,10 +1,10 @@
 const browser = globalThis.browser || globalThis.chrome;
 
 async function callBackground(request) {
-  console.log("sending to service worker", request);
+  cLog("sending to service worker", request);
   return await new Promise((resolve, reject) => {
     browser.runtime.sendMessage(request, response => {
-      console.log("response from service worker", response);
+      cLog("response from service worker", response);
       if (response === undefined) {
         reject(browser.runtime.lastError);
       } else if (response.status === "error") {
@@ -37,23 +37,23 @@ async function injectContentScript() {
   const tab = await getCurrentTab();
   if (!tab)
     return;
-  console.log("injecting to", tab);
+  cLog("injecting to", tab);
   if (chrome.scripting) {
     return await new Promise((resolve, reject) => {
       function getTitle() {
-        console.log("title", document.title);
+        cLog("title", document.title);
       }
       // Chrome Mv3
       chrome.scripting.executeScript({
         target: {tabId: tab.id},
         files: ["contentscript.js"],
       }, (injectionResults) => {
-        console.log("injection result", injectionResults, chrome.runtime.lastError);
+        cLog("injection result", injectionResults, chrome.runtime.lastError);
         if (chrome.runtime.lastError)
           reject(chrome.runtime.lastError);
         else {
           for (const frameResult of injectionResults)
-            console.log('Frame Title: ' + frameResult.result);
+            cLog('Frame Title: ' + frameResult.result);
           resolve();
         }
       });
@@ -65,32 +65,56 @@ async function injectContentScript() {
   }
 }
 
-const contentScript = new Proxy({}, {
-  get(obj, prop) {
-    return async function () {
-      const tab = await getCurrentTab();
-      const msg = {
-        type: "donate4fun-request",
-        command: prop,
-        args: Array.from(arguments),
-      };
-      console.log("sending to tab", tab, msg);
-      let result;
-      try {
-        result = await browser.tabs.sendMessage(tab.id, msg);
-      } catch (err) {
-        console.log("[dff] error while sending to contentScript, injecting script and retrying", err);
-        await injectContentScript();
-        result = await browser.tabs.sendMessage(tab.id, msg);
-      }
-      console.log("received from tab", tab, result);
-      if (result.status === "error")
-        throw new Error(result.message);
-      else
-        return result.response;
-    };
+async function callTab(tab, func, args) {
+  const msg = {
+    type: "donate4fun-request",
+    command: func,
+    args: args,
+  };
+  cLog("sending to tab", tab, func, args, msg);
+  const result = await browser.tabs.sendMessage(tab.id, msg);
+  cLog("received from tab", tab, result);
+  if (result.status === "error")
+    throw new Error(result.message);
+  else
+    return result.response;
+};
+
+async function isConnectedToTab(tab) {
+  try {
+    if (await callTab(tab, "ping", []) === "pong")
+      return true;
+  } catch (error) {
+    cLog("error while connecting to tab", tab, error);
   }
-});
+  return false;
+}
+
+async function connectToPage() {
+  cLog("connecting to contentScript");
+  const tab = await getCurrentTab();
+  if (!tab)
+    throw new Error("No current tab");
+
+  if (!await isConnectedToTab(tab)) {
+    cLog("error while sending to contentScript, injecting script and retrying", browser.runtime.lastError);
+    await injectContentScript();
+    if (!await isConnectedToTab(tab))
+      throw new Error("Failed to connect to tab: no ping");
+  }
+
+  const proxy = {
+    get(obj, prop) {
+      if (prop === 'then')
+        return Reflect.get(...arguments);
+      else
+        return async function () {
+          return await callTab(tab, prop, Array.from(arguments));
+        };
+    }
+  };
+  return new Proxy({}, proxy);
+}
 
 const pageScript = new Proxy({}, {
   get(obj, prop) {
@@ -100,11 +124,11 @@ const pageScript = new Proxy({}, {
         method: prop,
         args: Array.from(arguments),
       };
-      console.log("sending to pageScript", message);
+      cLog("sending to pageScript", message);
       window.postMessage(message);
       return await new Promise((resolve, reject) => {
         async function handleResponse(event) {
-          console.log("received from pageScript", event);
+          cLog("received from pageScript", event);
           if (event.source !== window)
             return;
           if (event.data.type === "donate4.fun-response") {
@@ -142,7 +166,7 @@ async function handleMessageWrapper(request, sendResponse) {
     sendResponse(await handleMessage(func, request.args));
 }
 
-async function registerHandlers(handlers) {
+function registerHandlers(handlers) {
   browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type !== 'donate4fun-request')
       return false;
@@ -208,10 +232,7 @@ async function subscribe(topic, on_message) {
   return unsubscribe;
 }
 
-function cLog() {
-  arguments[0] = `[donate4fun] ${arguments[0]}`;
-  console.log(...arguments);
-}
+const cLog = console.log.bind(console, '[donate4fun]: %s');
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -235,7 +256,7 @@ async function createPopup(path) {
       resolve(window);
     });
   });
-  console.log("opened popup", window);
+  cLog("opened popup", window);
 }
 
 async function waitElement(id) {
@@ -291,7 +312,7 @@ export {
   worker,
   registerHandlers,
   browser,
-  contentScript,
+  connectToPage,
   getCurrentTab,
   subscribe,
   cLog,
