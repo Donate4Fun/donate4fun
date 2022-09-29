@@ -18,9 +18,9 @@
   <div class="label flex-row align-center width-full gap-8">
     <span>{option.description || key}</span>
     {#if option.default}
-      <span class=action on:click={reset} title="Reset to default">⟲</span>
+      <span class="action reset" on:click={reset} title="Reset to default">⟲</span>
     {:else}
-      <span class=action on:click={() => dispatch("remove")} title="Remove">❌</span>
+      <span class="action remove" on:click={() => dispatch("remove")} title="Remove">🗑</span>
     {/if}
   </div>
   {#if !option.type || option.type === 'text'}
@@ -38,9 +38,14 @@
   font-size: 16px;
   margin-bottom: 12px;
 }
+.remove {
+  font-size: 10px;
+}
+.reset {
+  font-size: 18px;
+}
 span.action {
   cursor: pointer;
-  font-size: 18px;
 }
 input {
   width: 100%;

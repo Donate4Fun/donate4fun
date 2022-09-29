@@ -1,6 +1,6 @@
 <script>
   import Option from "./Option.svelte";
-  import {worker} from "./common.js";
+  import { worker, cLog } from "./common.js";
 
   let options;
   let newKey;
@@ -8,24 +8,34 @@
   async function save() {
     let values = {};
     for (const [key, option] of Object.entries(options))
-      if (option.type === 'section')
+      if (option.type === 'section' || option.type === 'extendable')
         for (const [subKey, subOption] of Object.entries(option.options))
           values[subKey] = subOption.value;
       else
         values[key] = option.value;
+    cLog("saving options", values);
     await worker.saveOptions(values);
   }
 
   async function load() {
-    console.log("loading");
     options = await worker.loadOptions();
-    console.log("options", options);
+    cLog("options", options);
   }
   
   function addNewKey(option) {
-    option.options[`${option.prefix}${newKey}`] = {
+    cLog("addNewKey", option);
+    option.options[`${option.prefix}${newKey.toLowerCase()}`] = {
       type: "text",
+      description: newKey.toUpperCase(),
     };
+    save();
+    options = options;
+  }
+
+  function removeSubKey(option, subKey) {
+    cLog("removeSubKey", subKey);
+    delete option.options[subKey];
+    save();
     options = options;
   }
 </script>
@@ -35,14 +45,14 @@
   {#await load() then}
   <div class=options>
   {#each Object.values(options) as option}
-    {#if option.type === 'section'}
+    {#if option.type === 'section' || option.type === 'extendable'}
       <details>
         <summary>{option.name}</summary>
         <div class=options>
         {#each Object.entries(option.options) as [subKey, subOption]}
-          <Option on:change={save} on:remove={() => delete option.options[subKey]} bind:option={subOption} key={subKey.replace(option.prefix, '')} />
+          <Option on:change={save} on:remove={() => removeSubKey(option, subKey)} bind:option={subOption} key={subKey.replace(option.prefix, '')} />
         {/each}
-        {#if option.extendable}
+        {#if option.type === 'extendable'}
           <div class="flex-row">
             <input bind:value={newKey} />
             <button on:click={() => addNewKey(option)}>Add</button>

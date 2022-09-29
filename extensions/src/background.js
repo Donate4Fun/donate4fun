@@ -55,9 +55,8 @@ const Options = {
     description: "Default comment",
   },
   otherCommentLanguages: {
-    type: "section",
+    type: "extendable",
     name: "Default comments by language",
-    extendable: true,
     prefix: "defaultComment_",
     options: {
       defaultComment_ru: {
@@ -99,8 +98,18 @@ const Options = {
 function assignOptionValues(options, values) {
   for (const [key, option] of Object.entries(options))
     if (option.type === 'section')
-      assignOptionValues(option.options, values)
-    else
+      assignOptionValues(option.options, values);
+    else if (option.type === 'extendable') {
+      assignOptionValues(option.options, values);
+      for (const [storedKey, storedValue] of Object.entries(values)) {
+        if (!(storedKey in option.options) && storedKey.startsWith(option.prefix))
+          option.options[storedKey] = {
+            type: "text",
+            description: storedKey.substring(option.prefix.length).toUpperCase(),
+            value: storedValue,
+          };
+      }
+    } else
       option.value = Object.hasOwn(values, key) ? values[key] : option.default;
 }
 
@@ -161,4 +170,3 @@ registerHandlers({
   injectContentScript,
   createPopup,
 });
-
