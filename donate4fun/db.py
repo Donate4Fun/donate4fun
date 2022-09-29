@@ -1,11 +1,11 @@
 import logging
 from uuid import UUID
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy import select, desc, update, Column, TIMESTAMP, String, BigInteger, ForeignKey, func, text, literal
 from sqlalchemy.dialects.postgresql import insert, UUID as Uuid
-from sqlalchemy.orm import sessionmaker, declarative_base, relationship
+from sqlalchemy.orm import sessionmaker, declarative_base, relationship, join
 from sqlalchemy.orm.exc import NoResultFound  # noqa
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy_utils.functions import get_referencing_foreign_keys
@@ -505,3 +505,22 @@ class DbSession:
             .where(YoutubeVideoDb.video_id == video_id)
         )
         return YoutubeVideo.from_orm(resp.scalars().one())
+
+    async def query_recently_donated_donatees(self) -> list[YoutubeChannel]:
+        from_ = datetime.utcnow() - timedelta(days=1)
+        resp = await self.execute(
+            select(
+                YoutubeChannelDb.id,
+                func.max(YoutubeChannelDb.channel_id).label('channel_id'),
+                func.max(YoutubeChannelDb.title).label('title'),
+                func.max(YoutubeChannelDb.thumbnail_url).label('thumbnail_url'),
+                func.sum(DonationDb.amount).label('balance'),
+            ).select_from(
+                join(YoutubeChannelDb, DonationDb, DonationDb.youtube_channel)
+            ).where(
+                DonationDb.paid_at > from_
+            ).group_by(
+                YoutubeChannelDb.id
+            ).limit(20)
+        )
+        return [YoutubeChannel.from_orm(item) for item in resp.fetchall()]

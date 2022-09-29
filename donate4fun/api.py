@@ -494,3 +494,8 @@ async def ownership_check(donator=Depends(get_donator), db=Depends(get_db_sessio
         await db.link_youtube_channel(youtube_channel, donator)
         channels.append(youtube_channel)
     return channels
+
+
+@router.get("/donatee/recently-donated", response_model=list[YoutubeChannel])
+async def recently_donated_donatees(db=Depends(get_db_session)):
+    return await db.query_recently_donated_donatees()

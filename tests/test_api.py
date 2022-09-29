@@ -1,6 +1,6 @@
 import json
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import partial
 from urllib.parse import urlparse, parse_qs, urlunparse
 from contextlib import asynccontextmanager
@@ -381,3 +381,35 @@ async def test_donate_from_balance(
     me_response = await client.get('/api/v1/donator/me')
     check_response(me_response, 200)
     assert me_response.json()['donator']['balance'] == rich_donator.balance - amount
+
+
+async def donate(
+    db_session, donator: Donator, youtube_channel: YoutubeChannel, amount: int, donation_id: UUID, paid_at: datetime,
+):
+    donation: Donation = Donation(
+        id=donation_id,
+        donator=donator,
+        amount=amount,
+        youtube_channel=youtube_channel,
+    )
+    await db_session.create_donation(donation)
+    await db_session.donation_paid(
+        donation_id=donation.id,
+        amount=donation.amount,
+        paid_at=paid_at,
+    )
+
+
+@freeze_time
+async def test_recent_donatees(client, db, paid_donation_fixture, rich_donator, freeze_request_hash_json):
+    async with db.session() as db_session:
+        youtube_channel = YoutubeChannel(
+            id=UUID(int=2), channel_id='0001', title='0001', thumbnail_url='http://0001/img',
+        )
+        await db_session.save_youtube_channel(youtube_channel)
+        await donate(db_session, rich_donator, youtube_channel, 20, UUID(int=2), datetime.now())
+        await donate(db_session, rich_donator, youtube_channel, 30, UUID(int=3), datetime.now())
+        await donate(db_session, rich_donator, youtube_channel, 40, UUID(int=4), datetime.now() - timedelta(days=1, minutes=1))
+
+    response = await client.get("/api/v1/donatee/recently-donated")
+    verify_response(response, 'recently-donated-donatees', 200)
