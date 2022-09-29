@@ -151,7 +151,7 @@ export default [
           staticFile("D.svg"),
           staticFile("Inter.var.woff2"),
           staticFile("global.css"),
-          staticFile("inter.css"),
+          staticFile("defaults.css"),
           staticFile("D-*.png"),
           staticFile("lottie-arrow.json"),
           staticFile("youtube.svg"),

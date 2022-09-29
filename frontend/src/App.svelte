@@ -18,7 +18,7 @@
 
 <svelte:head>
   <link href="/static/global.css" rel="stylesheet">
-  <link href="/static/inter.css" rel="stylesheet">
+  <link href="/static/defaults.css" rel="stylesheet">
   <title>{$title}</title>
 </svelte:head>
 
@@ -43,23 +43,9 @@
   color: #000000;
   margin: 0;
 }
-/* https://stackoverflow.com/a/26140154/1022684 */
-:global(input), :global(textarea), :global(button) {
-  font-family: inherit;
-}
 :global(div#app) {
   display: flex;
   flex-direction: column;
   height: 100vh;
-}
-:global(a) {
-  color: #004EE7;
-  text-decoration: none;
-  font-weight: 700;
-}
-:global(*) {
-  box-sizing: border-box;
-  margin: 0;
-  font-family: "Inter var experimental", "system-ui";
 }
 </style>

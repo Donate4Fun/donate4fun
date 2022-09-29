@@ -58,6 +58,7 @@
       "contentscript.js.map",
       "static/success.png",
       "static/global.css",
+      "static/defaults.css",
       "static/lottie-arrow.json",
       "static/youtube.svg"
     ],

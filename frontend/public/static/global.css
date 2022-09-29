@@ -177,12 +177,16 @@
   grid-column: 2;
 }
 
-/* global defaults */
-* {
-  box-sizing: border-box;
-  font-family: "Inter var experimental", "system-ui";
+/* fonts */
+@font-face {
+  font-family: "Inter var experimental";
+  font-weight: 100 900;
+  font-style: oblique 0deg 10deg;
+  font-display: block;
+  src: url("Inter.var.woff2?v=3.19") format("woff2-variations"), url("Inter.var.woff2?v=3.19") format("woff2");
 }
-p {
-  margin-block-start: 0;
-  margin-block-end: 0;
+@font-face {
+  font-weight: 100 900;
+  font-family: "Montserrat";
+  src: url("montserrat.ttf");
 }

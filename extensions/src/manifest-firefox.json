@@ -28,7 +28,8 @@
         "contentscript.js"
       ],
       "css": [
-        "contentscript.css"
+        "contentscript.css",
+        "static/global.css"
       ],
       "run_at":  "document_end",
       "matches":  [
