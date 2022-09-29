@@ -25,14 +25,14 @@
   });
 
   async function load() {
-    await me.init();
+    await $me.load();
     const params = new URLSearchParams($location.search);
     const return_ = params.get('return');
-    unsubscribe = await api.subscribe(`donator:${$me.donator.id}`, async (token) => {
+    unsubscribe = await api.subscribe("donator:" + $me.donator.id, async (token) => {
       unsubscribe();
       await api.post('update-session', {creds_jwt: token['message']});
-      await me.load();
-      navigate(return_ || `/donator/${$me.donator.id}`);
+      await $me.load();
+      navigate(return_ || "/donator/" + $me.donator.id);
       if ($me.connected)
         notify("Success", `You've successefully connected your wallet`, "success");
       else

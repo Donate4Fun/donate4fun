@@ -18,7 +18,7 @@
   </div>
   <Social class="onlylarge" />
   <div class="right">
-    {#await me.init()}
+    {#await $me.loaded}
       <Loading/>
     {:then}
       <WalletLogin class="connect" />

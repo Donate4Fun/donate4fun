@@ -35,7 +35,7 @@
   })();
 
   async function load() {
-    await me.init();
+    await $me.loaded;
     donator = await api.get(`donator/${donator_id}`);
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has("amount"))

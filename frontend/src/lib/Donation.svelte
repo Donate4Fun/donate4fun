@@ -30,7 +30,7 @@
 </script>
 
 <main>
-{#await me.init()}
+{#await $me.loaded}
   <Loading/>
 {:then}
   <ChannelLogo url={donation.youtube_channel.thumbnail_url} size=72px />

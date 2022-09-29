@@ -24,7 +24,7 @@
     apiOrigin.set(host);
     webOrigin.set(host);
 
-    await me.init();
+    await me.loaded;
   }
 
   function onNavigate(event) {

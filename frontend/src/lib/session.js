@@ -1,37 +1,52 @@
-import { writable, get } from "svelte/store";
-import api from "../lib/api.js";
+import { readable, get } from "svelte/store";
+import api from "$lib/api.js";
+import { storage } from "$lib/storage.js";
 
-
-const { subscribe, update, set } = writable({});
 let loadPromise = null;
 
-async function init() {
-  if (loadPromise === null) {
-    const curr = get(me);
-    if (!('donator' in curr)) {
-      loadPromise = load();
-    }
-  }
-  await loadPromise;
-}
+const obj = {
+  loaded: null,
+  load: null,
+};
 
-async function load() {
-  if (window.webln)
-    console.log("webln detected");
+async function fetchMe() {
   const resp = await api.get("donator/me");
   console.log("Loaded user", resp);
-  const pubkey = resp.donator.lnauth_pubkey;
-  if (pubkey) {
-    resp.shortkey = `@${pubkey.slice(0, 4)}…${pubkey.slice(-4)}`;
-    resp.connected = true;
-  } else {
-    resp.connected = false;
-  }
-  set(resp);
+  return resp;
 }
 
-export const me = {
-  subscribe,
-  init,
-  load,
+function loadFrom(resp, set) {
+  storage.me = resp;
+  obj.donator = resp.donator;
+  obj.youtube_channels = resp.youtube_channels;
+  const pubkey = obj.donator.lnauth_pubkey;
+  if (pubkey) {
+    obj.shortkey = `@${pubkey.slice(0, 4)}…${pubkey.slice(-4)}`;
+    obj.connected = true;
+  } else {
+    obj.connected = false;
+  }
+
+  obj.load = async () => {
+    obj.loaded = new Promise(async (resolve) => {
+      loadFrom(await fetchMe(), set);
+      resolve();
+    });
+    set(obj);
+    await obj.loaded;
+  };
+  set(obj);
 }
+
+export const me = readable(obj, function start(set) {
+  obj.loaded = new Promise(async (resolve) => {
+    if (!storage.me) {
+      loadFrom(await fetchMe(), set);
+    } else {
+      loadFrom(storage.me, set);
+    }
+    resolve();
+  });
+  set(obj);
+  return function stop() {};
+});

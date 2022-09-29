@@ -23,7 +23,7 @@
 
   async function load() {
     if (donator_id === $me.donator?.id) {
-      await me.load();
+      await $me.load();
       donator = $me.donator;
     } else {
       donator = await api.get(`donator/${donator_id}`)

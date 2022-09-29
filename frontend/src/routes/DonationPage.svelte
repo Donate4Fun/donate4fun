@@ -19,7 +19,7 @@
   let target;
 
   async function load() {
-    await me.init();
+    await $me.loaded;
     const state_donation = window.history.state;
     if (state_donation && state_donation.id === donation_id) {
       donation = state_donation;

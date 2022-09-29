@@ -36,7 +36,7 @@
     showSuccess = false;
     amount = null;
     try {
-      await me.init()
+      await $me.loaded
       youtube_channel = await api.get(`youtube-channel/${channel_id}`);
       $title = `Claim donations for ${youtube_channel.title} [${youtube_channel.id}]`
       balance = youtube_channel.balance;
