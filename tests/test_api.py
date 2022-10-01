@@ -15,7 +15,7 @@ from lnurl.helpers import _lnurl_decode
 from donate4fun.api import DonateRequest, DonateResponse, WithdrawResponse, LnurlWithdrawResponse
 from donate4fun.lnd import monitor_invoices, LndClient, Invoice
 from donate4fun.settings import LndSettings
-from donate4fun.models import Donation, YoutubeChannel, Donator
+from donate4fun.models import Donation, YoutubeChannel, Donator, SubscribeEmailRequest
 from donate4fun.db import Notification
 
 from tests.test_util import verify_fixture, verify_response, check_response, freeze_time
@@ -413,3 +413,10 @@ async def test_recent_donatees(client, db, paid_donation_fixture, rich_donator, 
 
     response = await client.get("/api/v1/donatee/recently-donated")
     verify_response(response, 'recently-donated-donatees', 200)
+
+
+@freeze_time
+async def test_subscribe_email(client, db):
+    response = await client.post("/api/v1/subscribe-email", json=SubscribeEmailRequest(email="me@example.com").dict())
+    check_response(response)
+    assert response.json() != None  # noqa

@@ -23,7 +23,7 @@ from rollbar.contrib.fastapi.routing import RollbarLoggingRoute
 from .core import get_db_session, get_lnd, get_db, get_pubsub
 from .models import (
     Donation, Donator, Invoice, DonateResponse, DonateRequest, YoutubeChannelRequest, YoutubeChannel, YoutubeVideo,
-    WithdrawalToken, BaseModel, Notification, Credentials,
+    WithdrawalToken, BaseModel, Notification, Credentials, SubscribeEmailRequest,
 )
 from .types import ValidationError, RequestHash, PaymentRequest
 from .youtube import YoutubeDonatee, ChannelInfo, fetch_user_channel, validate_target, find_comment, fetch_channel
@@ -498,4 +498,9 @@ async def ownership_check(donator=Depends(get_donator), db=Depends(get_db_sessio
 
 @router.get("/donatee/recently-donated", response_model=list[YoutubeChannel])
 async def recently_donated_donatees(db=Depends(get_db_session)):
-    return await db.query_recently_donated_donatees()
+    return await db.query_recently_donated_donatees(limit=20)
+
+
+@router.post("/subscribe-email", response_model=UUID | None)
+async def subscribe_email(request: SubscribeEmailRequest, db=Depends(get_db_session)):
+    return await db.save_email(request.email)

@@ -103,6 +103,14 @@ class WithdrawalDb(Base):
     youtube_channel = relationship(YoutubeChannelDb, lazy='joined')
 
 
+class EmailNotificationDb(Base):
+    __tablename__ = 'email_notification'
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4())
+    email = Column(String, unique=True)
+    created_at = Column(TIMESTAMP, nullable=False)
+
+
 Base.registry.configure()  # Create backrefs
 
 
@@ -120,6 +128,10 @@ class Database:
                 await conn.execute(text(
                     f'ALTER TABLE {table_name} DROP CONSTRAINT IF EXISTS {table_name}_{foreign_key.parent.key}_fkey'
                 ))
+
+    async def create_table(self, tablename: str):
+        async with self.engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all, tables=[Base.metadata.tables[tablename]])
 
     async def execute(self, query: str):
         async with self.engine.connect() as connection:
@@ -506,8 +518,7 @@ class DbSession:
         )
         return YoutubeVideo.from_orm(resp.scalars().one())
 
-    async def query_recently_donated_donatees(self) -> list[YoutubeChannel]:
-        from_ = datetime.utcnow() - timedelta(days=1)
+    async def query_recently_donated_donatees(self, limit=20, limit_days=7) -> list[YoutubeChannel]:
         resp = await self.execute(
             select(
                 YoutubeChannelDb.id,
@@ -518,9 +529,23 @@ class DbSession:
             ).select_from(
                 join(YoutubeChannelDb, DonationDb, DonationDb.youtube_channel)
             ).where(
-                DonationDb.paid_at > from_
+                DonationDb.paid_at > datetime.utcnow() - timedelta(days=limit_days)
             ).group_by(
                 YoutubeChannelDb.id
-            ).limit(20)
+            ).order_by(
+                desc('balance')
+            ).limit(limit)
         )
         return [YoutubeChannel.from_orm(item) for item in resp.fetchall()]
+
+    async def save_email(self, email: str) -> UUID | None:
+        resp = await self.execute(
+            insert(EmailNotificationDb)
+            .values(
+                email=email,
+                created_at=datetime.utcnow(),
+            )
+            .on_conflict_do_nothing()
+            .returning(EmailNotificationDb.id)
+        )
+        return resp.scalar()

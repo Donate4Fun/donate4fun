@@ -5,7 +5,7 @@ from typing import Any
 import json
 
 import jwt
-from pydantic import BaseModel as PydanticBaseModel, validator, HttpUrl, Field, root_validator
+from pydantic import BaseModel as PydanticBaseModel, validator, HttpUrl, Field, root_validator, EmailStr
 from funkybob import UniqueRandomNameGenerator
 from multiavatar.multiavatar import multiavatar
 
@@ -171,3 +171,7 @@ class Notification(BaseModel):
 class Credentials(BaseModel):
     donator_id: UUID
     lnauth_pubkey: str | None
+
+
+class SubscribeEmailRequest(BaseModel):
+    email: EmailStr

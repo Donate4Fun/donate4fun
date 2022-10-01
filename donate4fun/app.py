@@ -107,14 +107,21 @@ async def main():
     commands = dict(
         serve=serve,
         createdb=create_db,
+        createtable=create_table,
     )
-    await commands[command]()
+    await commands[command](*sys.argv[2:])
 
 
 async def create_db():
     async with load_settings() as settings:
         db = Database(settings.db)
         await db.create_tables()
+
+
+async def create_table(tablename: str):
+    async with load_settings() as settings:
+        db = Database(settings.db)
+        await db.create_table(tablename)
 
 
 async def serve():
