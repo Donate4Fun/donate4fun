@@ -36,10 +36,12 @@ spec:
           httpGet:
             path: /api/v1/status
             port: http-backend
+          timeoutSeconds: 3
         readinessProbe:
           httpGet:
             path: /api/v1/status
             port: http-backend
+          timeoutSeconds: 3
         resources:
           {{- toYaml .Values.backend.resources | nindent 10 }}
         volumeMounts:
