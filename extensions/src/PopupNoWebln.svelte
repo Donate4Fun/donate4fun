@@ -8,7 +8,6 @@
   export let amount;
   export let historySource;
   const navigate = useNavigate();
-  const balance = get(me).donator.balance || 0;
 
   function onClose() {
     const state = historySource.history.state;
@@ -20,6 +19,7 @@
   }
 </script>
 
+{#await me.loaded}
 <section class="popup flex-column">
   <Button
     on:click={onClose}
@@ -57,7 +57,7 @@
     <Button
       --height=100%
       target=_blank
-      link="{$webOrigin}/fulfill/{$me.donator.id}?amount={amount - balance + 1000}"
+      link="{$webOrigin}/fulfill/{$me.donator.id}?amount={amount - ($me.donator.balance || 0) + 1000}"
       class=white
       style="
         grid-row: fulfill;
@@ -65,6 +65,7 @@
     >Fulfill your balance</Button>
   </div>
 </section>
+{/await}
 
 <style>
 section {

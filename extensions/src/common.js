@@ -1,20 +1,15 @@
-const browser = globalThis.browser || globalThis.chrome;
+import browser from "webextension-polyfill";
+import cLog from "./log.js";
 
 async function callBackground(request) {
   cLog("sending to service worker", request);
-  return await new Promise((resolve, reject) => {
-    browser.runtime.sendMessage(request, response => {
-      cLog("response from service worker", response);
-      if (response === undefined) {
-        reject(browser.runtime.lastError);
-      } else if (response.status === "error") {
-        // TODO: use something like serialize-error
-        reject(new Error(response.error));
-      } else {
-        resolve(response.response);
-      }
-    });
-  });
+  const response = await browser.runtime.sendMessage(request);
+  cLog("received from service worker", response);
+  if (response === undefined)
+    throw browser.runtime.lastError;
+  if (response.status === "error")
+    throw new Error(response.error);
+  return response.response;
 }
 
 const worker = new Proxy({}, {
@@ -27,38 +22,35 @@ const worker = new Proxy({}, {
 
 async function getCurrentTab() {
   const queryOptions = { active: true, lastFocusedWindow: true };
-  // `tab` will either be a `tabs.Tab` instance or `undefined`.
-  // NOTE: chrome.tabs.query doesn't work here - it returns undefined
   const [tab] = await browser.tabs.query(queryOptions);
   return tab;
 }
 
-async function injectContentScript() {
-  const tab = await getCurrentTab();
-  if (!tab)
-    return;
-  cLog("injecting to", tab);
-  if (chrome.scripting) {
-    return await new Promise((resolve, reject) => {
+function isSupportedPage(tab) {
+  return tab?.url?.match('^https\:\/\/(www\.)?youtube\.com');
+}
+
+async function injectContentScript(tab) {
+  if (browser.scripting) {
+    cLog("injecting content script using browser.scripting", tab);
       function getTitle() {
         cLog("title", document.title);
       }
-      // Chrome Mv3
-      chrome.scripting.executeScript({
+      const manifest = browser.runtime.getManifest();
+      const contentScript = manifest.content_scripts[0];
+      await browser.scripting.insertCSS({
         target: {tabId: tab.id},
-        files: ["contentscript.js"],
-      }, (injectionResults) => {
-        cLog("injection result", injectionResults, chrome.runtime.lastError);
-        if (chrome.runtime.lastError)
-          reject(chrome.runtime.lastError);
-        else {
-          for (const frameResult of injectionResults)
-            cLog('Frame Title: ' + frameResult.result);
-          resolve();
-        }
+        files: contentScript.css,
       });
-    });
+      const injectionResults = await browser.scripting.executeScript({
+        target: {tabId: tab.id},
+        files: contentScript.js,
+      });
+      cLog("injection results", injectionResults, chrome.runtime.lastError);
+      if (chrome.runtime.lastError)
+        throw chrome.runtime.lastError;
   } else {
+    cLog("injecting content script using browser.tabs", tab);
     await browser.tabs.executeScript({
       file: ['common.js'],
     });
@@ -90,15 +82,24 @@ async function isConnectedToTab(tab) {
   return false;
 }
 
+let injectionPromise;
+
 async function connectToPage() {
   cLog("connecting to contentScript");
   const tab = await getCurrentTab();
   if (!tab)
     throw new Error("No current tab");
 
+  if (!isSupportedPage(tab))
+    throw new Error("Page is not supported");
+
   if (!await isConnectedToTab(tab)) {
     cLog("error while sending to contentScript, injecting script and retrying", browser.runtime.lastError);
-    await injectContentScript();
+    if (!injectionPromise)
+      injectionPromise = injectContentScript(tab);
+    await injectionPromise;
+    injectionPromise = null;
+    cLog("content script injected, retrying");
     if (!await isConnectedToTab(tab))
       throw new Error("Failed to connect to tab: no ping");
   }
@@ -167,7 +168,7 @@ async function handleMessageWrapper(request, sendResponse) {
 }
 
 function registerHandlers(handlers) {
-  browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  browser.runtime.onMessage.addListener((request, sender) => {
     if (request.type !== 'donate4fun-request')
       return false;
     const handler = handlers[request.command];
@@ -175,8 +176,7 @@ function registerHandlers(handlers) {
       console.error(`Unexpected command ${request.command}`);
       return false;
     } else {
-      handleMessage(handler, request.args).then(sendResponse);
-      return true;
+      return handleMessage(handler, request.args);
     }
   });
 }
@@ -232,8 +232,6 @@ async function subscribe(topic, on_message) {
   return unsubscribe;
 }
 
-const cLog = console.log.bind(console, '[donate4fun]: %s');
-
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -245,16 +243,12 @@ function isTest() {
 
 async function createPopup(path) {
   const baseUrl = browser.runtime.getURL('popup.html');
-  const window = await new Promise((resolve, reject) => {
-    browser.windows.create({
-      focused: true,
-      url: `${baseUrl}#${path}`,
-      type: "popup",
-      width: 446,  // must match popup.html size
-      height: 600,
-    }, (window) => {
-      resolve(window);
-    });
+  const window = await browser.windows.create({
+    focused: true,
+    url: `${baseUrl}#${path}`,
+    type: "popup",
+    width: 446,  // must match popup.html size
+    height: 600,
   });
   cLog("opened popup", window);
 }
@@ -315,7 +309,6 @@ export {
   connectToPage,
   getCurrentTab,
   subscribe,
-  cLog,
   sleep,
   isTest,
   pageScript,

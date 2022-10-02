@@ -1,7 +1,8 @@
 <script>
   import { useNavigate } from "svelte-navigator";
   import PopupSection from "./PopupSection.svelte";
-  import {  worker, connectToPage, browser, subscribe, cLog } from "./common.js";
+  import {  worker, connectToPage, browser, subscribe } from "./common.js";
+  import cLog from "./log.js";
   import Button from "$lib/Button.svelte";
   import Input from "$lib/Input.svelte";
   import FiatAmount from "$lib/FiatAmount.svelte";

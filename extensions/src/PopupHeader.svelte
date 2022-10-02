@@ -13,7 +13,8 @@
   import MeNamePubkey from "$lib/MeNamePubkey.svelte";
   import MeBalance from "$lib/MeBalance.svelte";
   import DonateYoutube from "./DonateYoutube.svelte";
-  import {worker, browser, connectToPage, createPopup} from "./common.js";
+  import { worker, browser, connectToPage, createPopup, getCurrentTab } from "./common.js";
+  import cLog from "./log.js";
 
   let balance;
   let popupVisible = false;
@@ -29,7 +30,7 @@
     try {
       contentScript = await connectToPage();
     } catch (error) {
-      console.log("no content script");
+      cLog("could not connect to page", error);
     }
   }
 </script>
@@ -65,7 +66,7 @@
               <Fa icon={faComment} size=2x color={iconColor} />
               <span>Show comment popup</span>
             </div>
-            <div on:click={() => worker.injectContentScript()}>
+            <div on:click={async () => worker.injectContentScript(await getCurrentTab())}>
               <Fa icon={faSyringe} size=2x color={iconColor} />
               <span>Inject script</span>
             </div>

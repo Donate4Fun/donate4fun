@@ -12,10 +12,14 @@
   "permissions": [
     "storage",
     "scripting",
-    "activeTab"
+    "activeTab",
+    "tabs"
   ],
   "host_permissions": [
-    "https://*.donate4.fun/*"
+    "https://*.donate4.fun/*",
+    "https://youtube.com/*",
+    "https://www.youtube.com/*",
+    "https://m.youtube.com/*"
   ],
   "background": {
     "service_worker": "background.js",

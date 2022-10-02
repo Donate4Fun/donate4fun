@@ -35,22 +35,23 @@ function serve() {
   };
 }
 
-function makeOutput(browser) {
+function makeOutput(browser, footer) {
   return {
     sourcemap: dev,
     format: "iife",
     name: "app",
     dir: `../${browser}`,
     assetFileNames: "[name][extname]",
+    footer: footer,
   }
 }
 
-function makeConfig(name) {
+function makeConfig(name, footer) {
   return {
     input: `${name}.js`,
     output: [
-      makeOutput('chrome'),
-      makeOutput('firefox'),
+      makeOutput('chrome', footer),
+      makeOutput('firefox', footer),
     ],
     plugins: [
       svelte({
@@ -87,6 +88,18 @@ function makeConfig(name) {
           { src: `${name}.html`, dest: ["../chrome", "../firefox"] },
         ],
       }),
+      /*{
+        writeBundle(options, bundle){
+          if (bundle.fileName === 'contentscript.js")
+          for (const [fileName, chunkOrAsset] of Object.entries(bundle)) {
+            console.log("writeBundle", fileName, chunkOrAsset);
+            //test for file you want to modify
+            //const data = fs.readFileSync(fileName, {encoding:'utf8'});
+            //data.replace(/^[^\n]*\n/,'');
+            //fs.writeFileSync(...)
+          }
+        },
+      },*/
     ],
     watch: {
       clearScreen: false,
@@ -134,7 +147,7 @@ export default [
   makeConfig('popup'),
   makeConfig('window'),
   makeConfig('background'),
-  makeConfig('contentscript'),
+  makeConfig('contentscript', "app;"), // we need to return pormise from contentscript.js to wait in scripting.executeScript
   makeConfig('pagescript'),
   {
     input: "./empty.js",

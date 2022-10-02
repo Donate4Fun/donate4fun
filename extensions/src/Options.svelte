@@ -1,6 +1,7 @@
 <script>
   import Option from "./Option.svelte";
-  import { worker, cLog } from "./common.js";
+  import { worker } from "./common.js";
+  import cLog from "./log.js";
 
   let options;
   let newKey;

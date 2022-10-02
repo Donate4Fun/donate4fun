@@ -1,7 +1,8 @@
 <script>
   import {onMount, onDestroy, tick} from 'svelte';
   import {Confetti} from "svelte-confetti";
-  import {worker, subscribe, pageScript, cLog, sleep, donate} from "./common.js";
+  import {worker, subscribe, pageScript, sleep, donate} from "./common.js";
+  import cLog from "./log.js";
   import {getVideoId, postComment} from "./youtube.js";
   import CommentTip from "./CommentTip.svelte";
 

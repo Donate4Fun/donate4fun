@@ -4,8 +4,8 @@ import {
   getCurrentTab,
   injectContentScript,
   createPopup,
-  cLog,
 } from "./common.js";
+import cLog from "./log.js";
 
 async function handleFetch(method, path, data) {
   let response;
@@ -159,6 +159,13 @@ function getDefaults() {
 async function resetConfig() {
   await chrome.storage.sync.set(getDefaults());
 }
+
+browser.runtime.onInstalled.addListener(async (details) => {
+  cLog("onInstalled", details);
+  for (const contentScript of browser.runtime.getManifest().content_scripts)
+    for (const tab of await browser.tabs.query({url: contentScript.matches}))
+      injectContentScript(tab);
+});
 
 registerHandlers({
   fetch: handleFetch,

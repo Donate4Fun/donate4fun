@@ -1,7 +1,6 @@
 import {
   worker,
   subscribe,
-  cLog,
   sleep,
   pageScript,
   registerHandlers,
@@ -16,8 +15,9 @@ import {
   getVideoId,
   getChannelTitle,
   getChannelLogo,
+  isLoaded,
 } from "./youtube.js";
-
+import cLog from "./log.js";
 import Bolt from "./Bolt.svelte";
 
 const buttonId = "donate4fun-button";
@@ -52,6 +52,12 @@ async function init() {
     bolt?.$destroy();
     bolt = null;
   });
+  // Try to load instantly if extension was loaded while youtube was active
+  if (isLoaded()) {
+    cLog("Youtube is already loaded, patching");
+    await patchButtons();
+  }
+  return "123";  // for easier debugging
 }
 
 async function load(evt) {
@@ -62,20 +68,20 @@ async function load(evt) {
 
 async function patchButtons() {
   if (!await worker.getConfig("enableBoltButton")) return;
-  const buttons = getButtons();
-  cLog("buttons", buttons);
-  if (document.getElementById(buttonId) === null) {
-    cLog("creating button");
-    // Donate button could be already created after user navigated back to youtube video
-    bolt = new Bolt({
-      target: buttons,
-      props: {
-      },
-      anchor: buttons.firstElementChild,
-    });
-  } else {
-    cLog("button is already created");
+  // Donate button could be already created after user navigated back to youtube video
+  const button = document.getElementById(buttonId);
+  if (button) {
+    cLog("button is already created, destroying");
+    button.remove();
   }
+  const buttons = getButtons();
+  cLog("creating button", buttons);
+  bolt = new Bolt({
+    target: buttons,
+    props: {
+    },
+    anchor: buttons.firstElementChild,
+  });
 }
 
 async function injectPageScript() {
@@ -96,4 +102,5 @@ async function injectPageScript() {
   cLog("page script responded");
 }
 
-init();
+const result = init();
+export default result;  // return promise for executeScript to wait

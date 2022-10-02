@@ -1,4 +1,4 @@
-import { cLog } from "./common.js";
+import cLog from "./log.js";
 
 if (!window.donate4funPageScriptLoaded) {
   window.donate4funPageScriptLoaded = true;

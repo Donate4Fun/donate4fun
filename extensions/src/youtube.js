@@ -1,4 +1,5 @@
-import {cLog, worker, waitElement, sleep, pageScript} from "./common.js";
+import {worker, waitElement, sleep, pageScript} from "./common.js";
+import cLog from "./log.js";
 
 function isInViewport(element) {
   const rect = element.getBoundingClientRect();
@@ -13,16 +14,14 @@ function isInViewport(element) {
 }
 
 function getButtons_shorts() {
-  let elements = document.querySelectorAll(
+  const elements = document.querySelectorAll(
     isMobile()
     ? "ytm-like-button-renderer"
     : "#like-button > ytd-like-button-renderer"
   );
-  for (let element of elements) {
-    if (isInViewport(element)) {
+  for (let element of elements)
+    if (isInViewport(element))
       return element;
-    }
-  }
 }
 
 function getButtons_mobile() {
@@ -77,7 +76,7 @@ function isShorts() {
 }
 
 function isMobile() {
-  return location.hostname == "m.youtube.com";
+  return location.hostname === "m.youtube.com";
 }
 
 function getButtons() {
@@ -103,11 +102,15 @@ async function waitLoaded(checkInterval) {
     const offset_parent = getButtons();//?.offsetParent;
     const is_video_loaded = isVideoLoaded();
     cLog(`Checking for load isShorts=${is_shorts} getButtons=${offset_parent} isVideoLoaded=${is_video_loaded}`);
-    if (is_shorts || (offset_parent && is_video_loaded)) {
+    if (is_shorts || (offset_parent && is_video_loaded))
       return true;
-    }
-    await sleep(100);
+    await sleep(checkInterval);
   }
+}
+
+function isLoaded() {
+    const offset_parent = getButtons();//?.offsetParent;
+    return isShorts() || (offset_parent && isVideoLoaded());
 }
 
 function isCommentEnabled() {
@@ -177,4 +180,5 @@ export {
   getButtons,
   postComment,
   isCommentEnabled,
+  isLoaded,
 }
