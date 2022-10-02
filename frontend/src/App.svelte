@@ -23,7 +23,7 @@
   <title>{$title}</title>
 </svelte:head>
 
-<Router url={url}>
+<Router url={url} primary={false}>
   <Route path="donation/:donation_id" component="{DonationPage}" />
   <Route path="donator/:donator_id" component="{DonatorPage}" />
   <Route path="youtube/:channel_id" component="{YoutubeChannelPage}" />
