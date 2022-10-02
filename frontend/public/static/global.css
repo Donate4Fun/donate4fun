@@ -13,6 +13,9 @@
 .flex-grow {
   flex-grow: 1;
 }
+.flex-wrap {
+  flex-wrap: wrap;
+}
 .gap-3 {
   gap: 3px;
 }
@@ -31,14 +34,23 @@
 .gap-16 {
   gap: 16px;
 }
+.gap-18 {
+  gap: 18px;
+}
 .gap-20 {
   gap: 20px;
+}
+.gap-24 {
+  gap: 24px;
 }
 .gap-28 {
   gap: 28px;
 }
 .gap-41 {
   gap: 41px;
+}
+.gap-44 {
+  gap: 44px;
 }
 .align-center {
   align-items: center;

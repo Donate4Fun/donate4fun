@@ -23,7 +23,7 @@ function handle_response(response) {
     console.error(`Server error in ${response.request.responseURL}`, response);
     let message = response.data;
     if (typeof message !== "string")
-      message = message.message || message.error || JSON.stringify(message);
+      message = message.message || message.error || message.detail[0]?.msg || JSON.stringify(message);
     notify("Server Error", message, "error");
     throw new ApiError(response);
   }

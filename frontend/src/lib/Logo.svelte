@@ -1,6 +1,6 @@
 <div class="parent">
   <img class=bolt src="/static/ln-icon.svg" alt="bolt">
-  <img class=text src="/static/D.svg" alt="D">
+  <img class=text src="/static/D.svg" alt="D" width=28>
   <div class=text>
     <span class="stroke"><span>Donate4Fun</span></span>
     <span class="gradient"><span>Donate4Fun</span></span>

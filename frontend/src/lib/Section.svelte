@@ -1,4 +1,4 @@
-<section {...$$restProps}>
+<section class={$$restProps.class}>
   <slot />
 </section>
 <style>
@@ -16,5 +16,7 @@ section {
 
   box-sizing: border-box;
   padding: var(--padding);
+  width: fit-content;
+  height: fit-content;
 }
 </style>

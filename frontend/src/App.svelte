@@ -11,6 +11,7 @@
   import YoutubeProvePage from "./routes/YoutubeProvePage.svelte";
   import LoginPage from "./routes/LoginPage.svelte";
   import Test from "./routes/Test.svelte";
+  import Landing from "./routes/Landing.svelte";
   import title from "./lib/title.js";
 
   const url = "";
@@ -32,7 +33,8 @@
   <Route path="fulfill/:donator_id" component="{FulfillPage}" />
   <Route path="prove/youtube" component={YoutubeProvePage} />
   <Route path="login" component={LoginPage} />
-  <Route path="/" component={Main} />
+  <Route path="main" component={Main} />
+  <Route path="/" component={Landing} />
   <Route path="/test" component={Test} />
 </Router>
 
