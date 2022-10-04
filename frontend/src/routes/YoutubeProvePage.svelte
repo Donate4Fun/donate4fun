@@ -1,5 +1,4 @@
 <script>
-  import Page from "../lib/Page.svelte";
   import Section from "../lib/Section.svelte";
   import Editable from "../lib/Editable.svelte";
   import CopyButton from "../lib/CopyButton.svelte";
@@ -36,65 +35,64 @@
 
   title.set("Link YouTube channel");
 </script>
-<Page>
-  <Section>
-    <main>
-      <h1>Prove that you own YouTube channel</h1>
-      <ol>
-        <li>
-          <summary>
-            <div class=index></div>
-            <span>Copy this comment</span>
-          </summary>
-          <div>
-            {#await loadProveMessage()}
-            <Editable />
-            {:then}
-            <Editable editable={false} message={message} />
-            {#if window.isSecureContext}
-            <CopyButton content={message} />
-            {/if}
-            {/await}
+
+<Section>
+  <main>
+    <h1>Prove that you own YouTube channel</h1>
+    <ol>
+      <li>
+        <summary>
+          <div class=index></div>
+          <span>Copy this comment</span>
+        </summary>
+        <div>
+          {#await loadProveMessage()}
+          <Editable />
+          {:then}
+          <Editable editable={false} message={message} />
+          {#if window.isSecureContext}
+          <CopyButton content={message} />
+          {/if}
+          {/await}
+        </div>
+      </li>
+      <li>
+        <summary>
+          <div class=index></div>
+          <span>Place it under <a href="https://youtu.be/J2Tz2jGQjHE" target=_blank>this video</a> using the account you want to prove ownership for.</span>
+        </summary>
+      </li>
+      <li>
+        <summary>
+          <div class=index></div>
+          <div class=press>
+            <span>Press</span>
+            <Button on:click={check} class=white>
+              {#if spin}
+              <Spinner --size=20px --width=3px />
+              {/if}
+              <span class=check>Check</span>
+            </Button>
           </div>
-        </li>
-        <li>
-          <summary>
-            <div class=index></div>
-            <span>Place it under <a href="https://youtu.be/J2Tz2jGQjHE" target=_blank>this video</a> using the account you want to prove ownership for.</span>
-          </summary>
-        </li>
-        <li>
-          <summary>
-            <div class=index></div>
-            <div class=press>
-              <span>Press</span>
-              <Button on:click={check} class=white>
-                {#if spin}
-                <Spinner --size=20px --width=3px />
-                {/if}
-                <span class=check>Check</span>
-              </Button>
-            </div>
-          </summary>
-        </li>
-      </ol>
-      <div>
-      {#if proved_channels === null}
-        <!-- should be empty -->
-      {:else if proved_channels.length}
-        <h2>Youtube channel successfully linked</h2>
-        <LinkedYoutubeChannels youtube_channels={proved_channels} />
-      {:else}
-        No comments found, try again.
-      {/if}
-      </div>
-      <Separator>OR</Separator>
-      <Button on:click={useOAuth}>Use Google OAuth instead</Button>
-      <Infobox>Until this app is verified by Google you will see a warning message. It's OK to bypass it. <a href="https://donate4fun.notion.site/How-to-prove-ownership-of-your-YouTube-channel-c514b950fef74ef8a5886af2926f9392">More info</a></Infobox>
-      <Button class="grey" on:click={() => navigate(-1)}>Cancel</Button>
-    </main>
-  </Section>
-</Page>
+        </summary>
+      </li>
+    </ol>
+    <div>
+    {#if proved_channels === null}
+      <!-- should be empty -->
+    {:else if proved_channels.length}
+      <h2>Youtube channel successfully linked</h2>
+      <LinkedYoutubeChannels youtube_channels={proved_channels} />
+    {:else}
+      No comments found, try again.
+    {/if}
+    </div>
+    <Separator>OR</Separator>
+    <Button on:click={useOAuth}>Use Google OAuth instead</Button>
+    <Infobox>Until this app is verified by Google you will see a warning message. It's OK to bypass it. <a href="https://donate4fun.notion.site/How-to-prove-ownership-of-your-YouTube-channel-c514b950fef74ef8a5886af2926f9392">More info</a></Infobox>
+    <Button class="grey" on:click={() => navigate(-1)}>Cancel</Button>
+  </main>
+</Section>
 
 <style>
 main {

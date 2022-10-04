@@ -3,7 +3,6 @@
 
   import api from "../lib/api.js";
   import Donate from '../lib/Donate.svelte';
-  import Page from "../lib/Page.svelte";
   import Section from "../lib/Section.svelte";
   import YoutubeChannel from "../lib/YoutubeChannel.svelte";
   import Input from "../lib/Input.svelte";
@@ -55,32 +54,33 @@
   {/await}
 </svelte:head>
 
-<Page>
-  <header>
-    <h1>Donate your favorite blogger</h1>
-    Instant delivery with Lightning network. No KYC.
-  </header>
-  <Section>
-    {#await loadPromise}
-    <Loading />
-    {:then}
-    <form on:submit|preventDefault={donate}>
-      <h1>Donate to <YoutubeChannel channel={youtube_channel} /></h1>
-      <ChannelLogo url={youtube_channel.thumbnail_url} />
-      <div>
-        <span class="i-want">Donate</span>
-        <div class="amount"><Input type=number placeholder="Enter amount" bind:value={amount} min={amountMin} max={amountMax} bind:error={amountError} suffix=sats /></div><FiatAmount bind:amount={amount} class="fiat-amount" />
+<header>
+  <h1>Donate your favorite blogger</h1>
+  Instant delivery with Lightning network. No KYC.
+</header>
+<Section>
+  {#await loadPromise}
+  <Loading />
+  {:then}
+  <form on:submit|preventDefault={donate}>
+    <h1>Donate to <YoutubeChannel channel={youtube_channel} /></h1>
+    <ChannelLogo url={youtube_channel.thumbnail_url} />
+    <div>
+      <span class="i-want">Donate</span>
+      <div class="amount">
+        <Input type=number placeholder="Enter amount" bind:value={amount} min={amountMin} max={amountMax} bind:error={amountError} suffix=sats />
       </div>
-      <Button class="submit" type=submit disabled={!isValid}>
-        {#if spin}
-          <Spinner --size=20px --width=3px />
-        {/if}
-        <span>Donate</span>
-      </Button>
-    </form>
-    {/await}
-  </Section>
-</Page>
+      <FiatAmount bind:amount={amount} class="fiat-amount" />
+    </div>
+    <Button class="submit" type=submit disabled={!isValid}>
+      {#if spin}
+        <Spinner --size=20px --width=3px />
+      {/if}
+      <span>Donate</span>
+    </Button>
+  </form>
+  {/await}
+</Section>
 
 <style>
 header {

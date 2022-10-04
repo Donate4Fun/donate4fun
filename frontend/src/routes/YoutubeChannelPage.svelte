@@ -7,7 +7,6 @@
   import Error from "../lib/Error.svelte";
   import Button from "../lib/Button.svelte";
   import YoutubeChannel from "../lib/YoutubeChannel.svelte";
-  import Page from "../lib/Page.svelte";
   import Section from "../lib/Section.svelte";
   import Infobox from "../lib/Infobox.svelte";
   import ChannelLogo from "../lib/ChannelLogo.svelte";
@@ -55,45 +54,43 @@
   const loadPromise = load();
 </script>
 
-<Page>
-  <Section>
-    <div class="youtube-channel">
-      {#await load()}
-        <Loading />
-      {:then}
-        <h1>Donations to <a href={youtube_channel_url} target=_blank>{youtube_channel.title}</a></h1>
-        <ChannelLogo url={youtube_channel.thumbnail_url} />
-        <div class="controls">
-        {#if balance >= min_withdraw}
-          <div class="available">Available BTC to withdraw: <Amount amount={balance} /></div>
-          {#if $me.youtube_channels.filter(elem => elem.id === channel_id).length > 0}
-            <Button class="withdraw" link='{resolve("withdraw")}'>Withdraw</Button>
-          {:else}
-            <Infobox>You can withdraw donations if the channel belongs to you. Confirm by linking your Youtube channel.</Infobox>
-            <Button on:click={link_youtube}>Link your Youtube channel</Button>
-          {/if}
+<Section>
+  <div class="youtube-channel">
+    {#await load()}
+      <Loading />
+    {:then}
+      <h1>Donations to <a href={youtube_channel_url} target=_blank>{youtube_channel.title}</a></h1>
+      <ChannelLogo url={youtube_channel.thumbnail_url} />
+      <div class="controls">
+      {#if balance >= min_withdraw}
+        <div class="available">Available BTC to withdraw: <Amount amount={balance} /></div>
+        {#if $me.youtube_channels.filter(elem => elem.id === channel_id).length > 0}
+          <Button class="withdraw" link='{resolve("withdraw")}'>Withdraw</Button>
         {:else}
-          <div class="available">Available BTC: <Amount amount={balance} /></div>
-          <Infobox class="red">Minimum amount to withdraw: {min_withdraw} sats</Infobox>
+          <Infobox>You can withdraw donations if the channel belongs to you. Confirm by linking your Youtube channel.</Infobox>
+          <Button on:click={link_youtube}>Link your Youtube channel</Button>
         {/if}
-          <Button class="want-more white" link={resolve("link")}>Want more donations?</Button>
+      {:else}
+        <div class="available">Available BTC: <Amount amount={balance} /></div>
+        <Infobox class="red">Minimum amount to withdraw: {min_withdraw} sats</Infobox>
+      {/if}
+        <Button class="want-more white" link={resolve("link")}>Want more donations?</Button>
+      </div>
+      <div class="table">
+        <div class="head">
+          <div>Name</div><div>Date</div><div>Amount</div>
         </div>
-        <div class="table">
-          <div class="head">
-            <div>Name</div><div>Date</div><div>Amount</div>
-          </div>
-          <div class="body">
-          {#each donations as donation}
-            <Donator user={donation.donator} class="ellipsis"/>
-            <Datetime dt={donation.paid_at} />
-            <Amount amount={donation.amount} />
-          {/each}
-          </div>
+        <div class="body">
+        {#each donations as donation}
+          <Donator user={donation.donator} class="ellipsis"/>
+          <Datetime dt={donation.paid_at} />
+          <Amount amount={donation.amount} />
+        {/each}
         </div>
-      {/await}
-    </div>
-  </Section>
-</Page>
+      </div>
+    {/await}
+  </div>
+</Section>
 
 <style>
 .youtube-channel {

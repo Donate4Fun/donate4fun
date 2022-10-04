@@ -1,5 +1,4 @@
 <script>
-  import Page from "../lib/Page.svelte";
   import Section from "../lib/Section.svelte";
   import Button from "../lib/Button.svelte";
   import CopyButton from "../lib/CopyButton.svelte";
@@ -22,10 +21,9 @@
   }
 </script>
 
-<Page>
-  {#await load()}
+{#await load()}
   <Loading />
-  {:then}
+{:then}
   <Section>
     <div class="youtube-link">
       <h1>Hey! Do you want to get more donations?</h1>
@@ -38,8 +36,7 @@
       <Button class="grey" on:click={() => navigate(-1)}>Close</Button>
     </div>
   </Section>
-  {/await}
-</Page>
+{/await}
 
 <style>
 .youtube-link {

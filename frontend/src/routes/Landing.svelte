@@ -1,6 +1,5 @@
 <script>
   import { useResolve } from "svelte-navigator";
-  import Page from "$lib/Page.svelte";
   import LandingStep from "$lib/LandingStep.svelte";
   import LandingYoutuber from "$lib/LandingYoutuber.svelte";
   import Button from "$lib/Button.svelte";
@@ -30,129 +29,127 @@
   <title>Donate4.Fun • Donate anyone on YouTube with Bitcoin Lightning</title>
 </svelte:head>
 
-<Page>
-  <div class="page">
-    <section class="header" id="main">
-      <h1>One click instant donations with <span class="gradient-light">Bitcoin ⚡ Lightning on Youtube. <span class="gradient-dark">Near zero fees.</span></span></h1>
-      <div class="annotation">
-        <p>🔥Instant delivery and withdraw with</p>
-        <p>Lightning network. No KYC.🔥</p>
-      </div>
-      <div class="only-desktop">
-        <Button --width=300px>Get extension</Button>
-      </div>
-      <form on:submit|preventDefault={submitEmail} class="only-mobile flex-column gap-18">
-        Currently we support only desktop browsers.
-        <Input bind:value={email} placeholder="Add your email" />
-        <Button type=submit>
-          {#if emailAdded === null}
-            Notify me when app is ready
-          {:else if emailAdded === true}
-            You've been subscribed!
-          {:else if emailAdded === false}
-            Already subscribed!
-          {/if}
-        </Button>
-      </form>
-      <video autoplay muted loop src="/static/sample.webm" width=640px />
-    </section>
-    <section id="howto">
-      <h1 class="gradient-light">Easy to donate</h1>
-      <content class="steps">
-        <a href="https://addons.mozilla.org/en-US/firefox/addon/donate4-fun/" target=_blank class="step narrow">
-          <LandingStep number=1 done={isExtensionPresent()}>
-            <img slot=image alt="D" src="/static/extensions.svg">
-            <div slot=text>
-              <p>Get Donate4.Fun</p>
-              <p>browser extension</p>
-            </div>
-          </LandingStep>
-        </a>
-        <a href="https://getalby.com/" target=_blank class="step narrow">
-          <LandingStep number=2 done={isWeblnPresent()}>
-            <img slot=image src="/static/wallet.svg" alt="wallet">
-            <div slot=text>
-              <p>Get a Lightning Wallet</p>
-              <p>if you don’t have it yet</p>
-              <p>And fulfill with satoshis</p>
-            </div>
-          </LandingStep>
-        </a>
-        <a href="https://youtube.com" target=_blank class="step wide">
-          <LandingStep number=3>
-            <img slot=image alt="browser-extension" src="/static/extension-popup.png" height=188>
-            <div slot=text>
-              <p>Go to YouTube and click a ⚡ icon under video or open Donate4fun Google Extension to donate</p>
-            </div>
-          </LandingStep>
-        </a>
-      </content>
-    </section>
-    <section id="donatees">
-      <h1 class="gradient-dark">Top donated</h1>
-      {#await loadRecentDonatees() then}
-        <div class="donatees">
-          <div class="flex-row gap-20">
-            {#each youtubers as youtuber}
-              <LandingYoutuber youtuber={youtuber} />
-            {/each}
-          </div>
-        </div>
-      {/await}
-    </section>
-    <section>
-      <img src="/static/coin.png" alt="bitcoin" width=88 height=88>
-      <h1 class="gradient-light">Want to get your donations?</h1>
-      <Button class="white" --width=300px link={resolve("/prove/youtube")}>Claim here</Button>
-    </section>
-    <div class="flex-row gap-20 justify-center flex-wrap">
-      <Section>
-        <div class="half-box">
-          <h1 class="gradient-dark">FAQ</h1>
-        </div>
-      </Section>
-      <Section>
-        <div class="half-box">
-          <h1 class="gradient-dark">Team</h1>
-          <div class="annotation">
-            <p>Passionate founders. Big dreamers.</p>
-            <p>Proven builders. Ready to change the game.</p>
-          </div>
-          <div class="flex-column gap-44">
-            <Person
-              name="Nikolay Bryskin"
-              title="Founder, developer and creator"
-              photo="/static/nbryskin.jpeg"
-              linkedin="https://linkedin.com/nbryskin"
-              twitter="https://twitter.com/nbryskin"
-              github="https://github.com/nikicat"
-              telegram="https://t.me/nbryskin"
-            />
-            <Person
-              name="Klim Novopashin"
-              title="CO-FOUNDER. Product UX/UI designer"
-              photo="/static/klim.jpeg"
-              linkedin="https://www.linkedin.com/in/klim-nova/"
-              twitter="https://twitter.com/Novaklim1"
-              telegram="https://t.me/Klim_Nova"
-              dribbble="https://dribbble.com/Klim_Nova"
-            />
-          </div>
-        </div>
-      </Section>
+<div class="page">
+  <section class="header" id="main">
+    <h1>One click instant donations with <span class="gradient-light">Bitcoin ⚡ Lightning on Youtube. <span class="gradient-dark">Near zero fees.</span></span></h1>
+    <div class="annotation">
+      <p>🔥Instant delivery and withdraw with</p>
+      <p>Lightning network. No KYC.🔥</p>
     </div>
-    <section>
-      <a href="https://github.com/orgs/Donate4Fun/projects/1" target=_blank>
-        <h1 class="gradient-dark roadmap">Roadmap<sup>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M2 2H22M22 2V22M22 2L2 22" stroke="#004EE7" stroke-width="3" stroke-linejoin="round"/>
-            </svg>
-          </sup>
-        </h1>
+    <div class="only-desktop">
+      <Button --width=300px>Get extension</Button>
+    </div>
+    <form on:submit|preventDefault={submitEmail} class="only-mobile flex-column gap-18">
+      Currently we support only desktop browsers.
+      <Input bind:value={email} placeholder="Add your email" />
+      <Button type=submit>
+        {#if emailAdded === null}
+          Notify me when app is ready
+        {:else if emailAdded === true}
+          You've been subscribed!
+        {:else if emailAdded === false}
+          Already subscribed!
+        {/if}
+      </Button>
+    </form>
+    <video autoplay muted loop src="/static/sample.webm" width=640px />
+  </section>
+  <section id="howto">
+    <h1 class="gradient-light">Easy to donate</h1>
+    <content class="steps">
+      <a href="https://addons.mozilla.org/en-US/firefox/addon/donate4-fun/" target=_blank class="step narrow">
+        <LandingStep number=1 done={isExtensionPresent()}>
+          <img slot=image alt="D" src="/static/extensions.svg">
+          <div slot=text>
+            <p>Get Donate4.Fun</p>
+            <p>browser extension</p>
+          </div>
+        </LandingStep>
       </a>
-    </section>
+      <a href="https://getalby.com/" target=_blank class="step narrow">
+        <LandingStep number=2 done={isWeblnPresent()}>
+          <img slot=image src="/static/wallet.svg" alt="wallet">
+          <div slot=text>
+            <p>Get a Lightning Wallet</p>
+            <p>if you don’t have it yet</p>
+            <p>And fulfill with satoshis</p>
+          </div>
+        </LandingStep>
+      </a>
+      <a href="https://youtube.com" target=_blank class="step wide">
+        <LandingStep number=3>
+          <img slot=image alt="browser-extension" src="/static/extension-popup.png" height=188>
+          <div slot=text>
+            <p>Go to YouTube and click a ⚡ icon under video or open Donate4fun Google Extension to donate</p>
+          </div>
+        </LandingStep>
+      </a>
+    </content>
+  </section>
+  <section id="donatees">
+    <h1 class="gradient-dark">Top donated</h1>
+    {#await loadRecentDonatees() then}
+      <div class="donatees">
+        <div class="flex-row gap-20">
+          {#each youtubers as youtuber}
+            <LandingYoutuber youtuber={youtuber} />
+          {/each}
+        </div>
+      </div>
+    {/await}
+  </section>
+  <section>
+    <img src="/static/coin.png" alt="bitcoin" width=88 height=88>
+    <h1 class="gradient-light">Want to get your donations?</h1>
+    <Button class="white" --width=300px link={resolve("/prove/youtube")}>Claim here</Button>
+  </section>
+  <div class="flex-row gap-20 justify-center flex-wrap">
+    <Section>
+      <div class="half-box">
+        <h1 class="gradient-dark">FAQ</h1>
+      </div>
+    </Section>
+    <Section>
+      <div class="half-box">
+        <h1 class="gradient-dark">Team</h1>
+        <div class="annotation">
+          <p>Passionate founders. Big dreamers.</p>
+          <p>Proven builders. Ready to change the game.</p>
+        </div>
+        <div class="flex-column gap-44">
+          <Person
+            name="Nikolay Bryskin"
+            title="Founder, developer and creator"
+            photo="/static/nbryskin.jpeg"
+            linkedin="https://linkedin.com/nbryskin"
+            twitter="https://twitter.com/nbryskin"
+            github="https://github.com/nikicat"
+            telegram="https://t.me/nbryskin"
+          />
+          <Person
+            name="Klim Novopashin"
+            title="CO-FOUNDER. Product UX/UI designer"
+            photo="/static/klim.jpeg"
+            linkedin="https://www.linkedin.com/in/klim-nova/"
+            twitter="https://twitter.com/Novaklim1"
+            telegram="https://t.me/Klim_Nova"
+            dribbble="https://dribbble.com/Klim_Nova"
+          />
+        </div>
+      </div>
+    </Section>
   </div>
-</Page>
+  <section>
+    <a href="https://github.com/orgs/Donate4Fun/projects/1" target=_blank>
+      <h1 class="gradient-dark roadmap">Roadmap<sup>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 2H22M22 2V22M22 2L2 22" stroke="#004EE7" stroke-width="3" stroke-linejoin="round"/>
+          </svg>
+        </sup>
+      </h1>
+    </a>
+  </section>
+</div>
 
 <style>
 .page {

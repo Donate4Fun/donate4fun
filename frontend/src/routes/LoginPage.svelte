@@ -1,10 +1,8 @@
 <script>
   import {onDestroy} from "svelte";
-  import { useLocation } from "svelte-navigator";
   import Lnurl from "../lib/Lnurl.svelte";
   import Button from "../lib/Button.svelte";
   import QRCode from "../lib/QRCode.svelte";
-  import Page from "../lib/Page.svelte";
   import Section from "../lib/Section.svelte";
   import Loading from "../lib/Loading.svelte";
   import Spinner from "../lib/Spinner.svelte";
@@ -47,36 +45,34 @@
   }
 </script>
 
-<Page>
-  {#await load()}
-    <Loading />
-  {:then}
-    <div>
-      <Section>
-        <h1>
+{#await load()}
+  <Loading />
+{:then}
+  <div>
+    <Section>
+      <h1>
         {#if $me.donator.lnauth_pubkey}
-        Change wallet
+          Change wallet
         {:else}
-        Connect wallet
+          Connect wallet
         {/if}
-        </h1>
-        <a href="lightning:{lnurl}" class="qrcode"><QRCode value={lnurl} /></a>
-        <div class="buttons">
-          <a href="lightning:{lnurl}" class="open-in-wallet"><Button --width=100%>Connect using WebLN</Button></a>
-          <Lnurl lnurl="{lnurl}" class="lnurl" />
-          <Button class="white" on:click={$me.reset} --width=100%>Reset account</Button>
-          {#if $me.donator.lnauth_pubkey}
-            <Button class="white" on:click={disconnect} --width=100%>Disconnect wallet</Button>
-          {/if}
-          <Button class="grey" on:click={() => navigate(-1)} --width=100%>Cancel</Button>
-        </div>
-        <div class=waiting>
-          <Spinner /><span>Waiting for you...</span>
-        </div>
-      </Section>
-    </div>
-  {/await}
-</Page>
+      </h1>
+      <a href="lightning:{lnurl}" class="qrcode"><QRCode value={lnurl} /></a>
+      <div class="buttons">
+        <a href="lightning:{lnurl}" class="open-in-wallet"><Button --width=100%>Connect using WebLN</Button></a>
+        <Lnurl lnurl="{lnurl}" class="lnurl" />
+        <Button class="white" on:click={$me.reset} --width=100%>Reset account</Button>
+        {#if $me.donator.lnauth_pubkey}
+          <Button class="white" on:click={disconnect} --width=100%>Disconnect wallet</Button>
+        {/if}
+        <Button class="grey" on:click={() => navigate(-1)} --width=100%>Cancel</Button>
+      </div>
+      <div class=waiting>
+        <Spinner /><span>Waiting for you...</span>
+      </div>
+    </Section>
+  </div>
+{/await}
 
 <style>
 h1 {

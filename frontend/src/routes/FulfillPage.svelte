@@ -1,11 +1,10 @@
 <script>
-  import { navigate, useLocation } from "svelte-navigator";
+  import { navigate } from "svelte-navigator";
 
   import api from "$lib/api.js";
   import {me} from "$lib/session.js";
   import Donate from '$lib/Donate.svelte';
   import Donator from '$lib/Donator.svelte';
-  import Page from "$lib/Page.svelte";
   import Section from "$lib/Section.svelte";
   import YoutubeChannel from "$lib/YoutubeChannel.svelte";
   import Input from "$lib/Input.svelte";
@@ -16,6 +15,7 @@
   import {resolve} from "$lib/utils.js";
 
   export let donator_id;
+  export let location;
 
   let donator;
   let amount = 100_000; // sats
@@ -23,7 +23,6 @@
 
   const amountMin = 10;
   const amountMax = 1000000;
-  const location = useLocation();
 
   $: amountError = (() => {
     if (amount < amountMin)
@@ -61,40 +60,38 @@
   {/await}
 </svelte:head>
 
-<Page>
-  <Section>
-    {#await loadPromise}
-      <Loading />
-    {:then}
-      <main>
-        {#if $me.donator.id === donator_id}
-          <h1 class="text-align-center">Fulfill your wallet</h1>
+<Section>
+  {#await loadPromise}
+    <Loading />
+  {:then}
+    <main>
+      {#if $me.donator.id === donator_id}
+        <h1 class="text-align-center">Fulfill your wallet</h1>
+      {:else}
+        <h1 class="text-align-center">Fulfill wallet for</h1>
+      {/if}
+      <Donator user={donator} />
+      <div class="amount">
+        <span>Amount:</span>
+        <div class="input">
+          <Input type=number placeholder="Enter amount" bind:value={amount} min={amountMin} max={amountMax} bind:error={amountError} suffix=sats />
+        </div>
+        <FiatAmount bind:amount={amount} class="fiat-amount" />
+      </div>
+      <div class="button">
+        {#if $me.connected}
+          <Button on:click={donate} disabled={amountError}>
+            <span>Fulfill</span>
+          </Button>
         {:else}
-          <h1 class="text-align-center">Fulfill wallet for</h1>
+          <Button link={resolve('/login') + '?return=' + $location.pathname} disabled={amountError}>
+            <span>Connect Wallet</span>
+          </Button>
         {/if}
-        <Donator user={donator} />
-        <div class="amount">
-          <span>Amount:</span>
-          <div class="input">
-            <Input type=number placeholder="Enter amount" bind:value={amount} min={amountMin} max={amountMax} bind:error={amountError} suffix=sats />
-          </div>
-          <FiatAmount bind:amount={amount} class="fiat-amount" />
-        </div>
-        <div class="button">
-          {#if $me.connected}
-            <Button on:click={donate} disabled={amountError}>
-              <span>Fulfill</span>
-            </Button>
-          {:else}
-            <Button link={resolve('/login') + '?return=' + $location.pathname} disabled={amountError}>
-              <span>Connect Wallet</span>
-            </Button>
-          {/if}
-        </div>
-      </main>
-    {/await}
-  </Section>
-</Page>
+      </div>
+    </main>
+  {/await}
+</Section>
 
 <style>
 main {

@@ -7,7 +7,6 @@
   import Error from "../lib/Error.svelte";
   import Button from "../lib/Button.svelte";
   import Lnurl from "../lib/Lnurl.svelte";
-  import Page from "../lib/Page.svelte";
   import Section from "../lib/Section.svelte";
   import QRCode from "../lib/QRCode.svelte";
   import ChannelLogo from "../lib/ChannelLogo.svelte";
@@ -57,43 +56,41 @@
   }
 </script>
 
-<Page>
-  <Section>
-    <div class="withdraw">
-      {#await load()}
-        <Loading />
-      {:then}
-        <h1>Withdraw <Amount amount={amount} /></h1>
-      {#if showSuccess}
-        <img src="/static/success.png" class="success" alt="success">
-        <div class="donations-claimed">Donations claimed</div>
-        <div class="buttons success">
-          <Button link={resolve("../link")}>Want more donations?</Button>
-          <Button class="grey" on:click={() => navigate(-1)}>Close</Button>
+<Section>
+  <div class="withdraw">
+    {#await load()}
+      <Loading />
+    {:then}
+      <h1>Withdraw <Amount amount={amount} /></h1>
+    {#if showSuccess}
+      <img src="/static/success.png" class="success" alt="success">
+      <div class="donations-claimed">Donations claimed</div>
+      <div class="buttons success">
+        <Button link={resolve("../link")}>Want more donations?</Button>
+        <Button class="grey" on:click={() => navigate(-1)}>Close</Button>
+      </div>
+    {:else}
+      <ChannelLogo url={youtube_channel.thumbnail_url} />
+      {#if lnurl}
+        <a class="qrcode" href="lightning:{lnurl}"><QRCode value={lnurl} /></a>
+        <div class="buttons">
+          <a href="lightning:{lnurl}" class="open-in-wallet"><Button>Open in wallet</Button></a>
+          <Lnurl lnurl={lnurl} class="lnurl" />
+          <Button class="grey" on:click={() => navigate(-1)}>Cancel</Button>
         </div>
-      {:else}
-        <ChannelLogo url={youtube_channel.thumbnail_url} />
-        {#if lnurl}
-          <a class="qrcode" href="lightning:{lnurl}"><QRCode value={lnurl} /></a>
-          <div class="buttons">
-            <a href="lightning:{lnurl}" class="open-in-wallet"><Button>Open in wallet</Button></a>
-            <Lnurl lnurl={lnurl} class="lnurl" />
-            <Button class="grey" on:click={() => navigate(-1)}>Cancel</Button>
-          </div>
-          <div class="suggestion">
-            Don’t have a wallet? Download wallet and claim your donations with a Wallet Like
-            <a href="https://getalby.com" target="_blank">Alby</a>,
-            <a href="https://phoenix.acinq.co" target="_blank">Phoenix</a>,
-            <a href="https://sbw.app" target="_blank">SBW</a> or
-            <a href="https://blixtwallet.github.io" target="_blank">Blixt</a>
-            .
-          </div>
-        {/if}
+        <div class="suggestion">
+          Don’t have a wallet? Download wallet and claim your donations with a Wallet Like
+          <a href="https://getalby.com" target="_blank">Alby</a>,
+          <a href="https://phoenix.acinq.co" target="_blank">Phoenix</a>,
+          <a href="https://sbw.app" target="_blank">SBW</a> or
+          <a href="https://blixtwallet.github.io" target="_blank">Blixt</a>
+          .
+        </div>
       {/if}
-      {/await}
-    </div>
-  </Section>
-</Page>
+    {/if}
+    {/await}
+  </div>
+</Section>
 
 <style>
 .withdraw {

@@ -3,7 +3,6 @@
   import Donator from "../lib/Donator.svelte";
   import Loading from "../lib/Loading.svelte";
   import Invoice from "../lib/Invoice.svelte";
-  import Page from "../lib/Page.svelte";
   import Section from "../lib/Section.svelte";
   import Button from "../lib/Button.svelte";
   import title from "../lib/title.js";
@@ -53,33 +52,35 @@
   {/await}
 </svelte:head>
 
-<Page>
-  <Section class="main-section">
-  {#await loadPromise}
-    <Loading />
-  {:then}
-    {#if donation.paid_at}
-      {#if !donation.receiver}
-        <Donation donation={donation} on:close={() => navigate(-1)} />
+<Section>
+  <div class="main">
+    {#await loadPromise}
+      <Loading />
+    {:then}
+      {#if donation.paid_at}
+        {#if !donation.receiver}
+          <Donation donation={donation} on:close={() => navigate(-1)} />
+        {:else}
+          <div class="flex-column">
+            {#if donation.receiver.id === $me.donator.id}
+              You successfuly fulfilled your balance.
+            {:else}
+              You successfuly donated to <Donator user={donation.receiver} />.
+            {/if}
+            <Button class=white on:click={() => navigate(-2)}>Close</Button>
+          </div>
+        {/if}
       {:else}
-        <div class="flex-column">
-          {#if donation.receiver.id === $me.donator.id}
-            You successfuly fulfilled your balance.
-          {:else}
-            You successfuly donated to <Donator user={donation.receiver} />.
-          {/if}
-          <Button class=white on:click={() => navigate(-2)}>Close</Button>
-        </div>
+        <Invoice donation={donation} payment_request={payment_request} on:cancel={() => navigate(-1)} on:paid={paid} />
       {/if}
-    {:else}
-      <Invoice donation={donation} payment_request={payment_request} on:cancel={() => navigate(-1)} on:paid={paid} />
-    {/if}
-  {/await}
-  </Section>
-</Page>
+    {/await}
+  </div>
+</Section>
 
 <style>
-:global(.main-section) {
+.main {
+  display: flex;
+  flex-direction: column;
   align-items: center;
   width: 640px;
 }
