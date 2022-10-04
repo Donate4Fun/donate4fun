@@ -70,7 +70,7 @@
               <span>Press</span>
               <Button on:click={check} class=white>
                 {#if spin}
-                <Spinner class="spinner" size=20px width=3px />
+                <Spinner --size=20px --width=3px />
                 {/if}
                 <span class=check>Check</span>
               </Button>

@@ -12,6 +12,6 @@ a {
   display: flex;
 }
 img {
-  width: var(--width, 3em);
+  width: var(--width);
 }
 </style>

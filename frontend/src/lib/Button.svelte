@@ -1,12 +1,11 @@
 <script>
   import { navigate } from "svelte-navigator";
   import { custom_event, get_current_component } from 'svelte/internal'
-  import Spinner from "../lib/Spinner.svelte";
+  import Spinner from "$lib/Spinner.svelte";
 
   export let link = null;
   export let target = null;
   export let spin = false;
-  export let nospin = false;
   export let selected = false;
   export let disabled = false;
 
@@ -44,11 +43,10 @@
         navigate(link);
       }
     } else {
-      if (!nospin)
-        spin = true;
       try {
         await dispatch("click", ev);
       } catch (err) {
+        console.log("error in button on:click dispatcher", err);
       }
       spin = false;
     }
@@ -58,9 +56,10 @@
 <button {...$$restProps} on:click={click} disabled={disabled || spin} class:selected>
   <div class="flex-row align-center">
     {#if spin}
-      <Spinner class="spinner" size=20px width=3px />
+      <div class="spinner"></div>
+    {:else}
+      <slot />
     {/if}
-    <slot />
   </div>
 </button>
 
@@ -73,7 +72,7 @@ button {
   padding: var(--padding, 12px 25px);
   cursor: pointer;
   height: var(--height, auto);
-  width: var(--width, auto);
+  width: var(--width, 100%);
 
   border: 0;
   border-radius: 100px;
@@ -115,10 +114,19 @@ button:disabled {
 button:hover:enabled {
   box-shadow: 0px 8px 20px rgba(185, 192, 204, 0.6);
 }
-.spinner {
-  left: -30px;
-}
 .selected {
   border: 2px solid #FF8A00;
+}
+.spinner::after {
+  display: inline-block;
+  animation: dotty steps(1,end) 1s infinite;
+  content: '';
+}
+@keyframes dotty {
+  0%   { content: ''; }
+  25%  { content: '.'; }
+  50%  { content: '..'; }
+  75%  { content: '...'; }
+  100% { content: ''; }
 }
 </style>

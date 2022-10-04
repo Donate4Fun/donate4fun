@@ -45,7 +45,7 @@
       <div class=url><Input type=url placeholder="Paste YouTube URL" bind:value={donatee} bind:error={error} logo=url(/static/youtube.svg) required/></div>
       <Button type=submit class="submit white">
         {#if spin}
-        <Spinner class="spinner" size=20px width=3px/>
+        <Spinner --size=20px --width=3px/>
         {/if}
         <span>Check donation</span>
       </Button>

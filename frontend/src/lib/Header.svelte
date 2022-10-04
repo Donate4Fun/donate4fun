@@ -3,7 +3,7 @@
   import Logo from "../lib/Logo.svelte";
   import Social from "../lib/Social.svelte";
   import Userpic from "../lib/Userpic.svelte";
-  import Loading from "../lib/Loading.svelte";
+  import Spinner from "../lib/Spinner.svelte";
   import Button from "../lib/Button.svelte";
   import WalletLogin from "../lib/WalletLogin.svelte";
   import {me} from "../lib/session.js";
@@ -18,11 +18,11 @@
   </div>
   <Social class="onlylarge" />
   <div class="right">
+    <WalletLogin class="connect" />
     {#await $me.loaded}
-      <Loading/>
+      <Spinner --size=56px />
     {:then}
-      <WalletLogin class="connect" />
-      <Userpic user={$me.donator} class="userpic" />
+      <Userpic user={$me.donator} class="userpic" --width=56px />
     {/await}
   </div>
 </header>

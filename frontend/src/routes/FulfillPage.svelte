@@ -64,29 +64,34 @@
 <Page>
   <Section>
     {#await loadPromise}
-    <Loading />
+      <Loading />
     {:then}
-    <main>
-      {#if $me.donator.id === donator_id}
-        <h1 class="text-align-center">Fulfill your wallet</h1>
-      {:else}
-        <h1 class="text-align-center">Fulfill wallet for</h1>
-      {/if}
-      <Donator user={donator} />
-      <div>
-        <span>Amount:</span>
-        <div class="amount"><Input type=number placeholder="Enter amount" bind:value={amount} min={amountMin} max={amountMax} bind:error={amountError} suffix=sats /></div><FiatAmount bind:amount={amount} class="fiat-amount" />
-      </div>
-      {#if $me.connected}
-        <Button on:click={donate} disabled={amountError} --padding="10px 41px">
-          <span>Fulfill</span>
-        </Button>
-      {:else}
-        <Button link={resolve('/login') + '?return=' + $location.pathname} disabled={amountError} --padding="10px 41px">
-          <span>Connect Wallet</span>
-        </Button>
-      {/if}
-    </main>
+      <main>
+        {#if $me.donator.id === donator_id}
+          <h1 class="text-align-center">Fulfill your wallet</h1>
+        {:else}
+          <h1 class="text-align-center">Fulfill wallet for</h1>
+        {/if}
+        <Donator user={donator} />
+        <div class="amount">
+          <span>Amount:</span>
+          <div class="input">
+            <Input type=number placeholder="Enter amount" bind:value={amount} min={amountMin} max={amountMax} bind:error={amountError} suffix=sats />
+          </div>
+          <FiatAmount bind:amount={amount} class="fiat-amount" />
+        </div>
+        <div class="button">
+          {#if $me.connected}
+            <Button on:click={donate} disabled={amountError}>
+              <span>Fulfill</span>
+            </Button>
+          {:else}
+            <Button link={resolve('/login') + '?return=' + $location.pathname} disabled={amountError}>
+              <span>Connect Wallet</span>
+            </Button>
+          {/if}
+        </div>
+      </main>
     {/await}
   </Section>
 </Page>
@@ -100,23 +105,23 @@ main {
   width: 640px;
   box-sizing: border-box;
 }
-main > h1 {
+h1 {
   margin-top: 0;
   margin-bottom: 24px;
 }
-main > div {
+.amount {
   display: flex;
   align-items: center;
   margin-top: 32px;
   margin-bottom: 36px;
   font-size: 18px;
 }
-.amount {
+.amount > .input {
   width: 250px;
   margin-left: 16px;
   margin-right: 20px;
 }
-main :global(button) {
+.button {
   width: 204px;
 }
 </style>

@@ -73,7 +73,7 @@
       </div>
       <Button class="submit" type=submit disabled={!isValid}>
         {#if spin}
-        <Spinner class="spinner" size=20px width=3px/>
+          <Spinner --size=20px --width=3px />
         {/if}
         <span>Donate</span>
       </Button>

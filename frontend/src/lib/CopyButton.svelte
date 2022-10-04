@@ -1,6 +1,6 @@
 <script>
-  import Button from "../lib/Button.svelte";
-  import {copy, sleep} from "../lib/utils.js";
+  import Button from "$lib/Button.svelte";
+  import { copy } from "$lib/utils.js";
 
   export let content;
   let copied = false;
@@ -8,12 +8,11 @@
   async function doCopy() {
     copy(content);
     copied = true;
-    await sleep(3000);
-    copied = false;
+    setTimeout(() => copied = false, 3000);
   }
 </script>
 
-<Button on:click={doCopy} nospin>
+<Button on:click={doCopy}>
   {#if copied}
   Copied
   {:else}
