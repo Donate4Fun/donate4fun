@@ -1,9 +1,10 @@
 <script>
   import { get } from "svelte/store";
-  import Button from "../../frontend/src/lib/Button.svelte";
-  import { webOrigin } from "../../frontend/src/lib/utils.js";
-  import { me } from "../../frontend/src/lib/session.js";
   import { useNavigate } from "svelte-navigator";
+  import Button from "$lib/Button.svelte";
+  import { webOrigin } from "$lib/utils.js";
+  import { me } from "$lib/session.js";
+  import cLog from "./log.js";
 
   export let amount;
   export let historySource;
@@ -11,7 +12,7 @@
 
   function onClose() {
     const state = historySource.history.state;
-    console.log("state", state);
+    cLog("state", state);
     if (state)
       navigate(-1);
     else
@@ -19,7 +20,6 @@
   }
 </script>
 
-{#await me.loaded}
 <section class="popup flex-column">
   <Button
     on:click={onClose}
@@ -54,18 +54,19 @@
       font-size: 16px;
       text-align: center;
     ">OR</p>
-    <Button
-      --height=100%
-      target=_blank
-      link="{$webOrigin}/fulfill/{$me.donator.id}?amount={amount - ($me.donator.balance || 0) + 1000}"
-      class=white
-      style="
-        grid-row: fulfill;
-      "
-    >Fulfill your balance</Button>
+    {#await $me.loaded then}
+      <Button
+        --height=100%
+        target=_blank
+        link="{$webOrigin}/fulfill/{$me.donator.id}?amount={amount - ($me.donator.balance || 0) + 1000}"
+        class=white
+        style="
+          grid-row: fulfill;
+        "
+      >Fulfill your balance</Button>
+    {/await}
   </div>
 </section>
-{/await}
 
 <style>
 section {

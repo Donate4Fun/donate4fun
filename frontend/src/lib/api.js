@@ -20,7 +20,7 @@ function handle_response(response) {
     console.log(`received response for ${response.request.responseURL}`, response);
     return response.data;
   } else {
-    console.error(`Server error in ${response.request.responseURL}`, response);
+    console.error(`Server error in ${response.request?.responseURL}`, response);
     let message = response.data;
     if (typeof message !== "string")
       message = message.message || message.error || message.detail[0]?.msg || JSON.stringify(message);
@@ -92,7 +92,7 @@ async function subscribe(topic, on_message) {
   };
 }
 
-const api = {
+export const api = {
   post: async (path, body) => {
     try {
       const resp = await axios.post(fullpath(path), body);

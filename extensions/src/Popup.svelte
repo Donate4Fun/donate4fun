@@ -15,7 +15,6 @@
   const hashSource = createHashSource();
   const hashHistory = createHistory(hashSource);
 
-  let showYoutube = false;
   let showWeblnHelp = false;
   let amount;
   let balance;
@@ -28,33 +27,40 @@
     cookies.set(browser.cookies);
 
     await me.loaded;
+
+    try {
+      const contentScript = await connectToPage();
+      if (await contentScript.isVideoLoaded()) {
+        cLog("detected youtube page, navigating to /youtube");
+        hashHistory.navigate("youtube");
+      }
+    } catch (error) {
+      console.log("error connecting to tab", error);
+    }
   }
 
   function onNavigate(event) {
     console.log("navigate", event.location.pathname, event.action);
   }
-  const unlisten = hashHistory.listen(onNavigate);
-	onDestroy(unlisten);
+	onDestroy(hashHistory.listen(onNavigate));
 </script>
 
 <div class="flex-column height-full justify-space-between gradient">
   <main class="flex-column gap-28 height-full position-relative">
-{#await load() then}
-  <Router history={hashHistory} primary={false}>
-    <Route path="">
-      <PopupHeader bind:balance={balance} />
-      <PopupDefault />
-    </Route>
-    <Route path="youtube" primary={false}>
-      <PopupHeader bind:balance={balance} />
-      <PopupYoutube bind:amount={amount} />
-    </Route>
-    <Route path="nowebln/:amount" primary={false} let:params>
-      <PopupHeader bind:balance={balance} />
-      <PopupNoWebln amount={params.amount} historySource={hashSource}/>
-    </Route>
-  </Router>
-{/await}
+    {#await load() then}
+      <PopupHeader bind:balance={balance} history={hashHistory} />
+      <Router history={hashHistory} primary={false}>
+        <Route path="">
+          <PopupDefault />
+        </Route>
+        <Route path="youtube">
+          <PopupYoutube bind:amount={amount} />
+        </Route>
+        <Route path="nowebln/:amount" let:params>
+          <PopupNoWebln amount={params.amount} historySource={hashSource}/>
+        </Route>
+      </Router>
+    {/await}
   </main>
 </div>
 

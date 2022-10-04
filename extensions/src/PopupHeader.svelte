@@ -16,12 +16,13 @@
   import { worker, browser, connectToPage, createPopup, getCurrentTab } from "./common.js";
   import cLog from "./log.js";
 
+  export let history;
+
   let balance;
   let popupVisible = false;
   let showDev = false;
-  const iconColor = '#787981';
-  const navigate = useNavigate();
   let contentScript;
+  const iconColor = '#787981';
 
   async function load() {
     await $me.loaded;
@@ -74,7 +75,7 @@
               <Fa icon={faWindowRestore} size=2x color={iconColor} />
               <span>Create popup window</span>
             </div>
-            <div on:click={() => navigate('/nowebln')}>
+            <div on:click={() => history.navigate('/nowebln/1000')}>
               <Fa icon={faHashtag} size=2x color={iconColor} />
               <span>Open NoWebLN page</span>
             </div>

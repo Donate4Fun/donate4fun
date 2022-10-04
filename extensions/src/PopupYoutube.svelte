@@ -24,7 +24,6 @@
       contentScript = await connectToPage();
     } catch (error) {
       cLog("couldn't connect to content script", error);
-      navigate("/");
       return;
     }
     videoId = await contentScript.getVideoId();
