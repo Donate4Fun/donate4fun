@@ -1,12 +1,12 @@
 json:
+- balance: 90
+  channel_id: '0001'
+  id: 00000000-0000-0000-0000-000000000002
+  thumbnail_url: http://0001/img
+  title: '0001'
 - balance: 20
   channel_id: q2dsaf
   id: 00000000-0000-0000-0000-000000000001
   thumbnail_url: 1wdasd
   title: asdzxc
-- balance: 50
-  channel_id: '0001'
-  id: 00000000-0000-0000-0000-000000000002
-  thumbnail_url: http://0001/img
-  title: '0001'
 status_code: 200
