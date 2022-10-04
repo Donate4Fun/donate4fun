@@ -42,6 +42,14 @@ function youtube_studio_url(channel_id) {
   return `https://studio.youtube.com/channel/${channel_id}/editing/details`;
 }
 
+function isWeblnPresent() {
+  return !!window.webln;
+}
+
+function isExtensionPresent() {
+  return !!window.donate4fun;
+}
+
 export {
   copy,
   partial,
@@ -50,4 +58,6 @@ export {
   youtube_video_url,
   youtube_channel_url,
   resolve,
+  isWeblnPresent,
+  isExtensionPresent,
 };

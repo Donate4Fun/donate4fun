@@ -1,40 +1,49 @@
 <script>
-  import Section from "$lib/Section.svelte";
+  import { link } from "svelte-navigator";
+  import LandingSection from "$lib/LandingSection.svelte";
   import Amount from "$lib/Amount.svelte";
   import { youtube_channel_url } from "$lib/utils.js";
 
   export let youtuber;
 </script>
 
-<Section>
-  <div>
-    <img alt="youtuber-logo" src={youtuber.thumbnail_url} width=120 height=120>
-    <a class="ellipsis" target=_blank href={youtube_channel_url(youtuber.channel_id)}>{youtuber.title}</a>
-    <p>Got donated</p>
-    <Amount amount={youtuber.balance} />
-  </div>
-</Section>
+<section>
+  <LandingSection>
+    <a href="/youtube/{youtuber.id}" use:link>
+      <img alt="youtuber-logo" src={youtuber.thumbnail_url} width=120 height=120>
+      <p class="title ellipsis">{youtuber.title}</p>
+      <div>
+        <p>Got donated</p>
+        <Amount amount={youtuber.balance} />
+      </div>
+    </a>
+  </LandingSection>
+</section>
 
 <style>
-div {
-  width: 240px;
-  height: 290px;
+section {
+  min-width: 240px;
+  height: 288px;
+}
+a {
+  padding: 32px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 28px
+  gap: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  font-size: 16px;
+  color: var(--color);
+  text-align: center;
 }
 img {
   border-radius: 100%;
 }
-a {
-  margin: 20px 22px 16px;
+p.title {
+  font-size: 20px;
   text-align: center;
-  width: 100%;
-}
-p {
-  font-weight: 500;
-  font-size: 16px;
-  line-height: 24px;
+  max-width: 100%;
+  color: var(--link-color);
 }
 </style>

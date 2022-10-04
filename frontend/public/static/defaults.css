@@ -1,5 +1,7 @@
 body {
   font-family: "Inter var experimental", "system-ui";
+  --color: #414141;
+  --link-color: #2E6CFF;
 }
 * {
   box-sizing: border-box;
