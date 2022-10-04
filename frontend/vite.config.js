@@ -3,6 +3,15 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 import alias from '@rollup/plugin-alias';
 import path from 'path';
 
+const apiUrl = process.env.API_URL || 'http://localhost:8000';
+
+const httpProxy = {
+  target: apiUrl,
+  changeOrigin: true,
+  secure: false,
+  cookieDomainRewrite: 'http://localhost',
+};
+
 export default defineConfig({
   build: {
     rollupOptions: {
@@ -16,6 +25,7 @@ export default defineConfig({
     },
   },
   plugins: [svelte()],
+  optimizeDeps: { exclude: ["svelte-navigator"] },
   resolve: {
     alias: {
       "$lib": path.resolve('src/lib'),
@@ -23,24 +33,16 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/sitemap.xml': {
-        target: 'http://localhost:8000',
-      },
+      '/sitemap.xml': httpProxy,
       '/api/v1/subscribe': {
-        target: 'ws://localhost:8000',
-        ws: true
-      },
-      '/api/': {
-        target: 'http://localhost:8000',
-      },
-      '/d/': {
-        target: 'http://localhost:8000',
-      },
-      '/js/script.js': {
-        target: 'https://plausible.io/js/script.js',
+        target: apiUrl.replace('http', 'ws'),
+        ws: true,
         changeOrigin: true,
-        ignorePath: true,
+        secure: false,
       },
+      '/api/': httpProxy,
+      '/d/': httpProxy,
+      '/js/script.js': httpProxy,
     },
   },
 })

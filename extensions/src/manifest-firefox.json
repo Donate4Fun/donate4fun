@@ -17,6 +17,7 @@
   "permissions": [
     "storage",
     "activeTab",
+    "cookies",
     "https://*.donate4.fun/*"
   ],
   "background": {

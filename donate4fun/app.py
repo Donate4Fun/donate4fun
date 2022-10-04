@@ -93,13 +93,20 @@ async def create_app(settings: Settings):
     )
     # same_site = None is needed for CORS auth
     app.add_middleware(
-        AuthlibMiddleware, secret_key=settings.jwt_secret, same_site="None", https_only=settings.cookie_https_only,
+        AuthMiddleware, settings=settings,
         domain=settings.cookie_domain,
     )
     app.mount("/static", StaticFiles(directory="donate4fun/static"), name="static")
     app.include_router(api.router, prefix="/api/v1")
     app.include_router(web.router, prefix="")
     yield app
+
+
+class AuthMiddleware(AuthlibMiddleware):
+    def __init__(self, settings: Settings, **kwargs):
+        super().__init__(**kwargs, secret_key=settings.jwt_secret, same_site="None", https_only=settings.cookie_https_only)
+        if not settings.cookie_http_only:
+            self.security_flags = self.security_flags.replace('httponly; ', '')
 
 
 async def main():

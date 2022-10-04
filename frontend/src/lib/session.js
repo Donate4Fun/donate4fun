@@ -1,12 +1,15 @@
-import { readable, get } from "svelte/store";
-import api from "$lib/api.js";
+import { readable, writable, get } from "svelte/store";
+import { api, apiOrigin } from "$lib/api.js";
 import { storage } from "$lib/storage.js";
+import jwt_decode from "jwt-decode";
+import Cookies from "js-cookie";
 
-let loadPromise = null;
+export const cookies = writable();
 
 const obj = {
   loaded: null,
   load: null,
+  reset: null,
 };
 
 async function fetchMe() {
@@ -35,12 +38,38 @@ function loadFrom(resp, set) {
     set(obj);
     await obj.loaded;
   };
+  obj.reset = async () => {
+    Cookies.remove("session");
+    await obj.load();
+  };
+
   set(obj);
+}
+
+async function isValid() {
+  if (!storage.me)
+    return false;
+  let sessionCookie;
+  if (get(cookies)) {
+    const cookie = await get(cookies).get({name: "session", url: get(apiOrigin)});
+    if (!cookie)
+      return false;
+    sessionCookie = cookie.value;
+  } else {
+    sessionCookie = Cookies.get('session');
+    if (!sessionCookie)
+      return false;
+  }
+  const decoded = jwt_decode(sessionCookie);
+  if (!decoded)
+    return false;
+  return decoded.donator === storage.me.donator.id;
 }
 
 export const me = readable(obj, function start(set) {
   obj.loaded = new Promise(async (resolve) => {
-    if (!storage.me) {
+    if (!await isValid()) {
+      console.log("stored session is invalid or missing, reloading");
       loadFrom(await fetchMe(), set);
     } else {
       loadFrom(storage.me, set);

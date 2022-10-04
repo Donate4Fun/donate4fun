@@ -5,10 +5,11 @@
   import PopupYoutube from "./PopupYoutube.svelte";
   import PopupHeader from "./PopupHeader.svelte";
   import PopupNoWebln from "./PopupNoWebln.svelte";
-  import {apiOrigin} from "../../frontend/src/lib/api.js";
-  import {webOrigin} from "../../frontend/src/lib/utils.js";
-  import {me} from "../../frontend/src/lib/session.js";
-  import {worker, getCurrentTab, browser} from "./common.js";
+  import { apiOrigin } from "$lib/api.js";
+  import { webOrigin } from "$lib/utils.js";
+  import { me, cookies } from "$lib/session.js";
+  import { worker, getCurrentTab, browser, connectToPage } from "./common.js";
+  import cLog from "./log.js";
   import createHashSource from "./hashHistory.js";
 
   const hashSource = createHashSource();
@@ -21,8 +22,10 @@
 
   async function load() {
     const host = await worker.getConfig("apiHost");
+    // These stores are used by scripts from /frontend/src/lib
     apiOrigin.set(host);
     webOrigin.set(host);
+    cookies.set(browser.cookies);
 
     await me.loaded;
   }

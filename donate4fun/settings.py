@@ -117,6 +117,7 @@ class Settings(BaseSettings):
     ownership_message: str
     cookie_domain: str | None = None
     cookie_https_only: bool = True
+    cookie_http_only: bool = False
 
     class Config:
         env_nested_delimiter = '__'

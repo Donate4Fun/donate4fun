@@ -6,6 +6,8 @@ specifiers:
   '@sveltejs/vite-plugin-svelte': ^1.0.0-next.49
   axios: ^0.27.2
   dateformat: ^5.0.3
+  js-cookie: ^3.0.1
+  jwt-decode: ^3.1.2
   qrcode: ^1.5.0
   rollup: ^2.79.0
   svelte: ^3.50.1
@@ -21,6 +23,8 @@ dependencies:
   '@sveltejs/vite-plugin-svelte': 1.0.0-next.49_svelte@3.50.1+vite@2.9.12
   axios: 0.27.2
   dateformat: 5.0.3
+  js-cookie: 3.0.1
+  jwt-decode: 3.1.2
   qrcode: 1.5.0
   svelte: 3.50.1
   svelte-awesome-icons: 0.2.5
@@ -589,6 +593,11 @@ packages:
     engines: {node: '>=0.12.0'}
     dev: true
 
+  /js-cookie/3.0.1:
+    resolution: {integrity: sha512-+0rgsUXZu4ncpPxRL+lNEptWMOWl9etvPHc/koSRp6MPwpRYAhmk0dUG00J4bxVV3r9uUzfo24wW0knS07SKSw==}
+    engines: {node: '>=12'}
+    dev: false
+
   /js-yaml/3.14.0:
     resolution: {integrity: sha512-/4IbIeHcD9VMHFqDR/gQ7EdZdLimOvW2DdcxFjdyyZ9NsbS+ccrXqVWDtab/lRl5AlUqmpBx8EhPaWR+OtY17A==}
     hasBin: true
@@ -596,6 +605,10 @@ packages:
       argparse: 1.0.10
       esprima: 4.0.1
     dev: true
+
+  /jwt-decode/3.1.2:
+    resolution: {integrity: sha512-UfpWE/VZn0iP50d8cz9NrZLM9lSWhcJ+0Gt/nm4by88UL+J1SiKN8/5dkjMmbEzwL2CAe+67GsegCbIKtbp75A==}
+    dev: false
 
   /kleur/4.1.4:
     resolution: {integrity: sha512-8QADVssbrFjivHWQU7KkMgptGTl6WAcSdlbBPY4uNF+mWr6DGcKrvY2w4FQJoXch7+fKMjj0dRrL75vk3k23OA==}
