@@ -420,8 +420,8 @@ async def lnauth_callback(
         return dict(status="OK")
 
 
-@router.post('/logout')
-async def logout(db=Depends(get_db_session), donator=Depends(get_donator)):
+@router.post('/disconnect-wallet')
+async def disconnect_wallet(db=Depends(get_db_session), donator=Depends(get_donator)):
     await db.login_donator(donator.id, key=None)
 
 

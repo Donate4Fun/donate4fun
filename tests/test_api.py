@@ -420,3 +420,12 @@ async def test_subscribe_email(client, db):
     response = await client.post("/api/v1/subscribe-email", json=SubscribeEmailRequest(email="me@example.com").dict())
     check_response(response)
     assert response.json() != None  # noqa
+
+
+async def test_disconnect_wallet(client, settings: Settings, registered_donator: Donator, db):
+    login_to(client, settings, registered_donator)
+    response = check_response(await client.get("/api/v1/donator/me"))
+    assert response.json()['donator']['lnauth_pubkey'] == registered_donator.lnauth_pubkey
+    check_response(await client.post("/api/v1/disconnect-wallet"))
+    me_response = check_response(await client.get("/api/v1/donator/me"))
+    assert me_response.json()['donator']['lnauth_pubkey'] == None  # noqa

@@ -13,10 +13,10 @@
   import {notify} from "../lib/notifications.js";
 
   export let navigate;
+  export let location;
 
   let lnurl;
   let unsubscribe = null;
-  const location = useLocation();
 
   onDestroy(() => {
     if (unsubscribe !== null) {
@@ -25,8 +25,8 @@
   });
 
   async function load() {
-    await $me.load();
-    const params = new URLSearchParams($location.search);
+    await $me.loaded;
+    const params = new URLSearchParams(location.search);
     const return_ = params.get('return');
     unsubscribe = await api.subscribe("donator:" + $me.donator.id, async (token) => {
       unsubscribe();
@@ -42,38 +42,39 @@
     lnurl = response.lnurl;
   }
 
-  async function logout() {
-    await api.post('logout');
+  async function disconnect() {
+    await api.post('disconnect-wallet');
   }
 </script>
 
 <Page>
   {#await load()}
-  <Loading />
+    <Loading />
   {:then}
-  <div>
-    <Section>
-      <h1>
-      {#if $me.donator.lnauth_pubkey}
-      Change wallet
-      {:else}
-      Connect wallet
-      {/if}
-      </h1>
-      <a href="lightning:{lnurl}" class="qrcode"><QRCode value={lnurl} /></a>
-      <div class="buttons">
-        <a href="lightning:{lnurl}" class="open-in-wallet"><Button --width=100%>Open in wallet</Button></a>
-        <Lnurl lnurl="{lnurl}" class="lnurl" />
+    <div>
+      <Section>
+        <h1>
         {#if $me.donator.lnauth_pubkey}
-          <Button class="white" on:click={logout} --width=100%>Logout</Button>
+        Change wallet
+        {:else}
+        Connect wallet
         {/if}
-        <Button class="grey" on:click={() => navigate(-1)} --width=100%>Cancel</Button>
-      </div>
-      <div class=waiting>
-        <Spinner /><span>Waiting for you...</span>
-      </div>
-    </Section>
-  </div>
+        </h1>
+        <a href="lightning:{lnurl}" class="qrcode"><QRCode value={lnurl} /></a>
+        <div class="buttons">
+          <a href="lightning:{lnurl}" class="open-in-wallet"><Button --width=100%>Connect using WebLN</Button></a>
+          <Lnurl lnurl="{lnurl}" class="lnurl" />
+          <Button class="white" on:click={$me.reset} --width=100%>Reset account</Button>
+          {#if $me.donator.lnauth_pubkey}
+            <Button class="white" on:click={disconnect} --width=100%>Disconnect wallet</Button>
+          {/if}
+          <Button class="grey" on:click={() => navigate(-1)} --width=100%>Cancel</Button>
+        </div>
+        <div class=waiting>
+          <Spinner /><span>Waiting for you...</span>
+        </div>
+      </Section>
+    </div>
   {/await}
 </Page>
 
