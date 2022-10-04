@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import requests
 from urllib.parse import urlparse, parse_qs, urlunparse
 import ecdsa
