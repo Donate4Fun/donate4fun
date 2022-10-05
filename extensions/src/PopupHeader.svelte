@@ -113,6 +113,7 @@ main {
   top: 0;
   right: 100%;
   visibility: visible;
+  position: absolute;
 }
 .popup > div,a {
   height: 48px;
