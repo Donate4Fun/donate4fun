@@ -26,35 +26,19 @@ async function getCurrentTab() {
   return tab;
 }
 
-function isSupportedPage(tab) {
-  return tab?.url?.match('^https\:\/\/(www\.)?youtube\.com');
-}
-
-async function injectContentScript(tab) {
-  if (browser.scripting) {
-    cLog("injecting content script using browser.scripting", tab);
-      function getTitle() {
-        cLog("title", document.title);
-      }
-      const manifest = browser.runtime.getManifest();
-      const contentScript = manifest.content_scripts[0];
-      await browser.scripting.insertCSS({
-        target: {tabId: tab.id},
-        files: contentScript.css,
-      });
-      const injectionResults = await browser.scripting.executeScript({
-        target: {tabId: tab.id},
-        files: contentScript.js,
-      });
-      cLog("injection results", injectionResults, chrome.runtime.lastError);
-      if (chrome.runtime.lastError)
-        throw chrome.runtime.lastError;
-  } else {
-    cLog("injecting content script using browser.tabs", tab);
-    await browser.tabs.executeScript({
-      file: ['common.js'],
-    });
-  }
+async function injectContentScript(tab, contentScript) {
+  cLog("injecting content script using browser.scripting", tab, contentScript);
+  await browser.scripting.insertCSS({
+    target: {tabId: tab.id},
+    files: contentScript.css,
+  });
+  const injectionResults = await browser.scripting.executeScript({
+    target: {tabId: tab.id},
+    files: contentScript.js,
+  });
+  cLog("injection results", injectionResults, chrome.runtime.lastError);
+  if (chrome.runtime.lastError)
+    throw chrome.runtime.lastError;
 }
 
 async function callTab(tab, func, args) {
@@ -72,14 +56,8 @@ async function callTab(tab, func, args) {
     return result.response;
 };
 
-async function isConnectedToTab(tab) {
-  try {
-    if (await callTab(tab, "ping", []) === "pong")
-      return true;
-  } catch (error) {
-    cLog("error while connecting to tab", tab, error);
-  }
-  return false;
+async function getPopupPage(tab) {
+  return await callTab(tab, "popupPath", []);
 }
 
 let injectionPromise;
@@ -90,18 +68,31 @@ async function connectToPage() {
   if (!tab)
     throw new Error("No current tab");
 
-  if (!isSupportedPage(tab))
-    throw new Error("Page is not supported");
-
-  if (!await isConnectedToTab(tab)) {
-    cLog("error while sending to contentScript, injecting script and retrying", browser.runtime.lastError);
+  try {
+    await getPopupPage(tab);
+  } catch {
+    cLog("error while sending to contentScript, trying to inject script", browser.runtime.lastError);
+    let contentScript;
+    for (const contentScript_ of browser.runtime.getManifest().content_scripts) {
+      const tabs = await browser.tabs.query({
+        active: true,
+        lastFocusedWindow: true,
+        url: contentScript_.matches,
+      });
+      if (tabs.length) {
+        cLog("found matching content script", tabs, contentScript_);
+        contentScript = contentScript_;
+        break;
+      }
+    }
+    if (!contentScript)
+      throw new Error("No content script matches current tab", tab);
     if (!injectionPromise)
-      injectionPromise = injectContentScript(tab);
+      injectionPromise = injectContentScript(tab, contentScript);
     await injectionPromise;
     injectionPromise = null;
     cLog("content script injected, retrying");
-    if (!await isConnectedToTab(tab))
-      throw new Error("Failed to connect to tab: no ping");
+    await getPopupPage(tab);
   }
 
   const proxy = {

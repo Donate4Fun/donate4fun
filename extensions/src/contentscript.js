@@ -44,7 +44,7 @@ async function init() {
     sendPayment: pageScript.sendPayment,
     donate,
     onPaid: donation => { bolt?.onPaid(donation) },
-    ping: () => "pong",
+    popupPath: () => "/youtube",
   });
 
   cLog("connecting to background script");

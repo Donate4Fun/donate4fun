@@ -1,7 +1,7 @@
 <script>
   import { onDestroy } from "svelte";
   import { Router, Link, Route, navigate, createHistory } from "svelte-navigator";
-  import PopupDefault from "./PopupMain.svelte";
+  import PopupMain from "./PopupMain.svelte";
   import PopupYoutube from "./PopupYoutube.svelte";
   import PopupHeader from "./PopupHeader.svelte";
   import PopupNoWebln from "./PopupNoWebln.svelte";
@@ -30,10 +30,9 @@
 
     try {
       const contentScript = await connectToPage();
-      if (await contentScript.isVideoLoaded()) {
-        cLog("detected youtube page, navigating to /youtube");
-        hashHistory.navigate("youtube");
-      }
+      const popupPath = await contentScript.popupPath();
+      cLog("detected supported page, navigating to", popupPath);
+      hashHistory.navigate(popupPath);
     } catch (error) {
       console.log("error connecting to tab", error);
     }
@@ -42,7 +41,24 @@
   function onNavigate(event) {
     console.log("navigate", event.location.pathname, event.action);
   }
-	onDestroy(hashHistory.listen(onNavigate));
+
+  function onTabActivated(activeInfo) {
+    cLog("tabs.onActivated", activeInfo);
+    browser.tabs.onUpdated.removeListener(onTabUpdated);
+    browser.tabs.onUpdated.addListener(onTabUpdated, {tabId: activeInfo.tabId, properties: ['status']});
+  }
+
+  function onTabUpdated(tabId, changeInfo, tab) {
+    cLog("tabs.onTabUpdated", tabId, changeInfo, tab);
+  }
+
+  //browser.tabs.onActivated.addListener(onTabActivated)
+	const unlistenHistory = hashHistory.listen(onNavigate);
+  onDestroy(() => {
+	  unlistenHistory();
+    browser.tabs.onActivated.removeListener(onTabActivated);
+    browser.tabs.onUpdated.removeListener(onTabUpdated);
+  });
 </script>
 
 <div class="flex-column height-full justify-space-between gradient">
@@ -51,7 +67,7 @@
       <PopupHeader bind:balance={balance} history={hashHistory} />
       <Router history={hashHistory} primary={false}>
         <Route path="">
-          <PopupDefault />
+          <PopupMain />
         </Route>
         <Route path="youtube">
           <PopupYoutube bind:amount={amount} />

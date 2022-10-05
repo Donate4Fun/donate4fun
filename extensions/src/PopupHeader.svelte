@@ -13,7 +13,7 @@
   import MeNamePubkey from "$lib/MeNamePubkey.svelte";
   import MeBalance from "$lib/MeBalance.svelte";
   import DonateYoutube from "./DonateYoutube.svelte";
-  import { worker, browser, connectToPage, createPopup, getCurrentTab } from "./common.js";
+  import { worker, browser, connectToPage, createPopup } from "./common.js";
   import cLog from "./log.js";
 
   export let history;
@@ -28,6 +28,9 @@
     await $me.loaded;
     showDev = await worker.getConfig('enableDevCommands');
     balance = $me.donator.balance;
+  }
+
+  async function loadDev() {
     try {
       contentScript = await connectToPage();
     } catch (error) {
@@ -49,38 +52,42 @@
           <circle cx="22" cy="22" r="2" fill="black"/>
           <circle cx="22" cy="29" r="2" fill="black"/>
         </svg>
-        <div class="popup flex-column user-select-none" class:popupVisible>
-          <div on:click={() => browser.runtime.openOptionsPage()}>
-            <Fa icon={faGear} size=2x color={iconColor} />
-            <span>Settings</span>
+        {#if popupVisible}
+          <div class="popup flex-column user-select-none">
+            <div on:click={() => browser.runtime.openOptionsPage()}>
+              <Fa icon={faGear} size=2x color={iconColor} />
+              <span>Settings</span>
+            </div>
+            <a class="text-decoration-none" href="https://donate4.fun" target="_blank">
+              <Fa icon={faGlobe} size=2x color={iconColor} />
+              <span>Website</span>
+            </a>
+            {#if showDev}
+              {#await loadDev() then}
+                <div disabled={!contentScript} on:click={() => contentScript.postComment("en", 100)}>
+                  <Fa icon={faComment} size=2x color={iconColor} />
+                  <span>Insert comment</span>
+                </div>
+                <div disabled={!contentScript} on:click={() => contentScript.onPaid({amount: 333})}>
+                  <Fa icon={faComment} size=2x color={iconColor} />
+                  <span>Show comment popup</span>
+                </div>
+                <div on:click={connectToPage}>
+                  <Fa icon={faSyringe} size=2x color={iconColor} />
+                  <span>Inject script</span>
+                </div>
+                <div on:click={createPopup}>
+                  <Fa icon={faWindowRestore} size=2x color={iconColor} />
+                  <span>Create popup window</span>
+                </div>
+                <div on:click={() => history.navigate('/nowebln/1000')}>
+                  <Fa icon={faHashtag} size=2x color={iconColor} />
+                  <span>Open NoWebLN page</span>
+                </div>
+              {/await}
+            {/if}
           </div>
-          <a class="text-decoration-none" href="https://donate4.fun" target="_blank">
-            <Fa icon={faGlobe} size=2x color={iconColor} />
-            <span>Website</span>
-          </a>
-          {#if showDev}
-            <div disabled={!contentScript} on:click={() => contentScript.postComment("en", 100)}>
-              <Fa icon={faComment} size=2x color={iconColor} />
-              <span>Insert comment</span>
-            </div>
-            <div disabled={!contentScript} on:click={() => contentScript.onPaid({amount: 333})}>
-              <Fa icon={faComment} size=2x color={iconColor} />
-              <span>Show comment popup</span>
-            </div>
-            <div on:click={async () => worker.injectContentScript(await getCurrentTab())}>
-              <Fa icon={faSyringe} size=2x color={iconColor} />
-              <span>Inject script</span>
-            </div>
-            <div on:click={createPopup}>
-              <Fa icon={faWindowRestore} size=2x color={iconColor} />
-              <span>Create popup window</span>
-            </div>
-            <div on:click={() => history.navigate('/nowebln/1000')}>
-              <Fa icon={faHashtag} size=2x color={iconColor} />
-              <span>Open NoWebLN page</span>
-            </div>
-          {/if}
-        </div>
+        {/if}
       </div>
     </header>
     <div class="flex-column gap-20 align-center">
@@ -105,6 +112,7 @@ main {
   border-radius: 12px;
   top: 0;
   right: 100%;
+  visibility: visible;
 }
 .popup > div,a {
   height: 48px;
@@ -122,8 +130,5 @@ main {
 .popup > div:hover,a:hover {
   background: #F7F8FF;
   height: 48px;
-}
-.popup.popupVisible {
-  visibility: visible;
 }
 </style>
