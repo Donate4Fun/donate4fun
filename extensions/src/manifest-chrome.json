@@ -41,6 +41,14 @@
       "*://m.youtube.com/*"
     ],
     "exclude_matches": [ "*://*.music.youtube.com/*" ]
+  },{
+    "js": [
+      "contentscripts/donate4.fun.js"
+    ],
+    "run_at": "document_start",
+    "matches": [
+      "*://*.donate4.fun/*"
+    ]
   }],
   "action":  {
     "default_icon":  {
@@ -57,9 +65,8 @@
   },
   "web_accessible_resources": [{
     "resources": [
-      "pagescript.js",
-      "contentscript.js",
-      "pagescript.js.map",
+      "webln.js",
+      "webln.js.map",
       "contentscript.js.map",
       "static/success.png",
       "static/global.css",
@@ -67,6 +74,17 @@
       "static/lottie-arrow.json",
       "static/youtube.svg"
     ],
-    "matches": [ "https://*.youtube.com/*" ]
+    "matches": [
+      "https://*.youtube.com/*"
+    ]
+  },{
+    "resources": [
+      "globalobj.js",
+      "globalobj.js.map",
+      "contentscripts/donate4.fun.js.map"
+    ],
+    "matches": [
+      "*://*.donate4.fun/*"
+    ]
   }]
 }

@@ -35,23 +35,23 @@ function serve() {
   };
 }
 
-function makeOutput(browser, footer) {
+function makeOutput(browser, options) {
   return {
     sourcemap: dev,
     format: "iife",
     name: "app",
-    dir: `../${browser}`,
+    dir: path.join('..', browser, options?.dir || '.'),
     assetFileNames: "[name][extname]",
-    footer: footer,
+    footer: options?.footer,
   }
 }
 
-function makeConfig(name, footer) {
+function makeConfig(name, options) {
   return {
     input: `${name}.js`,
     output: [
-      makeOutput('chrome', footer),
-      makeOutput('firefox', footer),
+      makeOutput('chrome', options),
+      makeOutput('firefox', options),
     ],
     plugins: [
       svelte({
@@ -88,18 +88,6 @@ function makeConfig(name, footer) {
           { src: `${name}.html`, dest: ["../chrome", "../firefox"] },
         ],
       }),
-      /*{
-        writeBundle(options, bundle){
-          if (bundle.fileName === 'contentscript.js")
-          for (const [fileName, chunkOrAsset] of Object.entries(bundle)) {
-            console.log("writeBundle", fileName, chunkOrAsset);
-            //test for file you want to modify
-            //const data = fs.readFileSync(fileName, {encoding:'utf8'});
-            //data.replace(/^[^\n]*\n/,'');
-            //fs.writeFileSync(...)
-          }
-        },
-      },*/
     ],
     watch: {
       clearScreen: false,
@@ -128,15 +116,20 @@ function getVersion() {
 }
 
 function patchChromeManifest(json) {
-  if (dev)
+  if (dev) {
     json.host_permissions = [...json.host_permissions, 'http://localhost/*'];
+    json.web_accessible_resources[1].matches = [...json.web_accessible_resources[1].matches, 'http://localhost:3000/*'];
+    json.content_scripts[1].matches = [...json.content_scripts[1].matches, 'http://localhost:3000/*'];
+  }
   json.version = getVersion();
   return json;
 }
 
 function patchFirefoxManifest(json) {
-  if (dev)
+  if (dev) {
     json.permissions = [...json.permissions, 'http://localhost/*'];
+    json.content_scripts[1].matches = [...json.content_scripts[1].matches, 'http://localhost/*'];
+  }
   json.version = getVersion();
   return json;
 }
@@ -147,8 +140,10 @@ export default [
   makeConfig('popup'),
   makeConfig('window'),
   makeConfig('background'),
-  makeConfig('contentscript', "app;"), // we need to return pormise from contentscript.js to wait in scripting.executeScript
-  makeConfig('pagescript'),
+  makeConfig('contentscript', {footer: "app;"}), // we need to return pormise from contentscript.js to wait in scripting.executeScript
+  makeConfig('contentscripts/donate4.fun', {dir: 'contentscripts'}),
+  makeConfig('webln'),
+  makeConfig('globalobj'),
   {
     input: "./empty.js",
     output: [

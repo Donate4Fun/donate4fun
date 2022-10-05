@@ -302,6 +302,23 @@ async function donate(amount, target) {
   }
 }
 
+async function injectPageScript(filename) {
+  const scriptUrl = chrome.runtime.getURL(filename);
+  cLog("injecting page script", scriptUrl);
+  const scriptElement = document.createElement('script');
+  scriptElement.src = scriptUrl;
+  scriptElement.async = false;
+  (document.head || document.documentElement).appendChild(scriptElement);
+  await new Promise((resolve, reject) => {
+    scriptElement.addEventListener("load", resolve);
+  });
+  cLog("page script loaded");
+  const pong = await pageScript.ping();
+  if (pong !== "pong")
+    throw new Error("unexpected pong from page script", pong);
+  cLog("page script responded");
+}
+
 export {
   worker,
   registerHandlers,
@@ -317,4 +334,5 @@ export {
   waitElement,
   getStatic,
   donate,
+  injectPageScript,
 };

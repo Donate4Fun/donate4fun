@@ -23,24 +23,30 @@
   "background": {
     "page": "background.html"
   },
-  "content_scripts":  [
-    {
-      "js":  [
-        "contentscript.js"
-      ],
-      "css": [
-        "contentscript.css",
-        "static/global.css"
-      ],
-      "run_at":  "document_end",
-      "matches":  [
-        "https://*.youtube.com/*"
-      ]
-    }
-  ],
+  "content_scripts":  [{
+    "js": [
+      "contentscript.js"
+    ],
+    "css": [
+      "contentscript.css",
+      "static/global.css"
+    ],
+    "run_at": "document_end",
+    "matches": [
+      "https://*.youtube.com/*"
+    ]
+  },{
+    "js": [
+      "contentscripts/donate4.fun.js"
+    ],
+    "run_at": "document_start",
+    "matches": [
+      "*://*.donate4.fun/*"
+    ]
+  }],
   "browser_action":  {
-    "default_icon":  "static/D.svg",
-    "default_title":  "Donate4.Fun",
+    "default_icon": "static/D.svg",
+    "default_title": "Donate4.Fun",
     "default_popup": "popup.html"
   },
   "options_ui": {

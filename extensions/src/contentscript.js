@@ -6,6 +6,7 @@ import {
   registerHandlers,
   donate,
   browser,
+  injectPageScript,
 } from "./common.js";
 import {
   waitLoaded,
@@ -26,7 +27,8 @@ let bolt = null;
 
 async function init() {
   cLog("init");
-  await injectPageScript();
+  // page script is needed only for webln to work
+  await injectPageScript("webln.js");
   window.addEventListener("yt-navigate-finish", load, true);
   window.addEventListener("yt-navigate-start", () => {
     bolt?.$destroy();
@@ -82,24 +84,6 @@ async function patchButtons() {
     },
     anchor: buttons.firstElementChild,
   });
-}
-
-async function injectPageScript() {
-  // page script is needed only for webln to work
-  const scriptUrl = chrome.runtime.getURL('pagescript.js');
-  cLog("injecting page script", scriptUrl);
-  const scriptElement = document.createElement('script');
-  scriptElement.src = scriptUrl;
-  scriptElement.async = false;
-  (document.head || document.documentElement).appendChild(scriptElement);
-  await new Promise((resolve, reject) => {
-    scriptElement.addEventListener("load", resolve);
-  });
-  cLog("page script loaded");
-  const pong = await pageScript.ping();
-  if (pong !== "pong")
-    throw new Error("unexpected pong from page script", pong);
-  cLog("page script responded");
 }
 
 const result = init();

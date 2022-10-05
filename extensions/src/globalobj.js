@@ -1,0 +1,1 @@
+window.donate4fun = {};
