@@ -14,6 +14,7 @@
   import LoginPage from "./routes/LoginPage.svelte";
   import Test from "./routes/Test.svelte";
   import Landing from "./routes/Landing.svelte";
+  import NotFoundPage from "./routes/NotFoundPage.svelte";
 
   const url = "";
 </script>
@@ -36,8 +37,11 @@
     <Route path="prove/youtube" component={YoutubeProvePage} />
     <Route path="login" component={LoginPage} />
     <Route path="main" component={Main} />
-    <Route path="/" component={Landing} />
     <Route path="/test" component={Test} />
+    <Route path="/">
+      <Landing />
+    </Route>
+    <Route component={NotFoundPage}></Route>
   </Page>
 </Router>
 
