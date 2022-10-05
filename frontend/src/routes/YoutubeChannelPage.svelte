@@ -68,7 +68,7 @@
           <Button class="withdraw" link='{resolve("withdraw")}'>Withdraw</Button>
         {:else}
           <Infobox>You can withdraw donations if the channel belongs to you. Confirm by linking your Youtube channel.</Infobox>
-          <Button on:click={link_youtube}>Link your Youtube channel</Button>
+          <Button link="/prove/youtube">Link your Youtube channel</Button>
         {/if}
       {:else}
         <div class="available">Available BTC: <Amount amount={balance} /></div>
