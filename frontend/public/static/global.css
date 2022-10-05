@@ -148,11 +148,6 @@
 .color-blue {
   color: #004EE7;
 }
-.popup {
-  visibility: hidden;
-  position: absolute; 
-  z-index: 1;
-}
 .position-relative {
   position: relative;
 }

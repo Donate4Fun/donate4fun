@@ -1,7 +1,10 @@
-body {
-  font-family: "Inter var experimental", "system-ui";
+:root {
+  --font: "Inter var experimental", "system-ui";
   --color: #414141;
   --link-color: #2E6CFF;
+}
+body {
+  font-family: var(--font);
 }
 * {
   box-sizing: border-box;

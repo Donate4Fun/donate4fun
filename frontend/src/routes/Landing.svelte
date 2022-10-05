@@ -7,12 +7,17 @@
   import LandingSection from "$lib/LandingSection.svelte";
   import Person from "$lib/Person.svelte";
   import Input from "$lib/Input.svelte";
+  import ExtensionPopup from "$lib/ExtensionPopup.svelte";
+  import WalletPopup from "$lib/WalletPopup.svelte";
+  import FAQ from "$lib/FAQ.svelte";
   import api from "$lib/api.js";
   import { isWeblnPresent, isExtensionPresent } from "$lib/utils.js";
 
   let youtubers = [];
   let email;
   let emailAdded = null;
+  let showExtensionPopup = false;
+  let showWalletPopup = false;
   const resolve = useResolve();
 
   async function loadRecentDonatees() {
@@ -30,13 +35,15 @@
 </svelte:head>
 
 <div class="page">
+  <ExtensionPopup bind:show={showExtensionPopup} />
+  <WalletPopup bind:show={showWalletPopup} />
   <section class="header" id="main">
     <h1>One click instant donations with <span class="gradient-light">Bitcoin ⚡ Lightning on Youtube. <span class="gradient-dark">Near zero fees.</span></span></h1>
     <div class="annotation">
       <p>🔥Instant delivery and withdraw with</p>
       <p>Lightning network. No KYC.🔥</p>
     </div>
-    <div class="only-desktop">
+    <div class="only-desktop" on:click={() => showExtensionPopup = true}>
       <Button --width=300px>Get extension</Button>
     </div>
     <form on:submit|preventDefault={submitEmail} class="only-mobile flex-column gap-18">
@@ -55,9 +62,9 @@
     <video autoplay muted loop src="/static/sample.webm" width=640px />
   </section>
   <section id="howto">
-    <h1 class="gradient-light">Easy to donate</h1>
+    <h1 class="gradient-light">How to donate</h1>
     <content class="steps">
-      <a href="https://addons.mozilla.org/en-US/firefox/addon/donate4-fun/" target=_blank class="step narrow">
+      <div on:click={() => showExtensionPopup = true} class="step narrow">
         <LandingStep number=1 done={isExtensionPresent()}>
           <img slot=image alt="D" src="/static/extensions.svg">
           <div slot=text>
@@ -65,8 +72,8 @@
             <p>browser extension</p>
           </div>
         </LandingStep>
-      </a>
-      <a href="https://getalby.com/" target=_blank class="step narrow">
+      </div>
+      <div on:click={() => showWalletPopup = true} class="step narrow">
         <LandingStep number=2 done={isWeblnPresent()}>
           <img slot=image src="/static/wallet.svg" alt="wallet">
           <div slot=text>
@@ -75,7 +82,7 @@
             <p>And fulfill with satoshis</p>
           </div>
         </LandingStep>
-      </a>
+      </div>
       <a href="https://youtube.com" target=_blank class="step wide">
         <LandingStep number=3>
           <img slot=image alt="browser-extension" src="/static/extension-popup.png" height=188>
@@ -107,6 +114,7 @@
     <Section>
       <div class="half-box">
         <h1 class="gradient-dark">FAQ</h1>
+        <FAQ />
       </div>
     </Section>
     <Section>
@@ -231,6 +239,7 @@ h1 {
   height: 450px;
   color: var(--color);
   font-weight: 500;
+  cursor: pointer;
 }
 .step div {
   text-align: center;

@@ -14,9 +14,8 @@ section {
   /* identical to box height, or 133% */
   letter-spacing: 0.015em;
 
-  box-sizing: border-box;
   padding: var(--padding);
-  width: fit-content;
-  height: fit-content;
+  width: var(--width, fit-content);  /* replace with 100% always */
+  height: var(--height, fit-content);
 }
 </style>
