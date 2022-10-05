@@ -63,7 +63,13 @@
         <Lnurl lnurl="{lnurl}" class="lnurl" />
         <Button class="white" on:click={$me.reset} --width=100%>Reset account</Button>
         {#if $me.donator.lnauth_pubkey}
-          <Button class="white" on:click={disconnect} --width=100%>Disconnect wallet</Button>
+          <Button
+            class="white"
+            --width=100%
+            on:click={disconnect}
+            disabled={$me.donator.balance > 0}
+            title={$me.donator.balance > 0 ? "You can't disconnect wallet if you have funds" : ""}
+          >Disconnect wallet</Button>
         {/if}
         <Button class="grey" on:click={() => navigate(-1)} --width=100%>Cancel</Button>
       </div>

@@ -422,6 +422,9 @@ async def lnauth_callback(
 
 @router.post('/disconnect-wallet')
 async def disconnect_wallet(db=Depends(get_db_session), donator=Depends(get_donator)):
+    donator = await load_donator(db, donator.id)
+    if donator.balance > 0:
+        raise ValidationError("Could not disconnect LN wallet with positive balance")
     await db.login_donator(donator.id, key=None)
 
 
