@@ -17,7 +17,6 @@ python-multipart = "^0.0.5"
 Authlib = "<1.0"
 PyYAML = "^6.0"
 itsdangerous = "^2.1.2"
-jwt = "^1.3.1"
 aiogoogle = "^4.1.0"
 databases = {extras = ["asyncpg"], version = "^0.5.5"}
 asyncpg = "^0.25.0"

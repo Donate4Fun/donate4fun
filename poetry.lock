@@ -458,7 +458,7 @@ resolved_reference = "7528811f4c6f1f562b8a96c828a0d9f3248ee3dc"
 
 [[package]]
 name = "google-auth"
-version = "2.11.1"
+version = "2.12.0"
 description = "Google Authentication Library"
 category = "main"
 optional = false
@@ -683,17 +683,6 @@ MarkupSafe = ">=2.0"
 
 [package.extras]
 i18n = ["Babel (>=2.7)"]
-
-[[package]]
-name = "jwt"
-version = "1.3.1"
-description = "JSON Web Token library for Python 3."
-category = "main"
-optional = false
-python-versions = ">= 3.6"
-
-[package.dependencies]
-cryptography = ">=3.1,<3.4.0 || >3.4.0"
 
 [[package]]
 name = "lightning-payencode"
@@ -1354,15 +1343,15 @@ full = ["itsdangerous", "jinja2", "python-multipart", "pyyaml", "requests"]
 
 [[package]]
 name = "starlette-authlib"
-version = "0.1.12"
+version = "0.1.13"
 description = "A drop-in replacement for Starlette session middleware, using authlib's jwt"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
-authlib = "<1.1"
-starlette = "<0.21"
+authlib = "<1.2"
+starlette = "<0.22"
 uvicorn = "<0.19"
 
 [[package]]
@@ -1512,7 +1501,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "c9cc76452e077301b23c50ffd1f80144ded12c42903283afd4aa1e63098dd200"
+content-hash = "4ecfbf99c78a278b1c5d1372ba96a6f0a4a3f0c2a747acf0e9d85135749bd945"
 
 [metadata.files]
 aiofiles = [
@@ -1911,8 +1900,8 @@ frozenlist = [
 ]
 funkybob = []
 google-auth = [
-    {file = "google-auth-2.11.1.tar.gz", hash = "sha256:516e6623038b81430dd062a1a25ecd24f173d7c15cdf4e48a9e78bc87e97aeec"},
-    {file = "google_auth-2.11.1-py2.py3-none-any.whl", hash = "sha256:53bdc0c2b4e25895575779caef4cfb3a6bdff1b7b32dc38a654d71aba35bb5f8"},
+    {file = "google-auth-2.12.0.tar.gz", hash = "sha256:f12d86502ce0f2c0174e2e70ecc8d36c69593817e67e1d9c5e34489120422e4b"},
+    {file = "google_auth-2.12.0-py2.py3-none-any.whl", hash = "sha256:98f601773978c969e1769f97265e732a81a8e598da3263895023958d456ee625"},
 ]
 greenlet = [
     {file = "greenlet-1.1.3-cp27-cp27m-macosx_10_14_x86_64.whl", hash = "sha256:8c287ae7ac921dfde88b1c125bd9590b7ec3c900c2d3db5197f1286e144e712b"},
@@ -2021,9 +2010,6 @@ jedi = [
 Jinja2 = [
     {file = "Jinja2-3.1.2-py3-none-any.whl", hash = "sha256:6088930bfe239f0e6710546ab9c19c9ef35e29792895fed6e6e31a023a182a61"},
     {file = "Jinja2-3.1.2.tar.gz", hash = "sha256:31351a702a408a9e7595a8fc6150fc3f43bb6bf7e319770cbc0db9df9437e852"},
-]
-jwt = [
-    {file = "jwt-1.3.1-py3-none-any.whl", hash = "sha256:61c9170f92e736b530655e75374681d4fcca9cfa8763ab42be57353b2b203494"},
 ]
 lightning-payencode = []
 lnurl = [
@@ -2521,8 +2507,8 @@ starlette = [
     {file = "starlette-0.19.1.tar.gz", hash = "sha256:c6d21096774ecb9639acad41b86b7706e52ba3bf1dc13ea4ed9ad593d47e24c7"},
 ]
 starlette-authlib = [
-    {file = "starlette-authlib-0.1.12.tar.gz", hash = "sha256:78411b476003ec1efc50d568b78a042a76e00e20f667b688aae25964dd005abd"},
-    {file = "starlette_authlib-0.1.12-py3-none-any.whl", hash = "sha256:aa2dcd3a8f1e522371fbc71dca17e31201eb27c85d3f7570ed19c251aff390d3"},
+    {file = "starlette-authlib-0.1.13.tar.gz", hash = "sha256:e2673465c9ea85581594bc1840f59c0aa8c16485f1aa52cf3be658ebd6393847"},
+    {file = "starlette_authlib-0.1.13-py3-none-any.whl", hash = "sha256:848c543edd6c054cc9aba383b9ed198a8ad1071ce083f0a39b89f950fbc79cb7"},
 ]
 toml = [
     {file = "toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"},
