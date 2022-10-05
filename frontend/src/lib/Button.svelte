@@ -42,14 +42,14 @@
       } else {
         navigate(link);
       }
-    } else {
-      try {
-        await dispatch("click", ev);
-      } catch (err) {
-        console.log("error in button on:click dispatcher", err);
-      }
-      spin = false;
     }
+    spin = true;
+    try {
+      await dispatch("click", ev);
+    } catch (err) {
+      console.log("error in button on:click dispatcher", err);
+    }
+    spin = false;
   }
 </script>
 
