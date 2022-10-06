@@ -49,6 +49,18 @@ jobs:
       - name: Build extensions
         run: pnpm package-clean
 
+      - name: Archive firefox production zip file
+        uses: actions/upload-artifact@v3
+        with:
+          name: firefox.xpi
+          path: extensions/firefox.zip
+
+      - name: Archive chrome production zip file
+        uses: actions/upload-artifact@v3
+        with:
+          name: chrome.zip
+          path: extensions/chrome.zip
+
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
