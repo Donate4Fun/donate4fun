@@ -16,8 +16,9 @@
       <Logo />
     </Link>
   </div>
-  <Social class="onlylarge" />
   <div class="right">
+    <a href="/#roadmap">Roadmap</a>
+    <a href="/#claim">Claim donations</a>
     <WalletLogin class="connect" />
     {#await $me.loaded}
       <Spinner --size=56px />
@@ -66,8 +67,13 @@ header {
   display: flex;
   align-items: center;
   gap: 25px;
+  font-weight: 700;
 }
-.right :global(.userpic img) {
-  width: 56px;
+.right > a {
+  font-size: 15px;
+  line-height: 18px;
+  text-align: center;
+  letter-spacing: 0.01em;
+  color: var(--color);
 }
 </style>

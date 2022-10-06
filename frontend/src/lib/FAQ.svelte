@@ -59,8 +59,11 @@ details[open] summary::before {
 }
 details > *:not(summary) {
   padding-left: 54px;
-  font-size: 12px;
   margin-bottom: 22px;
   margin-top: 22px;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0.01em;
 }
 </style>

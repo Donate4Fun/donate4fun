@@ -105,7 +105,7 @@
       </div>
     {/await}
   </section>
-  <section>
+  <section id="claim">
     <img src="/static/coin.png" alt="bitcoin" width=88 height=88>
     <h1 class="gradient-light">Want to get your donations?</h1>
     <Button class="white" --width=300px link={resolve("/prove/youtube")}>Claim here</Button>
@@ -147,7 +147,7 @@
       </div>
     </Section>
   </div>
-  <section>
+  <section id="roadmap">
     <a href="https://github.com/orgs/Donate4Fun/projects/1" target=_blank>
       <h1 class="gradient-dark roadmap">Roadmap<sup>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -269,7 +269,7 @@ h1 {
   border-radius: 20px;
 }
 .half-box {
-  height: 535px;
+  min-height: 535px;
   padding: 40px;
 }
 .half-box h1 {

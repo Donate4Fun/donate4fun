@@ -11,8 +11,7 @@ section {
   font-size: 18px;
   line-height: 24px;
 
-  /* identical to box height, or 133% */
-  letter-spacing: 0.015em;
+  /* identical to box height, or 133% letter-spacing: 0.015em; */
 
   padding: var(--padding);
   width: var(--width, fit-content);  /* replace with 100% always */

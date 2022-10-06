@@ -1,9 +1,15 @@
+<script>
+  import GithubBrand from "svelte-awesome-icons/GithubBrand.svelte";
+  import DiscordBrand from "svelte-awesome-icons/DiscordBrand.svelte";
+</script>
+
 <footer>
   <div>2022 Donate4Fun<sup>©</sup></div>
   <div class="links">
-    <a href="https://donate4fun.notion.site/Donat4-Fun-Roadmap-9fe79f04955b4e6bbac73175efee4351">FAQ</a>
-    <a href="/terms.html">Terms of Use</a>
-    <a href="/privacy-policy.html">Privacy Policy</a>
+    <a target=_blank href="https://github.com/donate4Fun/donate4fun"><GithubBrand size=32 color="var(--link-color)" /></a>
+    <a target=_blank href="https://discord.gg/pfFRGWZ4TM"><DiscordBrand size=32 color="var(--link-color)" /></a>
+    <a target=_blank href="https://donate4fun.notion.site/Donat4-Fun-Roadmap-9fe79f04955b4e6bbac73175efee4351">FAQ</a>
+    <a href="/terms">Terms and Privacy Policy</a>
   </div>
 </footer>
 
@@ -18,6 +24,7 @@ footer {
 .links {
   display: flex;
   gap: 2em;
+  align-items: center;
 }
 .links a {
   font-weight: 500;
