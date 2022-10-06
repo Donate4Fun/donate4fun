@@ -43,7 +43,7 @@ jobs:
         run: pnpm install
 
       - name: Build extensions
-        run: pnpm package-clean
+        run: pnpm list && ls -l node_modules && pnpm package-clean
 
       - name: Release
         uses: softprops/action-gh-release@v1

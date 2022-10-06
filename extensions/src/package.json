@@ -5,7 +5,7 @@
   "homepage": "https://donate4.fun",
   "type": "module",
   "scripts": {
-    "build": "rollup -c",
+    "build": "rollup -c --failAfterWarnings",
     "dev": "rollup -c -w",
     "start": "sirv public",
     "package-chrome": "rm -f ../chrome.zip && cd ../chrome && zip -r ../chrome.zip .",

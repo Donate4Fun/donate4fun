@@ -146,6 +146,7 @@ export default [
   makeConfig('globalobj'),
   {
     input: "./empty.js",
+    treeshake: false,
     output: [
       makeOutput('chrome'),
       makeOutput('firefox'),
