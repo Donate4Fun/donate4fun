@@ -39,11 +39,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: Install dependencies
+      - name: Install frontend dependencies
+        run: pnpm install
+        working-directory: ./frontend
+
+      - name: Install extension dependencies
         run: pnpm install
 
       - name: Build extensions
-        run: pnpm list && ls -l node_modules && pnpm package-clean
+        run: pnpm package-clean
 
       - name: Release
         uses: softprops/action-gh-release@v1
