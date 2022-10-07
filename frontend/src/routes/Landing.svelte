@@ -163,8 +163,6 @@
   display: flex;
   flex-direction: column;
   gap: 88px;
-  width: 100vw;
-  padding: 0 24px;
 }
 :global(body) {
   background-image: url("/static/background-bolt.svg");

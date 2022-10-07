@@ -4,31 +4,24 @@
   import Toast from "../lib/Toast.svelte";
 </script>
 
-<div class="container">
-  <div class="item">
-    <Header />
-    <Toast />
+<div class="page">
+  <Header />
+  <Toast />
+  <div class="content">
     <slot />
   </div>
+  <Footer />
 </div>
-<Footer />
 
 <style>
-.container {
+.page {
   display: flex;
   flex-direction: column;
   align-items: center;
+  min-height: 100vh;
   background-color: #F7F9FF;
 }
-.item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 1280px;
-}
-@media only screen and (max-width: 1280px) {
-  .item {
-    width: 100%;
-  }
+.content {
+  flex: 1;
 }
 </style>

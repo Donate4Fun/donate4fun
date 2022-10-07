@@ -18,9 +18,9 @@
 footer {
   display: flex;
   justify-content: space-between;
-  margin-top: auto;
   font-size: 14px;
   padding: 28px 62px 28px 62px;
+  width: 100%;
 }
 .links {
   display: flex;
