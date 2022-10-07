@@ -64,12 +64,13 @@
 <div class="flex-column height-full justify-space-between gradient">
   <main class="flex-column gap-28 height-full position-relative">
     {#await load() then}
-      <PopupHeader bind:balance={balance} history={hashHistory} />
       <Router history={hashHistory} primary={false}>
         <Route path="">
+          <PopupHeader bind:balance={balance} />
           <PopupMain />
         </Route>
         <Route path="youtube">
+          <PopupHeader bind:balance={balance} />
           <PopupYoutube bind:amount={amount} />
         </Route>
         <Route path="nowebln/:amount" let:params>

@@ -16,8 +16,7 @@
   import { worker, browser, connectToPage, createPopup } from "./common.js";
   import cLog from "./log.js";
 
-  export let history;
-
+  let navigate = useNavigate();
   let balance;
   let popupVisible = false;
   let showDev = false;
@@ -80,7 +79,7 @@
                   <Fa icon={faWindowRestore} size=2x color={iconColor} />
                   <span>Create popup window</span>
                 </div>
-                <div on:click={() => history.navigate('/nowebln/1000')}>
+                <div on:click={() => navigate('/nowebln/1000')}>
                   <Fa icon={faHashtag} size=2x color={iconColor} />
                   <span>Open NoWebLN page</span>
                 </div>
