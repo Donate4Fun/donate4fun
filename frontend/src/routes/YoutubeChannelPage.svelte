@@ -35,7 +35,7 @@
     showSuccess = false;
     amount = null;
     try {
-      await $me.loaded
+      await $me.load();  // force reload to refresh youtube channels
       youtube_channel = await api.get(`youtube-channel/${channel_id}`);
       $title = `Claim donations for ${youtube_channel.title} [${youtube_channel.id}]`
       balance = youtube_channel.balance;

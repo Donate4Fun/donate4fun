@@ -9,23 +9,20 @@
   import Infobox from "../lib/Infobox.svelte";
   import Separator from "../lib/Separator.svelte";
   import LinkedYoutubeChannels from "../lib/LinkedYoutubeChannels.svelte";
-  import {me} from "../lib/session.js";
+  import { me } from "../lib/session.js";
   import api from "../lib/api.js";
   import title from "../lib/title.js";
 
-  let message;
-  let proved_channels = null;
-  let spin = false;
+  $: proved_channels = $me.youtube_channels;
   export let navigate;
 
   async function check() {
-    spin = true;
-    proved_channels = await api.post("me/youtube/check-ownership");
-    spin = false;
+    await api.post("me/youtube/check-ownership");
+    await $me.load();
   }
 
   async function loadProveMessage() {
-    message = (await api.get("me/youtube/ownership-message")).message;
+    return (await api.get("me/youtube/ownership-message")).message;
   }
 
   async function useOAuth() {
@@ -47,12 +44,12 @@
         </summary>
         <div>
           {#await loadProveMessage()}
-          <Editable />
-          {:then}
-          <Editable editable={false} message={message} />
-          {#if window.isSecureContext}
-          <CopyButton content={message} />
-          {/if}
+            <Editable message="" />
+          {:then message}
+            <Editable editable={false} message={message} />
+            {#if window.isSecureContext}
+              <CopyButton content={message} />
+            {/if}
           {/await}
         </div>
       </li>
@@ -67,25 +64,24 @@
           <div class=index></div>
           <div class=press>
             <span>Press</span>
-            <Button on:click={check} class=white>
-              {#if spin}
-              <Spinner --size=20px --width=3px />
-              {/if}
-              <span class=check>Check</span>
+            <Button on:click={check} class=white --width=195px>
+              Check
             </Button>
           </div>
         </summary>
       </li>
     </ol>
     <div>
-    {#if proved_channels === null}
-      <!-- should be empty -->
-    {:else if proved_channels.length}
-      <h2>Youtube channel successfully linked</h2>
-      <LinkedYoutubeChannels youtube_channels={proved_channels} />
-    {:else}
-      No comments found, try again.
-    {/if}
+      {#await $me.loaded}
+        <Spinner />
+      {:then}
+        {#if proved_channels.length}
+          <h2>Linked channels</h2>
+          <LinkedYoutubeChannels youtube_channels={proved_channels} />
+        {:else}
+          No comments found, try again.
+        {/if}
+      {/await}
     </div>
     <Separator>OR</Separator>
     <Button on:click={useOAuth}>Use Google OAuth instead</Button>
