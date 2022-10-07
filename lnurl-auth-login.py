@@ -18,7 +18,10 @@ def main(lnurl):
         key=sk.verifying_key.to_string().hex(),
         **{k: v[0] for k, v in query.items()},
     ))
-    assert callback_response.json()['status'] == 'OK'
+    response = callback_response.json()
+    if response['status'] != 'OK':
+        print(response)
+        sys.exit(1)
 
 
 if __name__ == '__main__':
