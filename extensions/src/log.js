@@ -1,2 +1,2 @@
-const cLog = console.log.bind(console, '[donate4fun]: %s');
+const cLog = console.log.bind(console, '[⚡₿] %s');
 export default cLog;
