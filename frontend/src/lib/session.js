@@ -29,20 +29,6 @@ function loadFrom(resp, set) {
   } else {
     obj.connected = false;
   }
-
-  obj.load = async () => {
-    obj.loaded = new Promise(async (resolve) => {
-      loadFrom(await fetchMe(), set);
-      resolve();
-    });
-    set(obj);
-    await obj.loaded;
-  };
-  obj.reset = async () => {
-    Cookies.remove("session");
-    await obj.load();
-  };
-
   set(obj);
 }
 
@@ -67,6 +53,21 @@ async function isValid() {
 }
 
 export const me = readable(obj, function start(set) {
+  obj.load = async () => {
+    obj.loaded = new Promise(async (resolve) => {
+      loadFrom(await fetchMe(), set);
+      resolve();
+    });
+    set(obj);
+    await obj.loaded;
+  };
+  obj.reset = async () => {
+    // Take first-level domain
+    const domain = "." + window.location.hostname.split('.').slice(-2).join('.');
+    Cookies.remove("session", { path: "/", domain: domain });
+    await obj.load();
+  };
+
   obj.loaded = new Promise(async (resolve) => {
     if (!await isValid()) {
       console.log("stored session is invalid or missing, reloading");

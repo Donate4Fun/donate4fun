@@ -94,15 +94,15 @@ button.blue {
   background: rgba(46, 108, 255, 0.2);
   padding: 2px;
 }
-button.white div,button.light div, button.blue div {
+button.white > div,button.light > div, button.blue > div {
   border-radius: inherit;
   padding: var(--padding, 10px 23px);  /* parent padding - 2px (pseudo-border) */
 }
 /* background */
-button.white div,button.blue div {
+button.white > div,button.blue > div {
   background: white;
 }
-button.light div {
+button.light > div {
   background: linear-gradient(105.38deg, rgba(249, 240, 62, 0.2) 1.16%, rgba(157, 237, 162, 0.2) 95.37%), #FFFFFF;
 }
 button.grey {
