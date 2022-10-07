@@ -20,14 +20,14 @@ from aiogoogle import Aiogoogle
 from anyio.abc import TaskStatus
 from rollbar.contrib.fastapi.routing import RollbarLoggingRoute
 
-from .core import get_db_session, get_lnd, get_db, get_pubsub
+from .core import get_db_session, get_lnd, get_pubsub
 from .models import (
     Donation, Donator, Invoice, DonateResponse, DonateRequest, YoutubeChannelRequest, YoutubeChannel, YoutubeVideo,
     WithdrawalToken, BaseModel, Notification, Credentials, SubscribeEmailRequest,
 )
 from .types import ValidationError, RequestHash, PaymentRequest
 from .youtube import YoutubeDonatee, ChannelInfo, fetch_user_channel, validate_target, find_comment, fetch_channel
-from .db import NoResultFound, DonationDb, DbSession
+from .db import NoResultFound, DonationDb, DbSession, WithdrawalDb
 from .settings import settings
 
 logger = logging.getLogger(__name__)
@@ -221,10 +221,6 @@ async def withdraw(request: Request, channel_id: UUID, db=Depends(get_db_session
         )
     withdrawal_id: UUID = await db.create_withdrawal(youtube_channel_id=youtube_channel.id, donator_id=donator.id)
     token = WithdrawalToken(
-        min_amount=settings.min_withdraw,
-        max_amount=youtube_channel.balance,
-        description=f'Donate4.Fun withdrawal for "{youtube_channel.title}"',
-        youtube_channel_id=youtube_channel.id,
         withdrawal_id=withdrawal_id,
     )
     url = request.app.url_path_for('lnurl_withdraw').make_absolute_url(settings.lnd.lnurl_base_url)
@@ -257,39 +253,45 @@ class LnurlWithdrawResponse(LnurlResponseModel):
 
 
 @router.get('/lnurl/withdraw', response_model=LnurlWithdrawResponse)
-async def lnurl_withdraw(request: Request, token: str):
+async def lnurl_withdraw(request: Request, token: str, db=Depends(get_db_session)):
     decoded = WithdrawalToken.from_jwt(token)
+    withdrawal: WithdrawalDb = await db.query_withdrawal(decoded.withdrawal_id)
     return LnurlWithdrawResponse(
         callback=request.app.url_path_for('withdraw_callback').make_absolute_url(settings.lnd.lnurl_base_url),
         k1=token,
-        default_description=decoded.description,
-        min_withdrawable=decoded.min_amount * 1000,
-        max_withdrawable=decoded.max_amount * 1000,
+        default_description=f'Donate4.Fun withdrawal for "{withdrawal.youtube_channel.title}"',
+        min_withdrawable=settings.min_withdraw * 1000,
+        max_withdrawable=withdrawal.youtube_channel.balance * 1000,
     )
 
 
 @router.get('/lnurl/withdraw-callback', response_class=JSONResponse)
-async def withdraw_callback(request: Request, k1: str, pr: str, db=Depends(get_db), lnd=Depends(get_lnd)):
+async def withdraw_callback(request: Request, k1: str, pr: str, db=Depends(get_db_session), lnd=Depends(get_lnd)):
     try:
         token = WithdrawalToken.from_jwt(k1)
+        withdrawal: WithdrawalDb = await db.query_withdrawal(token.withdrawal_id)
+        youtube_channel = withdrawal.youtube_channel
         invoice: LnAddr = lndecode(pr)
         invoice_amount_sats = invoice.amount * 10**8
-        if invoice_amount_sats < token.min_amount or invoice_amount_sats > token.max_amount:
+        min_amount = settings.min_withdraw
+        max_amount = youtube_channel.balance
+        if invoice_amount_sats < min_amount or invoice_amount_sats > max_amount:
             raise ValidationError(
-                f"Invoice amount {invoice_amount_sats} is not in allowed bounds [{token.min_amount}, {token.max_amount}]"
+                f"Invoice amount {invoice_amount_sats} is not in allowed bounds [{min_amount}, {max_amount}]"
             )
         # According to https://github.com/fiatjaf/lnurl-rfc/blob/luds/03.md payment should not block response
         await request.app.task_group.start(partial(
             send_withdrawal,
-            youtube_channel_id=token.youtube_channel_id,
-            withdrawal_id=token.withdrawal_id,
+            youtube_channel_id=youtube_channel.id,
+            withdrawal_id=withdrawal.id,
             amount=invoice_amount_sats,
             payment_request=pr,
             lnd=lnd,
-            db=db,
+            db=db.db,
         ))
     except Exception as exc:
-        return dict(status="ERROR", reason=f"Exception while initiating payment: {type(exc)}({exc})")
+        logger.exception("Exception while initiating payment")
+        return dict(status="ERROR", reason=f"Error while initiating payment: {exc}")
     else:
         return dict(status="OK")
 

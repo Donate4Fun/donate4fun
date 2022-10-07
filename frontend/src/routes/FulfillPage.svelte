@@ -36,7 +36,7 @@
   async function load() {
     await $me.loaded;
     donator = await api.get(`donator/${donator_id}`);
-    const urlParams = new URLSearchParams(window.location.search);
+    const urlParams = new URLSearchParams(location.search);
     if (urlParams.has("amount"))
       amount = parseInt(urlParams.get("amount"));
   }
@@ -84,7 +84,7 @@
             <span>Fulfill</span>
           </Button>
         {:else}
-          <Button link={resolve('/login') + '?return=' + $location.pathname} disabled={amountError}>
+          <Button link={resolve('/login') + '?return=' + location.pathname} disabled={amountError}>
             <span>Connect Wallet</span>
           </Button>
         {/if}

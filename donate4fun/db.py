@@ -213,6 +213,13 @@ class DbSession:
         )
         return result.scalars().one()
 
+    async def query_withdrawal(self, withdrawal_id: UUID) -> WithdrawalDb:
+        result = await self.execute(
+            select(WithdrawalDb)
+            .where(WithdrawalDb.id == withdrawal_id)
+        )
+        return result.scalars().one()
+
     async def lock_withdrawal(self, withdrawal_id: UUID):
         result = await self.execute(
             select(WithdrawalDb)

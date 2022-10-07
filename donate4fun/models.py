@@ -37,10 +37,6 @@ class DonationRequest(BaseModel):
 
 
 class WithdrawalToken(BaseModel):
-    min_amount: int
-    max_amount: int
-    description: str
-    youtube_channel_id: UUID
     withdrawal_id: UUID
 
 
