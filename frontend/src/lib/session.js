@@ -49,7 +49,7 @@ async function isValid() {
   const decoded = jwt_decode(sessionCookie);
   if (!decoded)
     return false;
-  return decoded.donator === storage.me.donator.id;
+  return decoded.donator === storage.me.donator.id && decoded.lnauth_pubkey === storage.me.donator.lnauth_pubkey;
 }
 
 export const me = readable(obj, function start(set) {
