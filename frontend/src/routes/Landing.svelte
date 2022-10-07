@@ -40,13 +40,12 @@
   <section class="header" id="main">
     <h1>One click instant donations with <span class="gradient-light">Bitcoin ⚡ Lightning on Youtube. <span class="gradient-dark">Near zero fees.</span></span></h1>
     <div class="annotation">
-      <p>🔥Instant delivery and withdraw with</p>
-      <p>Lightning network. No KYC.🔥</p>
+      🔥Instant delivery and withdraw with Lightning network. No KYC.🔥
     </div>
-    <div class="only-desktop" on:click={() => showExtensionPopup = true}>
+    <div class="desktop-only" on:click={() => showExtensionPopup = true}>
       <Button --width=300px>Get extension</Button>
     </div>
-    <form on:submit|preventDefault={submitEmail} class="only-mobile flex-column gap-18">
+    <form on:submit|preventDefault={submitEmail} class="mobile-only flex-column gap-18 text-align-center">
       Currently we support only desktop browsers.
       <Input bind:value={email} placeholder="Add your email" />
       <Button type=submit>
@@ -165,7 +164,7 @@
   flex-direction: column;
   gap: 88px;
   width: 100vw;
-  padding: 0 14px;
+  padding: 0 24px;
 }
 :global(body) {
   background-image: url("/static/background-bolt.svg");
@@ -181,17 +180,30 @@ h1 {
   font-family: 'Montserrat';
   font-style: normal;
   font-weight: 900;
-  line-height: 56px;
   text-align: center;
 }
-#main > h1 {
-  font-size: 44px;
-  width: 100%;
-  max-width: 700px;
+@media (max-width: 640px) {
+  h1 {
+    font-size: 32px;
+    line-height: 40px;
+  }
+  :not(#main) > h1 {
+    margin-bottom: 28px;
+  }
 }
-:not(#main) > h1 {
-  font-size: 40px;
-  margin-bottom: 28px;
+@media (min-width: 641px) {
+  h1 {
+    line-height: 56px;
+  }
+  #main > h1 {
+    font-size: 44px;
+    width: 100%;
+    max-width: 700px;
+  }
+  :not(#main) > h1 {
+    font-size: 40px;
+    margin-bottom: 28px;
+  }
 }
 .gradient-light {
   background: linear-gradient(89.59deg, #FF9634 27.11%, #DC24A9 92.47%);
@@ -208,9 +220,6 @@ h1 {
   text-fill-color: transparent;
 }
 @media (min-width: 641px) {
-  .only-mobile {
-    display: none;
-  }
   .step.narrow {
     width: 340px;
   }
@@ -219,12 +228,11 @@ h1 {
   }
   .half-box {
     width: 560px;
+    padding: 40px;
+    min-height: 535px;
   }
 }
 @media (max-width: 640px) {
-  .only-desktop {
-    display: none;
-  }
   .step {
     width: 328px;
   }
@@ -233,6 +241,7 @@ h1 {
   }
   .half-box {
     width: 100%;
+    padding: 28px;
   }
 }
 .step {
@@ -254,23 +263,17 @@ h1 {
   gap: 22px;
 }
 #main .annotation {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   margin-top: 32px;
   margin-bottom: 42px;
   font-weight: 500;
   font-size: 20px;
   line-height: 30px;
+  text-align: center;
 }
 #main video {
   margin-top: 56px;
   box-shadow: 10px 15px 20px rgba(209, 217, 230, 0.15);
   border-radius: 20px;
-}
-.half-box {
-  min-height: 535px;
-  padding: 40px;
 }
 .half-box h1 {
   line-height: 49px;

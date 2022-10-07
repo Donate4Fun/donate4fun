@@ -1,5 +1,5 @@
 <script>
-  import { Link } from "svelte-navigator";
+  import { Link, link } from "svelte-navigator";
   import Logo from "../lib/Logo.svelte";
   import Social from "../lib/Social.svelte";
   import Userpic from "../lib/Userpic.svelte";
@@ -7,24 +7,28 @@
   import Button from "../lib/Button.svelte";
   import WalletLogin from "../lib/WalletLogin.svelte";
   import {me} from "../lib/session.js";
-
+  import { resolve } from "$lib/utils.js";
 </script>
 
-<header {...$$restProps}>
+<header>
   <div class="logo">
     <Link to="/" style="text-decoration: none;">
       <Logo />
     </Link>
   </div>
   <div class="right">
-    <a href="/#roadmap">Roadmap</a>
-    <a href="/#claim">Claim donations</a>
-    <WalletLogin class="connect" />
-    {#await $me.loaded}
-      <Spinner --size=56px />
-    {:then}
-      <Userpic user={$me.donator} class="userpic" --width=56px />
-    {/await}
+    <a class="desktop-only" use:link href={resolve("/#roadmap")}>Roadmap</a>
+    <a class="desktop-only" use:link href={resolve("/prove/youtube")}>Claim donations</a>
+    <div class="connect-button">
+      <WalletLogin />
+    </div>
+    <div class="userpic">
+      {#await $me.loaded}
+        <Spinner --size=56px />
+      {:then}
+        <Userpic user={$me.donator} />
+      {/await}
+    </div>
   </div>
 </header>
 
@@ -34,7 +38,7 @@ header {
   align-items: center;
   place-content: space-between;
   width: 100%;
-  padding: 23px 40px 23px 40px;
+  height: 88px;
   box-sizing: border-box;
   font-size: 15px;
   position: sticky;
@@ -43,24 +47,31 @@ header {
   background: rgba(247, 249, 255, 0.8);
   backdrop-filter: blur(12px);
 }
-@media (max-width: 1280px) {
-  :global(.onlylarge) {
-    display: none;
-  }
-}
 @media (max-width: 640px) {
-  .right :global(.connect) {
+  .connect-button {
     width: 158px;
-    padding: 10px;
+    --padding: 10px;
   }
   header {
-    padding-left: 12px;
-    padding-right: 20px;
+    padding-left: 18px;
+    padding-right: 24px;
+  }
+  .userpic {
+    --width: 48px;
+    --size: 48px;
   }
 }
 @media (min-width: 641px) {
-  .right :global(.connect) {
+  .connect-button {
     width: 204px;
+  }
+  header {
+    padding-left: 28px;
+    padding-right: 40px;
+  }
+  .userpic {
+    --width: 56px;
+    --size: 56px;
   }
 }
 .right {

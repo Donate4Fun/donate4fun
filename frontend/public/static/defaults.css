@@ -5,6 +5,8 @@
 }
 body {
   font-family: var(--font);
+  color: var(--color);
+  font-weight: 400;
 }
 * {
   box-sizing: border-box;

@@ -1,15 +1,16 @@
 <script>
   import GithubBrand from "svelte-awesome-icons/GithubBrand.svelte";
   import DiscordBrand from "svelte-awesome-icons/DiscordBrand.svelte";
+  import TwitterBrand from "svelte-awesome-icons/TwitterBrand.svelte";
 </script>
 
 <footer>
   <div>2022 Donate4Fun<sup>©</sup></div>
   <div class="links">
+    <a target=_blank href="https://twitter.com/donate4_fun"><TwitterBrand size=32 color="var(--link-color)" /></a>
     <a target=_blank href="https://github.com/donate4Fun/donate4fun"><GithubBrand size=32 color="var(--link-color)" /></a>
     <a target=_blank href="https://discord.gg/pfFRGWZ4TM"><DiscordBrand size=32 color="var(--link-color)" /></a>
-    <a target=_blank href="https://donate4fun.notion.site/Donat4-Fun-Roadmap-9fe79f04955b4e6bbac73175efee4351">FAQ</a>
-    <a href="/terms">Terms and Privacy Policy</a>
+    <a href="/terms">Terms and Privacy</a>
   </div>
 </footer>
 

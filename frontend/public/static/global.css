@@ -197,3 +197,15 @@
   font-family: "Montserrat";
   src: url("montserrat.ttf");
 }
+
+/* mobile layout */
+@media (min-width: 641px) {
+  .mobile-only {
+    display: none;
+  }
+}
+@media (max-width: 640px) {
+  .desktop-only {
+    display: none;
+  }
+}

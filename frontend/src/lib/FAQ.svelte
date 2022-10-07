@@ -38,6 +38,7 @@ summary {
   font-weight: 600;
   font-size: 14px;
   line-height: 22px;
+  cursor: pointer;
 }
 summary::before {
   background-image: url("/static/plus.svg");
@@ -51,8 +52,15 @@ summary::before {
 summary::marker {
   content: "";
 }
-details:not([open]) {
-  height: 72px;
+@media (max-width: 640px) {
+  details:not([open]) {
+    height: 88px;
+  }
+}
+@media (min-width: 641px) {
+  details:not([open]) {
+    height: 72px;
+  }
 }
 details[open] summary::before {
   transform: rotate(45deg);

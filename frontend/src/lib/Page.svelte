@@ -6,7 +6,7 @@
 
 <div class="container">
   <div class="item">
-    <Header class="page-header" />
+    <Header />
     <Toast />
     <slot />
   </div>
@@ -18,6 +18,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  background-color: #F7F9FF;
 }
 .item {
   display: flex;
@@ -29,8 +30,5 @@
   .item {
     width: 100%;
   }
-}
-:global(.page-header) {
-  margin-bottom: 16px;
 }
 </style>

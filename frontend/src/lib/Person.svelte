@@ -16,7 +16,7 @@
   export let dribbble = null;
 </script>
 
-<div class="person gap-20">
+<div class="person">
   <img alt={name} src={photo}>
   <div class="description">
     <p style="grid-row: name;" class="name">{name}</p>
@@ -45,12 +45,14 @@
 .person {
   display: flex;
   align-items: end;
+  gap: 20px;
 }
 img {
   width: 116px;
   height: 116px;
   border-radius: 12px;
   object-fit: cover;
+  flex-shrink: 0;
 }
 .name {
   font-weight: 600;

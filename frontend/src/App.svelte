@@ -46,17 +46,3 @@
     <Route component={NotFoundPage}></Route>
   </Page>
 </Router>
-
-<style>
-:global(body) {
-  background-color: #F7F9FF;
-  font-weight: 400;
-  color: #000000;
-  margin: 0;
-}
-:global(div#app) {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-}
-</style>
