@@ -61,6 +61,8 @@
   }
 
   function hideOnClickOutside(element) {
+    if (!element)
+      console.error("hideOnClickOutside element is null", element);
     const outsideClickListener = event => {
       if (!element.contains(event.target)) {
         document.removeEventListener('click', outsideClickListener);
@@ -95,7 +97,7 @@
     {#if confetti}
       <Confetti />
     {/if}
-    <div class="flex-row align-center bolt-button" on:click={onDonateClicked}>
+    <button class="flex-row align-center bolt-button" on:click={onDonateClicked} disabled={animate}>
       <div class="icon" class:animate>
         <svg viewBox="60 60 160 160" xmlns="http://www.w3.org/2000/svg">
           <g>
@@ -104,7 +106,7 @@
         </svg>
       </div>
       <div class="text" class:loading>{text}</div>
-    </div>
+    </button>
     <div class="tooltip" style-target="tooltip">
       Donate sats
     </div>
@@ -129,6 +131,10 @@
   justify-content: center;
   cursor: pointer;
   padding-right: var(--yt-button-icon-padding,8px);
+  color: inherit;
+  border-width: 0;
+  background-color: transparent;
+  font-family: inherit;
 }
 .icon {
   line-height: 1;
