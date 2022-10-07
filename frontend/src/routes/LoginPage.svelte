@@ -59,7 +59,7 @@
       </h1>
       <a href="lightning:{lnurl}" class="qrcode"><QRCode value={lnurl} /></a>
       <div class="buttons">
-        <a href="lightning:{lnurl}" class="open-in-wallet"><Button --width=100%>Connect using WebLN</Button></a>
+        <a href="lightning:{lnurl}" class="open-in-wallet"><Button --width=100%>Connect using Wallet</Button></a>
         <Lnurl lnurl="{lnurl}" class="lnurl" />
         <Button class="white" on:click={$me.reset} --width=100%>Reset account</Button>
         {#if $me.donator.lnauth_pubkey}

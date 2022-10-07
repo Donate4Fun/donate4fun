@@ -65,6 +65,7 @@ export const me = readable(obj, function start(set) {
     // Take first-level domain
     const domain = "." + window.location.hostname.split('.').slice(-2).join('.');
     Cookies.remove("session", { path: "/", domain: domain });
+    Cookies.remove("session", { path: "/" });
     await obj.load();
   };
 
