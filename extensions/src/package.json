@@ -10,8 +10,8 @@
     "start": "sirv public",
     "package-chrome": "rm -f ../chrome.zip && cd ../chrome && zip -r ../chrome.zip .",
     "package-firefox": "rm -f ../firefox.zip && cd ../firefox && zip -r ../firefox.zip .",
-    "package": "npm run package-chrome && npm run package-firefox",
-    "package-clean": "rm -rf ../firefox ../chrome && npm run build && npm run package"
+    "package": "$npm_execpath run package-chrome && $npm_execpath run package-firefox",
+    "package-clean": "rm -rf ../firefox ../chrome && $npm_execpath run build && $npm_execpath run package"
   },
   "devDependencies": {
     "@guanghechen/rollup-plugin-copy": "^2.1.0",
