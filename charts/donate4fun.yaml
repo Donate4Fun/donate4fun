@@ -14,6 +14,7 @@ backend:
     repository: europe-central2-docker.pkg.dev/donate4fun-prod/docker/donate4fun-backend
   config:
     bugsnag:
+      enabled: false
       release_stage: production
     rollbar:
       environment: production
