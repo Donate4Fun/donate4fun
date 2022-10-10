@@ -85,9 +85,10 @@ class FastApiSettings(BaseModel):
 
 
 class BugsnagSettings(BaseModel):
-    api_key: str
-    release_stage: str
-    app_version: str
+    enabled: bool
+    api_key: str | None
+    release_stage: str | None
+    app_version: str | None
 
 
 class RollbarSettings(BaseModel):
@@ -106,7 +107,7 @@ class Settings(BaseSettings):
     db: DbSettings
     log: LoggingConfig
     fastapi: FastApiSettings
-    bugsnag: BugsnagSettings | None
+    bugsnag: BugsnagSettings
     rollbar: RollbarSettings | None
     hypercorn: dict[str, Any]
     jwt_secret: str

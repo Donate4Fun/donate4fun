@@ -5,6 +5,7 @@ ingress:
 backend:
   config:
     bugsnag:
+      enabled: false
       release_stage: staging
     rollbar:
       environment: staging

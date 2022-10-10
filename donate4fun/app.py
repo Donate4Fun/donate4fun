@@ -133,7 +133,7 @@ async def create_table(tablename: str):
 
 async def serve():
     async with load_settings() as settings, create_app(settings) as app:
-        if settings.bugsnag:
+        if settings.bugsnag.enabled:
             bugsnag.configure(**settings.bugsnag.dict(), project_root=os.path.dirname(__file__))
         lnd = LndClient(settings.lnd)
         db = Database(settings.db)
