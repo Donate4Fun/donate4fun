@@ -10,7 +10,7 @@ from sqlalchemy.orm.exc import NoResultFound  # noqa
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy_utils.functions import get_referencing_foreign_keys
 
-from .models import Donation, Donator, YoutubeChannel, YoutubeVideo, Notification, Credentials
+from .models import Donation, Donator, YoutubeChannel, YoutubeVideo, Notification, Credentials, YoutubeNotification
 from .types import RequestHash, NotEnoughBalance, NotFound
 from .settings import DbSettings
 
@@ -440,11 +440,12 @@ class DbSession:
                     update(YoutubeVideoDb)
                     .values(total_donated=YoutubeVideoDb.total_donated + amount)
                     .where(YoutubeVideoDb.id == youtube_video_id)
-                    .returning(YoutubeVideoDb.video_id)
+                    .returning(YoutubeVideoDb.video_id, YoutubeVideoDb.total_donated)
                 )
-                (vid,) = video_update_resp.fetchone()
-                await self.notify(f'youtube-video:{youtube_video_id}', Notification(id=youtube_video_id, status='OK'))
-                await self.notify(f'youtube-video-by-vid:{vid}', Notification(id=vid, status='OK'))
+                vid, total_donated = video_update_resp.fetchone()
+                notification = YoutubeNotification(id=youtube_video_id, vid=vid, status='OK', total_donated=total_donated)
+                await self.notify(f'youtube-video:{youtube_video_id}', notification)
+                await self.notify(f'youtube-video-by-vid:{vid}', notification)
         elif receiver_id:
             await self.execute(
                 update(DonatorDb)

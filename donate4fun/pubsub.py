@@ -1,23 +1,20 @@
 import asyncio
 import logging
-import json
 from functools import partial
 from typing import Callable
 from contextlib import asynccontextmanager
 
 from .db import Database
-from .models import Notification
 
 logger = logging.getLogger(__name__)
 
 
-async def callback_wrapper(callback, conn, pid, channel, payload):
+async def callback_wrapper(callback: Callable, conn, pid, channel, payload: str):
     try:
-        notification = Notification(**json.loads(payload))
         if asyncio.iscoroutinefunction(callback):
-            return await callback(notification)
+            return await callback(payload)
         else:
-            return callback(notification)
+            return callback(payload)
     except Exception:
         logger.exception(f"Unhandled exception in pubsub callback while processing '{channel}' {payload}")
         raise
@@ -39,7 +36,7 @@ class PubSubBroker:
         logger.debug(f"Subscribed to '{channel}'")
         try:
             yield
-        except:
+        except Exception:
             logger.exception("exception in subscribe yield")
         finally:
             logger.debug(f"Unsubscribing from '{channel}'")

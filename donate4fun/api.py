@@ -432,8 +432,8 @@ async def disconnect_wallet(db=Depends(get_db_session), donator=Depends(get_dona
 
 @router.websocket('/subscribe/{topic}')
 async def subscribe(websocket: WebSocket, topic: str, pubsub=Depends(get_pubsub)):
-    async def send_to_websocket(msg: Notification):
-        await websocket.send_text(msg.json())
+    async def send_to_websocket(msg: str):
+        await websocket.send_text(msg)
 
     await websocket.accept()
     async with pubsub.subscribe(topic, send_to_websocket):

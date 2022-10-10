@@ -77,7 +77,8 @@
     const videoId = getVideoId();
     unsubscribeVideoWS = await subscribe(`youtube-video-by-vid:${videoId}`, (msg) => {
       cLog("youtube video updated", msg);
-      fetchStats();
+      const notification = JSON.parse(msg.data);
+      text = notification.total_donated;
     });
     await fetchStats();
   }

@@ -164,6 +164,11 @@ class Notification(BaseModel):
     message: str | None
 
 
+class YoutubeNotification(Notification):
+    vid: str
+    total_donated: int
+
+
 class Credentials(BaseModel):
     donator_id: UUID
     lnauth_pubkey: str | None
