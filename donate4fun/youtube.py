@@ -8,9 +8,12 @@ from aiogoogle import Aiogoogle
 from aiogoogle.auth.creds import ClientCreds, ServiceAccountCreds
 from pydantic import BaseModel
 from email_validator import validate_email
+from sqlalchemy.orm.exc import NoResultFound
 
 from .settings import settings
 from .types import UnsupportedTarget, Url, ValidationError
+from .db import DbSession
+from .models import YoutubeVideo, YoutubeChannel, Donation
 
 ChannelId = str
 VideoId = str
@@ -55,25 +58,17 @@ class VideoInfo(BaseModel):
 
 @dataclass
 class YoutubeDonatee:
-    channel: ChannelInfo
-    video: VideoInfo | None
+    channel_id: str | None = None
+    video_id: str | None = None
 
 
 async def validate_youtube_url(parsed) -> YoutubeDonatee:
     parts = parsed.path.split('/')
     if parsed.path == '/watch':
-        video_id = parse_qs(parsed.query)['v']
-        return await fetch_donatee_by_video(video_id)
+        video_id = parse_qs(parsed.query)['v'][0]
+        return YoutubeDonatee(video_id=video_id)
     elif parts[1] in ('channel', 'c'):
-        part = parts[2]
-        if part.startswith('UC'):
-            channel_info = await fetch_channel(channel_id=part)
-        else:
-            channel_info = await fetch_channel(username=part)
-        return YoutubeDonatee(
-            channel=channel_info,
-            video=None,
-        )
+        return YoutubeDonatee(channel_id=parts[2])
     elif parsed.hostname == 'youtu.be':
         raise UnsupportedYoutubeUrl("youtu.be urls are not supported")
     else:
@@ -114,8 +109,17 @@ def get_service_account_creds():
     )
 
 
+async def query_or_fetch_youtube_video(video_id: str, db: DbSession):
+    try:
+        return await db.query_youtube_video(video_id=video_id)
+    except NoResultFound:
+        video: YoutubeVideo = await fetch_youtube_video(video_id, db)
+        await db.save_youtube_video(video)
+        return video
+
+
 @withyoutube
-async def fetch_donatee_by_video(aiogoogle, youtube, video_id: str) -> YoutubeDonatee:
+async def fetch_youtube_video(aiogoogle, youtube, video_id: str, db: DbSession) -> YoutubeVideo:
     req = youtube.videos.list(id=video_id, part='snippet')
     res = await aiogoogle.as_api_key(req)
     items = res['items']
@@ -123,19 +127,31 @@ async def fetch_donatee_by_video(aiogoogle, youtube, video_id: str) -> YoutubeDo
         raise YoutubeVideoNotFound
     item = items[0]
     snippet = item['snippet']
-    return YoutubeDonatee(
-        channel=await fetch_channel(channel_id=snippet['channelId']),
-        video=VideoInfo(
-            id=item['id'],
-            title=snippet['title'],
-            thumbnail=snippet['thumbnails']['default']['url'],
-            default_audio_language=snippet.get('defaultAudioLanguage', 'en'),
-        )
+    return YoutubeVideo(
+        video_id=item['id'],
+        title=snippet['title'],
+        thumbnail_url=snippet['thumbnails']['default']['url'],
+        default_audio_language=snippet.get('defaultAudioLanguage', 'en'),
+        youtube_channel=await query_or_fetch_youtube_channel(channel_id=snippet['channelId'], db=db),
     )
 
 
+async def query_or_fetch_youtube_channel(channel_id: str, db: DbSession) -> YoutubeChannel:
+    try:
+        return await db.find_youtube_channel(channel_id=channel_id)
+    except NoResultFound:
+        channel: YoutubeChannel = await fetch_youtube_channel(channel_id)
+        await db.save_youtube_channel(channel)
+        return channel
+
+
 @withyoutube
-async def fetch_channel(aiogoogle, youtube, channel_id: str | None = None, username: str | None = None) -> ChannelInfo:
+async def fetch_youtube_channel(aiogoogle, youtube, channel_id: str) -> YoutubeChannel:
+    if not channel_id.startswith('UC'):
+        username = channel_id
+        channel_id = None
+    else:
+        username = None
     req = youtube.channels.list(id=channel_id, forUsername=username, part='snippet')
     res = await aiogoogle.as_api_key(req)
     if res['pageInfo']['totalResults'] == 0:
@@ -143,7 +159,12 @@ async def fetch_channel(aiogoogle, youtube, channel_id: str | None = None, usern
     items = res['items']
     if not items:
         raise YoutubeChannelNotFound
-    return ChannelInfo.from_api(items[0])
+    api_channel = ChannelInfo.from_api(items[0])
+    return YoutubeChannel(
+        channel_id=api_channel.id,
+        title=api_channel.title,
+        thumbnail_url=api_channel.thumbnail,
+    )
 
 
 async def fetch_user_channel(request, code: str) -> ChannelInfo:
@@ -170,6 +191,19 @@ async def validate_target_url(target: Url):
         return await validate_youtube_url(parsed)
     else:
         raise UnsupportedTarget("URL is invalid")
+
+
+async def apply_target(donation: Donation, target: str, db: DbSession):
+    donatee = await validate_target(target)
+
+    if isinstance(donatee, YoutubeDonatee):
+        if donatee.video_id:
+            donation.youtube_video = await query_or_fetch_youtube_video(video_id=donatee.video_id, db=db)
+            donation.youtube_channel = donation.youtube_video.youtube_channel
+        elif donatee.channel_id:
+            donation.youtube_channel = await query_or_fetch_youtube_channel(channel_id=donatee.channel_id, db=db)
+    else:
+        raise NotImplementedError
 
 
 @withyoutube

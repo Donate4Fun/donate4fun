@@ -26,7 +26,10 @@ from .models import (
     WithdrawalToken, BaseModel, Notification, Credentials, SubscribeEmailRequest,
 )
 from .types import ValidationError, RequestHash, PaymentRequest
-from .youtube import YoutubeDonatee, ChannelInfo, fetch_user_channel, validate_target, find_comment, fetch_channel
+from .youtube import (
+    validate_target, apply_target, find_comment, YoutubeDonatee, query_or_fetch_youtube_video,
+    query_or_fetch_youtube_channel, ChannelInfo, fetch_user_channel,
+)
 from .db import NoResultFound, DonationDb, DbSession, WithdrawalDb
 from .settings import settings
 
@@ -73,23 +76,10 @@ async def donate(
         donation.receiver = receiver
     elif request.channel_id:
         donation.youtube_channel = await db_session.query_youtube_channel(youtube_channel_id=request.channel_id)
+    elif request.target:
+        await apply_target(donation, request.target, db_session)
     else:
-        donatee: YoutubeDonatee = await validate_target(request.target)
-        donation.youtube_channel = YoutubeChannel(
-            channel_id=donatee.channel.id,
-            title=donatee.channel.title,
-            thumbnail_url=donatee.channel.thumbnail,
-        )
-        await db_session.save_youtube_channel(donation.youtube_channel)
-        if video := donatee.video:
-            donation.youtube_video = YoutubeVideo(
-                youtube_channel=donation.youtube_channel,
-                video_id=video.id,
-                title=video.title,
-                thumbnail_url=video.thumbnail,
-                default_audio_language=video.default_audio_language,
-            )
-            await db_session.save_youtube_video(donation.youtube_video)
+        raise ValidationError("donation should have a target, channel_id or receier_id")
     donator = await load_donator(db_session, donator.id)
     # If donator has enough money (and not fulfilling his own balance) - try to pay donation instantly
     use_balance = request.receiver_id != donator.id and donator.balance >= request.amount
@@ -106,14 +96,13 @@ async def donate(
 
 
 @router.post("/donatee", response_model=YoutubeChannel)
-async def donatee_by_url(request: YoutubeChannelRequest, db_session=Depends(get_db_session)):
+async def donatee_by_url(request: YoutubeChannelRequest, db=Depends(get_db_session)):
     donatee: YoutubeDonatee = await validate_target(request.target)
-    youtube_channel = YoutubeChannel(
-        channel_id=donatee.channel.id,
-        title=donatee.channel.title,
-        thumbnail_url=donatee.channel.thumbnail,
-    )
-    await db_session.save_youtube_channel(youtube_channel)
+    if donatee.video_id:
+        youtube_video = await query_or_fetch_youtube_video(video_id=donatee.video_id, db=db)
+        youtube_channel = youtube_video.channel
+    elif donatee.channel_id:
+        youtube_channel = await query_or_fetch_youtube_channel(channel_id=donatee.channel_id, db=db)
     return youtube_channel
 
 
@@ -489,13 +478,7 @@ async def ownership_check(donator=Depends(get_donator), db=Depends(get_db_sessio
     )
     channels = []
     for channel_id in channel_ids:
-        channel_info: ChannelInfo = await fetch_channel(channel_id=channel_id)
-        youtube_channel = YoutubeChannel(
-            channel_id=channel_info.id,
-            title=channel_info.title,
-            thumbnail_url=channel_info.thumbnail,
-        )
-        await db.save_youtube_channel(youtube_channel)
+        youtube_channel = await query_or_fetch_youtube_channel(channel_id, db)
         await db.link_youtube_channel(youtube_channel, donator)
         channels.append(youtube_channel)
     return channels
