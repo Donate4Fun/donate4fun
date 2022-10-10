@@ -21,8 +21,6 @@
 </script>
 
 <svelte:head>
-  <link href="/static/global.css" rel="stylesheet">
-  <link href="/static/defaults.css" rel="stylesheet">
   <title>{$title}</title>
 </svelte:head>
 
