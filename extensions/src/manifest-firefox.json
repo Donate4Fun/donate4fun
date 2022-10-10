@@ -4,7 +4,7 @@
   "description":  "Support creators instantly using Bitcoin Lightning Network",
   "homepage_url": "https://donate4.fun",
   "author": "Nikolay Bryskin",
-  "version":  "0.5",
+  "version":  "",
   "icons":  {
     "48":  "static/D.svg",
     "96":  "static/D.svg"
