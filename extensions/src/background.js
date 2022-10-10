@@ -164,7 +164,14 @@ browser.runtime.onInstalled.addListener(async (details) => {
   cLog("onInstalled", details);
   for (const contentScript of browser.runtime.getManifest().content_scripts)
     for (const tab of await browser.tabs.query({url: contentScript.matches}))
-      injectContentScript(tab, contentScript);
+      try {
+        await injectContentScript(tab, contentScript);
+      } catch (err) {
+        // This error happens on firefox for some reasone, We can ignore it because Firefox
+        // injects content scripts on install automatically
+        if (err.message !== 'An unexpected error occurred')
+          console.error("Failed to inject content script", err, tab, contentScript);
+      }
 });
 
 registerHandlers({

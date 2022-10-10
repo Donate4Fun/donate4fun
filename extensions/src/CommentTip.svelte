@@ -5,7 +5,7 @@
   import {getStatic} from "./common.js";
   import {isCommentEnabled} from "./youtube.js";
 
-  export let element;
+  export let element = null;
   export let amount;
 
 	const dispatch = createEventDispatcher();
@@ -15,7 +15,6 @@
   onMount(() => {
     if (isCommentEnabled()) {
       const color = window.getComputedStyle(textElement).getPropertyValue("color");
-      console.log("color", color);
       invert = color === "rgb(255, 255, 255)" ? 100 : 0;
     }
   });

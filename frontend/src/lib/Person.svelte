@@ -12,7 +12,6 @@
   export let twitter = null;
   export let github = null;
   export let telegram = null;
-  export let linktree = null;
   export let dribbble = null;
 </script>
 

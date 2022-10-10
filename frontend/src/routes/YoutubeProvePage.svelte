@@ -155,9 +155,6 @@ li > div {
   align-items: center;
   gap: 12px;
 }
-.check {
-  width: 150px;
-}
 h2 {
   font-weight: 600;
   font-size: 11px;

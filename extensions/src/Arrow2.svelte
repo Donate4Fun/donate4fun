@@ -7,4 +7,8 @@
   autoplay={true}
   loop={true}
   width={30}
+  background=transparent
+  controls={null}
+  controlsLayout={[]}
+  height={null}
 />
