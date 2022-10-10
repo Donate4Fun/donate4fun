@@ -83,7 +83,11 @@ async def create_app(settings: Settings):
     if settings.rollbar:
         rollbar.init(**settings.rollbar.dict())
     if settings.fastapi.debug:
-        app.add_middleware(DebugToolbarMiddleware)
+        app.add_middleware(
+            DebugToolbarMiddleware,
+            panels=["debug_toolbar.panels.sqlalchemy.SQLAlchemyPanel"],
+            profiler_options=dict(interval=.0002, async_mode='enabled'),
+        )
     app.add_middleware(
         CORSMiddleware,
         allow_origins=origins,

@@ -20,7 +20,7 @@ class PaymentRequest(str):
             raise ValueError(f"valid payment request should start with one of {cls.prefixes}")
 
 
-class RequestHash:
+class RequestHash(str):
     def __init__(self, data: bytes):
         self.data = data
 
@@ -30,10 +30,10 @@ class RequestHash:
 
     @classmethod
     def validate(cls, b64data: str):
-        if isinstance(b64data, str):
-            return cls(urlsafe_b64decode(b64data))
-        elif isinstance(b64data, cls):
+        if isinstance(b64data, cls):
             return b64data
+        elif isinstance(b64data, str):
+            return cls(urlsafe_b64decode(b64data))
         else:
             breakpoint()
 
