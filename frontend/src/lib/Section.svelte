@@ -8,9 +8,6 @@ section {
   border-radius: 20px;
   box-shadow: 10px 15px 20px rgba(209, 217, 230, 0.15);
 
-  font-size: 18px;
-  line-height: 24px;
-
   /* identical to box height, or 133% letter-spacing: 0.015em; */
 
   padding: var(--padding);

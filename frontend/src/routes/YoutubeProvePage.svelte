@@ -99,6 +99,8 @@ main {
   gap: 32px;
   padding: 36px 85px 40px 85px;
   width: 640px;
+  font-size: 16px;
+  line-height: 19px;
 }
 h1 {
   text-align: center;

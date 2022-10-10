@@ -23,9 +23,7 @@
       <WalletLogin />
     </div>
     <div class="userpic">
-      {#await $me.loaded}
-        <Spinner --size=56px />
-      {:then}
+      {#await $me.loaded then}
         <Userpic user={$me.donator} />
       {/await}
     </div>
@@ -50,7 +48,9 @@ header {
 @media (max-width: 640px) {
   .connect-button {
     width: 158px;
-    --padding: 10px;
+    font-size: 15px;
+    line-height: 18px;
+    --padding: 11px 22px;
   }
   header {
     padding-left: 18px;
@@ -64,6 +64,7 @@ header {
 @media (min-width: 641px) {
   .connect-button {
     width: 204px;
+    --padding: 11px 22px;
   }
   header {
     padding-left: 28px;

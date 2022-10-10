@@ -67,7 +67,7 @@
 button {
   background-image: var(--background-image, linear-gradient(90deg, #F9F03E 0%, #9DEDA2 100%));
   font-weight: var(--font-weight, 700);
-  font-size: var(--font-size, 16px);
+  font-size: var(--font-size, inherit);
   color: black;
   padding: var(--padding, 12px 25px);
   cursor: pointer;
