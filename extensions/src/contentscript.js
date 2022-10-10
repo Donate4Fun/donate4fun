@@ -1,6 +1,5 @@
 import {
   worker,
-  subscribe,
   sleep,
   pageScript,
   registerHandlers,

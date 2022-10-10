@@ -1,8 +1,10 @@
 import axios from "axios";
-import {notify} from "../lib/notifications.js";
-import {writable, get} from 'svelte/store';
+import WebSocket from "async-ws";
+import { notify } from "$lib/notifications.js";
+import { writable, get as store_get } from 'svelte/store';
+import { sleep } from "$lib/utils.js";
 
-export const apiOrigin = writable(window.location.origin);
+const apiOrigin = writable(window.location.origin);
 
 class ApiError extends Error {
   constructor(response) {
@@ -40,82 +42,58 @@ function handle_error(error) {
 }
 
 function fullpath(path) {
-  return get(apiOrigin) + `/api/v1/${path}`;
+  return store_get(apiOrigin) + `/api/v1/${path}`;
 }
 
-function createWebsocket(topic, on_message, on_close) {
-  const origin = get(apiOrigin).replace('http', 'ws');
-  const ws_uri = `${origin}/api/v1/subscribe/${topic}`;
-  const socket = new WebSocket(ws_uri);
-  socket.onmessage = (event) => {
-    console.log(`[ws] Message from ${topic}`, event);
-    try {
-      const msg = JSON.parse(event.data)
-      on_message(msg)
-    } catch (err) {
-      console.error(`unexpected websocket ${topic} notification`, err, event);
+function subscribe(topic) {
+  const origin = store_get(apiOrigin).replace('http', 'ws');
+  const wsUri = `${origin}/api/v1/subscribe/${topic}`;
+  const ws = new WebSocket(wsUri);
+  const origReady = ws.ready.bind(ws);
+  ws.ready = async (timeout) => {
+    if (timeout) {
+      await Promise.race([origReady(), sleep(timeout)]);
+      if (!ws._ready) {
+        await ws.close(1000);
+        throw new Error("timeout while connecting websocket");
+      }
+    } else {
+      await origReady();
     }
   };
-  socket.onerror = (event) => {
-    console.log(`[ws] Error in ${topic}`, event);
-  };
-  socket.onclose = (event) => {
-    console.log(`[ws] Closed ${topic}`, event);
-    on_close();
-  };
-  console.log(`[ws] ${topic} opening`);
-  return socket;
-}
-
-async function subscribe(topic, on_message) {
-  let socket;
-  let opened = true;
-  function onClose() {
-    if (opened) {
-      socket = createWebsocket(topic, on_message, onClose);
-      socket.onopen = _ => {
-        console.log(`[ws] ${topic} opened`);
-      };
-    }
-  }
-  socket = createWebsocket(topic, on_message, onClose);
-  await new Promise((resolve, reject) => {
-    socket.onopen = _ => {
-      console.log(`[ws] ${topic} opened`);
-      resolve();
-    };
-  });
-  return () => {
-    opened = false;
-    socket.close();
-    console.log(`[ws] ${topic} unsubscribed`);
-  };
-}
-
-export const api = {
-  post: async (path, body) => {
-    try {
-      const resp = await axios.post(fullpath(path), body);
-      return handle_response(resp);
-    } catch (error) {
-      return handle_error(error);
-    }
-  },
-
-  get: async (path) => {
-    try {
-      return handle_response(await axios.get(fullpath(path)));
-    } catch (error) {
-      return handle_error(error);
-    }
-  },
-
-  subscribe: subscribe,
+  return ws;
 };
+
+async function post(path, body) {
+  try {
+    const resp = await axios.post(fullpath(path), body);
+    return handle_response(resp);
+  } catch (error) {
+    return handle_error(error);
+  }
+}
+
+async function get(path) {
+  try {
+    return handle_response(await axios.get(fullpath(path)));
+  } catch (error) {
+    return handle_error(error);
+  }
+}
 
 window.onError = function(message, source, lineno, colno, error) {
   console.log("onerror");
   notify("Error", message, "error");
 }
 
-export default api;
+export {
+  get,
+  post,
+  subscribe,
+  apiOrigin,
+};
+export default {
+  get,
+  post,
+  subscribe,
+};

@@ -1,9 +1,10 @@
 <script>
-  import {onMount, onDestroy, tick} from 'svelte';
-  import {Confetti} from "svelte-confetti";
-  import {worker, subscribe, pageScript, sleep, donate} from "./common.js";
+  import { onMount, onDestroy, tick } from 'svelte';
+  import { subscribe } from "$lib/api.js";
+  import { Confetti } from "svelte-confetti";
+  import { worker, pageScript, donate } from "./common.js";
   import cLog from "./log.js";
-  import {getVideoId, postComment} from "./youtube.js";
+  import { getVideoId, postComment } from "./youtube.js";
   import CommentTip from "./CommentTip.svelte";
 
 	export let text = '…';
@@ -11,7 +12,7 @@
   export let loading = true;
 
   let isCommentPosted = false;
-  let unsubscribeVideoWS;
+  let videoWS;
   let confetti = false;
   let showCommentTip = false;
   let donation = {amount: null};
@@ -75,21 +76,26 @@
   async function init() {
     cLog("onMount");
     const videoId = getVideoId();
-    unsubscribeVideoWS = await subscribe(`youtube-video-by-vid:${videoId}`, (msg) => {
+    videoWS = subscribe(`youtube-video-by-vid:${videoId}`);
+    videoWS.on("message", (msg) => {
       cLog("youtube video updated", msg);
       const notification = JSON.parse(msg.data);
       text = notification.total_donated;
     });
+    try {
+      await videoWS.ready();
+    } catch (err) {
+      cLog(err);
+      text = "";
+      return;
+    }
     await fetchStats();
   }
 
   onMount(init);
-  onDestroy(() => {
+  onDestroy(async () => {
     cLog("onDestroy");
-
-    if (unsubscribeVideoWS) {
-      unsubscribeVideoWS();
-    }
+    await videoWS.close();
   });
 </script>
 

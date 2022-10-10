@@ -172,57 +172,6 @@ function registerHandlers(handlers) {
   });
 }
 
-async function createWebsocket(topic, on_message, on_close) {
-  const apiHost = await worker.getConfig('apiHost');
-  const wsHost = apiHost.replace('http', 'ws');
-  const socket = new WebSocket(`${wsHost}/api/v1/subscribe/${topic}`);
-  socket.onmessage = (event) => {
-    cLog(`Message from ${topic}`, event);
-    try {
-      const msg = JSON.parse(event.data);
-      on_message(msg);
-    } catch (err) {
-      console.error(`unexpected websocket ${topic} notification`, err, event);
-    }
-  };
-  socket.onerror = (event) => {
-    cLog(`WebSocket ${topic} error`, event);
-  };
-  socket.onclose = (event) => {
-    cLog(`WebSocket ${topic} closed`, event);
-    on_close();
-  };
-  return socket;
-}
-
-async function subscribe(topic, on_message) {
-  let opened = true;
-  let socket = null;
-  let delay = 1000;
-  async function onClose() {
-    if (opened) {
-      cLog(`WebSocket ${topic} closed, reconnecting in ${delay}ms`);
-      await sleep(delay);
-      if (delay < 30000)
-        delay = delay * 1.5;
-      socket = await createWebsocket(topic, on_message, onClose);
-    }
-  }
-  function unsubscribe() {
-    opened = false;
-    cLog(`Closing WebSocket ${topic}`);
-    socket.close();
-  }
-  socket = await createWebsocket(topic, on_message, onClose);
-  await new Promise((resolve, reject) => {
-    socket.onopen = _ => {
-      cLog(`WebSocket ${topic} opened`);
-      resolve();
-    };
-  });
-  return unsubscribe;
-}
-
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -278,10 +227,12 @@ async function donate(amount, target) {
   } else {
     return await new Promise(async (resolve, reject) => {
       // If donation is not paid using balance then try to use WebLN
-      const unsubscribeWs = await subscribe(`donation:${donation.id}`, async (msg) => {
-        unsubscribeWs();
+      const ws = subscribe(`donation:${donation.id}`);
+      ws.on("message", async () => {
+        await ws.close();
         resolve(donation);
       });
+      await ws.ready(3000);
       const paymentRequest = response.payment_request;
       // Show payment dialog (or pay silently if budget allows)
       try {
@@ -316,7 +267,6 @@ export {
   browser,
   connectToPage,
   getCurrentTab,
-  subscribe,
   sleep,
   isTest,
   pageScript,

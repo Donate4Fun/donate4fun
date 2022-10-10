@@ -13,23 +13,23 @@
   export let donation;
   export let payment_request;
 
-  let unsubscribe = null;
-  onDestroy(() => {
-    if (unsubscribe !== null) {
-      unsubscribe();
-    }
+  let ws;
+  onDestroy(async () => {
+    await ws?.close();
   });
 
 	const dispatch = createEventDispatcher();
 
   async function subscribe() {
-    unsubscribe = await api.subscribe(`donation:${donation.id}`, async (notification) => {
+    ws = api.subscribe(`donation:${donation.id}`);
+    ws.on("message", async (notification) => {
       if (notification.status === 'OK') {
-        unsubscribe();
+        await ws.close();
         const response = await api.get(`donation/${donation.id}`);
         dispatch('paid', response.donation);
       }
     });
+    await ws.ready();
   }
 </script>
 

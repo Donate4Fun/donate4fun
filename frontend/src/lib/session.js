@@ -1,5 +1,5 @@
 import { readable, writable, get } from "svelte/store";
-import { api, apiOrigin } from "$lib/api.js";
+import { get as apiGet, apiOrigin } from "$lib/api.js";
 import { storage } from "$lib/storage.js";
 import jwt_decode from "jwt-decode";
 import Cookies from "js-cookie";
@@ -13,7 +13,7 @@ const obj = {
 };
 
 async function fetchMe() {
-  const resp = await api.get("donator/me");
+  const resp = await apiGet("donator/me");
   console.log("Loaded user", resp);
   return resp;
 }

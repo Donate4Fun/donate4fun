@@ -26,11 +26,9 @@
   const min_withdraw = 100;
   const dispatch = createEventDispatcher();
   const resolve = useResolve();
-  let unsubscribe = null;
-  onDestroy(() => {
-    if (unsubscribe !== null) {
-      unsubscribe();
-    }
+  let ws;
+  onDestroy(async () => {
+    await ws?.close();
   });
 
   async function load() {
@@ -41,13 +39,16 @@
       lnurl = response.lnurl;
       amount = response.amount;
       title.set(`Withdraw ${amount} sats for ${youtube_channel.title} [${youtube_channel.id}]`);
-      unsubscribe = await api.subscribe(`withdrawal:${channel_id}`, (msg) => {
-        unsubscribe();
+      ws = await api.subscribe(`withdrawal:${channel_id}`);
+      ws.on("message", async (data) => {
+        await ws.close();
+        const msg = JSON.parse(data);
         if (msg.status === 'ERROR') {
           notify(msg.message);
         }
         showSuccess = true;
       });
+      await ws.ready();
     } catch (err) {
       console.log(err);
       if (err.response.status === 403 || (err.response.data.status === 'error' && err.response.data.type === 'ValidationError'))

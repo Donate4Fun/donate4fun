@@ -14,20 +14,20 @@
   export let location;
 
   let lnurl;
-  let unsubscribe = null;
+  let ws;
 
-  onDestroy(() => {
-    if (unsubscribe !== null) {
-      unsubscribe();
-    }
+  onDestroy(async () => {
+    await ws?.close();
   });
 
   async function load() {
     await $me.loaded;
     const params = new URLSearchParams(location.search);
     const return_ = params.get('return');
-    unsubscribe = await api.subscribe("donator:" + $me.donator.id, async (token) => {
-      unsubscribe();
+    ws = await api.subscribe("donator:" + $me.donator.id);
+    ws.on("message", async (data) => {
+      const token = JSON.parse(data);
+      await ws.close();
       await api.post('update-session', {creds_jwt: token['message']});
       await $me.load();
       navigate(return_ || "/donator/" + $me.donator.id);
@@ -36,6 +36,7 @@
       else
         notify("Success", `You've successefully disconnected your wallet`, "success");
     });
+    await ws.ready();
     const response = await api.get('lnauth');
     lnurl = response.lnurl;
   }
