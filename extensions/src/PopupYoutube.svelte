@@ -20,12 +20,9 @@
 
   async function load() {
     cLog("load youtube", window.location.hash);
-    try {
-      contentScript = await connectToPage();
-    } catch (error) {
-      cLog("couldn't connect to content script", error);
+    contentScript = await connectToPage();
+    if (!contentScript)
       return;
-    }
     videoId = await contentScript.getVideoId();
     cLog("videoid", videoId);
     if (videoId) {

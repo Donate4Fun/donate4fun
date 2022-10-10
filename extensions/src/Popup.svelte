@@ -30,9 +30,13 @@
 
     try {
       const contentScript = await connectToPage();
-      const popupPath = await contentScript.popupPath();
-      cLog("detected supported page, navigating to", popupPath);
-      hashHistory.navigate(popupPath);
+      if (contentScript) {
+        const popupPath = await contentScript.popupPath();
+        cLog("detected supported page, navigating to", popupPath);
+        hashHistory.navigate(popupPath);
+      } else {
+        cLog("page has no assiciated content script");
+      }
     } catch (error) {
       cInfo("error connecting to tab", error);
     }

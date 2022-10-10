@@ -18,7 +18,9 @@
     "storage",
     "activeTab",
     "cookies",
-    "https://*.donate4.fun/*"
+    "scripting",
+    "https://*.donate4.fun/*",
+    "https://*.youtube.com/*"
   ],
   "background": {
     "page": "background.html"

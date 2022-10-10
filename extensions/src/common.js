@@ -27,18 +27,19 @@ async function getCurrentTab() {
 }
 
 async function injectContentScript(tab, contentScript) {
-  cLog("injecting content script using browser.scripting", tab, contentScript);
-  await browser.scripting.insertCSS({
-    target: {tabId: tab.id},
-    files: contentScript.css,
-  });
+  cLog("injecting content script using browser.scripting", tab.url, contentScript);
+  if (contentScript.css)
+    await browser.scripting.insertCSS({
+      target: {tabId: tab.id},
+      files: contentScript.css,
+    });
   const injectionResults = await browser.scripting.executeScript({
     target: {tabId: tab.id},
     files: contentScript.js,
   });
-  cLog("injection results", injectionResults, chrome.runtime.lastError);
-  if (chrome.runtime.lastError)
-    throw chrome.runtime.lastError;
+  cLog("injection results", injectionResults);
+  if (browser.runtime.lastError)
+    throw browser.runtime.lastError;
 }
 
 async function callTab(tab, func, args) {
@@ -85,8 +86,10 @@ async function connectToPage() {
         break;
       }
     }
-    if (!contentScript)
-      throw new Error("No content script matches current tab", tab);
+    if (!contentScript) {
+      cLog("No content script matches current tab", tab);
+      return null;
+    }
     if (!injectionPromise)
       injectionPromise = injectContentScript(tab, contentScript);
     await injectionPromise;
