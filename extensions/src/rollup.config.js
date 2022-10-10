@@ -128,7 +128,8 @@ function patchChromeManifest(json) {
 
 function patchFirefoxManifest(json) {
   if (dev) {
-    json.permissions = [...json.permissions, 'http://localhost/*'];
+    // Use *:// instead of http:// because firefox does not allow to get secure cookies for http://localhost
+    json.permissions = [...json.permissions, '*://localhost/*'];
     json.content_scripts[1].matches = [...json.content_scripts[1].matches, 'http://localhost/*'];
   }
   json.version = getVersion();

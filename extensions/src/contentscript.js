@@ -19,6 +19,7 @@ import {
 } from "./youtube.js";
 import cLog from "./log.js";
 import Bolt from "./Bolt.svelte";
+import { apiOrigin } from "$lib/api.js";
 
 const buttonId = "donate4fun-button";
 
@@ -53,6 +54,8 @@ async function init() {
     bolt?.$destroy();
     bolt = null;
   });
+  const apiHost = await worker.getConfig("apiHost");
+  apiOrigin.set(apiHost);
   // Try to load instantly if extension was loaded while youtube was active
   if (isLoaded()) {
     cLog("Youtube is already loaded, patching");

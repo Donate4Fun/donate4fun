@@ -29,18 +29,27 @@ function loadFrom(resp, set) {
   } else {
     obj.connected = false;
   }
-  set(obj);
+  return obj;
+}
+
+function getCookieDomain() {
+  // Take first-level domain
+  const hostname = new URL(get(apiOrigin)).hostname;
+  return "." + hostname.split('.').slice(-2).join('.');
 }
 
 async function isValid() {
-  if (!storage.me)
+  const me = storage.me;
+  if (!me)
     return false;
   let sessionCookie;
   if (get(cookies)) {
-    const cookie = await get(cookies).get({name: "session", url: get(apiOrigin)});
-    if (!cookie)
+    // Convert url to domain because Firefox does not allow to get secure cookie for http://localhost
+    // (but shows for https://localhost or "localhost" domain)
+    const cookieList = await get(cookies).getAll({name: "session", domain: getCookieDomain()});
+    if (!cookieList.length)
       return false;
-    sessionCookie = cookie.value;
+    sessionCookie = cookieList[0].value;
   } else {
     sessionCookie = Cookies.get('session');
     if (!sessionCookie)
@@ -49,7 +58,7 @@ async function isValid() {
   const decoded = jwt_decode(sessionCookie);
   if (!decoded)
     return false;
-  return decoded.donator === storage.me.donator.id && decoded.lnauth_pubkey === storage.me.donator.lnauth_pubkey;
+  return decoded.donator === me.donator.id && decoded.lnauth_pubkey === me.donator.lnauth_pubkey;
 }
 
 export const me = readable(obj, function start(set) {
@@ -62,9 +71,7 @@ export const me = readable(obj, function start(set) {
     await obj.loaded;
   };
   obj.reset = async () => {
-    // Take first-level domain
-    const domain = "." + window.location.hostname.split('.').slice(-2).join('.');
-    Cookies.remove("session", { path: "/", domain: domain });
+    Cookies.remove("session", { path: "/", domain: getCookieDomain() });
     Cookies.remove("session", { path: "/" });
     await obj.load();
   };
@@ -72,9 +79,9 @@ export const me = readable(obj, function start(set) {
   obj.loaded = new Promise(async (resolve) => {
     if (!await isValid()) {
       console.log("stored session is invalid or missing, reloading");
-      loadFrom(await fetchMe(), set);
+      set(loadFrom(await fetchMe()));
     } else {
-      loadFrom(storage.me, set);
+      set(loadFrom(storage.me));
     }
     resolve();
   });
