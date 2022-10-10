@@ -51,7 +51,6 @@
     const response = await api.get(`link-youtube-channel`);
     window.location.href = response.url;
   }
-  const loadPromise = load();
 </script>
 
 <Section>
