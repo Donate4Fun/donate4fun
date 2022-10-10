@@ -9,7 +9,7 @@
   import { webOrigin } from "$lib/utils.js";
   import { me, cookies } from "$lib/session.js";
   import { worker, getCurrentTab, browser, connectToPage } from "./common.js";
-  import cLog from "./log.js";
+  import { cLog, cInfo } from "./log.js";
   import createHashSource from "./hashHistory.js";
 
   const hashSource = createHashSource();
@@ -34,12 +34,12 @@
       cLog("detected supported page, navigating to", popupPath);
       hashHistory.navigate(popupPath);
     } catch (error) {
-      console.log("error connecting to tab", error);
+      cInfo("error connecting to tab", error);
     }
   }
 
   function onNavigate(event) {
-    console.log("navigate", event.location.pathname, event.action);
+    cLog("navigate", event.location.pathname, event.action);
   }
 
   function onTabActivated(activeInfo) {
