@@ -10,6 +10,7 @@
   import Separator from "../lib/Separator.svelte";
   import LinkedYoutubeChannels from "../lib/LinkedYoutubeChannels.svelte";
   import { me } from "../lib/session.js";
+  import { sleep } from "$lib/utils.js";
   import api from "../lib/api.js";
   import title from "../lib/title.js";
 
@@ -17,6 +18,7 @@
   export let navigate;
 
   async function check() {
+    await sleep(5000);
     await api.post("me/youtube/check-ownership");
     await $me.load();
   }
