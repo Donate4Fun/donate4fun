@@ -8,11 +8,15 @@ todo:
 - fulfill page: add "need help" link
 - withdraw page: add "need help" link
 - connect wallet page: add "need help" link
+- landing: restyle "done" steps
 
 bugs:
 - fulfill page: add links how to get satoshis
 - nowebln page: add links how to get satoshis
 - update screenshots in web stores
+- youtube: comment for non-default languages
+- youtube: support shorts
+- header: fix quick links on mobile
 
 fixed:
 - landing mobile layout
