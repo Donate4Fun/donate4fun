@@ -40,9 +40,8 @@
       amount = response.amount;
       title.set(`Withdraw ${amount} sats for ${youtube_channel.title} [${youtube_channel.id}]`);
       ws = await api.subscribe(`withdrawal:${channel_id}`);
-      ws.on("message", async (data) => {
+      ws.on("notification", async (msg) => {
         await ws.close();
-        const msg = JSON.parse(data);
         if (msg.status === 'ERROR') {
           notify(msg.message);
         }

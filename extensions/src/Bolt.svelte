@@ -75,11 +75,11 @@
 
   async function init() {
     cLog("onMount");
+
     const videoId = getVideoId();
     videoWS = subscribe(`youtube-video-by-vid:${videoId}`);
-    videoWS.on("message", (msg) => {
-      cLog("youtube video updated", msg);
-      const notification = JSON.parse(msg.data);
+    videoWS.on("notification", (notification) => {
+      cLog("youtube video updated", notification);
       text = notification.total_donated;
     });
     try {

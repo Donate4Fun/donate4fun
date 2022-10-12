@@ -25,10 +25,9 @@
     const params = new URLSearchParams(location.search);
     const return_ = params.get('return');
     ws = await api.subscribe("donator:" + $me.donator.id);
-    ws.on("message", async (data) => {
-      const token = JSON.parse(data);
+    ws.on("notification", async (token) => {
       await ws.close();
-      await api.post('update-session', {creds_jwt: token['message']});
+      await api.post('update-session', {creds_jwt: token.message});
       await $me.load();
       navigate(return_ || "/donator/" + $me.donator.id);
       if ($me.connected)

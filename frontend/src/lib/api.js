@@ -61,6 +61,10 @@ function subscribe(topic) {
       await origReady();
     }
   };
+  ws.on("message", (msg) => {
+    const notification = JSON.parse(msg.data);
+    ws.emit("notification", notification);
+  });
   return ws;
 };
 

@@ -22,7 +22,7 @@
 
   async function subscribe() {
     ws = api.subscribe(`donation:${donation.id}`);
-    ws.on("message", async (notification) => {
+    ws.on("notification", async (notification) => {
       if (notification.status === 'OK') {
         await ws.close();
         const response = await api.get(`donation/${donation.id}`);
