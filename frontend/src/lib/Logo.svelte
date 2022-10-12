@@ -1,58 +1,37 @@
 <div class="parent">
-  <img class=bolt src="/static/ln-icon.svg" alt="bolt">
-  <img class=text src="/static/D.svg" alt="D" width=28>
-  <div class=text>
-    <span class="stroke"><span>Donate4Fun</span></span>
-    <span class="gradient"><span>Donate4Fun</span></span>
+  <div class="small">
+    <img class=text src="/static/D.svg" alt="D" width=28>
+  </div>
+  <div class="full">
+    <div class="text">Donate4Fun</div>
   </div>
 </div>
 
 <style>
-@media only screen and (max-width: 640px) {
-  img.bolt,div.text {
-    display: None;
-  }
-  .stroke:after {
-    content: 'D';
-  }
-  .gradient:after {
-    content: 'D';
-  }
+.full {
+  background-image: url("/static/logo-background.svg");
 }
-@media (min-width: 641px) {
-  img.text {
-    display: none;
-  }
-}
-div.parent {
-  display: flex;
-  gap: 0.5em;
-  --stroke-width: 0.1em;
-  --stroke-color: #2E6CFF;
-}
-div.text {
+.full .text {
+  padding-left: 31.63px;
+  padding-top: 4px;
+  padding-right: 3px;
   font-weight: 900;
-  font-size: 32px;
-  line-height: 39px;
-}
-span.gradient {
+  font-size: 26.5333px;
+  line-height: 32px;
   background: linear-gradient(90deg, #F9F03E 0%, #9DEDA2 100%), linear-gradient(299.9deg, #FF7A00 18.72%, #FFA800 82.21%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-fill-color: transparent;
 }
-span.stroke {
-  position: absolute;
-  z-index: -1;
-  text-shadow:
-    0                               var(--stroke-width)             var(--stroke-color),
-    0                               calc(-1 * var(--stroke-width))  var(--stroke-color),
-    calc(-1 * var(--stroke-width))  0                               var(--stroke-color),
-    var(--stroke-width)             0                               var(--stroke-color),
-    calc(1 * var(--stroke-width))  calc(1 * var(--stroke-width))  var(--stroke-color),
-    calc(-1 * var(--stroke-width)) calc(1 * var(--stroke-width))  var(--stroke-color),
-    calc(1 * var(--stroke-width))  calc(-1 * var(--stroke-width)) var(--stroke-color),
-    calc(-1 * var(--stroke-width)) calc(-1 * var(--stroke-width)) var(--stroke-color);
+@media only screen and (max-width: 640px) {
+  .full {
+    display: none;
+  }
+}
+@media (min-width: 641px) {
+  .small {
+    display: none;
+  }
 }
 </style>
