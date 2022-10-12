@@ -1,6 +1,6 @@
 <script>
-  import { useResolve } from "svelte-navigator";
-  import LandingStep from "$lib/LandingStep.svelte";
+  import { onMount, tick } from "svelte";
+  import { useResolve, useLocation } from "svelte-navigator";
   import LandingYoutuber from "$lib/LandingYoutuber.svelte";
   import Button from "$lib/Button.svelte";
   import Section from "$lib/Section.svelte";
@@ -17,6 +17,7 @@
   let emailAdded = null;
   let showExtensionPopup = false;
   const resolve = useResolve();
+  const location = useLocation();
 
   async function loadRecentDonatees() {
     youtubers = await api.get("donatee/recently-donated");
@@ -26,6 +27,41 @@
     const response = await api.post("subscribe-email", {email: email});
     emailAdded = response !== null;
   }
+  // For #hashtag navigation - thnx to https://github.com/mefechoel/svelte-navigator/issues/39#issuecomment-851433750
+  onMount(() => {
+    // Don't use the `$` shorthand for store subscription here, since
+    // we only want to run this when the app has mounted, not
+    // when the component is created
+    const unsubscribe = location.subscribe(async (newLocation) => {
+      // If there's no hash, we don't need to scroll anywhere
+      if (!newLocation.hash) return;
+      // We need to wait for svelte to update the dom before atempting to
+      // scroll to a specific element
+      await tick();
+      // Get the element referenced by the fragment. `location.hash`
+      // always starts with `#` when a hash exists, so we already have a
+      // valid id selector
+      const fragmentReference = document.querySelector(newLocation.hash);
+      // If the fragment does not reference an element, we can ignore it
+      if (!fragmentReference) return;
+      fragmentReference.scrollIntoView({block: "center"});
+      // Set a tabindex, so the element can be focused
+      if (!fragmentReference.hasAttribute('tabindex')) {
+        fragmentReference.setAttribute('tabindex', '-1');
+        // Remove the tabindex on blur to prevent weird jumpy browser behaviour
+        fragmentReference.addEventListener(
+          'blur',
+          () => fragmentReference.removeAttribute('tabindex'),
+          { once: true },
+        );
+      }
+      fragmentReference.focus();
+      // By setting location.hash explictly, we ensure :target
+      // selectors in CSS will work as expected
+      window.location.hash = newLocation.hash;
+    });
+    return unsubscribe;
+  });
 </script>
 
 <svelte:head>
@@ -86,7 +122,7 @@
       </div>
     </Section>
     <Section>
-      <div class="half-box">
+      <div class="half-box" id="team">
         <h1 class="gradient-dark">Team</h1>
         <div class="annotation">
           <p>Passionate founders. Big dreamers.</p>
