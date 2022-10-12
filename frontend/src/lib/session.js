@@ -63,9 +63,13 @@ async function isValid() {
 
 export const me = readable(obj, function start(set) {
   obj.load = async () => {
-    obj.loaded = new Promise(async (resolve) => {
-      loadFrom(await fetchMe(), set);
-      resolve();
+    obj.loaded = new Promise(async (resolve, reject) => {
+      try {
+        loadFrom(await fetchMe(), set);
+        resolve();
+      } catch (err) {
+        reject(err);
+      }
     });
     set(obj);
     await obj.loaded;
@@ -76,14 +80,18 @@ export const me = readable(obj, function start(set) {
     await obj.load();
   };
 
-  obj.loaded = new Promise(async (resolve) => {
-    if (!await isValid()) {
-      console.log("stored session is invalid or missing, reloading");
-      set(loadFrom(await fetchMe()));
-    } else {
-      set(loadFrom(storage.me));
+  obj.loaded = new Promise(async (resolve, reject) => {
+    try {
+      if (!await isValid()) {
+        console.log("stored session is invalid or missing, reloading");
+        set(loadFrom(await fetchMe()));
+      } else {
+        set(loadFrom(storage.me));
+      }
+      resolve();
+    } catch (err) {
+      reject(err);
     }
-    resolve();
   });
   set(obj);
   return function stop() {};

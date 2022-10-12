@@ -1,7 +1,7 @@
 import { writable, get } from 'svelte/store';
 
-export const webOrigin = writable(window.location.origin);
-export const isExtension = !window.location.origin.startsWith('http');
+export const webOrigin = writable(globalThis.location.origin);
+export const isExtension = !globalThis.location.origin.startsWith('http');
 
 function resolve(path) {
   const origin = get(webOrigin);
@@ -47,7 +47,7 @@ function isWeblnPresent() {
 }
 
 function isExtensionPresent() {
-  return !!window.donate4fun;
+  return !!window.donate4fun || !!window.chrome;
 }
 
 export {
