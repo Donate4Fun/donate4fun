@@ -19,7 +19,10 @@
   flex-direction: column;
   align-items: center;
   min-height: 100vh;
-  background-color: #F7F9FF;
+  background-color: var(--background-color);
+  background-image: url("/static/background-bolt.svg");
+  background-repeat: no-repeat;
+  background-position: top;
 }
 .content {
   flex: 1;

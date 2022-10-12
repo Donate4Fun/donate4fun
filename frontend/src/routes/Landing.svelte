@@ -5,19 +5,17 @@
   import Button from "$lib/Button.svelte";
   import Section from "$lib/Section.svelte";
   import LandingSection from "$lib/LandingSection.svelte";
+  import LandingSteps from "$lib/LandingSteps.svelte";
   import Person from "$lib/Person.svelte";
   import Input from "$lib/Input.svelte";
   import ExtensionPopup from "$lib/ExtensionPopup.svelte";
-  import WalletPopup from "$lib/WalletPopup.svelte";
   import FAQ from "$lib/FAQ.svelte";
   import api from "$lib/api.js";
-  import { isWeblnPresent, isExtensionPresent } from "$lib/utils.js";
 
   let youtubers = [];
   let email;
   let emailAdded = null;
   let showExtensionPopup = false;
-  let showWalletPopup = false;
   const resolve = useResolve();
 
   async function loadRecentDonatees() {
@@ -34,9 +32,8 @@
   <title>Donate4.Fun • Donate anyone on YouTube with Bitcoin Lightning</title>
 </svelte:head>
 
-<div class="page">
-  <ExtensionPopup bind:show={showExtensionPopup} />
-  <WalletPopup bind:show={showWalletPopup} />
+<ExtensionPopup bind:show={showExtensionPopup} />
+<div class="landing">
   <section class="header" id="main">
     <h1>One click instant donations with <span class="gradient-light">Bitcoin ⚡ Lightning on Youtube. <span class="gradient-dark">Near zero fees.</span></span></h1>
     <div class="annotation">
@@ -62,35 +59,7 @@
   </section>
   <section id="howto">
     <h1 class="gradient-light">How to donate</h1>
-    <content class="steps">
-      <div on:click={() => showExtensionPopup = true} class="step narrow">
-        <LandingStep number=1 done={isExtensionPresent()}>
-          <img slot=image alt="D" src="/static/extensions.svg">
-          <div slot=text>
-            <p>Get Donate4.Fun</p>
-            <p>browser extension</p>
-          </div>
-        </LandingStep>
-      </div>
-      <div on:click={() => showWalletPopup = true} class="step narrow">
-        <LandingStep number=2 done={isWeblnPresent()}>
-          <img slot=image src="/static/wallet.svg" alt="wallet">
-          <div slot=text>
-            <p>Get a Lightning Wallet</p>
-            <p>if you don’t have it yet</p>
-            <p>And fulfill with satoshis</p>
-          </div>
-        </LandingStep>
-      </div>
-      <a href="https://youtube.com" target=_blank class="step wide">
-        <LandingStep number=3>
-          <img slot=image alt="browser-extension" src="/static/extension-popup.png" height=188>
-          <div slot=text>
-            <p>Go to YouTube and click a ⚡ icon under video or open Donate4fun Google Extension to donate</p>
-          </div>
-        </LandingStep>
-      </a>
-    </content>
+    <LandingSteps />
   </section>
   <section id="donatees">
     <h1 class="gradient-dark">Top donated</h1>
@@ -159,15 +128,10 @@
 </div>
 
 <style>
-.page {
+.landing {
   display: flex;
   flex-direction: column;
   gap: 88px;
-}
-:global(body) {
-  background-image: url("/static/background-bolt.svg");
-  background-repeat: no-repeat;
-  background-position: top;
 }
 section {
   display: flex;
@@ -218,12 +182,6 @@ h1 {
   text-fill-color: transparent;
 }
 @media (min-width: 641px) {
-  .step.narrow {
-    width: 340px;
-  }
-  .step.wide {
-    width: 426px;
-  }
   .half-box {
     width: 560px;
     padding: 40px;
@@ -231,9 +189,6 @@ h1 {
   }
 }
 @media (max-width: 640px) {
-  .step {
-    width: 328px;
-  }
   .header video {
     display: none;
   }
@@ -241,24 +196,6 @@ h1 {
     width: 100%;
     padding: 28px;
   }
-}
-.step {
-  height: 450px;
-  color: var(--color);
-  font-weight: 500;
-  cursor: pointer;
-}
-.step div {
-  text-align: center;
-}
-.step.wide p {
-  max-width: 308px;
-}
-.steps {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 22px;
 }
 #main .annotation {
   margin-top: 32px;

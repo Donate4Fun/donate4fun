@@ -136,7 +136,6 @@ function patchFirefoxManifest(json) {
   return json;
 }
 
-
 export default [
   makeConfig('options'),
   makeConfig('popup'),
