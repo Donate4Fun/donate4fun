@@ -3,6 +3,7 @@
   import LandingSection from "$lib/LandingSection.svelte";
   export let number;
   export let done = false;
+  export let doneText = null;
 </script>
 
 <LandingSection>
@@ -10,7 +11,10 @@
     <div class="number">
       <NumberInCircle number={number} --size=60px />
       {#if done}
-        <img class="galka" src="/static/galka.svg" alt="galka">
+        <div class="done-badge">
+          <img class="galka" src="/static/galka.svg" alt="galka">
+          <span>{doneText}</span>
+        </div>
       {/if}
     </div>
     <div class="content" class:done>
@@ -32,7 +36,9 @@
 }
 .number {
   align-self: start;
-  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 .content {
   display: flex;
@@ -50,9 +56,14 @@
   display: flex;
   justify-content: center;
 }
-.galka {
-  position: absolute;
-  top: 36px;
-  left: 38px;
+.done-badge {
+  display: flex;
+  align-items: center;
+  padding: 4px 12px 4px 8px;
+  gap: 8px;
+  width: 188px;
+  height: 32px;
+  background: rgba(46, 108, 255, 0.15);
+  border-radius: 100px;
 }
 </style>
