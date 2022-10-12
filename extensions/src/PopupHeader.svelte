@@ -2,9 +2,8 @@
   import {get} from 'svelte/store';
   import { useNavigate } from "svelte-navigator";
   import Fa from 'svelte-fa/src/fa.svelte';
-  import {faGear, faGlobe, faSyringe, faComment, faWindowRestore, faHashtag} from '@fortawesome/free-solid-svg-icons';
+  import { faGear, faGlobe, faSyringe, faComment, faWindowRestore, faHashtag, faHandshake } from '@fortawesome/free-solid-svg-icons';
   import {me} from "$lib/session.js";
-  import {apiOrigin} from "$lib/api.js";
   import Userpic from "$lib/Userpic.svelte";
   import Amount from "$lib/Amount.svelte";
   import FiatAmount from "$lib/FiatAmount.svelte";
@@ -79,6 +78,10 @@
                   <Fa icon={faWindowRestore} size=2x color={iconColor} />
                   <span>Create popup window</span>
                 </div>
+                <a target=_blank href="{browser.runtime.getURL("./welcome.html")}">
+                  <Fa icon={faHandshake} size=2x color={iconColor} />
+                  <span>Open welcome page</span>
+                </a>
                 <div on:click={() => navigate('/nowebln/1000')}>
                   <Fa icon={faHashtag} size=2x color={iconColor} />
                   <span>Open NoWebLN page</span>
