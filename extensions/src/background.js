@@ -162,6 +162,10 @@ async function resetConfig() {
 
 browser.runtime.onInstalled.addListener(async (details) => {
   cLog("onInstalled", details);
+  if (details.reason === "install") {
+    const host = await getConfig("apiHost");
+    browser.tabs.create({url: `${host}/welcome`});
+  }
   for (const contentScript of browser.runtime.getManifest().content_scripts)
     for (const tab of await browser.tabs.query({url: contentScript.matches}))
       try {
