@@ -1,5 +1,6 @@
 import browser from "webextension-polyfill";
 import cLog from "./log.js";
+import { subscribe } from "$lib/api.js";
 
 async function callBackground(request) {
   cLog("sending to service worker", request);
