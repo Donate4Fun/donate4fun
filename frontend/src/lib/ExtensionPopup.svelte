@@ -13,7 +13,7 @@
         Google Chrome or any compatible (Edge, Opera, etc.)
       </div>
     </a>
-    <a class="addon-item" target=_blank href="https://addons.mozilla.org/en-US/firefox/addon/donate4-fun/">
+    <a class="addon-item" target=_blank href="https://addons.mozilla.org/en-US/firefox/addon/donate4fun/">
       <img alt=firefox-icon src="/static/firefox.svg">
       <div class="text">
         Firefox
