@@ -32,7 +32,7 @@ function handle_response(response) {
 }
 
 function handle_error(error) {
-  if (error.response) {
+  if (error.response && error.response !== error.request) {
     return handle_response(error.response);
   } else {
     console.error('HTTP error', error);
@@ -85,7 +85,7 @@ async function get(path) {
   }
 }
 
-window.onError = function(message, source, lineno, colno, error) {
+globalThis.onError = function(message, source, lineno, colno, error) {
   console.log("onerror");
   notify("Error", message, "error");
 }
