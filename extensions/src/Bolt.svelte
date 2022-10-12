@@ -4,7 +4,7 @@
   import { Confetti } from "svelte-confetti";
   import { worker, pageScript, donate } from "./common.js";
   import cLog from "./log.js";
-  import { getVideoId, postComment } from "./youtube.js";
+  import { getVideoId, postComment, isShorts } from "./youtube.js";
   import CommentTip from "./CommentTip.svelte";
 
 	export let text = '…';
@@ -17,6 +17,7 @@
   let showCommentTip = false;
   let donation = {amount: null};
   let commentTipElement;
+  let shorts = isShorts();
 
   async function fetchStats() {
     const videoId = getVideoId();
@@ -97,14 +98,16 @@
     cLog("onDestroy");
     await videoWS.close();
   });
+
+  cLog("Created Bolt");
 </script>
 
-<div class="root" id="donate4fun-button">
-  <div class="flex-column align-center">
+<div class="root" class:shorts class:full={!shorts}>
+  <div class="button">
     {#if confetti}
       <Confetti />
     {/if}
-    <button class="flex-row align-center bolt-button" on:click={onDonateClicked} disabled={animate}>
+    <button class="bolt-button" on:click={onDonateClicked} disabled={animate}>
       <div class="icon" class:animate>
         <svg viewBox="60 60 160 160" xmlns="http://www.w3.org/2000/svg">
           <g>
@@ -131,10 +134,17 @@
 .root {
   display: inline-block;
   position: relative;
+  width: 100%;
   --yt-button-icon-padding: 6px;
-  color: var(--yt-spec-icon-inactive);
+}
+.button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .bolt-button {
+  display: flex;
+  align-items: center;
   justify-content: center;
   cursor: pointer;
   padding-right: var(--yt-button-icon-padding,8px);
@@ -143,11 +153,17 @@
   background-color: transparent;
   font-family: inherit;
 }
+.shorts .bolt-button {
+  flex-direction: column;
+  color: var(--yt-spec-text-secondary);
+}
+.full .bolt-button {
+  flex-direction: row;
+  color: var(--yt-spec-icon-inactive);
+}
 .icon {
   line-height: 1;
   padding: var(--yt-button-icon-padding,8px);
-  width: var(--yt-button-icon-size,var(--yt-icon-width,40px));
-  height: var(--yt-button-icon-size,var(--yt-icon-height,40px));
   color: var(--yt-button-color,inherit);
   background-color: transparent;
   text-transform: var(--yt-button-text-transform,inherit);
@@ -155,6 +171,14 @@
   position: relative;
   box-sizing: border-box;
   font-size: 0;
+}
+.full .icon {
+  width: var(--yt-button-icon-size,var(--yt-icon-width,40px));
+  height: var(--yt-button-icon-size,var(--yt-icon-height,40px));
+}
+.shorts .icon {
+  height: var(--iron-icon-height,24px);
+  width: var(--iron-icon-width,24px);
 }
 .tooltip {
   text-transform: none;
@@ -169,13 +193,18 @@
  
   position: absolute;
   z-index: var(--ytd-z-index-toggle-button-tooltip);
-  top: calc(100% + 4px); /* try to mimic youtube popups */
   white-space: nowrap;
 
   display: none;
   margin: 8px;
   padding: 8px;
   border-radius: 2px;
+}
+.full .tooltip {
+  top: calc(100% + 4px); /* try to mimic youtube popups */
+}
+.shorts .tooltip {
+  right: calc(72px); /* try to mimic youtube popups */
 }
 .bolt-button:hover + .tooltip {
   display: block;
@@ -201,7 +230,7 @@
   animation-timing-function: ease-out;
 }
 .text {
-  color: var(--yt-button-icon-button-text-color,var(--yt-spec-text-secondary));
+  /*color: var(--yt-button-icon-button-text-color,var(--yt-spec-text-secondary));*/
   font-size: var(--ytd-tab-system-font-size);
   font-weight: var(--ytd-tab-system-font-weight);
   letter-spacing: var(--ytd-tab-system-letter-spacing);

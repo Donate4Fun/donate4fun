@@ -26,7 +26,7 @@
     webOrigin.set(host);
     cookies.set(browser.cookies);
 
-    await me.loaded;
+    await $me.loaded;
 
     try {
       const contentScript = await connectToPage();
@@ -46,22 +46,9 @@
     cLog("navigate", event.location.pathname, event.action);
   }
 
-  function onTabActivated(activeInfo) {
-    cLog("tabs.onActivated", activeInfo);
-    browser.tabs.onUpdated.removeListener(onTabUpdated);
-    browser.tabs.onUpdated.addListener(onTabUpdated, {tabId: activeInfo.tabId, properties: ['status']});
-  }
-
-  function onTabUpdated(tabId, changeInfo, tab) {
-    cLog("tabs.onTabUpdated", tabId, changeInfo, tab);
-  }
-
-  //browser.tabs.onActivated.addListener(onTabActivated)
 	const unlistenHistory = hashHistory.listen(onNavigate);
   onDestroy(() => {
 	  unlistenHistory();
-    browser.tabs.onActivated.removeListener(onTabActivated);
-    browser.tabs.onUpdated.removeListener(onTabUpdated);
   });
 </script>
 

@@ -19,7 +19,7 @@ function getButtons_shorts() {
     ? "ytm-like-button-renderer"
     : "#like-button > ytd-like-button-renderer"
   );
-  for (let element of elements)
+  for (const element of elements)
     if (isInViewport(element))
       return element;
 }
@@ -52,12 +52,22 @@ function getVideoId(url) {
   }
 }
 
+function getParent() {
+  return isShorts()
+    ? document.querySelector("ytd-player#player").parentElement.parentElement
+    : document.querySelector("ytd-video-owner-renderer");
+}
+
 function getChannelLogo() {
-   return document.querySelector("ytd-video-owner-renderer #avatar > img").getAttribute("src");
+  return getParent().querySelector("#avatar > img").getAttribute("src");
 }
 
 function getChannelTitle() {
-   return document.querySelector("ytd-video-owner-renderer #channel-name a").text;
+  return getParent().querySelector("#channel-name a").text;
+}
+
+function getChannelId() {
+  return getParent().querySelector("#channel-name a").href;
 }
 
 function isVideoLoaded() {
@@ -99,18 +109,18 @@ async function waitLoaded(checkInterval) {
   const is_shorts = isShorts();
 
   while (true) {
-    const offset_parent = getButtons();//?.offsetParent;
+    const buttons = getButtons();//?.offsetParent;
     const is_video_loaded = isVideoLoaded();
-    cLog(`Checking for load isShorts=${is_shorts} getButtons=${offset_parent} isVideoLoaded=${is_video_loaded}`);
-    if (is_shorts || (offset_parent && is_video_loaded))
-      return true;
+    cLog(`Checking for load isShorts=${is_shorts} getButtons=${buttons} isVideoLoaded=${is_video_loaded}`);
+    if ((is_shorts || is_video_loaded) && buttons)
+      return buttons;
     await sleep(checkInterval);
   }
 }
 
 function isLoaded() {
-    const offset_parent = getButtons();//?.offsetParent;
-    return isShorts() || (offset_parent && isVideoLoaded());
+  const offset_parent = getButtons();//?.offsetParent;
+  return (isShorts() && getButtons()) || (offset_parent && isVideoLoaded());
 }
 
 function isCommentEnabled() {
@@ -181,4 +191,5 @@ export {
   postComment,
   isCommentEnabled,
   isLoaded,
+  isShorts,
 }

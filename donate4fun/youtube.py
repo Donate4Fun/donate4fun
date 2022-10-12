@@ -64,9 +64,11 @@ class YoutubeDonatee:
 
 async def validate_youtube_url(parsed) -> YoutubeDonatee:
     parts = parsed.path.split('/')
-    if parsed.path == '/watch':
+    if parts[1] == 'watch':
         video_id = parse_qs(parsed.query)['v'][0]
         return YoutubeDonatee(video_id=video_id)
+    elif parts[1] == 'shorts':
+        return YoutubeDonatee(video_id=parts[2])
     elif parts[1] in ('channel', 'c'):
         return YoutubeDonatee(channel_id=parts[2])
     elif parsed.hostname == 'youtu.be':
