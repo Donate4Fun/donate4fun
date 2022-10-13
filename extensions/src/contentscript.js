@@ -17,7 +17,7 @@ import {
   getChannelLogo,
   isLoaded,
 } from "./youtube.js";
-import cLog from "./log.js";
+import cLog from "$lib/log.js";
 import Bolt from "./Bolt.svelte";
 import { apiOrigin } from "$lib/api.js";
 

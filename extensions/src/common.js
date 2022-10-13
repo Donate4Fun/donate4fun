@@ -1,5 +1,5 @@
 import browser from "webextension-polyfill";
-import cLog from "./log.js";
+import cLog from "$lib/log.js";
 import { subscribe } from "$lib/api.js";
 
 async function callBackground(request) {
@@ -68,7 +68,7 @@ async function connectToPage() {
   cLog("connecting to contentScript");
   const tab = await getCurrentTab();
   if (!tab)
-    throw new Error("No current tab");
+    return;
 
   try {
     await getPopupPage(tab);

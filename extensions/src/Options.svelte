@@ -1,7 +1,7 @@
 <script>
   import Option from "./Option.svelte";
   import { worker } from "./common.js";
-  import cLog from "./log.js";
+  import cLog from "$lib/log.js";
 
   let options;
   let newKey;

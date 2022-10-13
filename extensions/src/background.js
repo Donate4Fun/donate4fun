@@ -5,7 +5,7 @@ import {
   injectContentScript,
   createPopup,
 } from "./common.js";
-import cLog from "./log.js";
+import cLog from "$lib/log.js";
 
 async function handleFetch(method, path, data) {
   let response;

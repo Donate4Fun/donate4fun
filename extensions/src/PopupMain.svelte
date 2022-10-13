@@ -2,7 +2,7 @@
   import Button from "$lib/Button.svelte";
   import NumberedItem from "$lib/NumberedItem.svelte";
   import PopupSection from "./PopupSection.svelte";
-  import cLog from "./log.js";
+  import cLog from "$lib/log.js";
 
   function close() {
     window.close();

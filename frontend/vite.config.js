@@ -1,9 +1,11 @@
 import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
+import { replaceCodePlugin } from "vite-plugin-replace";
 import alias from '@rollup/plugin-alias';
 import path from 'path';
 
 const apiUrl = process.env.API_URL || 'http://localhost:8000';
+const dev = true;
 
 const httpProxy = {
   target: apiUrl,
@@ -24,7 +26,15 @@ export default defineConfig({
       ],
     },
   },
-  plugins: [svelte()],
+  plugins: [
+    svelte(),
+    replaceCodePlugin({
+      replacements: [{
+        from: "process.env.DEV",
+        to: JSON.stringify(dev),
+      }],
+    }),
+  ],
   optimizeDeps: { exclude: ["svelte-navigator"] },
   resolve: {
     alias: {

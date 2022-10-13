@@ -1,5 +1,5 @@
 import {worker, waitElement, sleep, pageScript} from "./common.js";
-import cLog from "./log.js";
+import cLog from "$lib/log.js";
 
 function isInViewport(element) {
   const rect = element.getBoundingClientRect();
