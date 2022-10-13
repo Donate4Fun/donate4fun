@@ -4,7 +4,7 @@
   import Button from "$lib/Button.svelte";
   import { webOrigin } from "$lib/utils.js";
   import { me } from "$lib/session.js";
-  import cLog from "./log.js";
+  import cLog from "$lib/log.js";
 
   export let amount;
   export let historySource;
@@ -54,16 +54,18 @@
       font-size: 16px;
       text-align: center;
     ">OR</p>
-    {#await $me.loaded then}
+    {#await $me then me}
       <Button
         --height=100%
         target=_blank
-        link="{$webOrigin}/fulfill/{$me.donator.id}?amount={amount - ($me.donator.balance || 0) + 1000}"
+        link="{$webOrigin}/fulfill/{me.donator.id}?amount={amount - (me.donator.balance || 0) + 1000}"
         class=white
         style="
           grid-row: fulfill;
         "
       >Fulfill your balance</Button>
+    {:catch err}
+      <p>Failed to load session {err}</p>
     {/await}
   </div>
 </section>

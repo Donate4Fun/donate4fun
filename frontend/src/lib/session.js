@@ -1,16 +1,12 @@
 import { readable, writable, get } from "svelte/store";
+import { asyncable } from 'svelte-asyncable';
 import { get as apiGet, apiOrigin } from "$lib/api.js";
 import { storage } from "$lib/storage.js";
+import { cLog } from "$lib/log.js";
 import jwt_decode from "jwt-decode";
 import Cookies from "js-cookie";
 
 export const cookies = writable();
-
-const obj = {
-  loaded: null,
-  load: null,
-  reset: null,
-};
 
 async function fetchMe() {
   const resp = await apiGet("donator/me");
@@ -18,11 +14,11 @@ async function fetchMe() {
   return resp;
 }
 
-function loadFrom(resp, set) {
+function loadFrom(obj, resp) {
   storage.me = resp;
   obj.donator = resp.donator;
   obj.youtube_channels = resp.youtube_channels;
-  const pubkey = obj.donator.lnauth_pubkey;
+  const pubkey = resp.donator.lnauth_pubkey;
   if (pubkey) {
     obj.shortkey = `@${pubkey.slice(0, 4)}…${pubkey.slice(-4)}`;
     obj.connected = true;
@@ -61,38 +57,25 @@ async function isValid() {
   return decoded.donator === me.donator.id && decoded.lnauth_pubkey === me.donator.lnauth_pubkey;
 }
 
-export const me = readable(obj, function start(set) {
-  obj.load = async () => {
-    obj.loaded = new Promise(async (resolve, reject) => {
-      try {
-        loadFrom(await fetchMe(), set);
-        resolve();
-      } catch (err) {
-        reject(err);
-      }
-    });
-    set(obj);
-    await obj.loaded;
-  };
-  obj.reset = async () => {
-    Cookies.remove("session", { path: "/", domain: getCookieDomain() });
-    Cookies.remove("session", { path: "/" });
-    await obj.load();
-  };
-
-  obj.loaded = new Promise(async (resolve, reject) => {
-    try {
-      if (!await isValid()) {
-        console.log("stored session is invalid or missing, reloading");
-        set(loadFrom(await fetchMe()));
-      } else {
-        set(loadFrom(storage.me));
-      }
-      resolve();
-    } catch (err) {
-      reject(err);
-    }
-  });
-  set(obj);
-  return function stop() {};
+export const me = asyncable(async () => {
+  cLog("loading me");
+  if (await isValid()) {
+    return loadFrom({}, storage.me);
+  } else {
+    console.log("stored session is invalid or missing, reloading");
+    return loadFrom({}, await fetchMe());
+  }
 });
+
+export async function reloadMe() {
+  const oldMe = await me.get();
+  const newMe = loadFrom({}, await fetchMe());
+  if (JSON.stringify(oldMe) !== JSON.stringify(newMe))
+    await me.set(newMe);
+}
+
+export async function resetMe() {
+  Cookies.remove("session", { path: "/", domain: getCookieDomain() });
+  Cookies.remove("session", { path: "/" });
+  await reloadMe();
+}

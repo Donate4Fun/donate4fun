@@ -1,6 +1,6 @@
 <script>
   import {createEventDispatcher, onDestroy} from "svelte";
-  import {link, useResolve, navigate} from "svelte-navigator";
+  import { link, useResolve } from "svelte-navigator";
   import Loading from "../lib/Loading.svelte";
   import Donator from "../lib/Donator.svelte";
   import Amount from "../lib/Amount.svelte";
@@ -14,29 +14,26 @@
   import api from "../lib/api.js";
 
   export let channel_id;
+  export let location;
+  export let navigate;
 
   let youtube_channel;
-  let lnurl;
   let amount;
   let loading = false;
   let showSuccess = false;
-
   let youtube_channel_url;
 
   const min_withdraw = 100;
   const dispatch = createEventDispatcher();
   const resolve = useResolve();
   let ws;
-  onDestroy(async () => {
-    await ws?.close();
-  });
+  onDestroy(() => ws?.close());
 
   async function load() {
     const base = `youtube-channel/${channel_id}`;
     youtube_channel = await api.get(base);
     try {
       const response = await api.get(`${base}/withdraw`);
-      lnurl = response.lnurl;
       amount = response.amount;
       title.set(`Withdraw ${amount} sats for ${youtube_channel.title} [${youtube_channel.id}]`);
       ws = await api.subscribe(`withdrawal:${channel_id}`);
@@ -48,6 +45,7 @@
         showSuccess = true;
       });
       await ws.ready();
+      return response.lnurl;
     } catch (err) {
       console.log(err);
       if (err.response.status === 403 || (err.response.data.status === 'error' && err.response.data.type === 'ValidationError'))
@@ -60,34 +58,34 @@
   <div class="withdraw">
     {#await load()}
       <Loading />
-    {:then}
+    {:then lnurl}
       <h1>Withdraw <Amount amount={amount} /></h1>
-    {#if showSuccess}
-      <img src="/static/success.png" class="success" alt="success">
-      <div class="donations-claimed">Donations claimed</div>
-      <div class="buttons success">
-        <Button link={resolve("../link")}>Want more donations?</Button>
-        <Button class="grey" on:click={() => navigate(-1)}>Close</Button>
-      </div>
-    {:else}
-      <ChannelLogo url={youtube_channel.thumbnail_url} />
-      {#if lnurl}
-        <a class="qrcode" href="lightning:{lnurl}"><QRCode value={lnurl} /></a>
-        <div class="buttons">
-          <a href="lightning:{lnurl}" class="open-in-wallet"><Button>Open in wallet</Button></a>
-          <Lnurl lnurl={lnurl} class="lnurl" />
-          <Button class="grey" on:click={() => navigate(-1)}>Cancel</Button>
+      {#if showSuccess}
+        <img src="/static/success.png" class="success" alt="success">
+        <div class="donations-claimed">Donations claimed</div>
+        <div class="buttons success">
+          <Button link={resolve("../link")}>Want more donations?</Button>
+          <Button class="grey" on:click={() => navigate(-1)}>Close</Button>
         </div>
-        <div class="suggestion">
-          Don’t have a wallet? Download wallet and claim your donations with a Wallet Like
-          <a href="https://getalby.com" target="_blank">Alby</a>,
-          <a href="https://phoenix.acinq.co" target="_blank">Phoenix</a>,
-          <a href="https://sbw.app" target="_blank">SBW</a> or
-          <a href="https://blixtwallet.github.io" target="_blank">Blixt</a>
-          .
-        </div>
+      {:else}
+        <ChannelLogo url={youtube_channel.thumbnail_url} />
+        {#if lnurl}
+          <a class="qrcode" href="lightning:{lnurl}"><QRCode value={lnurl} /></a>
+          <div class="buttons">
+            <a href="lightning:{lnurl}" class="open-in-wallet"><Button>Open in wallet</Button></a>
+            <Lnurl lnurl={lnurl} class="lnurl" />
+            <Button class="grey" on:click={() => navigate(-1)}>Cancel</Button>
+          </div>
+          <div class="suggestion">
+            Don’t have a wallet? Download wallet and claim your donations with a Wallet Like
+            <a href="https://getalby.com" target="_blank">Alby</a>,
+            <a href="https://phoenix.acinq.co" target="_blank">Phoenix</a>,
+            <a href="https://sbw.app" target="_blank">SBW</a> or
+            <a href="https://blixtwallet.github.io" target="_blank">Blixt</a>
+            .
+          </div>
+        {/if}
       {/if}
-    {/if}
     {/await}
   </div>
 </Section>

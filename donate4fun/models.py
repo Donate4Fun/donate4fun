@@ -20,8 +20,11 @@ class BaseModel(PydanticBaseModel):
             RequestHash: lambda r: r.to_json(),
         }
 
+    def to_json_dict(self):
+        return json.loads(self.json())
+
     def to_jwt(self) -> str:
-        return jwt.encode(json.loads(self.json()), settings.jwt_secret, algorithm="HS256")
+        return jwt.encode(self.to_json_dict(), settings.jwt_secret, algorithm="HS256")
 
     @classmethod
     def from_jwt(cls, token: str):
@@ -170,7 +173,7 @@ class YoutubeNotification(Notification):
 
 
 class Credentials(BaseModel):
-    donator_id: UUID
+    donator: UUID | None
     lnauth_pubkey: str | None
 
 

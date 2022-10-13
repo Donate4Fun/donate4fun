@@ -138,7 +138,6 @@ async def check_notification(client, topic: str, id_: UUID):
         with anyio.fail_after(5):
             notification = Notification.parse_obj(await ws.receive_json())
         assert notification.status == 'OK'
-        assert notification.id == id_
 
 
 async def test_donate_full(

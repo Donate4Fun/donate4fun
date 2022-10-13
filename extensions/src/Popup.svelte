@@ -7,9 +7,9 @@
   import PopupNoWebln from "./PopupNoWebln.svelte";
   import { apiOrigin } from "$lib/api.js";
   import { webOrigin } from "$lib/utils.js";
-  import { me, cookies } from "$lib/session.js";
+  import { cookies } from "$lib/session.js";
   import { worker, getCurrentTab, browser, connectToPage } from "./common.js";
-  import { cLog, cInfo } from "./log.js";
+  import { cLog, cInfo } from "$lib/log.js";
   import createHashSource from "./hashHistory.js";
 
   const hashSource = createHashSource();
@@ -17,7 +17,6 @@
 
   let showWeblnHelp = false;
   let amount;
-  let balance;
 
   async function load() {
     const host = await worker.getConfig("apiHost");
@@ -25,8 +24,6 @@
     apiOrigin.set(host);
     webOrigin.set(host);
     cookies.set(browser.cookies);
-
-    await $me.loaded;
 
     try {
       const contentScript = await connectToPage();
@@ -57,11 +54,11 @@
     {#await load() then}
       <Router history={hashHistory} primary={false}>
         <Route path="">
-          <PopupHeader bind:balance={balance} />
+          <PopupHeader />
           <PopupMain />
         </Route>
         <Route path="youtube">
-          <PopupHeader bind:balance={balance} />
+          <PopupHeader />
           <PopupYoutube bind:amount={amount} />
         </Route>
         <Route path="nowebln/:amount" let:params>

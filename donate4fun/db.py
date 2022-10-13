@@ -506,7 +506,7 @@ class DbSession:
         await self.notify(f'donator:{donator_id}', Notification(
             id=donator_id,
             status='ok',
-            message=Credentials(donator_id=registered_donator_id, lnauth_pubkey=key).to_jwt()
+            message=Credentials(donator=registered_donator_id, lnauth_pubkey=key).to_jwt()
         ))
 
     async def link_youtube_channel(self, youtube_channel: YoutubeChannel, donator: Donator):

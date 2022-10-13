@@ -11,10 +11,12 @@
   import Infobox from "../lib/Infobox.svelte";
   import ChannelLogo from "../lib/ChannelLogo.svelte";
   import api from "../lib/api.js";
-  import { me } from "../lib/session.js";
+  import { me, reloadMe } from "../lib/session.js";
   import title from "../lib/title.js";
 
   export let channel_id;
+  export let location;
+  export let navigate;
 
   let youtube_channel;
   let sum_donated;
@@ -35,13 +37,14 @@
     showSuccess = false;
     amount = null;
     try {
-      await $me.load();  // force reload to refresh youtube channels
+      await reloadMe();  // force reload to refresh youtube channels
       youtube_channel = await api.get(`youtube-channel/${channel_id}`);
       $title = `Claim donations for ${youtube_channel.title} [${youtube_channel.id}]`
       balance = youtube_channel.balance;
       youtube_channel_url = `https://youtube.com/channel/${youtube_channel.channel_id}`
       donations = await api.get(`donations/by-donatee/${channel_id}`);
       sum_donated = donations.reduce((accum, donation) => accum + donation.amount, 0);
+      return await me.get();
     } catch (err) {
       console.log(err)
       error = err.response.data.detail;
@@ -57,13 +60,13 @@
   <div class="youtube-channel">
     {#await load()}
       <Loading />
-    {:then}
+    {:then me}
       <h1>Donations to <a href={youtube_channel_url} target=_blank>{youtube_channel.title}</a></h1>
       <ChannelLogo url={youtube_channel.thumbnail_url} />
       <div class="controls">
       {#if balance >= min_withdraw}
         <div class="available">Available BTC to withdraw: <Amount amount={balance} /></div>
-        {#if $me.youtube_channels.filter(elem => elem.id === channel_id).length > 0}
+        {#if me.youtube_channels.filter(elem => elem.id === channel_id).length > 0}
           <Button class="withdraw" link='{resolve("withdraw")}'>Withdraw</Button>
         {:else}
           <Infobox>You can withdraw donations if the channel belongs to you. Confirm by linking your Youtube channel.</Infobox>
@@ -80,11 +83,11 @@
           <div>Name</div><div>Date</div><div>Amount</div>
         </div>
         <div class="body">
-        {#each donations as donation}
-          <Donator user={donation.donator} class="ellipsis"/>
-          <Datetime dt={donation.paid_at} />
-          <Amount amount={donation.amount} />
-        {/each}
+          {#each donations as donation}
+            <Donator user={donation.donator} class="ellipsis"/>
+            <Datetime dt={donation.paid_at} />
+            <Amount amount={donation.amount} />
+          {/each}
         </div>
       </div>
     {/await}

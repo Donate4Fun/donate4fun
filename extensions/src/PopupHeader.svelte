@@ -2,8 +2,8 @@
   import {get} from 'svelte/store';
   import { useNavigate } from "svelte-navigator";
   import Fa from 'svelte-fa/src/fa.svelte';
-  import { faGear, faGlobe, faSyringe, faComment, faWindowRestore, faHashtag, faHandshake } from '@fortawesome/free-solid-svg-icons';
-  import {me} from "$lib/session.js";
+  import { faGear, faGlobe, faSyringe, faComment, faWindowRestore, faHashtag } from '@fortawesome/free-solid-svg-icons';
+  import { me } from "$lib/session.js";
   import Userpic from "$lib/Userpic.svelte";
   import Amount from "$lib/Amount.svelte";
   import FiatAmount from "$lib/FiatAmount.svelte";
@@ -13,36 +13,21 @@
   import MeBalance from "$lib/MeBalance.svelte";
   import DonateYoutube from "./DonateYoutube.svelte";
   import { worker, browser, connectToPage, createPopup } from "./common.js";
-  import cLog from "./log.js";
+  import cLog from "$lib/log.js";
 
   let navigate = useNavigate();
-  let balance;
   let popupVisible = false;
-  let showDev = false;
-  let contentScript;
   const iconColor = '#787981';
-
-  async function load() {
-    await $me.loaded;
-    showDev = await worker.getConfig('enableDevCommands');
-    balance = $me.donator.balance;
-  }
-
-  async function loadDev() {
-    try {
-      contentScript = await connectToPage();
-    } catch (error) {
-      cLog("could not connect to page", error);
-    }
-  }
 </script>
 
 <main class="flex-column gap-41">
-  {#await load() then}
-    <header class="flex-row justify-space-between">
+  {#await me.get() then me}
+    <header>
       <img src="static/D.svg" width=40px alt=D class=text />
-      <MeNamePubkey />
-      <Userpic user={$me.donator} target=_blank --width=44px />
+      <div class="name">
+        <MeNamePubkey />
+      </div>
+      <Userpic user={me.donator} target=_blank --width=44px />
       <div on:click={() => popupVisible = !popupVisible} class="flex-row align-center justify-center position-relative cursor-pointer">
         <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="22" cy="22" r="21.5" stroke="black" stroke-opacity="0.1"/>
@@ -50,61 +35,69 @@
           <circle cx="22" cy="22" r="2" fill="black"/>
           <circle cx="22" cy="29" r="2" fill="black"/>
         </svg>
-        {#if popupVisible}
-          <div class="popup flex-column user-select-none">
-            <div on:click={() => browser.runtime.openOptionsPage()}>
-              <Fa icon={faGear} size=2x color={iconColor} />
-              <span>Settings</span>
-            </div>
-            <a class="text-decoration-none" href="https://donate4.fun" target="_blank">
-              <Fa icon={faGlobe} size=2x color={iconColor} />
-              <span>Website</span>
-            </a>
+        <div class="popup flex-column user-select-none" style:visibility={popupVisible ? 'visible' : 'hidden'}>
+          <div on:click={() => browser.runtime.openOptionsPage()}>
+            <Fa icon={faGear} size=2x color={iconColor} />
+            <span>Settings</span>
+          </div>
+          <a class="text-decoration-none" href="https://donate4.fun" target="_blank">
+            <Fa icon={faGlobe} size=2x color={iconColor} />
+            <span>Website</span>
+          </a>
+          {#await worker.getConfig('enableDevCommands') then showDev}
             {#if showDev}
-              {#await loadDev() then}
-                <div disabled={!contentScript} on:click={() => contentScript.postComment("en", 100)}>
+              {#await connectToPage() then contentScript}
+                <div on:click={() => contentScript.postComment("en", 100)}>
                   <Fa icon={faComment} size=2x color={iconColor} />
                   <span>Insert comment</span>
                 </div>
-                <div disabled={!contentScript} on:click={() => contentScript.onPaid({amount: 333})}>
+                <div on:click={() => contentScript.onPaid({amount: 333})}>
                   <Fa icon={faComment} size=2x color={iconColor} />
                   <span>Show comment popup</span>
                 </div>
-                <div on:click={connectToPage}>
-                  <Fa icon={faSyringe} size=2x color={iconColor} />
-                  <span>Inject script</span>
-                </div>
-                <div on:click={createPopup}>
-                  <Fa icon={faWindowRestore} size=2x color={iconColor} />
-                  <span>Create popup window</span>
-                </div>
-                <a target=_blank href="{browser.runtime.getURL("./welcome.html")}">
-                  <Fa icon={faHandshake} size=2x color={iconColor} />
-                  <span>Open welcome page</span>
-                </a>
-                <div on:click={() => navigate('/nowebln/1000')}>
-                  <Fa icon={faHashtag} size=2x color={iconColor} />
-                  <span>Open NoWebLN page</span>
-                </div>
               {/await}
+              <div on:click={connectToPage}>
+                <Fa icon={faSyringe} size=2x color={iconColor} />
+                <span>Inject script</span>
+              </div>
+              <div on:click={createPopup}>
+                <Fa icon={faWindowRestore} size=2x color={iconColor} />
+                <span>Create popup window</span>
+              </div>
+              <div on:click={() => navigate('/nowebln/1000')}>
+                <Fa icon={faHashtag} size=2x color={iconColor} />
+                <span>Open NoWebLN page</span>
+              </div>
             {/if}
-          </div>
-        {/if}
+          {/await}
+        </div>
       </div>
     </header>
     <div class="flex-column gap-20 align-center">
-      {#if $me.connected}
+      {#if me.connected}
         <MeBalance />
       {:else}
         <WalletLogin target=_blank />
       {/if}
     </div>
+  {:catch err}
+    Error whlie loading session: {err}.
   {/await}
 </main>
 
 <style>
 main {
   padding: 27px 32px 0 27px;
+}
+header {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+.name {
+  flex-grow: 2;
+  display: flex;
+  justify-content: center;
 }
 .popup {
   width: 200px;

@@ -1,6 +1,6 @@
 <script>
   import {link} from "svelte-navigator";
-  import {webOrigin} from "../lib/utils.js";
+  import {webOrigin} from "$lib/utils.js";
 
   export let user;
 </script>

@@ -6,7 +6,7 @@
   import Spinner from "../lib/Spinner.svelte";
   import Button from "../lib/Button.svelte";
   import WalletLogin from "../lib/WalletLogin.svelte";
-  import {me} from "../lib/session.js";
+  import { me } from "../lib/session.js";
   import { resolve } from "$lib/utils.js";
 
   let showMenu = false;
@@ -23,8 +23,8 @@
       <li><a href="https://github.com/orgs/Donate4Fun/projects/1" target="_blank">Roadmap</a></li>
       <li><a use:link href="/prove/youtube">Claim donations</a></li>
       <li><a use:link href="/login">Connect wallet</li>
-      {#await $me.loaded then}
-        <li><a use:link href="/donator/{$me.donator.id}">Profile</a></li>
+      {#await $me then me}
+        <li><a use:link href="/donator/{me.donator.id}">Profile</a></li>
       {/await}
     </ul>
   </nav>
@@ -43,8 +43,10 @@
       <WalletLogin />
     </div>
     <div class="userpic">
-      {#await $me.loaded then}
-        <Userpic user={$me.donator} />
+      {#await $me then me}
+        <Userpic user={me.donator} />
+      {:catch err}
+        <p>Catch {err}</p>
       {/await}
     </div>
     <div class="menu-button" on:click={() => { showMenu = true; }}><img src="/static/Burger.svg" alt="burger"></div>

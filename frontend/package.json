@@ -18,6 +18,7 @@
     "jwt-decode": "^3.1.2",
     "qrcode": "^1.5.0",
     "svelte": "^3.50.1",
+    "svelte-asyncable": "github:nikicat/svelte-asyncable",
     "svelte-awesome-icons": "^0.2.5",
     "svelte-fa": "^3.0.3",
     "svelte-navigator": "^3.1.6",
@@ -29,6 +30,7 @@
     "@rollup/plugin-alias": "^3.1.9",
     "async-ws": "github:nikicat/async-ws",
     "rollup": "^2.79.0",
-    "svelte-sitemap": "^2.5.1"
+    "svelte-sitemap": "^2.5.1",
+    "vite-plugin-replace": "^0.1.1"
   }
 }

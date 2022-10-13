@@ -7,17 +7,17 @@
 </script>
 
 <main>
-  {#await $me.loaded then}
+  {#await $me then me}
     <div style="grid-row: sats;" class="amount flex-row justify-center">
-      <Amount class="font-24 font-weight-700i grid-column-2 text-align-center" amount={$me.donator.balance} />
+      <Amount class="font-24 font-weight-700i grid-column-2 text-align-center" amount={me.donator.balance} />
     </div>
     <FiatAmount
       style="grid-row: fiat; line-height: 16px;"
-      class="font-12 font-weight-400 text-align-center" amount={$me.donator.balance} />
+      class="font-12 font-weight-400 text-align-center" amount={me.donator.balance} />
     <Button
       style="grid-row: fulfill;"
       target={isExtension ? "_blank" : null}
-      link={resolve(`/fulfill/${$me.donator.id}`)}
+      link={resolve(`/fulfill/${me.donator.id}`)}
       class=white
       --padding="10px 41px"
     >Fulfill</Button>

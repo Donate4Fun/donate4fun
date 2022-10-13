@@ -11,22 +11,25 @@
   import Separator from "../lib/Separator.svelte";
   import MeNamePubkey from "../lib/MeNamePubkey.svelte";
   import MeBalance from "../lib/MeBalance.svelte";
-  import {me} from "../lib/session.js";
+  import { me, reloadMe } from "../lib/session.js";
   import api from "../lib/api.js";
-
   import { link } from "svelte-navigator";
 
   export let donator_id;
-  let donations;
+  export let location;
+  export let navigate;
+  let itsMe;
   let donator;
+  let donations;
 
-  async function load() {
-    if (donator_id === $me.donator?.id) {
-      await $me.loaded;
-      donator = $me.donator;
-    } else {
-      donator = await api.get(`donator/${donator_id}`)
-    }
+  async function load(donator_id, me) {
+    const mee = await me;
+    itsMe = donator_id === mee.donator?.id;
+    if (itsMe) {
+      await reloadMe();
+      donator = mee.donator;
+    } else
+      donator = await api.get(`donator/${donator_id}`);
     donations = await api.get(`donations/by-donator/${donator_id}`);
   }
 
@@ -37,11 +40,11 @@
 
 <Section>
   <div class="flex-column align-center gap-8 main">
-    {#await load()}
+    {#await load(donator_id, $me)}
       <Loading/>
     {:then}
       <Userpic user={donator} class="userpic" --width=88px/>
-      {#if $me.donator.id === donator.id}
+      {#if itsMe}
         <div style="height: 21px;"></div>
         <MeNamePubkey />
         <div style="height: 32px;"></div>

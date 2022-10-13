@@ -39,11 +39,13 @@ router.route_class = RollbarLoggingRoute
 
 
 def get_donator(request: Request):
-    if donator_id := request.session.get('donator'):
-        donator = Donator(id=UUID(donator_id))
+    creds = Credentials(**request.session)
+    if creds.donator is not None:
+        donator = Donator(id=creds.donator)
     else:
         donator = Donator(id=uuid4())
-        request.session['donator'] = str(donator.id)
+        creds.donator = donator.id
+    request.session.update(**creds.to_json_dict())
     return donator
 
 
@@ -443,8 +445,7 @@ class UpdateSessionRequest(BaseModel):
 @router.post('/update-session')
 async def update_session(request: Request, req: UpdateSessionRequest):
     creds = Credentials.from_jwt(req.creds_jwt)
-    request.session['donator'] = str(creds.donator_id)
-    request.session['lnauth_pubkey'] = creds.lnauth_pubkey
+    request.session.update(**creds.to_json_dict())
 
 
 class YoutubeVideoResponse(BaseModel):

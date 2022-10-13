@@ -9,18 +9,17 @@
   import Infobox from "../lib/Infobox.svelte";
   import Separator from "../lib/Separator.svelte";
   import LinkedYoutubeChannels from "../lib/LinkedYoutubeChannels.svelte";
-  import { me } from "../lib/session.js";
+  import { me, reloadMe } from "../lib/session.js";
   import { sleep } from "$lib/utils.js";
   import api from "../lib/api.js";
   import title from "../lib/title.js";
 
-  $: proved_channels = $me.youtube_channels;
   export let navigate;
 
   async function check() {
     await sleep(5000);
     await api.post("me/youtube/check-ownership");
-    await $me.load();
+    await reloadMe();
   }
 
   async function loadProveMessage() {
@@ -74,12 +73,12 @@
       </li>
     </ol>
     <div>
-      {#await $me.loaded}
+      {#await $me}
         <Spinner />
-      {:then}
-        {#if proved_channels.length}
+      {:then me}
+        {#if me.youtube_channels.length}
           <h2>Linked channels</h2>
-          <LinkedYoutubeChannels youtube_channels={proved_channels} />
+          <LinkedYoutubeChannels youtube_channels={me.youtube_channels} />
         {:else}
           No comments found, try again.
         {/if}

@@ -1,6 +1,4 @@
 <script>
-  import { navigate } from "svelte-navigator";
-
   import api from "$lib/api.js";
   import {me} from "$lib/session.js";
   import Donate from '$lib/Donate.svelte';
@@ -16,61 +14,58 @@
 
   export let donator_id;
   export let location;
-
-  let donator;
-  let amount = 100_000; // sats
-  let spin = false;
+  export let navigate;
 
   const amountMin = 10;
   const amountMax = 1000000;
 
-  $: amountError = (() => {
+  let amount = 100_000; // sats
+  $: {
     if (amount < amountMin)
-      return `minimum: ${amountMin} sats`;
-    else if (amount > amountMax)
-      return `maximum: ${amountMax} sats`;
-    else
-      return null;
-  })();
-
-  async function load() {
-    await $me.loaded;
-    donator = await api.get(`donator/${donator_id}`);
+      amountError = `minimum: ${amountMin} sats`;
+    if (amount > amountMax)
+      amountError = `maximum: ${amountMax} sats`;
+  };
+  let amountError = null;
+  $: {
     const urlParams = new URLSearchParams(location.search);
     if (urlParams.has("amount"))
       amount = parseInt(urlParams.get("amount"));
+  };
+
+  async function load(donator_id) {
+    return await api.get(`donator/${donator_id}`);
   }
+  $: loadPromise = load(donator_id);
 
   async function donate(e) {
-    spin = true;
     const response = await api.post('donate', {
-        amount: amount,
-        receiver_id: donator.id,
+      amount: amount,
+      receiver_id: donator_id,
     });
     navigate(`/donation/${response.donation.id}`, {state: response});
-    spin = false;
   }
-
-  const loadPromise = load();
 </script>
 
 <svelte:head>
-  {#await loadPromise then}
-  <title>[Donate4Fun] Fulfill balance for {donator.name}</title>
+  {#await loadPromise then donator}
+    <title>[Donate4Fun] Fulfill balance for {donator.name}</title>
   {/await}
 </svelte:head>
 
 <Section>
-  {#await loadPromise}
+  {#await $me}
     <Loading />
-  {:then}
+  {:then me}
     <main>
-      {#if $me.donator.id === donator_id}
+      {#if me.donator.id === donator_id}
         <h1 class="text-align-center">Fulfill your wallet</h1>
       {:else}
         <h1 class="text-align-center">Fulfill wallet for</h1>
       {/if}
-      <Donator user={donator} />
+      {#await loadPromise then donator}
+        <Donator user={donator} />
+      {/await}
       <div class="amount">
         <span>Amount:</span>
         <div class="input">
@@ -79,7 +74,7 @@
         <FiatAmount bind:amount={amount} class="fiat-amount" />
       </div>
       <div class="button">
-        {#if $me.connected}
+        {#if me.connected}
           <Button on:click={donate} disabled={amountError}>
             <span>Fulfill</span>
           </Button>

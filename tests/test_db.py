@@ -1,4 +1,5 @@
 import asyncio
+import json
 from datetime import datetime
 from uuid import UUID
 
@@ -59,8 +60,8 @@ async def test_listen_notify(db, pubsub):
     sent = []
     channel = 'channel'
 
-    def callback(notification: Notification):
-        received.append(notification)
+    def callback(notification: str):
+        received.append(Notification(**json.loads(notification)))
 
     async with pubsub.subscribe(channel, callback):
         for message in messages:
