@@ -45,10 +45,10 @@ function fullpath(path) {
   return store_get(apiOrigin) + `/api/v1/${path}`;
 }
 
-function subscribe(topic) {
+function subscribe(topic, options) {
   const origin = store_get(apiOrigin).replace('http', 'ws');
   const wsUri = `${origin}/api/v1/subscribe/${topic}`;
-  const ws = new WebSocket(wsUri);
+  const ws = new WebSocket(wsUri, options);
   const origReady = ws.ready.bind(ws);
   ws.ready = async (timeout) => {
     if (timeout) {

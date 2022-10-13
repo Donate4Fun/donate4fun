@@ -3,7 +3,7 @@
   import { subscribe } from "$lib/api.js";
   import { Confetti } from "svelte-confetti";
   import { worker, pageScript, donate } from "./common.js";
-  import cLog from "./log.js";
+  import cLog from "$lib/log.js";
   import { getVideoId, postComment, isShorts } from "./youtube.js";
   import CommentTip from "./CommentTip.svelte";
 
@@ -78,7 +78,7 @@
     cLog("onMount");
 
     const videoId = getVideoId();
-    videoWS = subscribe(`youtube-video-by-vid:${videoId}`);
+    videoWS = subscribe(`youtube-video-by-vid:${videoId}`, { autoReconnect: false });
     videoWS.on("notification", (notification) => {
       cLog("youtube video updated", notification);
       text = notification.total_donated;
@@ -86,7 +86,7 @@
     try {
       await videoWS.ready();
     } catch (err) {
-      cLog(err);
+      cLog("Failed to subscribe to video notifications", err);
       text = "";
       return;
     }
