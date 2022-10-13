@@ -118,7 +118,7 @@ function getVersion() {
 
 function patchChromeManifest(json) {
   if (dev) {
-    json.host_permissions = [...json.host_permissions, 'http://localhost/*'];
+    json.host_permissions = [...json.host_permissions, '*://localhost/'];
     json.web_accessible_resources[1].matches = [...json.web_accessible_resources[1].matches, 'http://localhost:3000/*'];
     json.content_scripts[1].matches = [...json.content_scripts[1].matches, 'http://localhost:3000/*'];
   }
