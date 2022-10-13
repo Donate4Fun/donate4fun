@@ -80,4 +80,7 @@
   box-shadow: 10px 15px 20px rgba(209, 217, 230, 0.15);
   border-radius: 2px;
 }
+main {
+  font-size: 14px;
+}
 </style>

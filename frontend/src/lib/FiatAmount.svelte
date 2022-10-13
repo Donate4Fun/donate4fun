@@ -13,5 +13,8 @@
 <style>
 span {
   font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.015em;
+  font-weight: 400;
 }
 </style>

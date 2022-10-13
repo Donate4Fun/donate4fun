@@ -46,31 +46,54 @@
   }
 </script>
  
-<PopupSection --justify-content=space-between>
-  {#await load() then}
-    {#if !videoId}
-      Navigate to video or channel..
-    {:else}
-      <div class="flex-row align-center justify-center gap-8 width-full">
-        <img src="./static/youtube.svg" height=24px alt="youtube logo">
-        <span class="flex-shrink-0 font-weight-900 font-20 line-height-24">Donate to</span>
-        <div class="flex-shrink-1 flex-row align-center gap-16 grid-span-2">
-          <img width=48px height=48px class="circular" src={channelLogo} alt="channel logo">
-          <span class="color-blue font-weight-700">{channelTitle}</span>
+<PopupSection>
+  <div class="main">
+    {#await load() then}
+      {#if !videoId}
+        Navigate to video or channel..
+      {:else}
+        <div class="flex-row align-center justify-center gap-8 width-full">
+          <img src="./static/youtube.svg" height=24px alt="youtube logo">
+          <span class="flex-shrink-0 font-weight-900 font-20 line-height-24">Donate to</span>
+          <div class="flex-shrink-1 flex-row align-center gap-16 grid-span-2">
+            <img width=48px height=48px class="circular" src={channelLogo} alt="channel logo">
+            <span class="color-blue font-weight-700">{channelTitle}</span>
+          </div>
         </div>
-      </div>
-      <div class="flex-row justify-space-between width-full">
-      {#each amounts as amount_}
-        <Button on:click={() => amount = amount_} --width=120px selected={amount_ === amount}>{toText(amount_)} ⚡</Button>
-      {/each}
-      </div>
-      <div class="flex-row gap-20 align-center width-full">
-        <div class="flex-grow">
-          <Input type=number bind:value={amount} min={amountMin} max={amountMax} suffix=sats required />
+        <div class="flex-row justify-space-between width-full">
+        {#each amounts as amount_}
+          <Button on:click={() => amount = amount_} --width=120px selected={amount_ === amount}>{toText(amount_)} ⚡</Button>
+        {/each}
         </div>
-        <FiatAmount bind:amount={amount} class="fiat-amount min-width-70" />
-      </div>
-      <Button --width=100% on:click={donate}>Donate</Button>
-    {/if}
-  {/await}
+        <div class="flex-row gap-20 align-center width-full">
+          <div class="flex-grow input">
+            <Input type=number bind:value={amount} min={amountMin} max={amountMax} suffix=sats required />
+          </div>
+          <FiatAmount bind:amount={amount} class="min-width-70" />
+        </div>
+        <Button --width=100% on:click={donate}>Donate</Button>
+      {/if}
+    {/await}
+  </div>
 </PopupSection>
+
+<style>
+.input {
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.015em;
+}
+.main {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 19px;
+  letter-spacing: 0.02em;
+}
+</style>
