@@ -19,6 +19,13 @@
   import Welcome from "./routes/Welcome.svelte";
 
   const url = "";
+
+  window.history.pushState = new Proxy(window.history.pushState, {
+    apply (target, thisArg, argumentsList) {
+      Reflect.apply(target, thisArg, argumentsList);
+      scrollTo(0,0);
+    }
+  });
 </script>
 
 <svelte:head>

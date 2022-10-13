@@ -14,7 +14,7 @@
 
 <div class="menu-popup" on:click={() => { showMenu = false; }} style:visibility={showMenu ? "visible" : "hidden"}>
   <div class="menu-header">
-    <a use:link href="/#main"><Logo /></a>
+    <a use:link href="/"><Logo /></a>
     <div class="menu-close-button"><img src="/static/burger_back.svg" alt="back"></div>
   </div>
   <nav>
@@ -31,7 +31,7 @@
 </div>
 <header>
   <div class="logo">
-    <a use:link href="/#main"><Logo /></a>
+    <a use:link href="/"><Logo /></a>
   </div>
   <nav class="quick-links">
     <a target=_blank href="https://github.com/orgs/Donate4Fun/projects/1">Roadmap</a>
