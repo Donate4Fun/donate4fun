@@ -11,7 +11,8 @@
     <a target=_blank href="https://twitter.com/donate4_fun"><TwitterBrand size=32 color="var(--link-color)" /></a>
     <a target=_blank href="https://github.com/donate4Fun/donate4fun"><GithubBrand size=32 color="var(--link-color)" /></a>
     <a target=_blank href="https://discord.gg/pfFRGWZ4TM"><DiscordBrand size=32 color="var(--link-color)" /></a>
-    <a use:link href="/terms">Terms and Privacy</a>
+    <a use:link href="/terms">Terms</a>
+    <a use:link href="/privacy">Privacy</a>
   </div>
 </footer>
 
