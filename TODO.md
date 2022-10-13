@@ -23,10 +23,7 @@ bugs:
 - nowebln page: add links how to get satoshis
 - update screenshots in web stores
 - youtube: comment for non-default languages
-- header: fix quick links on mobile
-- extension popup chrome fonts
-- youtube bolt animation layout
-- website paddings on various pages
+- website: element paddings on various pages
 
 fixed:
 - landing mobile layout
@@ -42,3 +39,6 @@ fixed:
 - header layout for desktop
 - addon: welcome page
 - eliminate errors in chrome extension console
+- header: fix quick links on mobile
+- youtube bolt animation layout
+- extension popup chrome fonts
