@@ -132,7 +132,6 @@
   width: 99.999% !important; /* trigger youtube action buttons recalculation (they use ResizeObserver)*/
 }
 .root {
-  display: inline-block;
   position: relative;
   width: 100%;
   --yt-button-icon-padding: 6px;
