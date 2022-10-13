@@ -1,11 +1,13 @@
+![Build Extension](https://github.com/Donate4Fun/donate4fun/actions/workflows/build-extension.yaml/badge.svg)
+
 Donate4.Fun
 ==
-This is monorepo for Donate4.Fun webservice.
+This is repository for Donate4.Fun webservice and browser extension.
 Directory structure:
- - `/donate4fun/` (python) - backend (API)
- - `/tests/` (python) - tests for backend
- - `/frontend/` (SvelteJS) - website
- - `/extensions/` (SvelteJS) - browser extensions
+ - `/donate4fun/` - backend (API)
+ - `/tests/` - tests for backend
+ - `/frontend/` - website and shared libraries
+ - `/extensions/` - browser extensions
  - `/charts/` - Helm charts for webservice and dependencies (LND, PostgreSQL, Tor)
  - `/docker/` - Docker-compose config and Dockerfiles for local development
 
@@ -36,15 +38,16 @@ If you are getting an error 'database "donate4fun-test" already exists' then con
 
 Browser extension
 ===
-It's pretty simple
+You need to install both frontend and extension dependencies to build.
 ```
+(cd frontend && pnpm i)
 cd extensions/src
-npm i
-npm run dev
+pnpm i
+pnpm run dev
 ```
 Then open browser and install unpacked extension from `extensions/chrome` or `extensions/firefox`.
 
-To build extension for webstore run `npm run package-clean`.
+To build release versions run `npm run package-clean`.
 
 Deploy
 ==
