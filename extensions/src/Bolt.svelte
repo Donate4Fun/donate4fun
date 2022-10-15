@@ -59,6 +59,7 @@
   async function onCommentClick() {
     const videoLanguage = donation.youtube_video.default_audio_language;
     showCommentTip = false;
+    // Return immediately to avoid button spinner
     postComment(videoLanguage, donation.amount).then(() => { isCommentPosted = true; });
   }
 

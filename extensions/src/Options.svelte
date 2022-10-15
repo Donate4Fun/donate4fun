@@ -33,10 +33,10 @@
     options = options;
   }
 
-  function removeSubKey(option, subKey) {
+  async function removeSubKey(option, subKey) {
     cLog("removeSubKey", subKey);
     delete option.options[subKey];
-    save();
+    await worker.removeConfig(subKey);
     options = options;
   }
 </script>

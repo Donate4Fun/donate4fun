@@ -51,7 +51,7 @@ const Options = {
   },
   defaultComment: {
     type: "text",
-    default: '<WRITE YOUR COMMENT> I’ve donated you some 🪙₿, you can take it on "donate 4 fun" 🤑',
+    default: 'Thanks for the video! Take a tip on "donate 4 fun"',
     description: "Default comment",
   },
   otherCommentLanguages: {
@@ -61,7 +61,7 @@ const Options = {
     options: {
       defaultComment_ru: {
         type: "text",
-        default: '<НАПИШИ СВОЙ КОММЕНТ> Я задонатил тебе 🪙₿ на "donate 4 fun", загугли чтобы забрать 🤑',
+        default: 'Спасибо за видео! Закинул донат на "donate 4 fun"',
         description: "RU",
       },
     },
@@ -122,27 +122,26 @@ async function loadOptions() {
 }
 
 async function getConfig(name) {
-  return await new Promise((resolve, reject) => {
-    chrome.storage.sync.get(getDefaults(), items => {
-      const value = items[name];
-      if (value === undefined) {
-        reject(new Error(`No saved or default value for ${name} config key`));
-      } else {
-        resolve(value);
-      }
-    });
-  });
+  const item = await browser.storage.sync.get(name);
+  if (item.hasOwnProperty(name))
+    return item[name];
+  const defaults = getDefaults();
+  if (defaults.hasOwnProperty(name))
+    return defaults[name];
+  throw new Error(`No saved or default value for ${name} config key`);
 }
 
 async function saveOptions(values) {
-  await chrome.storage.sync.set(values);
+  await browser.storage.sync.set(values);
 }
 
 async function setConfig(key, value) {
-  return await new Promise((resolve, reject) => {
-    const keys = {[key]: value};
-    chrome.storage.sync.set(keys, resolve);
-  });
+  const keys = {[key]: value};
+  await browser.storage.sync.set(keys, resolve);
+}
+
+async function removeConfig(key) {
+  await browser.storage.sync.remove(key);
 }
 
 function getDefaults() {
@@ -154,10 +153,6 @@ function getDefaults() {
     else
       defaults[key] = option.default;
   return defaults;
-}
-
-async function resetConfig() {
-  await chrome.storage.sync.set(getDefaults());
 }
 
 browser.runtime.onInstalled.addListener(async (details) => {
@@ -184,7 +179,7 @@ registerHandlers({
   saveOptions,
   getConfig,
   setConfig,
-  resetConfig,
+  removeConfig,
   injectContentScript,
   createPopup,
 });

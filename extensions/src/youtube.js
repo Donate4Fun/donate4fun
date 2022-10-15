@@ -129,6 +129,7 @@ function isCommentEnabled() {
 }
 
 async function postComment(language, amount) {
+  cLog("posting comment", language, amount);
   let comment;
   try {
     comment = await worker.getConfig(`defaultComment_${language}`);
@@ -156,7 +157,7 @@ async function postComment(language, amount) {
   commentInput.textContent = comment;
   await pageScript.emulateKeypresses("#contenteditable-root");
 
-  const pattern = /<.+>/g;
+  const pattern = /^.+!/g;
   const selection = window.getSelection();
   const textNode = commentInput.childNodes[0];
   let match;
