@@ -16,7 +16,6 @@
   import { link } from "svelte-navigator";
 
   export let donator_id;
-  export let location;
   export let navigate;
   let itsMe;
   let donator;

@@ -14,7 +14,6 @@
   import api from "../lib/api.js";
 
   export let channel_id;
-  export let location;
   export let navigate;
 
   let youtube_channel;
