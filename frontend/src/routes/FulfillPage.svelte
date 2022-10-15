@@ -59,9 +59,9 @@
   {:then me}
     <main>
       {#if me.donator.id === donator_id}
-        <h1 class="text-align-center">Fulfill your wallet</h1>
+        <h1 class="text-align-center">Fulfill your balance</h1>
       {:else}
-        <h1 class="text-align-center">Fulfill wallet for</h1>
+        <h1 class="text-align-center">Donate to </h1>
       {/if}
       {#await loadPromise then donator}
         <Donator user={donator} />
