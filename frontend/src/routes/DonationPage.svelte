@@ -62,11 +62,13 @@
           <Donation donation={donation} on:close={() => navigate(-1)} />
         {:else}
           <div class="flex-column">
-            {#if donation.receiver.id === $me.donator.id}
-              You successfuly fulfilled your balance.
-            {:else}
-              You successfuly donated to <Donator user={donation.receiver} />.
-            {/if}
+            {#await $me then me}
+              {#if donation.receiver.id === me.donator.id}
+                You successfuly fulfilled your balance.
+              {:else}
+                You successfuly donated to <Donator user={donation.receiver} />.
+              {/if}
+            {/await}
             <Button class=white on:click={() => navigate(-2)}>Close</Button>
           </div>
         {/if}
