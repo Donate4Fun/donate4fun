@@ -9,6 +9,7 @@
   import Donator from "../lib/Donator.svelte";
   import { partial } from "../lib/utils.js";
   import api from "../lib/api.js";
+  import { me } from "$lib/session.js";
 
   export let donation;
   export let payment_request;
@@ -41,20 +42,20 @@
       <h1>Donate <Amount amount={donation.amount} /> to</h1>
       <YoutubeChannel channel={donation.youtube_channel} />
     {:else if donation.receiver}
-      <h1>Fulfill <Amount amount={donation.amount} /> to your wallet</h1>
+      {#await $me then me}
+        {#if donation.receiver.id === me.donator.id}
+          <h1>Fulfill <Amount amount={donation.amount} /> to your wallet</h1>
+        {:else}
+          <h1>Donate <Amount amount={donation.amount} /> to <Donator user={donation.receiver} /></h1>
+        {/if}
+      {/await}
     {/if}
     <a href="lightning:{payment_request}"><QRCode value={payment_request} /></a>
-    <div class="suggestion font-weight-700 text-align-center">
-      <span>Pay with a Wallet like</span>
-      <a href="https://getalby.com" target="_blank">Alby</a>,
-      <a href="https://phoenix.acinq.co" target="_blank">Phoenix</a>,
-      <a href="https://sbw.app" target="_blank">SBW</a> or
-      <a href="https://blixtwallet.github.io" target="_blank">Blixt</a>
-    </div>
     <div class="buttons flex-column gap-20">
       <Button link="lightning:{payment_request}" --width=100%>Open in Wallet</Button>
       <Lnurl lnurl={payment_request} --width=100% />
       <Button on:click={partial(dispatch, "cancel")} class="grey" --width=100%>Back</Button>
+      <a target=_blank href="https://github.com/Donate4Fun/donate4fun/docs/HELP.md">Need help?</a>
     </div>
   {/await}
 </main>
@@ -64,8 +65,8 @@ main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 36px 0 40px 0;
   gap: 20px;
+  padding: 58px 16px 56px;
 }
 h1 {
   font-weight: 900;
@@ -73,11 +74,12 @@ h1 {
   margin-bottom: 20px;
   text-align: center;
 }
-.suggestion {
-  font-size: 16px;
-  width: 402px;
-  margin-top: 4px;
-  margin-bottom: 8px;
+.buttons a {
+  width: 100%;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .buttons {
   width: 295px;
