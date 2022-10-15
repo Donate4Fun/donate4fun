@@ -15,11 +15,13 @@
   import title from "../lib/title.js";
 
   export let navigate;
+  let checkPressed = false;
 
   async function check() {
     await sleep(5000);
     await api.post("me/youtube/check-ownership");
     await reloadMe();
+    checkPressed = true;
   }
 
   async function loadProveMessage() {
@@ -73,19 +75,17 @@
       </li>
     </ol>
     <div>
-      {#await $me}
-        <Spinner />
-      {:then me}
+      {#await $me then me}
         {#if me.youtube_channels.length}
           <h2>Linked channels</h2>
           <LinkedYoutubeChannels youtube_channels={me.youtube_channels} />
-        {:else}
+        {:else if checkPressed}
           No comments found, try again.
         {/if}
       {/await}
     </div>
     <Separator>OR</Separator>
-    <Button on:click={useOAuth}>Use Google OAuth instead</Button>
+    <Button class="white" on:click={useOAuth}>Use Google OAuth instead</Button>
     <Infobox>Until this app is verified by Google you will see a warning message. It's OK to bypass it. <a href="https://donate4fun.notion.site/How-to-prove-ownership-of-your-YouTube-channel-c514b950fef74ef8a5886af2926f9392">More info</a></Infobox>
     <Button class="grey" on:click={() => navigate(-1)}>Cancel</Button>
   </main>
