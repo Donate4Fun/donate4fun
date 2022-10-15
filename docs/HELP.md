@@ -7,7 +7,7 @@ If you wish to use a mobile wallet, then choose one of
 - [Phoenix](https://github.com/ACINQ/phoenix)
 - [SBW](https://github.com/btcontract/wallet)
 - [Blixt Wallet](https://blixtwallet.github.io/)
-- [Wallet Of Satoshi](https://www.walletofsatoshi.com/)
+- [Wallet Of Satoshi](https://www.walletofsatoshi.com/) *authentication doesn't work*
 
 # Where to get satoshis
 ## For fiat
