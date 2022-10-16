@@ -54,7 +54,7 @@ class LndClient:
     async def request(self, api: str, method: str, **kwargs):
         async with httpx.AsyncClient() as client:
             url = f'{self.settings.url}{api}'
-            logger.debug(f"{method} {url}")
+            logger.trace(f"{method} {url}")
             if self.invoice_macaroon:
                 kwargs['headers'] = {"Grpc-Metadata-macaroon": self.invoice_macaroon}
             async with client.stream(
@@ -62,7 +62,7 @@ class LndClient:
                 url=url,
                 **kwargs,
             ) as resp:
-                logger.debug(f"{method} {url} {resp.status_code}")
+                logger.trace(f"{method} {url} {resp.status_code}")
                 if not resp.is_success:
                     await resp.aread()
                 resp.raise_for_status()

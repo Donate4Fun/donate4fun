@@ -15,7 +15,7 @@ import ecdsa
 from authlib.jose import jwt
 from asgi_testclient import TestClient
 
-from donate4fun.app import create_app
+from donate4fun.app import create_app, addLoggingLevel
 from donate4fun.models import Invoice, Donation
 from donate4fun.lnd import LndClient
 from donate4fun.settings import load_settings, Settings, DbSettings
@@ -81,6 +81,10 @@ def event_loop():
 
 @pytest.fixture
 async def settings():
+    try:
+        addLoggingLevel('TRACE', 5, 'trace')
+    except AttributeError:
+        pass
     async with load_settings() as settings:
         settings.lnd.url = 'http://localhost:10001'
         settings.lnd.macaroon_by_network = None
