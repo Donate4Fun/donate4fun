@@ -166,7 +166,8 @@ async def sitemap(request: Request, db_session=Depends(get_db_session)):
 @router.get('/d/{channel_id}')
 async def donate_redirect(request: Request, channel_id: str, db=Depends(get_db_session)):
     youtube_channel: YoutubeChannel = await query_or_fetch_youtube_channel(channel_id=channel_id, db=db)
-    return RedirectResponse(request.url.replace(path=f'/donate/{youtube_channel.id}'), status_code=302)
+    origin = settings.redirect_base_url or f'{request.url.scheme}://{request.url.netloc}'
+    return RedirectResponse(f'{origin}/donate/{youtube_channel.id}', status_code=302)
 
 
 @router.get('/.well-known/lnurlp/{username}')

@@ -1,10 +1,11 @@
 <script>
+  import { get } from "svelte/store";
   import Section from "../lib/Section.svelte";
   import Button from "../lib/Button.svelte";
   import CopyButton from "../lib/CopyButton.svelte";
   import Editable from "../lib/Editable.svelte";
   import Loading from "../lib/Loading.svelte";
-  import {youtube_channel_url} from "../lib/utils.js";
+  import { youtube_channel_url, webOrigin } from "../lib/utils.js";
   import api from "../lib/api.js";
   import title from "../lib/title.js";
 
@@ -16,7 +17,7 @@
 
   async function load() {
     youtube_channel = await api.get(`youtube-channel/${channel_id}`);
-    message = `⚡ Donate4Fun to me here https://${window.location.host}/d/${youtube_channel.channel_id}`;
+    message = `⚡ Donate4Fun to me here ${get(webOrigin)}/d/${youtube_channel.channel_id}`;
     $title = `Collect donations for ${youtube_channel.title} with Bitcoin Lightning`;
   }
 </script>
