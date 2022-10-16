@@ -8,6 +8,7 @@ todo:
 - connect wallet page: add "need help" link
 - add analytics to extension and web (https://github.com/DavidWells/analytics)
 - add analytics consent
+- google oauth docs
 
 nice to be done:
 - test on opera and edge
@@ -19,13 +20,21 @@ look-and-feel:
 - login page: add confirmation to reset wallet / disconnect
 
 bugs:
-- fulfill page: add links how to get satoshis
+- extension popup: update balance after donation
 - nowebln page: add links how to get satoshis
 - update screenshots in web stores
-- youtube: comment for non-default languages
 - website: element paddings on various pages
+- sections header layout: move down
 
 fixed:
+- withdraw: no page update after withdraw from qrcode (sometimes ?)
+- backend: update youtube channel name after change
+- get more donations: fix link in copy text box
+- frontend: donate page doesn't work
+- prove youtube: restyle
+- prove youtube: remove "no comments found" on initial load
+- fulfill page: add links how to get satoshis
+- youtube: comment for non-default languages
 - landing mobile layout
 - login page: page does not change after connect
 - qrcode logo
