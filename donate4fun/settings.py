@@ -2,6 +2,7 @@ import yaml
 import os
 import logging
 import socket
+from datetime import timedelta
 from typing import Any
 from contextvars import ContextVar
 from contextlib import asynccontextmanager, contextmanager
@@ -22,6 +23,7 @@ class YoutubeSettings(BaseModel):
     oauth: OAuthSettings
     service_account_key_file: str
     api_key: str
+    refresh_timeout: timedelta
 
 
 class DbSettings(BaseModel):

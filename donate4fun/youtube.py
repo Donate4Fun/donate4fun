@@ -1,7 +1,9 @@
 import json
+import logging
 import re
 from functools import wraps
 from dataclasses import dataclass
+from datetime import datetime
 from urllib.parse import parse_qs, urlparse
 
 from aiogoogle import Aiogoogle
@@ -17,6 +19,7 @@ from .models import YoutubeVideo, YoutubeChannel, Donation
 
 ChannelId = str
 VideoId = str
+logger = logging.getLogger(__name__)
 
 
 class UnsupportedYoutubeUrl(UnsupportedTarget):
@@ -138,10 +141,17 @@ async def fetch_youtube_video(aiogoogle, youtube, video_id: str, db: DbSession) 
     )
 
 
+class ChannelIsTooOld(Exception):
+    pass
+
+
 async def query_or_fetch_youtube_channel(channel_id: str, db: DbSession) -> YoutubeChannel:
     try:
-        return await db.find_youtube_channel(channel_id=channel_id)
-    except NoResultFound:
+        channel: YoutubeChannel = await db.find_youtube_channel(channel_id=channel_id)
+        if channel.last_fetched_at is None or channel.last_fetched_at < datetime.utcnow() - settings.youtube.refresh_timeout:
+            logger.debug("youtube channel %s is too old, refreshing", channel)
+            raise ChannelIsTooOld
+    except (NoResultFound, ChannelIsTooOld):
         channel: YoutubeChannel = await fetch_youtube_channel(channel_id)
         await db.save_youtube_channel(channel)
         return channel
@@ -166,6 +176,7 @@ async def fetch_youtube_channel(aiogoogle, youtube, channel_id: str) -> YoutubeC
         channel_id=api_channel.id,
         title=api_channel.title,
         thumbnail_url=api_channel.thumbnail,
+        last_fetched_at=datetime.utcnow(),
     )
 
 
