@@ -1,18 +1,15 @@
 todo:
 - add text for investors and vision
-- add terms and privacy
 - add FAQ items
-- withdraw from donator balance
-- fulfill page: add "need help" link
-- withdraw page: add "need help" link
-- connect wallet page: add "need help" link
 - add analytics to extension and web (https://github.com/DavidWells/analytics)
 - add analytics consent
-- google oauth docs
+- complete google oauth verification
+- add more wallets to landing step 2
 
 nice to be done:
 - test on opera and edge
 - extension for safary
+- withdraw from donator balance
 
 look-and-feel:
 - restyle youtube bolt animation and popup animation
@@ -27,6 +24,10 @@ bugs:
 - sections header layout: move down
 
 fixed:
+- connect wallet page: add "need help" link
+- add terms and privacy
+- fulfill page: add "need help" link
+- withdraw page: add "need help" link
 - withdraw: no page update after withdraw from qrcode (sometimes ?)
 - backend: update youtube channel name after change
 - get more donations: fix link in copy text box
