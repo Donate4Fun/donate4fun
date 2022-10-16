@@ -6,6 +6,7 @@
   import Section from "../lib/Section.svelte";
   import Loading from "../lib/Loading.svelte";
   import Spinner from "../lib/Spinner.svelte";
+  import NeedHelp from "$lib/NeedHelp.svelte";
   import api from "../lib/api.js";
   import { me, resetMe, reloadMe } from "../lib/session.js";
   import {notify} from "../lib/notifications.js";
@@ -48,8 +49,8 @@
 {#await $me}
   <Loading />
 {:then me}
-  <div>
-    <Section>
+  <Section>
+    <div class="main">
       <h1>
         {#if me.donator.lnauth_pubkey}
           Change wallet
@@ -60,19 +61,19 @@
       {#await load() then lnurl}
         <a href="lightning:{lnurl}" class="qrcode"><QRCode value={lnurl} /></a>
         <div class="buttons">
-          <a href="lightning:{lnurl}" class="open-in-wallet"><Button --width=100%>Connect using Wallet</Button></a>
+          <Button link="lightning:{lnurl}">Connect using Wallet</Button>
           <Lnurl lnurl="{lnurl}" class="lnurl" />
-          <Button class="white" on:click={resetMe} --width=100%>Reset account</Button>
+          <Button class="white" on:click={resetMe}>Reset account</Button>
           {#if me.donator.lnauth_pubkey}
             <Button
               class="white"
-              --width=100%
               on:click={disconnect}
               disabled={me.donator.balance > 0}
               title={me.donator.balance > 0 ? "You can't disconnect wallet if you have funds" : ""}
             >Disconnect wallet</Button>
           {/if}
-          <Button class="grey" on:click={() => navigate(-1)} --width=100%>Cancel</Button>
+          <Button class="grey" on:click={() => navigate(-1)}>Cancel</Button>
+          <NeedHelp />
         </div>
         <div class=waiting>
           <Spinner /><span>Waiting for you...</span>
@@ -80,15 +81,15 @@
       {:catch err}
         <p>Catch {err}</p>
       {/await}
-    </Section>
-  </div>
+    </div>
+  </Section>
 {/await}
 
 <style>
 h1 {
   font-weight: 900;
 }
-div > :global(section) {
+.main {
   width: 640px;
   padding: 36px 172px 54px 172px;
   display: flex;
@@ -106,9 +107,6 @@ div.buttons {
   gap: 1em;
   align-items: center;
   margin-bottom: 40px;
-}
-.buttons > a {
-  width: 100%;
 }
 div.waiting {
   display: flex;

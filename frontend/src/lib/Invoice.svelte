@@ -7,6 +7,7 @@
   import Amount from "../lib/Amount.svelte";
   import YoutubeChannel from "../lib/YoutubeChannel.svelte";
   import Donator from "../lib/Donator.svelte";
+  import NeedHelp from "$lib/NeedHelp.svelte";
   import { partial } from "../lib/utils.js";
   import api from "../lib/api.js";
   import { me } from "$lib/session.js";
@@ -55,7 +56,7 @@
       <Button link="lightning:{payment_request}" --width=100%>Open in Wallet</Button>
       <Lnurl lnurl={payment_request} --width=100% />
       <Button on:click={partial(dispatch, "cancel")} class="grey" --width=100%>Back</Button>
-      <a target=_blank href="https://github.com/Donate4Fun/donate4fun/docs/HELP.md">Need help?</a>
+      <div class="need-help"><NeedHelp /></div>
     </div>
   {/await}
 </main>
@@ -74,7 +75,7 @@ h1 {
   margin-bottom: 20px;
   text-align: center;
 }
-.buttons a {
+.need-help {
   width: 100%;
   height: 44px;
   display: flex;
