@@ -75,8 +75,18 @@ function getChannelTitle() {
 function getChannelId() {
   if (isVideoPage())
     return getParent().querySelector("#channel-name a").href;
-  else
-    return document.querySelector('#snippet a[href^="/channel/"]')?.href
+  else {
+    if (location.pathname.startsWith('/channel/'))
+      return location.pathname.split('/')[2];
+
+    const snippetLink = document.querySelector('#snippet a[href^="/channel/"]');
+    if (snippetLink)
+      return snippetLink.href;
+
+    // This tag contains valid ID only when after loading the whole page
+    // After doesn't change afrer navigation, so it could be invalid
+    return document.querySelector('meta[itemprop="channelId"]')?.content;
+  }
 }
 
 function isVideoLoaded() {
