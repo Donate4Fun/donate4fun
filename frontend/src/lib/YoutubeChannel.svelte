@@ -1,5 +1,6 @@
 <script>
   import { link } from "svelte-navigator";
+  import { youtube_channel_url } from "$lib/utils.js";
 
   export let channel;
   export let linkto = 'external';
@@ -11,7 +12,7 @@
     <img src={channel.thumbnail_url} alt="youtube channel logo">
   {/if}
   {#if linkto === 'external'}
-    <a href="https://youtube.com/channel/{channel.channel_id}" target="_blank">{channel.title}</a>
+    <a href={youtube_channel_url(channel.channel_id)} target="_blank">{channel.title}</a>
   {:else if linkto === 'withdraw'}
     <a href="/youtube/{channel.id}" use:link>{channel.title}</a>
   {:else if linkto === 'donate'}
