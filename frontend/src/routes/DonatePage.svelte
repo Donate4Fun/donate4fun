@@ -60,7 +60,7 @@
 </header>
 <Section>
   {#await loadPromise}
-  <Loading />
+    <Loading />
   {:then}
   <form on:submit|preventDefault={donate}>
     <h1>Donate to <YoutubeChannel channel={youtube_channel} /></h1>
