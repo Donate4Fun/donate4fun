@@ -103,6 +103,8 @@ form {
 form > h1 {
   margin-top: 0;
   margin-bottom: 24px;
+  display: flex;
+  gap: 0.5em;
 }
 form > div {
   display: flex;

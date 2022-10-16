@@ -134,7 +134,10 @@ async def cancel_donation(donation_id: UUID, db=Depends(get_db_session), lnd=Dep
 
 @router.get("/donations/latest", response_model=list[Donation])
 async def latest_donations(db=Depends(get_db_session)):
-    return await db.query_donations(DonationDb.paid_at.isnot(None) & DonationDb.youtube_channel_id.isnot(None), limit=25)
+    return await db.query_donations(
+        DonationDb.paid_at.isnot(None) & DonationDb.youtube_channel_id.isnot(None),
+        limit=settings.latest_donations_count,
+    )
 
 
 @router.get("/donations/by-donator/{donator_id}", response_model=list[Donation])

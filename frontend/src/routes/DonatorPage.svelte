@@ -3,6 +3,7 @@
   import Userpic from "../lib/Userpic.svelte";
   import Section from "../lib/Section.svelte";
   import YoutubeChannel from "../lib/YoutubeChannel.svelte";
+  import YoutubeVideo from "../lib/YoutubeVideo.svelte";
   import Donator from "../lib/Donator.svelte";
   import Amount from "../lib/Amount.svelte";
   import FiatAmount from "../lib/FiatAmount.svelte";
@@ -14,6 +15,7 @@
   import { me, reloadMe } from "../lib/session.js";
   import api from "../lib/api.js";
   import { link } from "svelte-navigator";
+  import { toText } from "$lib/utils.js";
 
   export let donator_id;
   export let navigate;
@@ -55,8 +57,8 @@
       <div class=transactions><Separator>Transactions</Separator></div>
       <div class="table">
         <div class="head">
-          <div>When</div>
-          <div>Whom</div>
+          <div>Date</div>
+          <div>Donatee</div>
           <div>Amount</div>
           <div>Status</div>
         </div>
@@ -66,12 +68,14 @@
           {:else}
             <Datetime dt={donation.created_at}/>
           {/if}
-          {#if donation.youtube_channel}
-            <YoutubeChannel channel={donation.youtube_channel} linkto=donate class="ellipsis" />
+          {#if donation.youtube_video}
+            <YoutubeVideo video={donation.youtube_video} />
+          {:else if donation.youtube_channel}
+            <YoutubeChannel channel={donation.youtube_channel} linkto=donate class="ellipsis" logo />
           {:else}
             <Donator user={donation.receiver} ellipsis --gap=5px />
           {/if}
-          <Amount amount={donation.amount}/>
+          <Amount amount={toText(donation.amount)}/>
           <div>
             {#if donation.paid_at}
               {#if donation.donator.id === donation.receiver?.id}
@@ -106,7 +110,7 @@
 .table {
   font-size: 12px;
   display: grid;
-  grid-template-columns: 109px 99px 83px 45px;
+  grid-template-columns: 109px 199px 83px 45px;
   column-gap: 20px;
   row-gap: 26px;
 }
