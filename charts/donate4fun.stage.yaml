@@ -14,3 +14,7 @@ backend:
         redirect_base_url: https://stage.donate4.fun
     lnd:
       lnurl_base_url: https://stage.donate4.fun
+    log:
+      loggers:
+        httpx:
+          level: INFO
