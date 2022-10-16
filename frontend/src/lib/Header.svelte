@@ -147,6 +147,7 @@ header {
   }
   .quick-links {
     display: flex;
+    align-items: center;
     justify-content: end;
     flex-grow: 1;
     gap: 40px;

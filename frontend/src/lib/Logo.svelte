@@ -4,9 +4,9 @@
   </div>
   <div class="full">
     <img src="/static/ln-icon.svg" alt="bolt" height=40>
-    <div class="stoke-text">
-      <svg class="back" height="1.5em" width=300>
-        <text class="stroke" x="0.1em" y="0.97em">
+    <div class="stroke-text">
+      <svg class="back" height=40 width=200>
+        <text class="stroke" x="5px" y="32.5px">
           Donate4Fun
         </text>
       </svg>
@@ -29,12 +29,21 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-fill-color: transparent;
+  padding: 0 5px;
+}
+.stroke-text {
   position: relative;
-  padding: 0 0.1em;
+  height: 36px;
+  width: 200px;
 }
 .back {
   position: absolute;
   z-index: -1;
+  bottom: 0;
+}
+div.text {
+  position: absolute;
+  bottom: 0;
 }
 .stroke {
   stroke: #2E6CFF;
