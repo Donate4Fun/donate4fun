@@ -71,7 +71,7 @@
           {#if donation.youtube_video}
             <YoutubeVideo video={donation.youtube_video} />
           {:else if donation.youtube_channel}
-            <YoutubeChannel channel={donation.youtube_channel} linkto=donate class="ellipsis" logo />
+            <YoutubeChannel channel={donation.youtube_channel} class="ellipsis" logo />
           {:else}
             <Donator user={donation.receiver} ellipsis --gap=5px />
           {/if}

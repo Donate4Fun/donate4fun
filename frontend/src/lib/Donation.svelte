@@ -30,22 +30,22 @@
 </script>
 
 <main>
-{#await $me.loaded}
+{#await $me}
   <Loading/>
-{:then}
+{:then me}
   <ChannelLogo url={donation.youtube_channel.thumbnail_url} size=72px />
   <div class="header">Great! You've sent <Amount amount={donation.amount}/> to <YoutubeChannel channel={donation.youtube_channel}/></div>
-  {#if $me.donator.id === donation.donator_id}
+  {#if me.donator.id === donation.donator_id}
     <Infobox>Copy and share the message with the link or just tell {donation.youtube_channel.title} to receive the donation here at «Donate4Fun»</Infobox>
-    <call-to-action>
+    <div>
       {#if donation.youtube_video}
-      Now leave a comment on <a href="{donation.youtube_video_url(donation.youtube_video.video_id)}" target=_blank>his video</a> to make him know of donation:
+        Now leave a comment on <a href="{youtube_video_url(donation.youtube_video.video_id)}" target=_blank>his video</a> to make him know of donation:
       {:else}
-      Now leave a comment on his video to make him know of donation:
+        Now leave a comment on his video to make him know of donation:
       {/if}
-    </call-to-action>
+    </div>
     <ol>
-      <li>Press "Copy and Share" - commend will be copied to clipboard and YouTube video tab will open</li>
+      <li>Press "Copy and Share" - comment will be copied to clipboard and YouTube video tab will open</li>
       <li>Scroll to comments section and focus "Add a comment..." field</li>
       <li>Paste a comment from clipboard and post it</li>
     </ol>
