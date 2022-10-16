@@ -6,8 +6,10 @@
   import Button from "$lib/Button.svelte";
   import Input from "$lib/Input.svelte";
   import FiatAmount from "$lib/FiatAmount.svelte";
+  import { toText, youtube_video_url, youtube_channel_url } from "$lib/utils.js";
 
   let videoId;
+  let channelId;
   let channelTitle;
   let channelLogo;
   let contentScript;
@@ -23,40 +25,42 @@
     contentScript = await connectToPage();
     if (!contentScript)
       return;
-    videoId = await contentScript.getVideoId();
-    cLog("videoid", videoId);
-    if (videoId) {
-      channelTitle = await contentScript.getChannelTitle();
-      channelLogo = await contentScript.getChannelLogo();
+    if (await contentScript.isVideoPage()) {
+      videoId = await contentScript.getVideoId();
+      cLog("videoid", videoId);
+    } else if (await contentScript.isChannelPage()) {
+      channelId = await contentScript.getChannelId();
+      cLog("channelid", channelId);
     }
+    channelTitle = await contentScript.getChannelTitle();
+    channelLogo = await contentScript.getChannelLogo();
   }
 
   async function donate() {
     try {
-      contentScript.onPaid(await contentScript.donate(amount, `https://youtube.com/watch?v=${videoId}`));
+      const target = videoId ? youtube_video_url(videoId) : youtube_channel_url(channelId);
+      contentScript.onPaid(await contentScript.donate(amount, target));
     } catch (err) {
       console.error("Failed to donate", err);
       if (err.message === "No webln found")
         navigate(`/nowebln/${amount}`);
     }
   }
-
-  function toText(amount) {
-    return amount >= 1000 ? `${amount / 1000} K` : amount;
-  }
 </script>
  
 <PopupSection>
   <div class="main">
     {#await load() then}
-      {#if !videoId}
+      {#if !videoId && !channelId}
         Navigate to video or channel..
       {:else}
         <div class="flex-row align-center justify-center gap-8 width-full">
           <img src="./static/youtube.svg" height=24px alt="youtube logo">
           <span class="flex-shrink-0 font-weight-900 font-20 line-height-24">Donate to</span>
           <div class="flex-shrink-1 flex-row align-center gap-16 grid-span-2">
-            <img width=48px height=48px class="circular" src={channelLogo} alt="channel logo">
+            {#if channelLogo}
+              <img width=48px height=48px class="circular" src={channelLogo} alt="channel logo">
+            {/if}
             <span class="color-blue font-weight-700">{channelTitle}</span>
           </div>
         </div>

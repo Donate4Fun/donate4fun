@@ -59,15 +59,24 @@ function getParent() {
 }
 
 function getChannelLogo() {
-  return getParent().querySelector("#avatar > img").getAttribute("src");
+  if (isVideoPage())
+    return getParent().querySelector("#avatar > img").src;
+  else if (isChannelPage())
+    return document.querySelector('#channel-container #avatar img').src;
 }
 
 function getChannelTitle() {
-  return getParent().querySelector("#channel-name a").text;
+  if (isVideoPage())
+    return getParent().querySelector("#channel-name a").textContent;
+  else if (isChannelPage())
+    return document.querySelector("#channel-container #text.ytd-channel-name").textContent;
 }
 
 function getChannelId() {
-  return getParent().querySelector("#channel-name a").href;
+  if (isVideoPage())
+    return getParent().querySelector("#channel-name a").href;
+  else
+    return document.querySelector('#snippet a[href^="/channel/"]')?.href
 }
 
 function isVideoLoaded() {
@@ -79,6 +88,19 @@ function isVideoLoaded() {
   return (
     document.querySelector(`ytd-watch-flexy[video-id='${videoId}']`) !== null
   );
+}
+
+function isVideoPage() {
+  return location.pathname === '/watch' || location.pathname.startsWith('/shorts/');
+}
+
+function getCanonicalLocation() {
+  const canonical = document.querySelector('link[rel="canonical"]').href;
+  return canonical && new URL(canonical);
+}
+
+function isChannelPage() {
+  return location.pathname.startsWith('/c/') || location.pathname.startsWith('/channel/') || !!getChannelId();
 }
 
 function isShorts() {
@@ -186,6 +208,7 @@ export {
   getChannelLogo,
   getChannelTitle,
   getVideoId,
+  getChannelId,
   isInViewport,
   waitLoaded,
   getButtons,
@@ -193,4 +216,6 @@ export {
   isCommentEnabled,
   isLoaded,
   isShorts,
+  isVideoPage,
+  isChannelPage,
 }

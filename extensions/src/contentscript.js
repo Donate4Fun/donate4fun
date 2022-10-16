@@ -13,8 +13,11 @@ import {
   postComment,
   isVideoLoaded,
   getVideoId,
+  getChannelId,
   getChannelTitle,
   getChannelLogo,
+  isVideoPage,
+  isChannelPage,
   isLoaded,
 } from "./youtube.js";
 import cLog from "$lib/log.js";
@@ -45,9 +48,12 @@ async function init() {
   registerHandlers({
     postComment,
     getVideoId,
+    getChannelId,
     getChannelTitle,
     getChannelLogo,
     isVideoLoaded,
+    isVideoPage,
+    isChannelPage,
     sendPayment: pageScript.sendPayment,
     donate,
     onPaid: donation => { bolt?.onPaid(donation) },
