@@ -14,7 +14,7 @@
       <YoutubeChannel linkto=withdraw channel={channel} />
     </div>
     <div class="withdraw-button">
-      <Button>Withdraw</Button>
+      <Button link="/youtube/{channel.id}">Withdraw</Button>
     </div>
   </li>
   {/each}
