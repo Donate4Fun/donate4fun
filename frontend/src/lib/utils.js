@@ -50,6 +50,10 @@ function isExtensionPresent() {
   return !!window.donate4fun || !!window.chrome;
 }
 
+function toText(amount) {
+  return amount >= 1000 ? `${amount / 1000} K` : amount;
+}
+
 export {
   copy,
   partial,
@@ -60,4 +64,5 @@ export {
   resolve,
   isWeblnPresent,
   isExtensionPresent,
+  toText,
 };
