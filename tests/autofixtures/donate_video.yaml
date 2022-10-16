@@ -18,6 +18,7 @@ json:
       balance: 0
       channel_id: UC3ptU7hyNeFlJdvQj2nZHJg
       id: 00000000-0000-0000-0000-000000000001
+      last_fetched_at: '2022-02-02T22:22:22'
       thumbnail_url: https://yt3.ggpht.com/XRROgwcAhtZPrd7FWz0jLU3b1ii45tmP1SX9BvWrZOFl4iTDKoSruJtK0wm8q4Lf2PlVJmoGTw=s240-c-k-c0x00ffffff-no-rj
       title: Alex007SC2
     youtube_video:
@@ -37,6 +38,7 @@ json:
         balance: 0
         channel_id: UC3ptU7hyNeFlJdvQj2nZHJg
         id: 00000000-0000-0000-0000-000000000001
+        last_fetched_at: '2022-02-02T22:22:22'
         thumbnail_url: https://yt3.ggpht.com/XRROgwcAhtZPrd7FWz0jLU3b1ii45tmP1SX9BvWrZOFl4iTDKoSruJtK0wm8q4Lf2PlVJmoGTw=s240-c-k-c0x00ffffff-no-rj
         title: Alex007SC2
   payment_request: lnbcsomething

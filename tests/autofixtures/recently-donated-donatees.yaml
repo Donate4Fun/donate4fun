@@ -2,11 +2,13 @@ json:
 - balance: 90
   channel_id: '0001'
   id: 00000000-0000-0000-0000-000000000002
+  last_fetched_at: null
   thumbnail_url: http://0001/img
   title: '0001'
 - balance: 20
   channel_id: q2dsaf
   id: 00000000-0000-0000-0000-000000000001
+  last_fetched_at: null
   thumbnail_url: 1wdasd
   title: asdzxc
 status_code: 200

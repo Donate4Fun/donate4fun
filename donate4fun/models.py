@@ -79,6 +79,7 @@ class YoutubeChannel(BaseModel):
     channel_id: str
     thumbnail_url: Url | None
     balance: int = 0
+    last_fetched_at: datetime | None
 
     class Config:
         orm_mode = True

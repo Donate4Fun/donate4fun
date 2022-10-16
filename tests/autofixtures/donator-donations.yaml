@@ -17,6 +17,7 @@ json:
     balance: 20
     channel_id: q2dsaf
     id: 00000000-0000-0000-0000-000000000001
+    last_fetched_at: null
     thumbnail_url: 1wdasd
     title: asdzxc
   youtube_video: null

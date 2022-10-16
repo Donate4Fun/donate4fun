@@ -29,6 +29,7 @@ class YoutubeChannelDb(Base):
     thumbnail_url = Column(String)
     balance = Column(BigInteger, nullable=False, server_default=text('0'))
     total_donated = Column(BigInteger, nullable=False, server_default=text('0'))
+    last_fetched_at = Column(TIMESTAMP)
 
 
 class YoutubeVideoDb(Base):
