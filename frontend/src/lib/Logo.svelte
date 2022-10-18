@@ -6,7 +6,7 @@
     <img src="/static/ln-icon.svg" alt="bolt" height=40>
     <div class="stroke-text">
       <svg class="back" height=40 width=200>
-        <text class="stroke" x="5px" y="32.5px">
+        <text class="stroke" x="5px" y="33px">
           Donate4Fun
         </text>
       </svg>
