@@ -14,6 +14,7 @@ If you wish to use a mobile wallet, then choose one of
 Buy with USD, EUR or other fiat currencies
 - [kycnot.me](https://kycnot.me/?cash=on)
 - [RoboSats](https://unsafe.robosats.com/)
+- [MtPelerin](https://www.mtpelerin.com)
 
 ## For other cryptocurrencies
 Exchange BTC, ETH, USDT or other cryptocurrencies
