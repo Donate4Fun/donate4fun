@@ -1,4 +1,4 @@
-FROM python:3.10.6-alpine 
+FROM python:3.10.6-alpine
 
 RUN apk --update --no-cache add alpine-sdk libffi-dev rust cargo openssl-dev
 RUN pip install --upgrade pip && pip install poetry
