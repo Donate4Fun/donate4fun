@@ -1,4 +1,5 @@
 FROM node:16-alpine as builder
+ARG GIT_REF=v0.13.1
 
 WORKDIR /RTL
 RUN apk add --no-cache --update git
