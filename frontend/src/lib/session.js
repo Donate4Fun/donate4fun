@@ -6,7 +6,9 @@ import { cLog } from "$lib/log.js";
 import jwt_decode from "jwt-decode";
 import Cookies from "js-cookie";
 
+// Store for browser.cookies
 export const cookies = writable();
+const cookieName = 'session';
 
 async function fetchMe() {
   const resp = await apiGet("donator/me");
@@ -39,15 +41,18 @@ async function isValid() {
   if (!me)
     return false;
   let sessionCookie;
-  if (get(cookies)) {
+  const browserCookies = get(cookies);
+  if (browserCookies) {
     // Convert url to domain because Firefox does not allow to get secure cookie for http://localhost
     // (but shows for https://localhost or "localhost" domain)
-    const cookieList = await get(cookies).getAll({name: "session", domain: getCookieDomain()});
+    const cookieList = await browserCookies.getAll({name: cookieName, domain: getCookieDomain()});
     if (!cookieList.length)
       return false;
     sessionCookie = cookieList[0].value;
+    browserCookies.onChanged.removeListener(onCookieChanged);
+    browserCookies.onChanged.addListener(onCookieChanged);
   } else {
-    sessionCookie = Cookies.get('session');
+    sessionCookie = Cookies.get(cookieName);
     if (!sessionCookie)
       return false;
   }
@@ -55,6 +60,15 @@ async function isValid() {
   if (!decoded)
     return false;
   return decoded.donator === me.donator.id && decoded.lnauth_pubkey === me.donator.lnauth_pubkey;
+}
+
+async function onCookieChanged(changeInfo) {
+  cLog("onCookieChanged", changeInfo);
+  const cookie = changeInfo.cookie;
+  const domain = getCookieDomain();
+  const domainNoDot = domain.slice(1);
+  if (cookie.name === cookieName && !changeInfo.removed && (cookie.domain === domain || cookie.domain === domainNoDot))
+    await reloadMe();
 }
 
 export const me = asyncable(async () => {
@@ -75,7 +89,7 @@ export async function reloadMe() {
 }
 
 export async function resetMe() {
-  Cookies.remove("session", { path: "/", domain: getCookieDomain() });
-  Cookies.remove("session", { path: "/" });
+  Cookies.remove(cookieName, { path: "/", domain: getCookieDomain() });
+  Cookies.remove(cookieName, { path: "/" });
   await reloadMe();
 }
