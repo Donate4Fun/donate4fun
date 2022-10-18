@@ -94,9 +94,10 @@
 
 <style>
 .youtube-channel {
-  padding: 20px 70px 74px;
+  padding: 36px 70px 74px;
   display: flex;
   flex-direction: column;
+  gap: 32px;
   align-items: center;
   width: 640px;
   box-sizing: border-box;
@@ -105,18 +106,12 @@ h1 {
   text-align: center;
   font-weight: 900;
   font-size: 24px;
-  margin-bottom: 24px;
 }
 .controls {
-  margin-top: 44px;
-  margin-bottom: 32px;
   display: flex;
+  gap: 20px;
   flex-direction: column;
   align-items: center;
-}
-.controls :global(button) {
-  margin-top: 20px;
-  width: 100%;
 }
 .table {
   font-size: 12px;
