@@ -1,6 +1,6 @@
 FROM golang:1.18-alpine as builder
-ARG GIT_REF
-ARG GIT_REPO=https://github.com/nikicat/lnd
+ARG GIT_REF=v0.15.2-beta
+ARG GIT_REPO=https://github.com/lightningnetwork/lnd
 
 # Force Go to use the cgo based DNS resolver. This is required to ensure DNS
 # queries required to connect to linked containers succeed.
