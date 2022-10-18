@@ -1,15 +1,23 @@
 <div class="flex-column">
   <details>
     <summary>What is Donate4.Fun?</summary>
-    Donate4.Fun is a donations platform powered by Bitcoin Lightning that allows you to tip any content creator instantly and with minimal fees.
+    <div>
+      Donate4.Fun is a donations platform powered by Bitcoin Lightning that allows you to tip any content creator instantly and with minimal fees.
+    </div>
   </details>
   <details>
     <summary>One more donation service? How is it different?</summary>
-    Donate4.Fun does not require content author to register or create account before start accepting donations. You can donate first and author would be able to claim his donation later - all he would need to do is verify that he own social account that has a donation.
+    <div>
+      Donate4.Fun does not require content author to register or create account before start accepting donations.
+      You can donate first and author would be able to claim his donation later - all he would need to do is verify that he own social account that has a donation.
+    </div>
   </details>
   <details>
     <summary>But how would he know that I've donated him?</summary>
-    You would tell him =) Really, Donate4.Fun would deliver donations for authors that provided their Bitcoin or Lightning address, but if they hadn't the only way is you write a comment that mentions your donation on "donate 4 fun". Specially for this there is browser add-on feature that simplifes it. Moreover, each comment boost recomendations for author's content inside a platform.
+    <div>
+      You would tell him =) Really, Donate4.Fun would deliver donations for authors that provided their Bitcoin or Lightning address, but if they hadn't the only way is you write a comment that mentions your donation on "donate 4 fun".
+      Specially for this there is browser add-on feature that simplifes it. Moreover, each comment boost recomendations for author's content inside a platform.
+    </div>
   </details>
   <details>
     <summary>Why Donate4.Fun instead of YouTube Membership/Patreon/etc.? </summary>
@@ -23,38 +31,44 @@
     <summary>
       Why do not donate directly to a provided author's crypto-wallet or lightning address?
     </summary>
-    Although it's more straighforward to pay directly to the author instead of using third-party service like Donate4.Fun, not all authors provide crypto wallet addresses, even less of them have Lightning address. For on-chain addresses it's much harder to send a donation than just click a button in Donate4.Fun extension. Anyway, we are planning to implement sending of donations directly to the author if he provided on-chain of off-chain address.
+    <div>
+      Although it's more straighforward to pay directly to the author instead of using third-party service like Donate4.Fun, not all authors provide crypto wallet addresses, even less of them have Lightning address.
+      For on-chain addresses it's much harder to send a donation than just click a button in Donate4.Fun extension.
+      Anyway, we are planning to implement sending of donations directly to the author if he provided on-chain of off-chain address.
+    </div>
   </details>
   <details>
     <summary>How will I know that author got my donations?</summary>
-    You could check author's page on a <a href="https://donate4.fun">website</a>.
+    <div>
+      You could check author's page on a <a href="https://donate4.fun">website</a>.
+    </div>
   </details>
   <details>
-    <summary>What if author decided not to take donations?
-    In case of author didn't verify his account or didn't logged in for 6 months you will be able to revert your donation and withdraw your money back.
+    <summary>What if author decided not to take donations?</summary>
+    <div>
+      In case of author didn't verify his account or didn't logged in for 6 months you will be able to revert your donation and withdraw your money back.
+    </div>
   </details>
   <details>
     <summary>Why should I trust Donate4.Fun?</summary>
-    Our service is fully <a href="https://github.com/Donate4Fun/doante4fun" target=_blank>open source</a> and you could ensure that it works by donating to yourself:
-    <ul>
-      <li>donate to your YouTube channel</li>
-      <li>Verify channel ownership</li>
-      <li>Withdraw your funds</li>
-    </ul>
-    Moreover, Donate4.Fun creators do not hide their identities - you could check our social accounts in Team section.
+    <div>
+      Our service is fully <a href="https://github.com/Donate4Fun/doante4fun" target=_blank>open source</a> and you could ensure that it works by donating to yourself:
+      <ul>
+        <li>donate to your YouTube channel</li>
+        <li>Verify channel ownership</li>
+        <li>Withdraw your funds</li>
+      </ul>
+      Moreover, Donate4.Fun creators do not hide their identities - you could check our social accounts in Team section.
+    </div>
   </details>
   <details>
-    <summary>
-      How to use it from a mobile device?
-    </summary>
-    <p>
+    <summary>How to use it from a mobile device?</summary>
+    <div>
       Mobile app is planned. Currently only desktop browsers are supported.
-    </p>
+    </div>
   </details>
   <details>
-    <summary>
-      Where to get satoshis?
-    </summary>
+    <summary>Where to get satoshis?</summary>
     <ul>
       <li><a target=_blank href="https://robosats.com">Exchange on Robosats</a></li>
       <li><a target=_blank href="https://thndr.games">Play THNDR.games</a></li>
@@ -107,5 +121,11 @@ details > *:not(summary) {
   font-size: 14px;
   line-height: 20px;
   letter-spacing: 0.01em;
+  transition: transform 0.3s;
+  transform: scaleY(0);
+  transform-origin: top;
+}
+details[open] > *:not(summary) {
+  transform: scaleY(1);
 }
 </style>
