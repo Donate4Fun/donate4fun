@@ -2,6 +2,7 @@
   import { get } from "svelte/store";
   import { useNavigate } from "svelte-navigator";
   import Button from "$lib/Button.svelte";
+  import NeedHelp from "$lib/NeedHelp.svelte";
   import { webOrigin } from "$lib/utils.js";
   import { me } from "$lib/session.js";
   import cLog from "$lib/log.js";
@@ -29,34 +30,18 @@
     --font-weight=500
     class=grey
   >Close</Button>
-  <div>
-    <p 
-      style="
-        grid-row: text;
-        font-size: 20px;
-        text-align: center;
-        line-height: 26px;
-      "
-      class=message
-    >You haven't enought sats and WebLN-enabled wallet is not available. You may either 
-    </p>
+  <div class="content">
+    <p class="message">You haven't enought sats and WebLN-enabled wallet is not available. You may either </p>
     <Button
-      --height=100%
-      style="
-        grid-row: download;
-      "
+      --height=72px
       class=light
       target=_blank
       link="{$webOrigin}/install-webln-wallet"
-    >Get WebLN-enabled wallet</Button>
-    <p style="
-      grid-row: text-or;
-      font-size: 16px;
-      text-align: center;
-    ">OR</p>
+    >Get a WebLN-enabled wallet</Button>
+    <p class="or">OR</p>
     {#await $me then me}
       <Button
-        --height=100%
+        --height=72px
         target=_blank
         link="{$webOrigin}/fulfill/{me.donator.id}?amount={amount - (me.donator.balance || 0) + 1000}"
         class=white
@@ -67,6 +52,7 @@
     {:catch err}
       <p>Failed to load session {err}</p>
     {/await}
+    <NeedHelp />
   </div>
 </section>
 
@@ -79,8 +65,19 @@ section {
   gap: 77px;
   padding: 28px;
 }
-div {
-  display: grid;
-  grid-template-rows: [text] 78px 42px [download] 72px 25px [text-or] 19px 19px [fulfill] 72px;
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+}
+.message {
+  font-size: 20px;
+  line-height: 26px;
+  text-align: center;
+}
+.or {
+  font-size: 16px;
+  margin: -15px;
 }
 </style>
