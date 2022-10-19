@@ -11,10 +11,16 @@ If you wish to use a mobile wallet, then choose one of
 
 # Where to get satoshis
 ## For fiat
-Buy with USD, EUR or other fiat currencies
-- [kycnot.me](https://kycnot.me/?cash=on)
-- [RoboSats](https://unsafe.robosats.com/)
-- [MtPelerin](https://www.mtpelerin.com)
+Buy with USD, EUR or other fiat currencies.
+For non-KYC exchanges look at [kycnot.me](https://kycnot.me/?cash=on)
+Or use:
+- [RoboSats](https://unsafe.robosats.com)
+- [BestChange](https://www.bestchange.com)
+- [One of Simplex](https://buy.chainbits.com) frontends (If you buy >50 USD)
+
+If you don't mind to use CEX there exchanges support Bitcoin Lightning
+- [Kraken](https://kraken.com)
+- [OKX](https://okx.com)
 
 ## For other cryptocurrencies
 Exchange BTC, ETH, USDT or other cryptocurrencies
