@@ -1,9 +1,13 @@
 import { writable, get } from 'svelte/store';
+import Analytics from 'analytics';
+import googleAnalytics from '@analytics/google-analytics';
+import plausiblePlugin from "analytics-plugin-plausible";
+import { writable as writableStorage } from "svelte-local-storage-store";
 
 export const webOrigin = writable(globalThis.location.origin);
 export const isExtension = !globalThis.location.origin.startsWith('http');
 
-function resolve(path) {
+export function resolve(path) {
   const origin = get(webOrigin);
   if (origin === location.origin)
     return path;
@@ -11,7 +15,7 @@ function resolve(path) {
     return origin + path;
 }
 
-function copy(content) {
+export function copy(content) {
   if (window.isSecureContext) {
     navigator.clipboard.writeText(content);
     console.log("Copied to clipboard", content);
@@ -20,49 +24,62 @@ function copy(content) {
   }
 }
 
-function partial(func, ...args) {
+export function partial(func, ...args) {
   return () => {
     func(...args);
   }
 }
 
-function sleep(ms) {
+export function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function youtube_channel_url(channel_id) {
+export function youtube_channel_url(channel_id) {
   return `https://youtube.com/channel/${channel_id}`;
 }
 
-function youtube_video_url(video_id) {
+export function youtube_video_url(video_id) {
   return `https://youtube.com/watch?v=${video_id}`;
 }
 
-function youtube_studio_url(channel_id) {
+export function youtube_studio_url(channel_id) {
   return `https://studio.youtube.com/channel/${channel_id}/editing/details`;
 }
 
-function isWeblnPresent() {
+export function isWeblnPresent() {
   return !!window.webln;
 }
 
-function isExtensionPresent() {
+export function isExtensionPresent() {
   return !!window.donate4fun || !!window.chrome;
 }
 
-function toText(amount) {
+export function toText(amount) {
   return amount >= 1000 ? `${amount / 1000} K` : amount;
 }
 
-export {
-  copy,
-  partial,
-  sleep,
-  youtube_studio_url,
-  youtube_video_url,
-  youtube_channel_url,
-  resolve,
-  isWeblnPresent,
-  isExtensionPresent,
-  toText,
-};
+export const trackingEnabled = writableStorage('track', null);
+
+export const analytics = Analytics({
+  app: "donate4fun",
+  plugins: [
+    plausiblePlugin({
+      apiHost: "/proxy/event",
+      trackLocalhost: true,
+      enabled: !!get(trackingEnabled),
+    }),
+    googleAnalytics({
+      measurementIds: ['G-K9B229WW3F'],
+      enabled: !!get(trackingEnabled),
+    }),
+  ],
+});
+
+export function acceptTracking() {
+  trackingEnabled.set(true);
+  analytics.plugins.enable(['plausible-analytics', 'google-analytics']);
+}
+
+export function declineTracking() {
+  trackingEnabled.set(false);
+}

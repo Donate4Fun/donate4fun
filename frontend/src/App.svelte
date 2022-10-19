@@ -1,7 +1,9 @@
 <script>
+  import { onMount } from "svelte";
   import { Router, Link, Route } from "svelte-navigator";
   import Page from "$lib/Page.svelte";
   import title from "$lib/title.js";
+  import { analytics } from "$lib/utils.js";
   import Main from "./routes/Main.svelte";
   import DonatorPage from "./routes/DonatorPage.svelte";
   import DonatePage from "./routes/DonatePage.svelte";
@@ -26,8 +28,11 @@
     apply (target, thisArg, argumentsList) {
       Reflect.apply(target, thisArg, argumentsList);
       scrollTo(0,0);
+      analytics.page();
     }
   });
+
+  onMount(analytics.page);
 </script>
 
 <svelte:head>
