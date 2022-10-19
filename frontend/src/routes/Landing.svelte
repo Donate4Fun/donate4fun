@@ -1,6 +1,6 @@
 <script>
   import { onMount, tick } from "svelte";
-  import { useResolve, useLocation } from "svelte-navigator";
+  import { useResolve, useLocation, link } from "svelte-navigator";
   import LandingYoutuber from "$lib/LandingYoutuber.svelte";
   import Button from "$lib/Button.svelte";
   import Section from "$lib/Section.svelte";
@@ -18,6 +18,7 @@
   let showExtensionPopup = false;
   const resolve = useResolve();
   const location = useLocation();
+  export let navigate;
 
   async function loadRecentDonatees() {
     youtubers = await api.get("donatee/recently-donated");
@@ -117,13 +118,16 @@
   <div class="flex-row gap-20 justify-center flex-wrap">
     <Section>
       <div class="half-box">
-        <h1 class="gradient-dark">FAQ</h1>
-        <FAQ />
+        <div class="faq-header">
+          <h2 class="gradient-dark">FAQ</h2>
+          <a href="/faq" use:link>View all<img src="/static/arrow-right.svg" alt="arrow-right"></a>
+        </div>
+        <div class="faq"><FAQ /></div>
       </div>
     </Section>
     <Section>
       <div class="half-box" id="team">
-        <h1 class="gradient-dark">Team</h1>
+        <h2 class="gradient-dark">Team</h2>
         <div class="annotation">
           <p>Passionate founders. Big dreamers.</p>
           <p>Proven builders. Ready to change the game.</p>
@@ -174,7 +178,7 @@ section {
   flex-direction: column;
   align-items: center;
 }
-h1 {
+h1, h2 {
   font-family: 'Montserrat';
   font-style: normal;
   font-weight: 900;
@@ -223,6 +227,9 @@ h1 {
     padding: 40px;
     min-height: 535px;
   }
+  .faq {
+    margin: 0 -40px;
+  }
 }
 @media (max-width: 640px) {
   .header video {
@@ -231,6 +238,9 @@ h1 {
   .half-box {
     width: 100%;
     padding: 28px;
+  }
+  .faq {
+    margin: 0 -28px;
   }
 }
 #main .annotation {
@@ -246,9 +256,28 @@ h1 {
   box-shadow: 10px 15px 20px rgba(209, 217, 230, 0.15);
   border-radius: 20px;
 }
-.half-box h1 {
+.half-box {
+  display: flex;
+  flex-direction: column;
+}
+.half-box h2 {
   line-height: 49px;
   text-align: left;
+}
+h2 {
+  font-size: 40px;
+}
+.faq-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.faq-header a {
+  display: flex;
+  gap: 6px;
+}
+.faq :global(details:nth-child(n+5)) {
+  display: none;
 }
 .annotation {
   margin-top: 16px;

@@ -18,6 +18,7 @@
   import NotFoundPage from "./routes/NotFoundPage.svelte";
   import PrivacyPage from "./routes/Privacy.svelte";
   import Welcome from "./routes/Welcome.svelte";
+  import FAQPage from "./routes/FAQ.svelte";
 
   const url = "";
 
@@ -49,7 +50,8 @@
     <Route path="terms"><TermsPage /></Route>
     <Route path="privacy"><PrivacyPage /></Route>
     <Route path="welcome"><Welcome /></Route>
-    <Route path="/"><Landing /></Route>
+    <Route path="faq"><FAQPage /></Route>
+    <Route path="/" component={Landing} />
     <Route component={NotFoundPage}></Route>
   </Page>
 </Router>

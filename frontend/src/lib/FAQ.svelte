@@ -1,25 +1,29 @@
-<div class="flex-column">
-  <details>
+<script>
+  export let open;
+</script>
+
+<div class="root" class:no-plus={open}>
+  <details {open}>
     <summary>What is Donate4.Fun?</summary>
     <div>
       Donate4.Fun is a donations platform powered by Bitcoin Lightning that allows you to tip any content creator instantly and with minimal fees.
     </div>
   </details>
-  <details>
+  <details {open}>
     <summary>One more donation service? How is it different?</summary>
     <div>
       Donate4.Fun does not require content author to register or create account before start accepting donations.
       You can donate first and author would be able to claim his donation later - all he would need to do is verify that he own social account that has a donation.
     </div>
   </details>
-  <details>
+  <details {open}>
     <summary>But how would he know that I've donated him?</summary>
     <div>
       You would tell him =) Really, Donate4.Fun would deliver donations for authors that provided their Bitcoin or Lightning address, but if they hadn't the only way is you write a comment that mentions your donation on "donate 4 fun".
       Specially for this there is browser add-on feature that simplifes it. Moreover, each comment boost recomendations for author's content inside a platform.
     </div>
   </details>
-  <details>
+  <details {open}>
     <summary>Why Donate4.Fun instead of YouTube Membership/Patreon/etc.? </summary>
     <ul>
       <li>Pay any amount you want</li>
@@ -27,7 +31,7 @@
       <li>All donation amount goes to an author, no service fees except few sats for Ligtning Network.</li>
     </ul>
   </details>
-  <details>
+  <details {open}>
     <summary>
       Why do not donate directly to a provided author's crypto-wallet or lightning address?
     </summary>
@@ -37,19 +41,19 @@
       Anyway, we are planning to implement sending of donations directly to the author if he provided on-chain of off-chain address.
     </div>
   </details>
-  <details>
+  <details {open}>
     <summary>How will I know that author got my donations?</summary>
     <div>
       You could check author's page on a <a href="https://donate4.fun">website</a>.
     </div>
   </details>
-  <details>
+  <details {open}>
     <summary>What if author decided not to take donations?</summary>
     <div>
       In case of author didn't verify his account or didn't logged in for 6 months you will be able to revert your donation and withdraw your money back.
     </div>
   </details>
-  <details>
+  <details {open}>
     <summary>Why should I trust Donate4.Fun?</summary>
     <div>
       Our service is fully <a href="https://github.com/Donate4Fun/doante4fun" target=_blank>open source</a> and you could ensure that it works by donating to yourself:
@@ -61,13 +65,13 @@
       Moreover, Donate4.Fun creators do not hide their identities - you could check our social accounts in Team section.
     </div>
   </details>
-  <details>
+  <details {open}>
     <summary>How to use it from a mobile device?</summary>
     <div>
       Mobile app is planned. Currently only desktop browsers are supported.
     </div>
   </details>
-  <details>
+  <details {open}>
     <summary>Where to get satoshis?</summary>
     <ul>
       <li><a target=_blank href="https://robosats.com">Exchange on Robosats</a></li>
@@ -79,17 +83,29 @@
 </div>
 
 <style>
+.root {
+  display: flex;
+  flex-direction: column;
+  --padding: 40px;
+}
 summary {
   display: flex;
   gap: 20px;
   align-items: center;
   font-weight: 600;
-  font-size: 14px;
-  line-height: 22px;
+  font-size: 16px;
+  line-height: 24px;
   cursor: pointer;
+  padding: 0 var(--padding);
+  height: 88px;
+}
+summary:hover {
+  background: rgba(157, 237, 162, 0.1);
 }
 summary::before {
   background-image: url("/static/plus.svg");
+  background-repeat: no-repeat;
+  background-position-y: center;
   content: "";
   width: 34px;
   height: 34px;
@@ -97,35 +113,35 @@ summary::before {
   transition: transform 0.3s;
   flex-shrink: 0;
 }
+.no-plus summary::before {
+  display: none;
+}
+.no-plus summary {
+  pointer-events: none;
+}
 summary::marker {
   content: "";
-}
-@media (max-width: 640px) {
-  details:not([open]) {
-    height: 88px;
-  }
-}
-@media (min-width: 641px) {
-  details:not([open]) {
-    height: 72px;
-  }
 }
 details[open] summary::before {
   transform: rotate(45deg);
 }
 details > *:not(summary) {
-  padding-left: 54px;
-  margin-bottom: 22px;
-  margin-top: 22px;
+  padding: 0 var(--padding);
   font-weight: 400;
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 16px;
+  line-height: 24px;
   letter-spacing: 0.01em;
   transition: transform 0.3s;
   transform: scaleY(0);
   transform-origin: top;
+  text-align: justify;
+}
+details > ul {
+  padding-left: calc(var(--padding) + 15px);
+  padding-right: var(--padding);
 }
 details[open] > *:not(summary) {
   transform: scaleY(1);
+  padding-bottom: 48px;
 }
 </style>
