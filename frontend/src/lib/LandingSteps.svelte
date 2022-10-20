@@ -1,8 +1,9 @@
 <script>
+  import { readable } from "svelte/store";
   import ExtensionPopup from "$lib/ExtensionPopup.svelte";
   import WalletPopup from "$lib/WalletPopup.svelte";
   import LandingStep from "$lib/LandingStep.svelte";
-  import { isWeblnPresent, isExtensionPresent } from "$lib/utils.js";
+  import { weblnPresent, extensionPresent } from "$lib/utils.js";
 
   let showExtensionPopup = false;
   let showWalletPopup = false;
@@ -13,7 +14,7 @@
 
 <div class="steps">
   <div on:click={() => showExtensionPopup = true} class="step narrow">
-    <LandingStep number=1 done={isExtensionPresent()} doneText="Already installed">
+    <LandingStep number=1 done={$extensionPresent} doneText="Already installed">
       <img slot=image alt="D" src="/static/extensions.svg">
       <div slot=text>
         <p>Get Donate4.Fun</p>
@@ -22,7 +23,7 @@
     </LandingStep>
   </div>
   <div on:click={() => showWalletPopup = true} class="step narrow">
-    <LandingStep number=2 done={isWeblnPresent()} doneText="Already installed">
+    <LandingStep number=2 done={$weblnPresent} doneText="Already installed">
       <img slot=image src="/static/wallet.svg" alt="wallet">
       <div slot=text>
         <p>Get a Lightning Wallet</p>

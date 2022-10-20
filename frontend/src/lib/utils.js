@@ -12,7 +12,7 @@ export function resolve(path) {
 }
 
 export function copy(content) {
-  if (window.isSecureContext) {
+  if (globalThis.isSecureContext) {
     navigator.clipboard.writeText(content);
     console.log("Copied to clipboard", content);
   } else {
@@ -43,18 +43,33 @@ export function youtube_studio_url(channel_id) {
 }
 
 export function isWeblnPresent() {
-  return !!window.webln;
+  return !!globalThis.webln;
+}
+
+export function isInsideExtension() {
+  return !!globalThis.chrome;
 }
 
 export function isExtensionPresent() {
-  return !!window.donate4fun || !!window.chrome;
+  return !!globalThis.donate4fun || isInsideExtension();
 }
+
+function makeStore(func) {
+  return readable(func(), (set) => {
+    function update() {
+      set(func());
+    }
+    window.addEventListener("load", update);
+    return () => {
+      window.removeEventListener("load", update);
+    };
+  });
+}
+
+export const extensionPresent = makeStore(isExtensionPresent);
+export const weblnPresent = makeStore(isWeblnPresent);
+
 
 export function toText(amount) {
   return amount >= 1000 ? `${amount / 1000} K` : amount;
-}
-
-
-
-
 }
