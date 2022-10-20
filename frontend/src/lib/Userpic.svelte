@@ -5,7 +5,7 @@
   export let user;
 </script>
 
-<a href="{$webOrigin}/donator/{user.id}" use:link {...$$restProps}><img src="{user.avatar_url}" alt="user logo"></a>
+<a href="{$webOrigin}/donator/{user.id}" use:link {...$$restProps}><img title={user.name} src="{user.avatar_url}" alt="user logo"></a>
 
 <style>
 a {
