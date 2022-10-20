@@ -3,7 +3,7 @@ import { asyncable } from 'svelte-asyncable';
 import { get as apiGet, apiOrigin } from "$lib/api.js";
 import { storage } from "$lib/storage.js";
 import { cLog } from "$lib/log.js";
-import { analytics } from "$lib/utils.js";
+import { analytics } from "$lib/analytics.js";
 import jwt_decode from "jwt-decode";
 import Cookies from "js-cookie";
 

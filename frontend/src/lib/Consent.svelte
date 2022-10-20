@@ -1,6 +1,6 @@
 <script>
   import Button from "$lib/Button.svelte";
-  import { trackingEnabled, acceptTracking, declineTracking } from "$lib/utils.js";
+  import { trackingEnabled, acceptTracking, declineTracking } from "$lib/analytics.js";
 </script>
 
 {#if $trackingEnabled === null}

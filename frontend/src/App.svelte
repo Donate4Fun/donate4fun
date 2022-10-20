@@ -3,7 +3,7 @@
   import { Router, Link, Route } from "svelte-navigator";
   import Page from "$lib/Page.svelte";
   import title from "$lib/title.js";
-  import { analytics } from "$lib/utils.js";
+  import { analytics } from "$lib/analytics.js";
   import Main from "./routes/Main.svelte";
   import DonatorPage from "./routes/DonatorPage.svelte";
   import DonatePage from "./routes/DonatePage.svelte";
