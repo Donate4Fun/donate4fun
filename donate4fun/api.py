@@ -53,7 +53,7 @@ def make_memo(donation: Donation) -> str:
     if donation.youtube_channel:
         return f"Donate4.fun to {donation.youtube_channel.title}"
     elif donation.receiver:
-        if donation.receiver == donation.donator:
+        if donation.receiver.id == donation.donator.id:
             return f"[Donate4.fun] fulfillment for {donation.receiver.name}"
         else:
             return f"[Donate4.fun] donation to {donation.receiver.name}"
