@@ -1,18 +1,18 @@
 todo:
 - add text for investors and vision
-- add analytics to extension and web (https://github.com/DavidWells/analytics)
 - complete google oauth verification
 - add more wallets to landing step 2
 - revert donations after 3 months of donatee absense
 - withdraw from donator balance
 - variable donation amount in bolt button
+- add analytics to extension
 
 nice to be done:
 - test on opera and edge
 - extension for safari
 - automatic uploads to chrome and mozilla extension stores
 - make site with docs
-- accept BTC fulfillments
+- accept BTC fulfillments (Boltz)
 - subscribe to changes using VAPID instead of websockets
 - enable loop and pool in lnd
 
@@ -21,14 +21,17 @@ look-and-feel:
 - login page: add confirmation to reset wallet / disconnect
 
 bugs:
-- nowebln popup: fix scrollbars
-- nowebln popup: opens fullscreen on macos
-- nowebln popup: do not show "get webln enabled wallet" if webln is present
-- fulfill invoice: fix invoice text (replace "donate to")
-- extension welcome page: seconds step is not done although webln is present (until you connect site in alby)
 - add spinner to fulfillment page
+- fulfill invoice: 'need help' is not shown on small screens (x800)
 
 fixed:
+- nowebln popup: do not show "get webln enabled wallet" if webln is present
+- add analytics to extension and web (https://github.com/DavidWells/analytics)
+- fulfill invoice: fix invoice text (replace "donate to")
+- extension welcome page: second step is not done although webln is present (until you connect site in alby)
+- nowebln popup: opens fullscreen on macos - could not fix
+- nowebln popup: fix scrollbars
+- fulfill from nowebln - can't change amount
 - add FAQ items
 - add analytics consent
 - restyle FAQ
