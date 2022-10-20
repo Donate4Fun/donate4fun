@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from "svelte";
   import api from "$lib/api.js";
   import {me} from "$lib/session.js";
   import Donate from '$lib/Donate.svelte';
@@ -20,18 +21,20 @@
   const amountMax = 1000000;
 
   let amount = 100_000; // sats
+  let amountError = null;
   $: {
     if (amount < amountMin)
       amountError = `minimum: ${amountMin} sats`;
-    if (amount > amountMax)
+    else if (amount > amountMax)
       amountError = `maximum: ${amountMax} sats`;
+    else
+      amountError = null;
   };
-  let amountError = null;
-  $: {
+  onMount(() => {
     const urlParams = new URLSearchParams(location.search);
     if (urlParams.has("amount"))
       amount = parseInt(urlParams.get("amount"));
-  };
+  });
 
   async function load(donator_id) {
     return await api.get(`donator/${donator_id}`);
