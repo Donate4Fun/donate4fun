@@ -110,7 +110,10 @@ function getCanonicalLocation() {
 }
 
 function isChannelPage() {
-  return location.pathname.startsWith('/c/') || location.pathname.startsWith('/channel/') || !!getChannelId();
+  // FIXME: Check for more YouTube's own paths here
+  return location.pathname !== '/' && (
+    location.pathname.startsWith('/c/') || location.pathname.startsWith('/channel/') || !!getChannelId()
+  );
 }
 
 function isShorts() {
