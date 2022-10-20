@@ -24,6 +24,7 @@ If you don't mind to use CEX there exchanges support Bitcoin Lightning
 
 ## For other cryptocurrencies
 Exchange BTC, ETH, USDT or other cryptocurrencies
+- [Boltz](https://boltz.exchange)
 - [FixedFloat](https://fixedfloat.com)
 
 ## For likes/tweets
