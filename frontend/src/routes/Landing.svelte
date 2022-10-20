@@ -159,7 +159,7 @@
     <a href="https://github.com/orgs/Donate4Fun/projects/1" target=_blank>
       <h1 class="gradient-dark roadmap">Roadmap<sup>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M2 2H22M22 2V22M22 2L2 22" stroke="#004EE7" stroke-width="3" stroke-linejoin="round"/>
+            <path d="M 2,2 22,2 22,22 M 22,2 2,22" stroke="#004EE7" stroke-width="3" stroke-linejoin="round"/>
           </svg>
         </sup>
       </h1>
@@ -299,7 +299,12 @@ h2 {
 }
 .roadmap {
   text-decoration-line: underline;
-  font-size: 64px;
-  line-height: 64px;
+  font-size: 64px !important;
+  line-height: 56px;
+}
+.roadmap:hover {
+  background: linear-gradient(270.06deg, #004EE7 0.04%, #A863FF 99.94%), linear-gradient(90deg, #F9F03E 0%, #9DEDA2 100%), linear-gradient(90deg, #FF4B4B 0%, #DC24A9 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 </style>
