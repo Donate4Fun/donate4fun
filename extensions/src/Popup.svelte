@@ -65,8 +65,8 @@
           <PopupHeader />
           <PopupYoutube bind:amount={amount} />
         </Route>
-        <Route path="nowebln/:amount" let:params>
-          <PopupNoWebln amount={params.amount} historySource={hashSource}/>
+        <Route path="nowebln/:amount/:rejected" let:params>
+          <PopupNoWebln amount={params.amount} rejected={params.rejected} historySource={hashSource}/>
         </Route>
       </Router>
     {/await}

@@ -8,6 +8,7 @@
   import cLog from "$lib/log.js";
 
   export let amount;
+  export let rejected;
   export let historySource;
   const navigate = useNavigate();
 
@@ -31,13 +32,23 @@
     class=grey
   >Close</Button>
   <div class="content">
-    <p class="message">You haven't enought sats and WebLN-enabled wallet is not available. You may either </p>
-    <Button
-      --height=72px
-      class=light
-      target=_blank
-      link="{$webOrigin}/install-webln-wallet"
-    >Get a WebLN-enabled wallet</Button>
+    {#if rejected === 'true'}
+      <p class="message">You've rejected payment and you haven't enough sats on your Donate4.Fun balance. You may either</p>
+      <Button
+        --height=72px
+        class=light
+        target=_blank
+        link="https://github.com/Donate4Fun/donate4fun/blob/master/docs/HELP.md#what-wallet-should-i-use"
+      >Fulfill your wallet. How?</Button>
+    {:else}
+      <p class="message">You haven't enought sats and WebLN-enabled wallet is not available. You may either</p>
+      <Button
+        --height=72px
+        class=light
+        target=_blank
+        link="{$webOrigin}/install-webln-wallet"
+      >Get a WebLN-enabled wallet</Button>
+    {/if}
     <p class="or">OR</p>
     {#await $me then me}
       <Button

@@ -34,13 +34,17 @@
   async function onDonateClicked(evt) {
     animate = true;
     const amount = await worker.getConfig("amount");
+    let donation_;
     try {
-      onPaid(await donate(amount, window.location.href));
+      donation_ = await donate(amount, window.location.href);
     } catch (err) {
       animate = false;
-      console.log("Payment failed", err);
-      worker.createPopup(`nowebln/${amount}`);
+      cLog("Payment failed", err);
+      const rejected = err.message === 'User rejected';
+      worker.createPopup(`nowebln/${amount}/${rejected}`);
+      return;
     }
+    onPaid(donation_);
   }
 
   export async function onPaid(donation_) {
