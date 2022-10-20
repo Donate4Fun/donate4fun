@@ -49,6 +49,10 @@
   });
 </script>
 
+<svelte:head>
+  <title>Donate4.Fun</title>
+</svelte:head>
+
 <div class="flex-column height-full justify-space-between gradient">
   <main class="flex-column gap-28 height-full position-relative">
     {#await load() then}
