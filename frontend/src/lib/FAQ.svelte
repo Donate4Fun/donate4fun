@@ -12,15 +12,15 @@
   <details {open}>
     <summary>One more donation service? How is it different?</summary>
     <div>
-      Donate4.Fun does not require content author to register or create account before start accepting donations.
-      You can donate first and author would be able to claim his donation later - all he would need to do is verify that he own social account that has a donation.
+      Donate4.Fun does not require content authors to register or create an account to start accepting donations.
+      You can donate first and the author would be able to claim his donation later - all he would need to do is verify that he owns a social account that has a donation
     </div>
   </details>
   <details {open}>
-    <summary>But how would he know that I've donated him?</summary>
+    <summary>But how would author know about the donation?</summary>
     <div>
-      You would tell him =) Really, Donate4.Fun would deliver donations for authors that provided their Bitcoin or Lightning address, but if they hadn't the only way is you write a comment that mentions your donation on "donate 4 fun".
-      Specially for this there is browser add-on feature that simplifes it. Moreover, each comment boost recomendations for author's content inside a platform.
+      You should tell it =) Really, Donate4.Fun would deliver donations for authors that provided their Bitcoin or Lightning address, but if they hadn't the only way is you write a comment that mentions your donation on "donate 4 fun".
+      Specially for this there is a browser add-on feature that simplifies it. Moreover, each comment boosts recommendations for the author's content inside a platform.
     </div>
   </details>
   <details {open}>
@@ -36,21 +36,21 @@
       Why do not donate directly to a provided author's crypto-wallet or lightning address?
     </summary>
     <div>
-      Although it's more straighforward to pay directly to the author instead of using third-party service like Donate4.Fun, not all authors provide crypto wallet addresses, even less of them have Lightning address.
-      For on-chain addresses it's much harder to send a donation than just click a button in Donate4.Fun extension.
-      Anyway, we are planning to implement sending of donations directly to the author if he provided on-chain of off-chain address.
+      Although it's more straightforward to pay directly to the author instead of using a third-party service like Donate4.Fun, not all authors provide crypto wallet addresses, even less of them have Lightning addresses.
+      For on-chain addresses it's much harder to send a donation than just click a button in Donate4.Fun extension.
+      Anyway, we are planning to implement sending of donations directly to the author if he provided an on-chain or off-chain address.
     </div>
   </details>
   <details {open}>
     <summary>How will I know that author got my donations?</summary>
     <div>
-      You could check author's page on a <a href="https://donate4.fun">website</a>.
+      You could check the author's page on a <a href="https://donate4.fun">website</a>.
     </div>
   </details>
   <details {open}>
     <summary>What if author decided not to take donations?</summary>
     <div>
-      In case of author didn't verify his account or didn't logged in for 6 months you will be able to revert your donation and withdraw your money back.
+      In case when the author didn't verify his account or didn't log in for 6 months you will be able to revert your donation and withdraw your money back.
     </div>
   </details>
   <details {open}>
