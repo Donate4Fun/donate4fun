@@ -8,6 +8,7 @@
 
 <style>
 .number-circle {
+  flex-shrink: 0;
   width: var(--size, 40px);
   height: var(--size, 40px);
   background: linear-gradient(90deg, rgba(249, 240, 62, 0.15) 0%, rgba(157, 237, 162, 0.15) 100%), #FFFFFF;

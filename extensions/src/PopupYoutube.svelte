@@ -6,6 +6,7 @@
   import Button from "$lib/Button.svelte";
   import Input from "$lib/Input.svelte";
   import FiatAmount from "$lib/FiatAmount.svelte";
+  import NumberedItem from "$lib/NumberedItem.svelte";
   import { toText, youtube_video_url, youtube_channel_url } from "$lib/utils.js";
 
   let videoId;
@@ -49,11 +50,18 @@
 </script>
  
 <PopupSection>
-  <div class="main">
-    {#await load() then}
-      {#if !videoId && !channelId}
-        Navigate to video or channel..
-      {:else}
+  {#await load() then}
+    {#if !videoId && !channelId}
+      <div class="empty">
+        <NumberedItem number=1>
+          <span>Open video channel or author you want to donate</span>
+        </NumberedItem>
+        <NumberedItem number=2>
+          <span>Click a ⚡ icon under video or use this popup</span>
+        </NumberedItem>
+      </div>
+    {:else}
+      <div class="filled">
         <div class="flex-row align-center justify-center gap-8 width-full">
           <img src="./static/youtube.svg" height=24px alt="youtube logo">
           <span class="flex-shrink-0 font-weight-900 font-20 line-height-24">Donate to</span>
@@ -76,9 +84,9 @@
           <FiatAmount bind:amount={amount} class="min-width-70" />
         </div>
         <Button --width=100% on:click={donate}>Donate</Button>
-      {/if}
-    {/await}
-  </div>
+      </div>
+    {/if}
+  {/await}
 </PopupSection>
 
 <style>
@@ -88,7 +96,17 @@
   line-height: 16px;
   letter-spacing: 0.015em;
 }
-.main {
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 64px;
+
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: 0.02em;
+}
+.filled {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
