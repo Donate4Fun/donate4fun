@@ -9,3 +9,4 @@ __pycache__/
 tags
 /config.yaml
 /config-prod.yaml
+/backups/
