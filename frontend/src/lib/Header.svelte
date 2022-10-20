@@ -19,10 +19,11 @@
   </div>
   <nav>
     <ul>
-      <li><a use:link href="/#team">Team</a></li>
+      <li><a href="https://github.com/Donate4Fun/donate4fun/blob/master/docs/HELP.md" target="_blank">Docs</a></li>
       <li><a href="https://github.com/orgs/Donate4Fun/projects/1" target="_blank">Roadmap</a></li>
       <li><a use:link href="/prove/youtube">Claim donations</a></li>
       <li><a use:link href="/login">Connect wallet</li>
+      <li><a use:link href="/#team">Team</a></li>
       {#await $me then me}
         <li><a use:link href="/donator/{me.donator.id}">Profile</a></li>
       {/await}
@@ -35,7 +36,7 @@
   </div>
   <nav class="quick-links">
     <a target=_blank href="https://github.com/orgs/Donate4Fun/projects/1">Roadmap</a>
-    <a use:link href="/#team">Team</a>
+    <a target=_blank href="https://github.com/Donate4Fun/donate4fun/blob/master/docs/HELP.md">Docs</a>
     <a use:link href="/prove/youtube">Claim donations</a>
   </nav>
   <div class="right">
