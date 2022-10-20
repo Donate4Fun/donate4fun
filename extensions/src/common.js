@@ -39,6 +39,9 @@ async function injectContentScript(tab, contentScript) {
     files: contentScript.js,
   });
   cLog("injection results", injectionResults);
+  for (const result of injectionResults)
+    if (result.error)
+      console.error("error while injecting contentscript", result.error, tab, contentScript);
   if (browser.runtime.lastError)
     throw browser.runtime.lastError;
 }
@@ -121,21 +124,21 @@ const pageScript = new Proxy({}, {
         args: Array.from(arguments),
       };
       cLog("sending to pageScript", message);
-      window.postMessage(message);
+      globalThis.postMessage(message);
       return await new Promise((resolve, reject) => {
         async function handleResponse(event) {
           cLog("received from pageScript", event);
           if (event.source !== window)
             return;
           if (event.data.type === "donate4.fun-response") {
-            window.removeEventListener("message", handleResponse);
+            globalThis.removeEventListener("message", handleResponse);
             resolve(event.data.result);
           } else if (event.data.type === "donate4.fun-exception") {
-            window.removeEventListener("message", handleResponse);
+            globalThis.removeEventListener("message", handleResponse);
             reject(event.data.error);
           }
         }
-        window.addEventListener("message", handleResponse);
+        globalThis.addEventListener("message", handleResponse);
       });
     };
   }
