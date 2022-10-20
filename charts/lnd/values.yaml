@@ -27,6 +27,7 @@ resources:
 
 # Custom lnd configuration file used to override default lnd settings
 lnd:
+  alias: My Node
   walletPassword: ""
   config: |
     bitcoin.active=1

@@ -11,4 +11,5 @@ data:
   lnd.conf: |
     wallet-unlock-password-file=/secret/wallet.pw
     wallet-unlock-allow-create=1
+    alias={{ .Values.lnd.alias }}
 {{ .Values.lnd.config | indent 4 }}

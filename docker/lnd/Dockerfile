@@ -10,7 +10,7 @@ WORKDIR /go/src/github.com/lightningnetwork/lnd
 RUN apk add --no-cache --update alpine-sdk git make
 
 RUN git clone -n $GIT_REPO . && git checkout $GIT_REF
-RUN make && make install
+RUN make release-install
 
 
 FROM alpine
