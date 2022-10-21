@@ -2,21 +2,37 @@
   import { me } from "$lib/session.js";
 </script>
 
-<div class="flex-column align-center justify-center gap-10">
+<div class="outer">
   {#await $me then me}
-    <p class="name">{me.donator.name}</p>
+    <p class="name ellipsis">{me.donator.name}</p>
     {#if me.connected}
-      <p class="flex-row gap-6 font-12 font-weight-300 margin-0">Connected wallet: <span class="ellipsis font-weight-600">{me.shortkey}</span></p>
+      <p class="connected">Wallet connected <img src="/static/checkbox.svg" alt="checkbox"></p>
     {/if}
   {/await}
 </div>
 
 <style>
+.outer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+}
 .name {
-  font-weight: 400;
-  font-size: 12px;
-  line-height: 18px;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
   letter-spacing: 0.01em;
-  margin: 0;
+
+}
+.connected {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+
+  font-size: 11px;
+  line-height: 16px;
+  letter-spacing: 0.01em;
 }
 </style>

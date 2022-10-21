@@ -165,6 +165,7 @@ export default [
           staticFile("D-*.png"),
           staticFile("lottie-arrow.json"),
           staticFile("youtube.svg"),
+          staticFile("checkbox.svg"),
           { src: "background.html", dest: "../firefox" },
           manifestFile("manifest-firefox.json", "../firefox/manifest.json", patchFirefoxManifest),
           manifestFile("manifest-chrome.json", "../chrome/manifest.json", patchChromeManifest),

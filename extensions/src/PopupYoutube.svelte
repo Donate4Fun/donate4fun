@@ -3,6 +3,7 @@
   import PopupSection from "./PopupSection.svelte";
   import { worker, connectToPage, browser } from "./common.js";
   import cLog from "$lib/log.js";
+  import { me } from "$lib/session.js";
   import Button from "$lib/Button.svelte";
   import Input from "$lib/Input.svelte";
   import FiatAmount from "$lib/FiatAmount.svelte";
@@ -62,28 +63,41 @@
       </div>
     {:else}
       <div class="filled">
-        <div class="flex-row align-center justify-center gap-8 width-full">
-          <img src="./static/youtube.svg" height=24px alt="youtube logo">
-          <span class="flex-shrink-0 font-weight-900 font-20 line-height-24">Donate to</span>
-          <div class="flex-shrink-1 flex-row align-center gap-16 grid-span-2">
-            {#if channelLogo}
-              <img width=48px height=48px class="circular" src={channelLogo} alt="channel logo">
-            {/if}
-            <span class="color-blue font-weight-700">{channelTitle}</span>
+        <div class="filled-header">
+          <img src="./static/youtube.svg" height=16 alt="youtube logo">
+          <div>
+            Donate to
+            <span class="channel-title">{channelTitle}</span>
+          </div>
+          {#if channelLogo}
+            <img width=44 height=44 class="circular" src={channelLogo} alt="channel logo">
+          {/if}
+        </div>
+        <div class="amount">
+          <div class="amount-buttons">
+          {#each amounts as amount_}
+            <Button
+              on:click={() => amount = amount_}
+              --padding="8px"
+              selected={amount_ === amount}
+              dimmed={amount_ !== amount}
+            >{toText(amount_)} ⚡</Button>
+          {/each}
+          </div>
+          <div class="amount-input">
+            <div class="flex-grow input">
+              <Input type=number bind:value={amount} min={amountMin} max={amountMax} suffix=sats required />
+            </div>
+            <FiatAmount bind:amount={amount} />
           </div>
         </div>
-        <div class="flex-row justify-space-between width-full">
-        {#each amounts as amount_}
-          <Button on:click={() => amount = amount_} --width=120px selected={amount_ === amount}>{toText(amount_)} ⚡</Button>
-        {/each}
-        </div>
-        <div class="flex-row gap-20 align-center width-full">
-          <div class="flex-grow input">
-            <Input type=number bind:value={amount} min={amountMin} max={amountMax} suffix=sats required />
-          </div>
-          <FiatAmount bind:amount={amount} class="min-width-70" />
-        </div>
-        <Button --width=100% on:click={donate}>Donate</Button>
+        {#await $me then me}
+          {#if amount <= me.donator.balance}
+            <Button --width=100% on:click={donate} --padding="9px">Donate</Button>
+          {:else}
+            <Button --width=100% on:click={donate} --padding="9px">Donate with WebLN</Button>
+          {/if}
+        {/await}
       </div>
     {/if}
   {/await}
@@ -109,13 +123,45 @@
 .filled {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 42px;
   width: 100%;
   height: 100%;
 
   font-weight: 700;
   font-size: 16px;
-  line-height: 19px;
+  line-height: 20px;
   letter-spacing: 0.02em;
+}
+.filled-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 800;
+}
+.channel-title {
+  color: var(--link-color);
+}
+.amount {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+.amount-buttons {
+  display: flex;
+  gap: 16px;
+
+  font-size: 14px;
+  line-height: 20px;
+}
+.amount-input {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+
+  font-size: 14px;
+  line-height: 24px;
 }
 </style>

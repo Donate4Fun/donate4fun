@@ -8,22 +8,22 @@
   import Amount from "$lib/Amount.svelte";
   import FiatAmount from "$lib/FiatAmount.svelte";
   import Button from "$lib/Button.svelte";
-  import WalletLogin from "$lib/WalletLogin.svelte";
   import MeNamePubkey from "$lib/MeNamePubkey.svelte";
   import MeBalance from "$lib/MeBalance.svelte";
   import DonateYoutube from "./DonateYoutube.svelte";
   import { worker, browser, connectToPage, createPopup } from "./common.js";
   import cLog from "$lib/log.js";
+  import { resolve } from "$lib/utils.js";
 
   let navigate = useNavigate();
   let popupVisible = false;
   const iconColor = '#787981';
 </script>
 
-<main class="flex-column gap-41">
+<div class="main">
   {#await me.get() then me}
     <header>
-      <img src="static/D.svg" width=40px alt=D class=text />
+      <img src="static/D.svg" width=28px alt=D class=text />
       <div class="name">
         <MeNamePubkey />
       </div>
@@ -35,7 +35,7 @@
           <circle cx="22" cy="22" r="2" fill="black"/>
           <circle cx="22" cy="29" r="2" fill="black"/>
         </svg>
-        <div class="popup flex-column user-select-none" style:visibility={popupVisible ? 'visible' : 'hidden'}>
+        <div class="popup flex-column user-select-none" class:popupVisible>
           <div on:click={() => browser.runtime.openOptionsPage()}>
             <Fa icon={faGear} size=2x color={iconColor} />
             <span>Settings</span>
@@ -77,17 +77,24 @@
       {#if me.connected}
         <MeBalance />
       {:else}
-        <WalletLogin target=_blank />
+        <p>Do you want faster payments and zero fees?</p>
+        <Button link={resolve('/login')} class="white" target=_blank>
+          Connect wallet and fulfill balance
+        </Button>
       {/if}
     </div>
   {:catch err}
     Error whlie loading session: {err}.
   {/await}
-</main>
+</div>
 
 <style>
-main {
-  padding: 27px 32px 0 27px;
+.main {
+  padding: 32px 32px 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
 }
 header {
   display: flex;
@@ -98,6 +105,7 @@ header {
   flex-grow: 2;
   display: flex;
   justify-content: center;
+  min-width: 0;
 }
 .popup {
   width: 200px;

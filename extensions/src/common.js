@@ -194,7 +194,7 @@ async function createPopup(path) {
     focused: true,
     url: `${baseUrl}#${path}`,
     type: "popup",
-    width: 446,  // must match popup.html size
+    width: 380,  // must match popup.html size
     height: 600,
   });
   cLog("opened popup", window);

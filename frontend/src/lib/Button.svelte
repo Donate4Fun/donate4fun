@@ -7,6 +7,7 @@
   export let target = null;
   export let spin = false;
   export let selected = false;
+  export let dimmed = false;
   export let disabled = false;
 
   function createEventDispatcher() {
@@ -53,7 +54,7 @@
   }
 </script>
 
-<button {...$$restProps} on:click={click} disabled={disabled || spin} class:selected>
+<button {...$$restProps} on:click={click} disabled={disabled || spin} class:selected class:dimmed>
   <div class="flex-row align-center">
     {#if spin}
       <div class="spinner"></div>
@@ -115,6 +116,10 @@ button:hover:enabled {
 }
 .selected {
   border: 2px solid #FF8A00;
+}
+.dimmed {
+  box-shadow: 10px 15px 25px rgba(209, 217, 230, 0.4);
+  background: linear-gradient(90deg, rgba(249, 240, 62, 0.4) 0%, rgba(157, 237, 162, 0.4) 100%), #FFFFFF;
 }
 .spinner::after {
   display: inline-block;

@@ -54,7 +54,7 @@
 </svelte:head>
 
 <div class="flex-column height-full justify-space-between gradient">
-  <main class="flex-column gap-28 height-full position-relative">
+  <div class="inner">
     {#await load() then}
       <Router history={hashHistory} primary={false}>
         <Route path="">
@@ -70,7 +70,7 @@
         </Route>
       </Router>
     {/await}
-  </main>
+  </div>
 </div>
 
 <style>
@@ -84,7 +84,13 @@
   box-shadow: 10px 15px 20px rgba(209, 217, 230, 0.15);
   border-radius: 2px;
 }
-main {
+.inner {
   font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  position: relative;
+  height: 100%;
+  justify-content: space-between;
 }
 </style>

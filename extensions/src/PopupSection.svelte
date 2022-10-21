@@ -7,18 +7,21 @@
 <style>
 section {
   background-image: linear-gradient(to right, #F9F03E 0%, #9DEDA2 100%);
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
-  padding: 2px;
+  --border-radius: 20px;
+  --border-width: 2px;
+  border-top-left-radius: var(--border-radius);
+  border-top-right-radius: var(--border-radius);
+  padding: var(--border-width);
   height: 100%;
+  max-height: 360px;
 }
 section > div {
   width: 100%;
   height: 100%;
   background: white;
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
-  padding: 40px 32px 36px 32px;
+  border-top-left-radius: calc(var(--border-radius) - var(--border-width));
+  border-top-right-radius: calc(var(--border-radius) - var(--border-width));
+  padding: 32px;
   align-items: var(--align-items);
   justify-content: var(--justify-content);
 }

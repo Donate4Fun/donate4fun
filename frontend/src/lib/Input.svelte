@@ -41,12 +41,6 @@ input {
   border: none;
   background: transparent;
 
-  font-size: 16px;
-  line-height: 24px;
-
-  /* identical to box height, or 150% */
-  letter-spacing: 0.02em;
-
   color: #004EE7;
   outline: none;
   width: 100%;
