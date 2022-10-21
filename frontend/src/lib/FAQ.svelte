@@ -134,7 +134,6 @@ details > *:not(summary) {
   transition: transform 0.3s;
   transform: scaleY(0);
   transform-origin: top;
-  text-align: justify;
 }
 details > ul {
   padding-left: calc(var(--padding) + 15px);
