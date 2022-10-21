@@ -1,7 +1,7 @@
 lockfileVersion: 5.4
 
 specifiers:
-  '@analytics/google-analytics': ^1.0.3
+  '@donate4fun/google-analytics': github:nikicat/analytics-plugin-google-analytics
   '@fortawesome/free-solid-svg-icons': ^6.2.0
   '@rollup/plugin-alias': ^3.1.9
   '@sveltejs/vite-plugin-svelte': ^1.0.0-next.49
@@ -45,7 +45,7 @@ dependencies:
   webextension-polyfill: 0.10.0
 
 devDependencies:
-  '@analytics/google-analytics': 1.0.3
+  '@donate4fun/google-analytics': github.com/nikicat/analytics-plugin-google-analytics/124f7ee1e8b444ef2519240e76790847fbc91b9e
   '@rollup/plugin-alias': 3.1.9_rollup@2.79.1
   analytics: 0.8.1
   analytics-plugin-plausible: 0.0.6
@@ -86,10 +86,6 @@ packages:
     resolution: {integrity: sha512-DzOCd0qK7PGnz/dgBYNzLmaFBkxcEHM6/CpWMY7hel1IBUldMsyet4sdRgI2Nk+Wc6B/YvqVqos68p5ntB59zA==}
     dependencies:
       '@analytics/type-utils': 0.6.0
-    dev: true
-
-  /@analytics/google-analytics/1.0.3:
-    resolution: {integrity: sha512-LnwefjQaqypjIXhw9GLRYpUz8dkriEC53JTLgJZ+mxSBZTkSrLSi3zuAiuV8rcsI0XfYmlWIav9RgGq92dWd4w==}
     dev: true
 
   /@analytics/localstorage-utils/0.1.8:
@@ -1133,6 +1129,12 @@ packages:
       y18n: 4.0.3
       yargs-parser: 18.1.3
     dev: false
+
+  github.com/nikicat/analytics-plugin-google-analytics/124f7ee1e8b444ef2519240e76790847fbc91b9e:
+    resolution: {tarball: https://codeload.github.com/nikicat/analytics-plugin-google-analytics/tar.gz/124f7ee1e8b444ef2519240e76790847fbc91b9e}
+    name: '@donate4fun/google-analytics'
+    version: 1.0.3
+    dev: true
 
   github.com/nikicat/async-ws/527067dc6da4fcf355b80576250baaa914dac6b7:
     resolution: {tarball: https://codeload.github.com/nikicat/async-ws/tar.gz/527067dc6da4fcf355b80576250baaa914dac6b7}

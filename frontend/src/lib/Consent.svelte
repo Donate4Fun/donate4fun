@@ -5,7 +5,7 @@
 
 {#if $trackingEnabled === null}
 <div class="root">
-  <span class="text">Help us improve the service by sending anonymous telemetry</span>
+  <span class="text">Help us improve the service by allowing analytics cookie</span>
   <Button --width=125px --font-size=12px on:click={acceptTracking}>Accept</Button>
   <Button class="grey" --width=73px --font-size=12px on:click={declineTracking}>Decline</Button>
 </div>

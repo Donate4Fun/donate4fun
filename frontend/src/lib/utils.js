@@ -47,7 +47,7 @@ export function isWeblnPresent() {
 }
 
 export function isInsideExtension() {
-  return !!globalThis.chrome;
+  return typeof globalThis.chrome?.extension === 'object';
 }
 
 export function isExtensionPresent() {

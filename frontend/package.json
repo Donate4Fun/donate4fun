@@ -28,7 +28,7 @@
     "webextension-polyfill": "^0.10.0"
   },
   "devDependencies": {
-    "@analytics/google-analytics": "^1.0.3",
+    "@donate4fun/google-analytics": "github:nikicat/analytics-plugin-google-analytics",
     "@rollup/plugin-alias": "^3.1.9",
     "analytics": "^0.8.1",
     "analytics-plugin-plausible": "^0.0.6",
