@@ -18,6 +18,7 @@
   background: var(---border-color);
   padding: var(---border-width);
   border-radius: var(---border-radius);
+  transition: all 0.2s ease;
 }
 .outer:hover {
   --border-width: 6px;

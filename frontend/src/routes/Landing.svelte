@@ -307,6 +307,7 @@ h2 {
   text-decoration-line: underline;
   font-size: 64px !important;
   line-height: 56px;
+  transition: all 0.2s ease;
 }
 .roadmap:hover {
   background: linear-gradient(270.06deg, #004EE7 0.04%, #A863FF 99.94%), linear-gradient(90deg, #F9F03E 0%, #9DEDA2 100%), linear-gradient(90deg, #FF4B4B 0%, #DC24A9 100%);

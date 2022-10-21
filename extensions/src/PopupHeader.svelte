@@ -107,8 +107,14 @@ header {
   border-radius: 12px;
   top: 0;
   right: 100%;
-  visibility: visible;
+  visibility: hidden;
+  opacity: 0;
   position: absolute;
+  transition: all 0.2s ease;
+}
+.popupVisible {
+  visibility: visible;
+  opacity: 1;
 }
 .popup > div,a {
   height: 48px;

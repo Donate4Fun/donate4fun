@@ -73,11 +73,10 @@ button {
   cursor: pointer;
   height: var(--height, auto);
   width: var(--width, 100%);
+  transition: all 0.2s ease;
 
   border: 0;
   border-radius: 100px;
-
-  /* identical to box height, or 150% */
   letter-spacing: 0.02em;
 }
 button div {

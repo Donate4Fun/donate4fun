@@ -13,5 +13,10 @@ a {
 }
 img {
   width: var(--width);
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+img:hover {
+  border: 2px solid rgba(46, 108, 255, 0.5);
 }
 </style>

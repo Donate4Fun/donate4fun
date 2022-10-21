@@ -98,6 +98,7 @@ summary {
   cursor: pointer;
   padding: 0 var(--padding);
   height: 88px;
+  transition: all 0.2s ease;
 }
 summary:hover {
   background: rgba(157, 237, 162, 0.1);

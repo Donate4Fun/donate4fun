@@ -1,9 +1,10 @@
 <script>
+  import { fade } from 'svelte/transition';
   export let show;
 </script>
 
 {#if show}
-  <div class="overlay" on:click={() => show = false}>
+  <div transition:fade="{{ duration: 200 }}" class="overlay" on:click={() => show = false}>
     <div class="popup" on:click|stopPropagation={() => {}}>
       <slot />
     </div>
