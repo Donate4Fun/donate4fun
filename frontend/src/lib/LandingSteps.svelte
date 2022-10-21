@@ -4,16 +4,22 @@
   import WalletPopup from "$lib/WalletPopup.svelte";
   import LandingStep from "$lib/LandingStep.svelte";
   import { weblnPresent, extensionPresent } from "$lib/utils.js";
+  import { analytics } from "$lib/analytics.js";
 
-  let showExtensionPopup = false;
-  let showWalletPopup = false;
+  let extensionPopupShown = false;
+  let walletPopupShown = false;
+
+  function showExtensionPopup() {
+    analytics.track('show-extension-popup-from-steps');
+    extensionPopupShown = true;
+  }
 </script>
 
-<ExtensionPopup bind:show={showExtensionPopup} />
-<WalletPopup bind:show={showWalletPopup} />
+<ExtensionPopup bind:show={extensionPopupShown} />
+<WalletPopup bind:show={walletPopupShown} />
 
 <div class="steps">
-  <div on:click={() => showExtensionPopup = true} class="step narrow">
+  <div on:click={showExtensionPopup} class="step narrow">
     <LandingStep number=1 done={$extensionPresent} doneText="Already installed">
       <img slot=image alt="D" src="/static/extensions.svg">
       <div slot=text>
@@ -22,7 +28,7 @@
       </div>
     </LandingStep>
   </div>
-  <div on:click={() => showWalletPopup = true} class="step narrow">
+  <div on:click={() => walletPopupShown = true} class="step narrow">
     <LandingStep number=2 done={$weblnPresent} doneText="Already installed">
       <img slot=image src="/static/wallet.svg" alt="wallet">
       <div slot=text>

@@ -11,14 +11,20 @@
   import ExtensionPopup from "$lib/ExtensionPopup.svelte";
   import FAQ from "$lib/FAQ.svelte";
   import api from "$lib/api.js";
+  import { analytics } from "$lib/analytics.js";
 
   let youtubers = [];
   let email;
   let emailAdded = null;
-  let showExtensionPopup = false;
+  let extensionPopupShown = false;
   const resolve = useResolve();
   const location = useLocation();
   export let navigate;
+
+  function showExtensionPopup() {
+    analytics.track("show-extension-popup-from-landing");
+    extensionPopupShown = true;
+  }
 
   async function loadRecentDonatees() {
     youtubers = await api.get("donatee/recently-donated");
@@ -69,14 +75,14 @@
   <title>Donate4.Fun • Donate anyone on YouTube with Bitcoin Lightning</title>
 </svelte:head>
 
-<ExtensionPopup bind:show={showExtensionPopup} />
+<ExtensionPopup bind:show={extensionPopupShown} />
 <div class="landing">
   <section class="header" id="main">
     <h1>One click instant donations with <span class="gradient-light">Bitcoin ⚡ Lightning on Youtube. <span class="gradient-dark">Near zero fees.</span></span></h1>
     <div class="annotation">
       🔥Instant delivery and withdraw with Lightning network. No KYC.🔥
     </div>
-    <div class="desktop-only" on:click={() => showExtensionPopup = true}>
+    <div class="desktop-only" on:click={showExtensionPopup}>
       <Button --width=300px>Get extension</Button>
     </div>
     <form on:submit|preventDefault={submitEmail} class="mobile-only flex-column gap-18 text-align-center">
