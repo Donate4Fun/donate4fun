@@ -16,6 +16,7 @@
   import api from "../lib/api.js";
   import { link } from "svelte-navigator";
   import { toText } from "$lib/utils.js";
+  import title from "$lib/title.js";
 
   export let donator_id;
   export let navigate;
@@ -29,8 +30,10 @@
     if (itsMe) {
       await reloadMe();
       donator = mee.donator;
-    } else
+    } else {
       donator = await api.get(`donator/${donator_id}`);
+    }
+    title.set(`Donator profile for ${donator.name}`);
     donations = await api.get(`donations/by-donator/${donator_id}`);
   }
 
