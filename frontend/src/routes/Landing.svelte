@@ -1,6 +1,6 @@
 <script>
   import { onMount, tick } from "svelte";
-  import { useResolve, useLocation, link } from "svelte-navigator";
+  import { useResolve, useLocation, useNavigate, link } from "svelte-navigator";
   import LandingYoutuber from "$lib/LandingYoutuber.svelte";
   import Button from "$lib/Button.svelte";
   import Section from "$lib/Section.svelte";
@@ -20,7 +20,7 @@
   let extensionPopupShown = false;
   const resolve = useResolve();
   const location = useLocation();
-  export let navigate;
+  let navigate = useNavigate();
 
   function showExtensionPopup() {
     analytics.track("show-extension-popup-from-landing");

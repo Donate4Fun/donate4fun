@@ -1,5 +1,5 @@
 <script>
-  export let open;
+  export let open = false;
 </script>
 
 <div class="root" class:no-plus={open}>
