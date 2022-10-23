@@ -12,6 +12,7 @@
   import FAQ from "$lib/FAQ.svelte";
   import api from "$lib/api.js";
   import { analytics } from "$lib/analytics.js";
+  import title from "$lib/title.js";
 
   let youtubers = [];
   let email;
@@ -69,11 +70,8 @@
     });
     return unsubscribe;
   });
+  onMount(title.clear);
 </script>
-
-<svelte:head>
-  <title>Donate4.Fun • Donate anyone on YouTube with Bitcoin Lightning</title>
-</svelte:head>
 
 <ExtensionPopup bind:show={extensionPopupShown} />
 <div class="landing">

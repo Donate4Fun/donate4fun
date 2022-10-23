@@ -32,6 +32,8 @@
       else
         target = "<Unexpected donation target>";
     }
+
+    title.set(`Donate ${donation.amount} sat to ${target}`);
   }
 
   function paid(event) {
@@ -42,19 +44,11 @@
       notify("Success", `You've paid ${donation.amount} sats`, "success");
     }
   }
-
-  const loadPromise = load();
 </script>
-
-<svelte:head>
-  {#await loadPromise then}
-  <title>Donate {donation.amount} sats to {target} [{donation.id}]</title>
-  {/await}
-</svelte:head>
 
 <Section>
   <div class="main">
-    {#await loadPromise}
+    {#await load()}
       <Loading />
     {:then}
       {#if donation.paid_at}

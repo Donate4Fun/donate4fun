@@ -9,7 +9,7 @@ function createTitle() {
 			set(`${value} • Donate4.Fun`);
 		},
 		clear: () => {
-			set('Donate4.Fun • Donate anyone on YouTube with Bitcoin Lightning');
+			set('Donate anyone on YouTube with Bitcoin Lightning • Donate4.Fun');
 		}
 	}
 }
