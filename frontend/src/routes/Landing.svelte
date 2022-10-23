@@ -176,6 +176,7 @@
   display: flex;
   flex-direction: column;
   gap: 88px;
+  padding-top: 140px;
 }
 section {
   display: flex;
