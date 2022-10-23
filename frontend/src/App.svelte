@@ -56,7 +56,7 @@
     <Route path="privacy"><PrivacyPage /></Route>
     <Route path="welcome"><Welcome /></Route>
     <Route path="faq"><FAQPage /></Route>
-    <Route path="/" component={Landing} />
+    <Route path="/"><Landing /></Route>
     <Route component={NotFoundPage}></Route>
   </Page>
 </Router>
