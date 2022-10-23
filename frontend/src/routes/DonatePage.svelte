@@ -11,6 +11,7 @@
   import Spinner from "../lib/Spinner.svelte";
   import Loading from "../lib/Loading.svelte";
   import ChannelLogo from "../lib/ChannelLogo.svelte";
+  import title from "$lib/title.js";
 
   export let channel_id;
 
@@ -33,6 +34,7 @@
 
   async function load() {
     youtube_channel = await api.get(`youtube-channel/${channel_id}`);
+    title.set(`Donate4Fun to {youtube_channel.title}`);
   }
 
   async function donate(e) {
@@ -44,41 +46,33 @@
     navigate(`/donation/${response.donation.id}`, {state: response});
     spin = false;
   }
-
-  const loadPromise = load();
 </script>
-
-<svelte:head>
-  {#await loadPromise then}
-  <title>Donate4Fun to {youtube_channel.title}</title>
-  {/await}
-</svelte:head>
 
 <header>
   <h1>Donate your favorite blogger</h1>
   Instant delivery with Lightning network. No KYC.
 </header>
 <Section>
-  {#await loadPromise}
+  {#await load()}
     <Loading />
   {:then}
-  <form on:submit|preventDefault={donate}>
-    <h1>Donate to <YoutubeChannel channel={youtube_channel} /></h1>
-    <ChannelLogo url={youtube_channel.thumbnail_url} />
-    <div>
-      <span class="i-want">Donate</span>
-      <div class="amount">
-        <Input type=number placeholder="Enter amount" bind:value={amount} min={amountMin} max={amountMax} bind:error={amountError} suffix=sats />
+    <form on:submit|preventDefault={donate}>
+      <h1>Donate to <YoutubeChannel channel={youtube_channel} /></h1>
+      <ChannelLogo url={youtube_channel.thumbnail_url} />
+      <div>
+        <span class="i-want">Donate</span>
+        <div class="amount">
+          <Input type=number placeholder="Enter amount" bind:value={amount} min={amountMin} max={amountMax} bind:error={amountError} suffix=sats />
+        </div>
+        <FiatAmount bind:amount={amount} class="fiat-amount" />
       </div>
-      <FiatAmount bind:amount={amount} class="fiat-amount" />
-    </div>
-    <Button class="submit" type=submit disabled={!isValid}>
-      {#if spin}
-        <Spinner --size=20px --width=3px />
-      {/if}
-      <span>Donate</span>
-    </Button>
-  </form>
+      <Button class="submit" type=submit disabled={!isValid}>
+        {#if spin}
+          <Spinner --size=20px --width=3px />
+        {/if}
+        <span>Donate</span>
+      </Button>
+    </form>
   {/await}
 </Section>
 

@@ -12,6 +12,7 @@
   import Loading from "$lib/Loading.svelte";
   import ChannelLogo from "$lib/ChannelLogo.svelte";
   import {resolve} from "$lib/utils.js";
+  import title from "$lib/title.js";
 
   export let donator_id;
   export let location;
@@ -37,9 +38,10 @@
   });
 
   async function load(donator_id) {
-    return await api.get(`donator/${donator_id}`);
+    const donator = await api.get(`donator/${donator_id}`);
+    title.set(`Fulfill balance for ${donator.name}`);
+    return donator;
   }
-  $: loadPromise = load(donator_id);
 
   async function donate(e) {
     const response = await api.post('donate', {
@@ -49,12 +51,6 @@
     navigate(`/donation/${response.donation.id}`, {state: response});
   }
 </script>
-
-<svelte:head>
-  {#await loadPromise then donator}
-    <title>[Donate4Fun] Fulfill balance for {donator.name}</title>
-  {/await}
-</svelte:head>
 
 <Section>
   {#await $me}
@@ -66,7 +62,7 @@
       {:else}
         <h1 class="text-align-center">Donate to </h1>
       {/if}
-      {#await loadPromise then donator}
+      {#await load() then donator}
         <Donator user={donator} />
       {/await}
       <div class="amount">
