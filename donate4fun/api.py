@@ -142,7 +142,7 @@ async def latest_donations(db=Depends(get_db_session)):
 
 @router.get("/donations/by-donator/{donator_id}", response_model=list[Donation])
 async def donator_donations(donator_id: UUID, db=Depends(get_db_session)):
-    return await db.query_donations(DonationDb.donator_id == donator_id)
+    return await db.query_donations((DonationDb.donator_id == donator_id) & DonationDb.paid_at.isnot(None))
 
 
 @router.get("/donations/by-donatee/{donatee_id}", response_model=list[Donation])
