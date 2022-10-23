@@ -15,10 +15,13 @@ nice to be done:
 - accept BTC fulfillments (Boltz)
 - subscribe to changes using VAPID instead of websockets
 - enable loop and pool in lnd
+- integrate ramp.network for fiat fulfillments
 
 look-and-feel:
 - restyle youtube bolt animation and popup animation
 - login page: add confirmation to reset wallet / disconnect
+- speed up first donation on a video (dont wait for youtube api)
+- https://blaze-slider.dev/ for donations list on landing
 
 bugs:
 - add spinner to fulfillment page
