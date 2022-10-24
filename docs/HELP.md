@@ -16,8 +16,9 @@ For non-KYC exchanges look at [kycnot.me](https://kycnot.me/?cash=on)
 Or use:
 - [RoboSats](https://unsafe.robosats.com)
 - [BestChange](https://www.bestchange.com)
-- [One of Simplex](https://buy.chainbits.com) frontends (If you buy >50 USD)
-- [Ramp](https://ramp.network) (>10 USD)
+- [One of Simplex](https://buy.chainbits.com) frontends (If you buy >50 USD/EUR)
+- [Ramp](https://ramp.network) (>10 USD/EUR)
+- [MoonPay](https://moonpay.com) (>30 USD/EUR)
 
 If you don't mind to use CEX there exchanges support Bitcoin Lightning
 - [Kraken](https://kraken.com)
