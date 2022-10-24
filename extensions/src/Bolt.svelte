@@ -3,7 +3,7 @@
   import { subscribe, get } from "$lib/api.js";
   import { Confetti } from "svelte-confetti";
   import { worker, pageScript, donate } from "./common.js";
-  import cLog from "$lib/log.js";
+  import { cLog, cInfo } from "$lib/log.js";
   import { getVideoId, postComment, isShorts } from "./youtube.js";
   import CommentTip from "./CommentTip.svelte";
 
@@ -31,15 +31,14 @@
     return await worker.fetch("get", path);
   }
 
-  async function onDonateClicked(evt) {
+  async function doDonate(amount) {
     animate = true;
-    const amount = await worker.getConfig("amount");
     let donation_;
     try {
       donation_ = await donate(amount, window.location.href);
     } catch (err) {
       animate = false;
-      cLog("Payment failed", err);
+      cInfo("Payment failed", err);
       const rejected = err.message === 'User rejected';
       worker.createPopup(`nowebln/${amount}/${rejected}`);
       return;
@@ -55,8 +54,6 @@
     if (await worker.getConfig("enableComment") && !isCommentPosted) {
       donation = donation_;
       showCommentTip = true;
-      await tick();
-      hideOnClickOutside(commentTipElement);
     }
   }
 
@@ -66,18 +63,6 @@
     // Return immediately to avoid button spinner
     postComment(videoLanguage, donation.amount).then(() => { isCommentPosted = true; });
   }
-
-  function hideOnClickOutside(element) {
-    if (!element)
-      console.error("hideOnClickOutside element is null", element);
-    const outsideClickListener = event => {
-      if (!element.contains(event.target)) {
-        document.removeEventListener('click', outsideClickListener);
-        showCommentTip = false;
-      }
-    }
-    document.addEventListener('click', outsideClickListener);
-}
 
   async function init() {
     cLog("onMount");
@@ -91,7 +76,7 @@
     try {
       await videoWS.ready();
     } catch (err) {
-      cLog("Failed to subscribe to video notifications", err);
+      cInfo("Failed to subscribe to video notifications", err);
       text = "";
       return;
     }
@@ -104,6 +89,24 @@
     await videoWS.close();
   });
 
+  let holdAmount;
+  let holdInterval;
+  let showConfirmation = false;
+
+  function onMouseDown() {
+    holdAmount = 0;
+    holdInterval = setInterval(() => {
+      holdAmount += 10;
+    }, 100);
+  }
+
+  async function onMouseUp() {
+    clearInterval(holdInterval);
+    const amount = holdAmount || await worker.getConfig("amount");
+    holdAmount = 0;
+    doDonate(amount);
+  }
+
   cLog("Created Bolt");
 </script>
 
@@ -112,7 +115,7 @@
     {#if confetti}
       <Confetti />
     {/if}
-    <button class="bolt-button" on:click={onDonateClicked} disabled={animate}>
+    <button class="bolt-button" on:mousedown={onMouseDown} on:mouseup={onMouseUp} disabled={animate}>
       <div class="icon" class:animate>
         <svg viewBox="60 60 160 160" xmlns="http://www.w3.org/2000/svg">
           <g>
@@ -122,12 +125,15 @@
       </div>
       <div class="text" class:loading>{text}</div>
     </button>
-    <div class="tooltip" style-target="tooltip">
+    <div class="tooltip tooltip-hover" style:visibility={holdAmount ? 'hidden' : 'visible'} style-target="tooltip">
       Donate sats
+    </div>
+    <div class="tooltip" style:display={holdAmount ? 'block' : 'none'} style-target="tooltip">
+      ⚡{holdAmount} sat
     </div>
   </div>
   {#if showCommentTip}
-    <CommentTip bind:element={commentTipElement} amount={donation.amount} on:comment={onCommentClick} />
+    <CommentTip bind:element={commentTipElement} amount={donation.amount} on:comment={onCommentClick} on:click-outside={() => {showCommentTip = false;}} />
   {/if}
 </div>
 
@@ -210,7 +216,7 @@
 .shorts .tooltip {
   right: calc(72px); /* try to mimic youtube popups */
 }
-.bolt-button:hover + .tooltip {
+.bolt-button:hover + .tooltip-hover {
   display: block;
 
   opacity: 0;
