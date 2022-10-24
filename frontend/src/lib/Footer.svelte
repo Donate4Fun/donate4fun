@@ -21,15 +21,32 @@ footer {
   display: flex;
   justify-content: space-between;
   font-size: 14px;
-  padding: 28px 62px 28px 62px;
   width: 100%;
 }
 .links {
   display: flex;
-  gap: 2em;
   align-items: center;
 }
 .links a {
   font-weight: 500;
 }
+@media (max-width: 640px) {
+  footer {
+    padding: 28px 1em;
+  }
+  .links {
+    gap: 0.5em;
+    justify-content: space-evenly;
+    flex-grow: 1;
+  }
+}
+@media (min-width: 641px) {
+  footer {
+    padding: 28px 62px;
+  }
+  .links {
+    gap: 2em;
+  }
+}
+
 </style>
