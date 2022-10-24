@@ -245,6 +245,7 @@ async function donate(amount, target) {
       try {
         await pageScript.sendPayment(paymentRequest);
       } catch (err) {
+        await ws.close();
         reject(err);
       }
     });
