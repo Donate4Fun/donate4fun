@@ -1,6 +1,6 @@
 <script>
   import { onMount, onDestroy, tick } from 'svelte';
-  import { subscribe } from "$lib/api.js";
+  import { subscribe, get } from "$lib/api.js";
   import { Confetti } from "svelte-confetti";
   import { worker, pageScript, donate } from "./common.js";
   import cLog from "$lib/log.js";
@@ -21,7 +21,7 @@
 
   async function fetchStats() {
     const videoId = getVideoId();
-    const videoInfo = await apiGet(`youtube-video/${videoId}`);
+    const videoInfo = await get(`youtube-video/${videoId}`);
     cLog("video info", videoInfo);
     text = videoInfo.total_donated;
     loading = false;
