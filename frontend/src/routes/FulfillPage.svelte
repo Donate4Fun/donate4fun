@@ -37,7 +37,7 @@
       amount = parseInt(urlParams.get("amount"));
   });
 
-  async function load(donator_id) {
+  async function load() {
     const donator = await api.get(`donator/${donator_id}`);
     title.set(`Fulfill balance for ${donator.name}`);
     return donator;
