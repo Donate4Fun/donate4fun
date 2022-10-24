@@ -1,9 +1,9 @@
 <script>
-  import Button from "../../frontend/src/lib/Button.svelte";
+	import { createEventDispatcher, onMount } from 'svelte';
+  import Button from "$lib/Button.svelte";
   import Arrow2 from "./Arrow2.svelte";
-	import {createEventDispatcher, onMount} from 'svelte';
-  import {getStatic} from "./common.js";
-  import {isCommentEnabled} from "./youtube.js";
+  import { getStatic } from "./common.js";
+  import { isCommentEnabled } from "./youtube.js";
 
   export let element = null;
   export let amount;
@@ -17,7 +17,20 @@
       const color = window.getComputedStyle(textElement).getPropertyValue("color");
       invert = color === "rgb(255, 255, 255)" ? 100 : 0;
     }
+    hideOnClickOutside(element);
   });
+
+  function hideOnClickOutside(element) {
+    if (!element)
+      cInfo("hideOnClickOutside element is null", element);
+    const outsideClickListener = event => {
+      if (!element.contains(event.target)) {
+        document.removeEventListener('click', outsideClickListener);
+        dispatch('click-outside');
+      }
+    }
+    document.addEventListener('click', outsideClickListener);
+  }
 </script>
 
 <div bind:this={element} class="comment">
