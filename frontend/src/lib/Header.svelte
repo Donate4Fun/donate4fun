@@ -76,7 +76,7 @@ header {
 }
 .menu-popup {
   position: fixed;
-  width: 100%;
+  width: 100vw;
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -159,6 +159,9 @@ header {
   align-items: center;
   gap: 32px;
   font-weight: 700;
+}
+.menu-popup ul {
+  padding: 0;
 }
 .quick-links a, .menu-popup ul a {
   font-size: 15px;
