@@ -34,6 +34,7 @@
     "analytics-plugin-plausible": "^0.0.6",
     "async-ws": "github:nikicat/async-ws",
     "rollup": "^2.79.0",
+    "svelte-confetti": "^1.2.0",
     "svelte-sitemap": "^2.5.1",
     "svelte-visibility-change": "^0.6.0",
     "vite-plugin-replace": "^0.1.1"

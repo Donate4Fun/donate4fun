@@ -1,7 +1,21 @@
 <script>
+  import { Confetti } from "svelte-confetti";
   import LandingSteps from "$lib/LandingSteps.svelte";
 </script>
 
+<div style="
+  position: fixed;
+  top: 50px;
+  left: 0;
+  height: 30vh;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+  pointer-events: none;"
+>
+  <Confetti x={[-5, 5]} y={[0, 0.1]} delay={[300, 2000]} amount=500 fallDistance="30vh" />
+</div>
 <main>
   <h1>Thank you for downloading Donate4.Fun</h1>
   <p class="annotation">👇Complete the setup👇</p>
