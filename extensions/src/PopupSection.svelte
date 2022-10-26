@@ -21,7 +21,8 @@ section > div {
   background: white;
   border-top-left-radius: calc(var(--border-radius) - var(--border-width));
   border-top-right-radius: calc(var(--border-radius) - var(--border-width));
-  padding: 32px;
+  padding: calc(30px - var(--border-width));
+  padding-bottom: calc(26px - var(--border-width));
   align-items: var(--align-items);
   justify-content: var(--justify-content);
 }
