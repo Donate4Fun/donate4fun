@@ -3,9 +3,11 @@
   import { fly } from "svelte/transition";
   import Fa from 'svelte-fa/src/fa.svelte';
   import { faCircleExclamation, faCircleInfo, faCircleCheck } from '@fortawesome/free-solid-svg-icons';
-
+  import VisibilityChange from "svelte-visibility-change";
   import { notifications } from "./notifications.js";
   import Button from "../lib/Button.svelte";
+
+  let hidden;
 </script>
 
 <div class="notifications">
@@ -28,11 +30,13 @@
         {#if notification.hasClose}
           <Button class=white on:click={notification.close} --font-size=12px --padding="5px 15px">Close</Button>
         {/if}
+        <button on:click={() => {hidden = !hidden;}}>toggle</button>
       </div>
     </div>
-    <div class="progress" style="--duration: {notification.timeout}ms" on:animationstart={() => notification.isShown = true} on:animationend={notification.close}></div>
+    <div class="progress" class:paused={hidden} style="--duration: {notification.timeout}ms" on:animationstart={() => notification.isShown = true} on:animationend={notification.close}></div>
   </div>
 {/each}
+  <VisibilityChange bind:hidden />
 </div>
 
 <style>
@@ -76,6 +80,9 @@ pre.message {
   background: blue;
 }
 .toast:hover .progress {
+  animation-play-state: paused;
+}
+.progress.paused {
   animation-play-state: paused;
 }
 @keyframes progress {
