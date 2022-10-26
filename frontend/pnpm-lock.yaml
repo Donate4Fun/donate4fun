@@ -17,6 +17,7 @@ specifiers:
   svelte: ^3.50.1
   svelte-asyncable: github:nikicat/svelte-asyncable
   svelte-awesome-icons: ^0.2.5
+  svelte-confetti: ^1.2.0
   svelte-fa: ^3.0.3
   svelte-local-storage-store: ^0.3.1
   svelte-navigator: ^3.1.6
@@ -52,6 +53,7 @@ devDependencies:
   analytics-plugin-plausible: 0.0.6
   async-ws: github.com/nikicat/async-ws/527067dc6da4fcf355b80576250baaa914dac6b7
   rollup: 2.79.1
+  svelte-confetti: 1.2.0
   svelte-sitemap: 2.5.2
   svelte-visibility-change: 0.6.0
   vite-plugin-replace: 0.1.1_vite@2.9.15
@@ -966,6 +968,10 @@ packages:
   /svelte-awesome-icons/0.2.5:
     resolution: {integrity: sha512-db1f572uUzrlsCha16Eykh0xeYkAs6PxwFzgwgsYyeBzfgL8GuOIDxHGOK4xXJZan/XKejqmip6aQrqQqtEA/A==}
     dev: false
+
+  /svelte-confetti/1.2.0:
+    resolution: {integrity: sha512-6njSCc2mzNQpgxd6VnIkS8yhdbL9np9uTpK6bdmbephmLvI0+km0cBdfuM+MLmceVdW9Frx+ibwCFPDq/dBd1g==}
+    dev: true
 
   /svelte-fa/3.0.3:
     resolution: {integrity: sha512-GIikJjcVCD+5Y/x9hZc2R4gvuA0gVftacuWu1a+zVQWSFjFYZ+hhU825x+QNs2slsppfrgmFiUyU9Sz9gj4Rdw==}
