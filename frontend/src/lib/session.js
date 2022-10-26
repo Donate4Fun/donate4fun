@@ -1,15 +1,19 @@
 import { readable, writable, get } from "svelte/store";
 import { asyncable } from 'svelte-asyncable';
-import { get as apiGet, apiOrigin } from "$lib/api.js";
+import jwt_decode from "jwt-decode";
+import Cookies from "js-cookie";
+
+import { get as apiGet, apiOrigin, subscribe } from "$lib/api.js";
 import { storage } from "$lib/storage.js";
 import { cLog } from "$lib/log.js";
 import { analytics } from "$lib/analytics.js";
-import jwt_decode from "jwt-decode";
-import Cookies from "js-cookie";
+import { isExtension } from "$lib/utils.js";
 
 // Store for browser.cookies
 export const cookies = writable();
 const cookieName = 'session';
+let donatorWs;
+let donatorWsId;
 
 async function fetchMe() {
   const resp = await apiGet("donator/me");
@@ -77,19 +81,39 @@ async function onCookieChanged(changeInfo) {
 
 export const me = asyncable(async () => {
   cLog("loading me");
+  let me_;
   if (await isValid()) {
-    return loadFrom({}, storage.me);
+    me_ = loadFrom({}, storage.me);
   } else {
     console.log("stored session is invalid or missing, reloading");
-    return loadFrom({}, await fetchMe());
+    me_ = loadFrom({}, await fetchMe());
   }
+  await subscribeToDonator(me_.donator.id);
+  return me_;
 });
+
+async function subscribeToDonator(donatorId) {
+  if (isExtension())
+    // TODO: implemet VAPID subscriptions in extension
+    return;
+  if (donatorWsId !== donatorId) {
+    if (donatorWs)
+      await donatorWs.close();
+    donatorWs = subscribe(`donator:${donatorId}`);
+    donatorWs.on("notification", () => {
+      reloadMe();
+    });
+    donatorWsId = donatorId;
+  }
+}
 
 export async function reloadMe() {
   const oldMe = await me.get();
   const newMe = loadFrom({}, await fetchMe());
-  if (JSON.stringify(oldMe) !== JSON.stringify(newMe))
+  if (JSON.stringify(oldMe) !== JSON.stringify(newMe)) {
     await me.set(newMe);
+    await subscribeToDonator(newMe.donator.id);
+  }
 }
 
 export async function resetMe() {
