@@ -7,7 +7,7 @@ import { get as apiGet, apiOrigin, subscribe } from "$lib/api.js";
 import { storage } from "$lib/storage.js";
 import { cLog } from "$lib/log.js";
 import { analytics } from "$lib/analytics.js";
-import { isExtension } from "$lib/utils.js";
+import { isInsideExtension } from "$lib/utils.js";
 
 // Store for browser.cookies
 export const cookies = writable();
@@ -93,7 +93,7 @@ export const me = asyncable(async () => {
 });
 
 async function subscribeToDonator(donatorId) {
-  if (isExtension())
+  if (isInsideExtension())
     // TODO: implemet VAPID subscriptions in extension
     return;
   if (donatorWsId !== donatorId) {
