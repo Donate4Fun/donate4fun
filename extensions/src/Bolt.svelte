@@ -90,7 +90,7 @@
   });
 
   let holdAmount;
-  let holdInterval;
+  let holdInterval = null;
   let showConfirmation = false;
 
   function onMouseDown() {
@@ -101,10 +101,13 @@
   }
 
   async function onMouseUp() {
-    clearInterval(holdInterval);
-    const amount = holdAmount || await worker.getConfig("amount");
-    holdAmount = 0;
-    doDonate(amount);
+    if (holdInterval) {
+      clearInterval(holdInterval);
+      holdInterval = null;
+      const amount = holdAmount || await worker.getConfig("amount");
+      holdAmount = 0;
+      doDonate(amount);
+    }
   }
 
   cLog("Created Bolt");
@@ -115,7 +118,7 @@
     {#if confetti}
       <Confetti />
     {/if}
-    <button class="bolt-button" on:mousedown={onMouseDown} on:mouseup={onMouseUp} disabled={animate}>
+    <button class="bolt-button" on:mousedown={onMouseDown} on:mouseup={onMouseUp} on:mouseleave={onMouseUp} disabled={animate}>
       <div class="icon" class:animate>
         <svg viewBox="60 60 160 160" xmlns="http://www.w3.org/2000/svg">
           <g>
