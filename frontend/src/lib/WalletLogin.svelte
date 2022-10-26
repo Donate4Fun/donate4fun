@@ -14,7 +14,7 @@
       <span class="ellipsis">{me.shortkey}</span>
     </Button>
   {:else}
-    <Button link={resolve('/login')} --width=100% target={target}>
+    <Button class="white" link={resolve('/login')} --width=100% target={target}>
       Connect Wallet
     </Button>
   {/if}

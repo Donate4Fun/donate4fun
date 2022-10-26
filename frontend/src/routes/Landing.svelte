@@ -1,6 +1,7 @@
 <script>
   import { onMount, tick } from "svelte";
   import { useResolve, useLocation, useNavigate, link } from "svelte-navigator";
+
   import LandingYoutuber from "$lib/LandingYoutuber.svelte";
   import Button from "$lib/Button.svelte";
   import Section from "$lib/Section.svelte";
@@ -182,6 +183,9 @@ section {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+h1 {
+  color: var(--link-color);
 }
 h1, h2 {
   font-family: 'Montserrat';
