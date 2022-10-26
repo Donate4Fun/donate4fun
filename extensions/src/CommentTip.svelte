@@ -25,11 +25,11 @@
       cInfo("hideOnClickOutside element is null", element);
     const outsideClickListener = event => {
       if (!element.contains(event.target)) {
-        document.removeEventListener('click', outsideClickListener);
+        document.removeEventListener('mousedown', outsideClickListener);
         dispatch('click-outside');
       }
     }
-    document.addEventListener('click', outsideClickListener);
+    document.addEventListener('mousedown', outsideClickListener);
   }
 </script>
 
