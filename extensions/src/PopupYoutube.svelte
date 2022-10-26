@@ -135,6 +135,7 @@
 .filled-header {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
 
   font-size: 16px;
