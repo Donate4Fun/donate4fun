@@ -30,7 +30,6 @@
         {#if notification.hasClose}
           <Button class=white on:click={notification.close} --font-size=12px --padding="5px 15px">Close</Button>
         {/if}
-        <button on:click={() => {hidden = !hidden;}}>toggle</button>
       </div>
     </div>
     <div class="progress" class:paused={hidden} style="--duration: {notification.timeout}ms" on:animationstart={() => notification.isShown = true} on:animationend={notification.close}></div>
