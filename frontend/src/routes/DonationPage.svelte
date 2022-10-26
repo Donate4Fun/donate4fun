@@ -33,7 +33,7 @@
         target = "<Unexpected donation target>";
     }
 
-    title.set(`Donate ${donation.amount} sat to ${target}`);
+    title.set(`Donate ${donation.amount} sats to ${target}`);
   }
 
   function paid(event) {
