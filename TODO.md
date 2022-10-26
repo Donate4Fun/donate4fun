@@ -22,12 +22,16 @@ look-and-feel:
 - login page: add confirmation to reset wallet / disconnect
 - speed up first donation on a video (dont wait for youtube api)
 - https://blaze-slider.dev/ for donations list on landing
+- animate landing elements on scroll
 
 bugs:
 - add spinner to fulfillment page
-- fulfill invoice: 'need help' is not shown on small screens (x800)
+- fulfill invoice: 'need help' is not visible on small screens (x800)
+- refresh extension popup balance after fulfill
 
 fixed:
+- pause toast timer while tab is in background (works only in chrome)
+- confetti on welcome page
 - nowebln popup: do not show "get webln enabled wallet" if webln is present
 - add analytics to extension and web (https://github.com/DavidWells/analytics)
 - fulfill invoice: fix invoice text (replace "donate to")
