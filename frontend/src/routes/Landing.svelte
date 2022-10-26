@@ -14,6 +14,7 @@
   import api from "$lib/api.js";
   import { analytics } from "$lib/analytics.js";
   import title from "$lib/title.js";
+  import Slidein from "$lib/Slidein.svelte";
 
   let youtubers = [];
   let email;
@@ -99,10 +100,13 @@
     </form>
     <video autoplay muted loop src="/static/sample.webm" width=640px />
   </section>
+  <Slidein>
   <section id="howto">
     <h1 class="gradient-light">How to donate</h1>
     <LandingSteps />
   </section>
+  </Slidein>
+  <Slidein>
   <section id="donatees">
     <h1 class="gradient-dark">Top donated</h1>
     {#await loadRecentDonatees() then}
@@ -115,11 +119,15 @@
       </div>
     {/await}
   </section>
+  </Slidein>
+  <Slidein>
   <section id="claim">
     <img src="/static/coin.png" alt="bitcoin" width=88 height=88>
     <h1 class="gradient-light">Want to get your donations?</h1>
     <Button class="white" --width=300px link={resolve("/prove/youtube")}>Claim here</Button>
   </section>
+  </Slidein>
+  <Slidein>
   <div class="flex-row gap-20 justify-center flex-wrap">
     <Section>
       <div class="half-box">
@@ -160,6 +168,8 @@
       </div>
     </Section>
   </div>
+  </Slidein>
+  <Slidein>
   <section id="roadmap">
     <a href="https://github.com/orgs/Donate4Fun/projects/1" target=_blank>
       <h1 class="gradient-dark roadmap">Roadmap<sup>
@@ -170,6 +180,7 @@
       </h1>
     </a>
   </section>
+  </Slidein>
 </div>
 
 <style>

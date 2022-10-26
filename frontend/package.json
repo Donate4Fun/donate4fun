@@ -35,6 +35,7 @@
     "async-ws": "github:nikicat/async-ws",
     "rollup": "^2.79.0",
     "svelte-confetti": "^1.2.0",
+    "svelte-inview": "^3.0.1",
     "svelte-sitemap": "^2.5.1",
     "svelte-visibility-change": "^0.6.0",
     "vite-plugin-replace": "^0.1.1"
