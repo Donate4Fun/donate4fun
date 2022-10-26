@@ -12,7 +12,7 @@
   }
 </script>
 
-<Button on:click={doCopy}>
+<Button class="white" on:click={doCopy}>
   {#if copied}
   Copied
   {:else}
