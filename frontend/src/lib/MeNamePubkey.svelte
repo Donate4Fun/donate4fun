@@ -4,7 +4,7 @@
 
 <div class="outer">
   {#await $me then me}
-    <p class="name ellipsis">{me.donator.name}</p>
+    <p class="name ellipsis" title={me.donator.name}>{me.donator.name}</p>
     {#if me.connected}
       <p class="connected">Wallet connected <img src="/static/checkbox.svg" alt="checkbox"></p>
     {/if}
