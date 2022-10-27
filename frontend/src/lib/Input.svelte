@@ -1,5 +1,5 @@
 <script>
-  import Error from "../lib/Error.svelte";
+  import Error from "$lib/Error.svelte";
 
   export let value = "";
   export let error = null;

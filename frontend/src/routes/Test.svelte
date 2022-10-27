@@ -1,7 +1,7 @@
 <script>
-  import Button from "../lib/Button.svelte";
-  import Spinner from "../lib/Spinner.svelte";
-  import {notify} from '../lib/notifications.js';
+  import Button from "$lib/Button.svelte";
+  import Spinner from "$lib/Spinner.svelte";
+  import {notify} from '$lib/notifications.js';
 
   let i = 0;
 </script>

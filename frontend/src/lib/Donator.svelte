@@ -1,5 +1,5 @@
 <script>
-  import Userpic from "../lib/Userpic.svelte";
+  import Userpic from "$lib/Userpic.svelte";
   import {link} from "svelte-navigator";
 
   export let user;
