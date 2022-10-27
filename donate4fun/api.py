@@ -63,7 +63,8 @@ def make_memo(donation: Donation) -> str:
 
 @router.post("/donate", response_model=DonateResponse)
 async def donate(
-    request: DonateRequest, donator: Donator = Depends(get_donator), db_session=Depends(get_db_session), lnd=Depends(get_lnd),
+    web_request: Request, request: DonateRequest, donator: Donator = Depends(get_donator), db_session=Depends(get_db_session),
+    lnd=Depends(get_lnd),
  ) -> DonateResponse:
     logger.debug(f"Donator {donator.id} wants to donate {request.amount} to {request.target or request.channel_id}")
     donation = Donation(
@@ -92,6 +93,8 @@ async def donate(
     if use_balance:
         await db_session.donation_paid(donation_id=donation.id, amount=request.amount, paid_at=datetime.utcnow())
         donation = await db_session.query_donation(id=donation.id)
+        # FIXME: balance is saved in cookie to notify extension about balance change, but it should be done via VAPID
+        web_request.session['balance'] = (await db_session.query_donator(donator.id)).balance
         return DonateResponse(donation=donation, payment_request=None)
     else:
         return DonateResponse(donation=donation, payment_request=invoice.payment_request)
@@ -168,7 +171,7 @@ class MeResponse(BaseModel):
     youtube_channels: list[YoutubeChannel]
 
 
-async def load_donator(db: DbSession, donator_id: UUID):
+async def load_donator(db: DbSession, donator_id: UUID) -> Donator:
     try:
         return await db.query_donator(donator_id)
     except NoResultFound:
@@ -179,6 +182,8 @@ async def load_donator(db: DbSession, donator_id: UUID):
 async def me(request: Request, db=Depends(get_db_session), donator: Donator = Depends(get_donator)):
     donator = await load_donator(db, donator.id)
     linked_youtube_channels: list[YoutubeChannel] = await db.query_donator_youtube_channels(donator.id)
+    # FIXME: balance is saved in cookie to notify extension about balance change, but it should be done via VAPID
+    request.session['balance'] = donator.balance
     return MeResponse(donator=donator, youtube_channels=linked_youtube_channels)
 
 

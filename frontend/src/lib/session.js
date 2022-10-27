@@ -67,7 +67,11 @@ async function isValid() {
   const decoded = jwt_decode(sessionCookie);
   if (!decoded)
     return false;
-  return decoded.donator === me.donator.id && decoded.lnauth_pubkey === me.donator.lnauth_pubkey;
+  return (
+    decoded.donator === me.donator.id
+    && decoded.lnauth_pubkey === me.donator.lnauth_pubkey
+    && decoded.balance === me.donator.balance
+  );
 }
 
 async function onCookieChanged(changeInfo) {
@@ -75,8 +79,10 @@ async function onCookieChanged(changeInfo) {
   const cookie = changeInfo.cookie;
   const domain = getCookieDomain();
   const domainNoDot = domain.slice(1);
-  if (cookie.name === cookieName && !changeInfo.removed && (cookie.domain === domain || cookie.domain === domainNoDot))
-    await reloadMe();
+  if (cookie.name === cookieName && !changeInfo.removed && (cookie.domain === domain || cookie.domain === domainNoDot)) {
+    if (!await isValid())
+      await reloadMe();
+  }
 }
 
 export const me = asyncable(async () => {
