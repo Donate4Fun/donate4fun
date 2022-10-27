@@ -1,5 +1,5 @@
 <script>
-  import CopyButton from "../lib/CopyButton.svelte";
+  import CopyButton from "$lib/CopyButton.svelte";
 
   export let lnurl;
 </script>

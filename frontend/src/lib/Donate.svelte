@@ -2,13 +2,13 @@
   import { createEventDispatcher } from 'svelte';
   import { navigate } from "svelte-navigator";
 
-  import api from "../lib/api.js";
-  import Error from "../lib/Error.svelte";
-  import Section from "../lib/Section.svelte";
-  import Input from "../lib/Input.svelte";
-  import Button from "../lib/Button.svelte";
-  import Spinner from "../lib/Spinner.svelte";
-  import FiatAmount from "../lib/FiatAmount.svelte";
+  import api from "$lib/api.js";
+  import Error from "$lib/Error.svelte";
+  import Section from "$lib/Section.svelte";
+  import Input from "$lib/Input.svelte";
+  import Button from "$lib/Button.svelte";
+  import Spinner from "$lib/Spinner.svelte";
+  import FiatAmount from "$lib/FiatAmount.svelte";
 
 	const dispatch = createEventDispatcher();
   const amountMin = 100;

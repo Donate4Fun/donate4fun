@@ -1,13 +1,13 @@
 <script>
   import { get } from "svelte/store";
-  import Section from "../lib/Section.svelte";
-  import Button from "../lib/Button.svelte";
-  import CopyButton from "../lib/CopyButton.svelte";
-  import Editable from "../lib/Editable.svelte";
-  import Loading from "../lib/Loading.svelte";
-  import { youtube_channel_url, webOrigin } from "../lib/utils.js";
-  import api from "../lib/api.js";
-  import title from "../lib/title.js";
+  import Section from "$lib/Section.svelte";
+  import Button from "$lib/Button.svelte";
+  import CopyButton from "$lib/CopyButton.svelte";
+  import Editable from "$lib/Editable.svelte";
+  import Loading from "$lib/Loading.svelte";
+  import { youtube_channel_url, webOrigin } from "$lib/utils.js";
+  import api from "$lib/api.js";
+  import title from "$lib/title.js";
 
   export let channel_id;
   export let navigate;

@@ -1,15 +1,15 @@
 <script>
   import { createEventDispatcher } from 'svelte';
-  import Button from "../lib/Button.svelte";
-  import Section from "../lib/Section.svelte";
-  import Infobox from "../lib/Infobox.svelte";
-  import Loading from "../lib/Loading.svelte";
-  import Amount from "../lib/Amount.svelte";
-  import YoutubeChannel from "../lib/YoutubeChannel.svelte";
-  import Editable from "../lib/Editable.svelte";
-  import ChannelLogo from "../lib/ChannelLogo.svelte";
-  import { me } from "../lib/session.js";
-  import { copy, youtube_video_url, youtube_channel_url } from "../lib/utils.js";
+  import Button from "$lib/Button.svelte";
+  import Section from "$lib/Section.svelte";
+  import Infobox from "$lib/Infobox.svelte";
+  import Loading from "$lib/Loading.svelte";
+  import Amount from "$lib/Amount.svelte";
+  import YoutubeChannel from "$lib/YoutubeChannel.svelte";
+  import Editable from "$lib/Editable.svelte";
+  import ChannelLogo from "$lib/ChannelLogo.svelte";
+  import { me } from "$lib/session.js";
+  import { copy, youtube_video_url, youtube_channel_url } from "$lib/utils.js";
 
   const dispatch = createEventDispatcher();
 

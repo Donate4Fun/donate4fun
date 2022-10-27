@@ -1,12 +1,12 @@
 <script>
   import Donate from '$lib/Donate.svelte';
-  import Claim from '../lib/Claim.svelte';
-  import LatestDonations from "../lib/LatestDonations.svelte";
-  import Header from "../lib/Header.svelte";
-  import Extensions from "../lib/Extensions.svelte";
-  import Footer from "../lib/Footer.svelte";
-  import Section from "../lib/Section.svelte";
-  import title from "../lib/title.js";
+  import Claim from '$lib/Claim.svelte';
+  import LatestDonations from "$lib/LatestDonations.svelte";
+  import Header from "$lib/Header.svelte";
+  import Extensions from "$lib/Extensions.svelte";
+  import Footer from "$lib/Footer.svelte";
+  import Section from "$lib/Section.svelte";
+  import title from "$lib/title.js";
 
   const showInstruction = false;
 

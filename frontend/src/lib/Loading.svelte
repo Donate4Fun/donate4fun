@@ -1,5 +1,5 @@
 <script>
-  import Spinner from "../lib/Spinner.svelte";
+  import Spinner from "$lib/Spinner.svelte";
 </script>
 <div>
   <Spinner --size=5em --width=1em />

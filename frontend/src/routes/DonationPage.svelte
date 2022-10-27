@@ -1,14 +1,14 @@
 <script>
-  import Donation from "../lib/Donation.svelte";
-  import Donator from "../lib/Donator.svelte";
-  import Loading from "../lib/Loading.svelte";
-  import Invoice from "../lib/Invoice.svelte";
-  import Section from "../lib/Section.svelte";
-  import Button from "../lib/Button.svelte";
-  import title from "../lib/title.js";
-  import api from "../lib/api.js";
-  import {notify} from "../lib/notifications.js";
-  import {me} from "../lib/session.js";
+  import Donation from "$lib/Donation.svelte";
+  import Donator from "$lib/Donator.svelte";
+  import Loading from "$lib/Loading.svelte";
+  import Invoice from "$lib/Invoice.svelte";
+  import Section from "$lib/Section.svelte";
+  import Button from "$lib/Button.svelte";
+  import title from "$lib/title.js";
+  import api from "$lib/api.js";
+  import {notify} from "$lib/notifications.js";
+  import {me} from "$lib/session.js";
 
   export let donation_id;
   export let navigate;

@@ -1,7 +1,7 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
   import Slider from "./Slider.svelte";
-  import Input from "../../frontend/src/lib/Input.svelte";
+  import Input from "$lib/Input.svelte";
 
   export let key;
   export let option;

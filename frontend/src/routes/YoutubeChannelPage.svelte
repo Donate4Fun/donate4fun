@@ -1,18 +1,18 @@
 <script>
   import {link, useResolve} from "svelte-navigator";
-  import Loading from "../lib/Loading.svelte";
-  import Donator from "../lib/Donator.svelte";
-  import Datetime from "../lib/Datetime.svelte";
-  import Amount from "../lib/Amount.svelte";
-  import Error from "../lib/Error.svelte";
-  import Button from "../lib/Button.svelte";
-  import YoutubeChannel from "../lib/YoutubeChannel.svelte";
-  import Section from "../lib/Section.svelte";
-  import Infobox from "../lib/Infobox.svelte";
-  import ChannelLogo from "../lib/ChannelLogo.svelte";
-  import api from "../lib/api.js";
-  import { me, reloadMe } from "../lib/session.js";
-  import title from "../lib/title.js";
+  import Loading from "$lib/Loading.svelte";
+  import Donator from "$lib/Donator.svelte";
+  import Datetime from "$lib/Datetime.svelte";
+  import Amount from "$lib/Amount.svelte";
+  import Error from "$lib/Error.svelte";
+  import Button from "$lib/Button.svelte";
+  import YoutubeChannel from "$lib/YoutubeChannel.svelte";
+  import Section from "$lib/Section.svelte";
+  import Infobox from "$lib/Infobox.svelte";
+  import ChannelLogo from "$lib/ChannelLogo.svelte";
+  import api from "$lib/api.js";
+  import { me, reloadMe } from "$lib/session.js";
+  import title from "$lib/title.js";
 
   export let channel_id;
 

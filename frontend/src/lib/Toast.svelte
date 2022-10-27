@@ -5,7 +5,7 @@
   import { faCircleExclamation, faCircleInfo, faCircleCheck } from '@fortawesome/free-solid-svg-icons';
   import VisibilityChange from "svelte-visibility-change";
   import { notifications } from "./notifications.js";
-  import Button from "../lib/Button.svelte";
+  import Button from "$lib/Button.svelte";
 
   let hidden;
 </script>

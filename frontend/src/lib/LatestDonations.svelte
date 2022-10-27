@@ -1,13 +1,13 @@
 <script>
   import { link } from "svelte-navigator";
-  import Loading from "../lib/Loading.svelte";
-  import Section from "../lib/Section.svelte";
-  import Amount from "../lib/Amount.svelte";
-  import YoutubeChannel from "../lib/YoutubeChannel.svelte";
-  import Donator from "../lib/Donator.svelte";
-  import Datetime from "../lib/Datetime.svelte";
-  import ChannelLogo from "../lib/ChannelLogo.svelte";
-  import api from "../lib/api.js";
+  import Loading from "$lib/Loading.svelte";
+  import Section from "$lib/Section.svelte";
+  import Amount from "$lib/Amount.svelte";
+  import YoutubeChannel from "$lib/YoutubeChannel.svelte";
+  import Donator from "$lib/Donator.svelte";
+  import Datetime from "$lib/Datetime.svelte";
+  import ChannelLogo from "$lib/ChannelLogo.svelte";
+  import api from "$lib/api.js";
 
   let donations = [];
 

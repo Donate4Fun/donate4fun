@@ -1,15 +1,15 @@
 <script>
   import {navigate, useResolve} from "svelte-navigator";
 
-  import Section from "../lib/Section.svelte";
-  import Input from "../lib/Input.svelte";
-  import Button from "../lib/Button.svelte";
-  import Spinner from "../lib/Spinner.svelte";
-  import YoutubeChannel from "../lib/YoutubeChannel.svelte";
-  import ChannelLogo from "../lib/ChannelLogo.svelte";
-  import LinkedYoutubeChannels from "../lib/LinkedYoutubeChannels.svelte";
-  import api from "../lib/api.js";
-  import { me } from "../lib/session.js";
+  import Section from "$lib/Section.svelte";
+  import Input from "$lib/Input.svelte";
+  import Button from "$lib/Button.svelte";
+  import Spinner from "$lib/Spinner.svelte";
+  import YoutubeChannel from "$lib/YoutubeChannel.svelte";
+  import ChannelLogo from "$lib/ChannelLogo.svelte";
+  import LinkedYoutubeChannels from "$lib/LinkedYoutubeChannels.svelte";
+  import api from "$lib/api.js";
+  import { me } from "$lib/session.js";
 
   let donatee;
   let spin = false;

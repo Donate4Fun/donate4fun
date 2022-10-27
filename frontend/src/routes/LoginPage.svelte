@@ -1,15 +1,15 @@
 <script>
   import {onDestroy} from "svelte";
-  import Lnurl from "../lib/Lnurl.svelte";
-  import Button from "../lib/Button.svelte";
-  import QRCode from "../lib/QRCode.svelte";
-  import Section from "../lib/Section.svelte";
-  import Loading from "../lib/Loading.svelte";
-  import Spinner from "../lib/Spinner.svelte";
+  import Lnurl from "$lib/Lnurl.svelte";
+  import Button from "$lib/Button.svelte";
+  import QRCode from "$lib/QRCode.svelte";
+  import Section from "$lib/Section.svelte";
+  import Loading from "$lib/Loading.svelte";
+  import Spinner from "$lib/Spinner.svelte";
   import NeedHelp from "$lib/NeedHelp.svelte";
-  import api from "../lib/api.js";
-  import { me, resetMe, reloadMe } from "../lib/session.js";
-  import {notify} from "../lib/notifications.js";
+  import api from "$lib/api.js";
+  import { me, resetMe, reloadMe } from "$lib/session.js";
+  import {notify} from "$lib/notifications.js";
   import cLog from "$lib/log.js";
 
   export let navigate;

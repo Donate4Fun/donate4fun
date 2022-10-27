@@ -1,18 +1,18 @@
 <script>
-  import Section from "../lib/Section.svelte";
-  import Editable from "../lib/Editable.svelte";
-  import CopyButton from "../lib/CopyButton.svelte";
-  import YoutubeChannel from "../lib/YoutubeChannel.svelte";
-  import ChannelLogo from "../lib/ChannelLogo.svelte";
-  import Button from "../lib/Button.svelte";
-  import Spinner from "../lib/Spinner.svelte";
-  import Infobox from "../lib/Infobox.svelte";
-  import Separator from "../lib/Separator.svelte";
-  import LinkedYoutubeChannels from "../lib/LinkedYoutubeChannels.svelte";
-  import { me, reloadMe } from "../lib/session.js";
+  import Section from "$lib/Section.svelte";
+  import Editable from "$lib/Editable.svelte";
+  import CopyButton from "$lib/CopyButton.svelte";
+  import YoutubeChannel from "$lib/YoutubeChannel.svelte";
+  import ChannelLogo from "$lib/ChannelLogo.svelte";
+  import Button from "$lib/Button.svelte";
+  import Spinner from "$lib/Spinner.svelte";
+  import Infobox from "$lib/Infobox.svelte";
+  import Separator from "$lib/Separator.svelte";
+  import LinkedYoutubeChannels from "$lib/LinkedYoutubeChannels.svelte";
+  import { me, reloadMe } from "$lib/session.js";
   import { sleep } from "$lib/utils.js";
-  import api from "../lib/api.js";
-  import title from "../lib/title.js";
+  import api from "$lib/api.js";
+  import title from "$lib/title.js";
 
   export let navigate;
   let checkPressed = false;

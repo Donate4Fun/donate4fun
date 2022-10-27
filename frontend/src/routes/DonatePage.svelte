@@ -1,16 +1,16 @@
 <script>
   import { navigate } from "svelte-navigator";
 
-  import api from "../lib/api.js";
-  import Donate from '../lib/Donate.svelte';
-  import Section from "../lib/Section.svelte";
-  import YoutubeChannel from "../lib/YoutubeChannel.svelte";
-  import Input from "../lib/Input.svelte";
-  import FiatAmount from "../lib/FiatAmount.svelte";
-  import Button from "../lib/Button.svelte";
-  import Spinner from "../lib/Spinner.svelte";
-  import Loading from "../lib/Loading.svelte";
-  import ChannelLogo from "../lib/ChannelLogo.svelte";
+  import api from "$lib/api.js";
+  import Donate from '$lib/Donate.svelte';
+  import Section from "$lib/Section.svelte";
+  import YoutubeChannel from "$lib/YoutubeChannel.svelte";
+  import Input from "$lib/Input.svelte";
+  import FiatAmount from "$lib/FiatAmount.svelte";
+  import Button from "$lib/Button.svelte";
+  import Spinner from "$lib/Spinner.svelte";
+  import Loading from "$lib/Loading.svelte";
+  import ChannelLogo from "$lib/ChannelLogo.svelte";
   import title from "$lib/title.js";
 
   export let channel_id;

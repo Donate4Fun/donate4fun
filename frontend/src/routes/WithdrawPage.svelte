@@ -1,17 +1,17 @@
 <script>
   import {createEventDispatcher, onDestroy} from "svelte";
   import { link, useResolve } from "svelte-navigator";
-  import Loading from "../lib/Loading.svelte";
-  import Donator from "../lib/Donator.svelte";
-  import Amount from "../lib/Amount.svelte";
-  import Error from "../lib/Error.svelte";
-  import Button from "../lib/Button.svelte";
-  import Lnurl from "../lib/Lnurl.svelte";
-  import Section from "../lib/Section.svelte";
-  import QRCode from "../lib/QRCode.svelte";
-  import ChannelLogo from "../lib/ChannelLogo.svelte";
-  import title from "../lib/title.js";
-  import api from "../lib/api.js";
+  import Loading from "$lib/Loading.svelte";
+  import Donator from "$lib/Donator.svelte";
+  import Amount from "$lib/Amount.svelte";
+  import Error from "$lib/Error.svelte";
+  import Button from "$lib/Button.svelte";
+  import Lnurl from "$lib/Lnurl.svelte";
+  import Section from "$lib/Section.svelte";
+  import QRCode from "$lib/QRCode.svelte";
+  import ChannelLogo from "$lib/ChannelLogo.svelte";
+  import title from "$lib/title.js";
+  import api from "$lib/api.js";
 
   export let channel_id;
   export let navigate;

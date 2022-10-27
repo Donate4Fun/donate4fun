@@ -1,15 +1,15 @@
 <script>
   import {createEventDispatcher, onMount, onDestroy} from 'svelte';
-  import Button from "../lib/Button.svelte";
-  import QRCode from "../lib/QRCode.svelte";
-  import Loading from "../lib/Loading.svelte";
-  import Lnurl from "../lib/Lnurl.svelte";
-  import Amount from "../lib/Amount.svelte";
-  import YoutubeChannel from "../lib/YoutubeChannel.svelte";
-  import Donator from "../lib/Donator.svelte";
+  import Button from "$lib/Button.svelte";
+  import QRCode from "$lib/QRCode.svelte";
+  import Loading from "$lib/Loading.svelte";
+  import Lnurl from "$lib/Lnurl.svelte";
+  import Amount from "$lib/Amount.svelte";
+  import YoutubeChannel from "$lib/YoutubeChannel.svelte";
+  import Donator from "$lib/Donator.svelte";
   import NeedHelp from "$lib/NeedHelp.svelte";
-  import { partial } from "../lib/utils.js";
-  import api from "../lib/api.js";
+  import { partial } from "$lib/utils.js";
+  import api from "$lib/api.js";
   import { me } from "$lib/session.js";
 
   export let donation;
