@@ -5,16 +5,16 @@
 
 <div style="
   position: fixed;
-  top: 50px;
+  top: -50px;
   left: 0;
-  height: 30vh;
+  height: 100vh;
   width: 100vw;
   display: flex;
   justify-content: center;
   overflow: hidden;
   pointer-events: none;"
 >
-  <Confetti x={[-5, 5]} y={[0, 0.1]} delay={[300, 2000]} amount=500 fallDistance="30vh" />
+  <Confetti x={[-4, 4]} y={[-0.2, 0.1]} delay={[0, 2000]} duration=5000 amount=200 fallDistance="100vh" />
 </div>
 <main>
   <h1>Thank you for downloading Donate4.Fun</h1>
