@@ -7,3 +7,6 @@
 docker/
 .direnv/
 secrets/
+backups/
+extensions/
+charts/
