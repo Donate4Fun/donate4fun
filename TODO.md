@@ -4,7 +4,6 @@ todo:
 - add more wallets to landing step 2
 - revert donations after 3 months of donatee absense
 - withdraw from donator balance
-- variable donation amount in bolt button
 - add analytics to extension
 
 nice to be done:
@@ -16,13 +15,15 @@ nice to be done:
 - subscribe to changes using VAPID instead of websockets
 - enable loop and pool in lnd
 - integrate ramp.network for fiat fulfillments
+- integrate https://github.com/snok/asgi-correlation-id
+- e2e testing with cypress or playwright
 
 look-and-feel:
 - restyle youtube bolt animation and popup animation
 - login page: add confirmation to reset wallet / disconnect
 - speed up first donation on a video (dont wait for youtube api)
 - https://blaze-slider.dev/ for donations list on landing
-- animate landing elements on scroll
+- animate landing elements on scroll (difficult =()
 
 bugs:
 - add spinner to fulfillment page
@@ -30,6 +31,7 @@ bugs:
 - refresh extension popup balance after fulfill
 
 fixed:
+- variable donation amount in bolt button
 - pause toast timer while tab is in background (works only in chrome)
 - confetti on welcome page
 - nowebln popup: do not show "get webln enabled wallet" if webln is present
