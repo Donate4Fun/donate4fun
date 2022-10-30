@@ -5,7 +5,6 @@
   import QRCode from "$lib/QRCode.svelte";
   import Section from "$lib/Section.svelte";
   import Loading from "$lib/Loading.svelte";
-  import Spinner from "$lib/Spinner.svelte";
   import NeedHelp from "$lib/NeedHelp.svelte";
   import api from "$lib/api.js";
   import { me, resetMe, reloadMe } from "$lib/session.js";
@@ -84,9 +83,6 @@
           <Button class="grey" on:click={() => navigate(-1)}>Cancel</Button>
           <NeedHelp />
         </div>
-        <div class=waiting>
-          <Spinner /><span>Waiting for you...</span>
-        </div>
       {:catch err}
         <p>Catch {err}</p>
       {/await}
@@ -116,9 +112,5 @@ div.buttons {
   gap: 1em;
   align-items: center;
   margin-bottom: 40px;
-}
-div.waiting {
-  display: flex;
-  align-items: center;
 }
 </style>

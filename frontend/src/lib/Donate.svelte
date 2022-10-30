@@ -7,7 +7,6 @@
   import Section from "$lib/Section.svelte";
   import Input from "$lib/Input.svelte";
   import Button from "$lib/Button.svelte";
-  import Spinner from "$lib/Spinner.svelte";
   import FiatAmount from "$lib/FiatAmount.svelte";
 
 	const dispatch = createEventDispatcher();

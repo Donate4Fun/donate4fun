@@ -3,7 +3,6 @@
   import Logo from "$lib/Logo.svelte";
   import Social from "$lib/Social.svelte";
   import Userpic from "$lib/Userpic.svelte";
-  import Spinner from "$lib/Spinner.svelte";
   import Button from "$lib/Button.svelte";
   import WalletLogin from "$lib/WalletLogin.svelte";
   import { me } from "$lib/session.js";

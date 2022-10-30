@@ -1,7 +1,6 @@
 <script>
   import { navigate } from "svelte-navigator";
   import { custom_event, get_current_component } from 'svelte/internal'
-  import Spinner from "$lib/Spinner.svelte";
 
   export let link = null;
   export let target = null;

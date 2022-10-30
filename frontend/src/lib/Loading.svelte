@@ -1,8 +1,8 @@
 <script>
-  import Spinner from "$lib/Spinner.svelte";
+  import Loader from "$lib/Loader.svelte";
 </script>
 <div>
-  <Spinner --size=5em --width=1em />
+  <Loader --size=5em />
   <h1>Loading...</h1>
 </div>
 
