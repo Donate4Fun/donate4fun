@@ -82,7 +82,7 @@
       🔥Instant delivery and withdraw with Lightning network. No KYC.🔥
     </div>
     <div class="desktop-only" on:click={showExtensionPopup}>
-      <Button --width=300px>Get extension</Button>
+      <Button --width=300px>Get Extension</Button>
     </div>
     <form on:submit|preventDefault={submitEmail} class="mobile-only flex-column gap-18 text-align-center">
       Currently we support only desktop browsers.
