@@ -505,11 +505,8 @@ class DbSession:
             registered_donator_id = resp.scalar()
             if registered_donator_id is None:
                 registered_donator_id = donator_id
-        await self.notify(f'donator:{donator_id}', Notification(
-            id=donator_id,
-            status='ok',
-            message=Credentials(donator=registered_donator_id, lnauth_pubkey=key).to_jwt()
-        ))
+
+        return Credentials(donator=registered_donator_id, lnauth_pubkey=key)
 
     async def link_youtube_channel(self, youtube_channel: YoutubeChannel, donator: Donator):
         await self.execute(

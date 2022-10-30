@@ -394,12 +394,12 @@ class LoginLnurlResponse(BaseModel):
     lnurl: str
 
 
-@router.get('/lnauth', response_model=LoginLnurlResponse)
-async def login_lnauth(request: Request, donator=Depends(get_donator)):
+@router.get('/lnauth/{nonce}', response_model=LoginLnurlResponse)
+async def login_lnauth(request: Request, nonce: UUID, donator=Depends(get_donator)):
     url_start = request.app.url_path_for('lnauth_callback').make_absolute_url(settings.lnd.lnurl_base_url)
     query_string = urlencode(dict(
         tag='login',
-        k1=donator.id.bytes.hex() * 2,  # k1 size should be 32 bytes
+        k1=donator.id.bytes.hex() + nonce.bytes.hex(),  # k1 size should be 32 bytes
         action='link',
     ))
     return LoginLnurlResponse(lnurl=lnurl_encode(f'{url_start}?{query_string}'))
@@ -414,7 +414,13 @@ async def lnauth_callback(
         vk = ecdsa.VerifyingKey.from_string(bytes.fromhex(key), curve=ecdsa.SECP256k1)
         vk.verify_digest(bytes.fromhex(sig), k1_bytes, sigdecode=ecdsa.util.sigdecode_der)
         donator_id = UUID(bytes=k1_bytes[:16])
-        await db_session.login_donator(donator_id, key)
+        nonce = UUID(bytes=k1_bytes[16:])
+        credentials: Credentials = await db_session.login_donator(donator_id, key=key)
+        await db_session.notify(f'lnauth:{nonce}', Notification(
+            id=nonce,
+            status='ok',
+            message=credentials.to_jwt(),
+        ))
     except Exception as exc:
         logger.exception("Error in lnuath callback")
         return dict(status="ERROR", reason=str(exc))

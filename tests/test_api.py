@@ -312,7 +312,8 @@ async def test_lnauth(client, case_name, _registered_donator, donator_id, pubsub
     """
     donator_id: temporary donator id (like those given to user when he opens the site without session)
     """
-    lnauth_response = await client.get('/api/v1/lnauth')
+    nonce = UUID(int=0)
+    lnauth_response = check_response(await client.get(f'/api/v1/lnauth/{nonce}'))
     lnurl = _lnurl_decode(lnauth_response.json()['lnurl'])
     lnurl_parsed = urlparse(lnurl)
     query = parse_qs(lnurl_parsed.query, strict_parsing=True)
@@ -322,7 +323,7 @@ async def test_lnauth(client, case_name, _registered_donator, donator_id, pubsub
     sk = ecdsa.SigningKey.generate(entropy=ecdsa.util.PRNG(b'seed'), curve=ecdsa.SECP256k1)
     signature = sk.sign_digest_deterministic(bytes.fromhex(k1), sigencode=ecdsa.util.sigencode_der)
     callback_url = urlunparse(list(lnurl_parsed)[:3] + [''] * 3)
-    async with client.ws_session(f'/api/v1/subscribe/donator:{donator_id}') as ws:
+    async with client.ws_session(f'/api/v1/subscribe/lnauth:{nonce}') as ws:
         callback_response = await client.get(callback_url, params=dict(
             sig=signature.hex(),
             key=sk.verifying_key.to_string().hex(),

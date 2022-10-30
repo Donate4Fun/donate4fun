@@ -17,12 +17,12 @@
   let ws;
 
   async function load() {
-    cLog("login page load");
     const params = new URLSearchParams(location.search);
     const return_ = params.get('return');
     const mee = await me.get();
     await ws?.close();
-    ws = await api.subscribe("donator:" + mee.donator.id, { autoReconnect: false });
+    const nonce = crypto.randomUUID();
+    ws = await api.subscribe("lnauth:" + nonce, { autoReconnect: false });
     ws.on("notification", async (token) => {
       await ws.close();
       await api.post('update-session', {creds_jwt: token.message});
@@ -35,7 +35,7 @@
         notify("Success", `You've successefully disconnected your wallet`, "success");
     });
     await ws.ready();
-    const response = await api.get('lnauth');
+    const response = await api.get('lnauth/' + nonce);
     return response.lnurl;
   }
   onDestroy(() => ws?.close());
@@ -43,6 +43,15 @@
   async function disconnect() {
     await api.post('disconnect-wallet');
     await reloadMe();
+  }
+
+  async function connect(lnurl) {
+    if (window.webln) {
+      await window.webln.enable();
+      await window.webln.lnurl(lnurl);
+    } else {
+      window.location = `lightning:${lnurl}`;
+    }
   }
 </script>
 
@@ -61,7 +70,7 @@
       {#await load() then lnurl}
         <a href="lightning:{lnurl}" class="qrcode"><QRCode value={lnurl} /></a>
         <div class="buttons">
-          <Button link="lightning:{lnurl}">Connect using Wallet</Button>
+          <Button on:click={() => connect(lnurl)}>Connect using Wallet</Button>
           <Lnurl lnurl="{lnurl}" class="lnurl" />
           <Button class="white" on:click={resetMe}>Reset account</Button>
           {#if me.donator.lnauth_pubkey}
