@@ -67,6 +67,7 @@ async function isValid() {
   const decoded = jwt_decode(sessionCookie);
   if (!decoded)
     return false;
+  cLog("me from cookie", decoded);
   return (
     decoded.donator === me.donator.id
     && decoded.lnauth_pubkey === me.donator.lnauth_pubkey
@@ -75,7 +76,6 @@ async function isValid() {
 }
 
 async function onCookieChanged(changeInfo) {
-  cLog("onCookieChanged", changeInfo);
   const cookie = changeInfo.cookie;
   const domain = getCookieDomain();
   const domainNoDot = domain.slice(1);
