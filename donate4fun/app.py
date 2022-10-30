@@ -14,11 +14,12 @@ from hypercorn.asyncio import serve as hypercorn_serve
 from hypercorn.config import Config
 from debug_toolbar.middleware import DebugToolbarMiddleware
 from starlette_authlib.middleware import AuthlibMiddleware
+from starlette.datastructures import MutableHeaders
 from fastapi.responses import JSONResponse
 from httpx import HTTPStatusError
 from pydantic import ValidationError as PydanticValidationError
 
-from .settings import load_settings, Settings
+from .settings import load_settings, Settings, settings
 from .db import Database, NoResultFound
 from .lnd import monitor_invoices, LndClient
 from .pubsub import PubSubBroker
@@ -100,10 +101,28 @@ async def create_app(settings: Settings):
         AuthMiddleware, settings=settings,
         domain=settings.cookie_domain,
     )
+    app.add_middleware(ServerNameMiddleware)
     app.mount("/static", StaticFiles(directory="donate4fun/static"), name="static")
     app.include_router(api.router, prefix="/api/v1")
     app.include_router(web.router, prefix="")
     yield app
+
+
+class ServerNameMiddleware:
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+
+        async def send_with_name(message):
+            if message["type"] == "http.response.start":
+                headers = MutableHeaders(scope=message)
+                headers['Server'] = settings.server_name
+            await send(message)
+
+        await self.app(scope, receive, send_with_name)
 
 
 class AuthMiddleware(AuthlibMiddleware):

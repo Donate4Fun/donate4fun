@@ -28,6 +28,7 @@ backend:
       bind: '[::]:8080'
       websocket_ping_interval: 10
       access_log_format: '%(h)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"'
+      include_server_header: false
     youtube:
       refresh_timeout: P1D
       oauth:
