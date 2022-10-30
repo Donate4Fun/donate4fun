@@ -184,6 +184,7 @@ async def me(request: Request, db=Depends(get_db_session), donator: Donator = De
     linked_youtube_channels: list[YoutubeChannel] = await db.query_donator_youtube_channels(donator.id)
     # FIXME: balance is saved in cookie to notify extension about balance change, but it should be done via VAPID
     request.session['balance'] = donator.balance
+    request.session['lnauth_pubkey'] = donator.lnauth_pubkey
     return MeResponse(donator=donator, youtube_channels=linked_youtube_channels)
 
 
