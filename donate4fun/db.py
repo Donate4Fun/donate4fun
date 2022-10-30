@@ -67,6 +67,7 @@ class YoutubeChannelLink(Base):
 
     youtube_channel_id = Column(Uuid(as_uuid=True), ForeignKey(YoutubeChannelDb.id), primary_key=True)
     donator_id = Column(Uuid(as_uuid=True), ForeignKey(DonatorDb.id), primary_key=True)
+    created_at = Column(TIMESTAMP, server_default=func.now())
 
 
 class DonationDb(Base):
