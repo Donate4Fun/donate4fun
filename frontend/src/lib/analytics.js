@@ -10,17 +10,27 @@ export const trackingEnabled = writableStorage('track', null);
 const websiteOnlyPlugins = isInsideExtension() ? [] : [googleAnalytics({
   measurementIds: ['G-K9B229WW3F'],
 })];
+const plugins = import.meta.env.DEV ? [] : [
+  plausiblePlugin({
+    apiHost: "/proxy/event",
+    trackLocalhost: true,
+  }),
+];
 
+// Workaround for
+// >> TypeError: 'addEventListener' called on an object that does not implement interface EventTarget.
+// window object does not implement EventTarget inside content script context
+// (it's used here https://github.com/DavidWells/analytics/blob/052bd9262f92758f024248b35dc044d7aca74d4a/packages/analytics-core/src/utils/handleNetworkEvents.js#L5)
+const origAdd = window.addEventListener;
+window.addEventListener = () => {};
 export const analytics = Analytics({
   app: "donate4fun",
   plugins: [
-    plausiblePlugin({
-      apiHost: "/proxy/event",
-      trackLocalhost: true,
-    }),
+    ...plugins,
     ...websiteOnlyPlugins,
   ],
 });
+window.addEventListener = origAdd;
 
 analytics.on("ready", () => {
   if (!isInsideExtension()) {
