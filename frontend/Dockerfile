@@ -11,6 +11,7 @@ COPY public /app/public
 COPY src /app/src
 COPY index.html /app/index.html
 ENV VITE_VERSION=$VERSION
+ENV BASE_URL=%HOST%
 RUN pnpm build
 
 FROM nginx:alpine
