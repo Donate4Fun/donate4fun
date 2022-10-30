@@ -3,6 +3,7 @@ import WebSocket from "async-ws";
 import { notify } from "$lib/notifications.js";
 import { writable, get as store_get } from 'svelte/store';
 import { sleep } from "$lib/utils.js";
+import { analytics } from "$lib/analytics.js";
 
 const apiOrigin = writable(window.location.origin);
 
@@ -69,6 +70,7 @@ function subscribe(topic, options) {
 };
 
 async function post(path, body) {
+  analytics.track(`api-${path}`);
   try {
     const resp = await axios.post(fullpath(path), body);
     return handle_response(resp);
