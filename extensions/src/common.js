@@ -55,9 +55,11 @@ async function callTab(tab, func, args) {
   cLog("sending to tab", tab, func, args, msg);
   const result = await browser.tabs.sendMessage(tab.id, msg);
   cLog("received from tab", tab, result);
-  if (result.status === "error")
-    throw new Error(result.message);
-  else
+  if (result.status === "error") {
+    const error = new Error(result.message);
+    error.stack = result.stack;
+    throw error;
+  } else
     return result.response;
 };
 
