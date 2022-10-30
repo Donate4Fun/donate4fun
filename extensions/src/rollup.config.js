@@ -81,7 +81,7 @@ function makeConfig(name, options) {
       }),
       replace({
         "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV),
-        "process.env.DEV": dev,
+        "import.meta.env.DEV": dev,
         preventAssignment: false,
       }),
       copy({

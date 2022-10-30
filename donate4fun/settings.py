@@ -123,6 +123,7 @@ class Settings(BaseSettings):
     cookie_http_only: bool = False
     latest_donations_count: int = 50
     redirect_base_url: str = ''
+    server_name: str = ''
 
     class Config:
         env_nested_delimiter = '__'

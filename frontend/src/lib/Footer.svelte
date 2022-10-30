@@ -3,10 +3,12 @@
   import GithubBrand from "svelte-awesome-icons/GithubBrand.svelte";
   import DiscordBrand from "svelte-awesome-icons/DiscordBrand.svelte";
   import TwitterBrand from "svelte-awesome-icons/TwitterBrand.svelte";
+
+  const version = import.meta.env.VITE_VERSION;
 </script>
 
 <footer>
-  <div>2022 Donate4Fun<sup>©</sup></div>
+  <div title={version}>2022 Donate4Fun<sup>©</sup></div>
   <div class="links">
     <a target=_blank href="https://twitter.com/donate4_fun"><TwitterBrand size=32 color="var(--link-color)" /></a>
     <a target=_blank href="https://github.com/donate4Fun/donate4fun"><GithubBrand size=32 color="var(--link-color)" /></a>

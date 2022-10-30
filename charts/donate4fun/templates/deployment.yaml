@@ -55,6 +55,8 @@ spec:
           value: {{ .Release.Revision | quote }}
         - name: rollbar__code_version
           value: {{ .Release.Revision | quote }}
+        - name: server_name
+          value: {{ .Values.version | quote }}
       - name: frontend
         image: {{ include "donate4fun.image" .Values.frontend }}
         imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}

@@ -2,10 +2,11 @@
 
 backend_repo=europe-central2-docker.pkg.dev/donate4fun-prod/docker/donate4fun-backend
 frontend_repo=europe-central2-docker.pkg.dev/donate4fun-prod/docker/donate4fun-frontend
+version=$(git describe --tags --dirty)
 
 function build() {
   local repo=$1
-  docker build -t $repo . >&2
+  docker build --build-arg VERSION=$version -t $repo . >&2
   docker push $repo >&2
 }
 
@@ -45,4 +46,4 @@ fi
 backend_digest=$(digest $backend_repo)
 frontend_digest=$(digest $frontend_repo)
 
-helm upgrade --install --create-namespace --namespace $namespace --values charts/donate4fun.yaml $extra_args --values secrets://charts/secrets.donate4fun.yaml --set backend.image.digest=$backend_digest --set frontend.image.digest=$frontend_digest --wait $release charts/donate4fun
+helm upgrade --install --create-namespace --namespace $namespace --values charts/donate4fun.yaml $extra_args --values secrets://charts/secrets.donate4fun.yaml --set backend.image.digest=$backend_digest --set version=$version --set frontend.image.digest=$frontend_digest --wait $release charts/donate4fun
