@@ -482,10 +482,9 @@ class DbSession:
         registered_donator_id = None
         if key is not None:
             resp = await self.execute(
-                select(DonatorDb).where(DonatorDb.lnauth_pubkey == key)
+                select(DonatorDb.id).where(DonatorDb.lnauth_pubkey == key)
             )
-            registered_donator = resp.scalar()
-            registered_donator_id = registered_donator.id
+            registered_donator_id = resp.scalar()
         if registered_donator_id is None:
             # No existing donator with lnauth_pubkey
             resp = await self.execute(
@@ -501,9 +500,9 @@ class DbSession:
                     },
                     where=(func.coalesce(DonatorDb.lnauth_pubkey, '') != key),
                 )
-                .returning(DonatorDb.id, DonatorDb.balance)
+                .returning(DonatorDb.id)
             )
-            registered_donator_id, balance = resp.scalar()
+            registered_donator_id = resp.scalar()
             if registered_donator_id is None:
                 registered_donator_id = donator_id
         await self.notify(f'donator:{donator_id}', Notification(
