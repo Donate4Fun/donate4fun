@@ -5,7 +5,6 @@
   import YoutubeChannel from "$lib/YoutubeChannel.svelte";
   import ChannelLogo from "$lib/ChannelLogo.svelte";
   import Button from "$lib/Button.svelte";
-  import Spinner from "$lib/Spinner.svelte";
   import Infobox from "$lib/Infobox.svelte";
   import Separator from "$lib/Separator.svelte";
   import LinkedYoutubeChannels from "$lib/LinkedYoutubeChannels.svelte";

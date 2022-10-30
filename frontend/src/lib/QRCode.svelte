@@ -1,7 +1,6 @@
 <script>
   import { onMount } from "svelte";
   import QRCode from 'qrcode';
-  import Spinner from "$lib/Spinner.svelte";
 
   export let value;
   let canvas;

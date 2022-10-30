@@ -1,12 +1,14 @@
 <script>
   import Button from "$lib/Button.svelte";
   import Spinner from "$lib/Spinner.svelte";
+  import Loader from "$lib/Loader.svelte";
   import {notify} from '$lib/notifications.js';
 
   let i = 0;
 </script>
 
 <Spinner />
+<Loader />
 <div><Button on:click={() => {notify(`default title ${i}`, 'default message', 'error', 15000); i++;}}>button</Button></div>
 
 <style>
