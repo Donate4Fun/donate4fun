@@ -7,17 +7,41 @@
 </script>
 
 {#await $me}
-  <Button class="grey" --width=100%>...</Button>
+  <Button class="grey">...</Button>
 {:then me}
-  {#if me.donator.lnauth_pubkey}
-    <Button link={resolve('/login')} --width=100% --background-image="linear-gradient(90deg, #66E4FF 0%, #F68EFF 100%)">
-      <span class="ellipsis">{me.shortkey}</span>
-    </Button>
-  {:else}
-    <Button class="white" link={resolve('/login')} --width=100% target={target}>
+  <Button class="white" link={resolve('/login')} target={target} --padding="0" --height="40px" --width="160px" --border-width="1px">
+    {#if me.connected}
+      <div class="inner">
+        <p class="connected">Wallet connected <img src="/static/checkbox.svg" alt="checkbox"></p>
+        <p class="pubkey ellipsis">{me.shortkey}</p>
+      </div>
+    {:else}
       Connect Wallet
-    </Button>
-  {/if}
+    {/if}
+  </Button>
 {:catch err}
   <p>Catch {err}</p>
 {/await}
+<style>
+.inner {
+  display: flex;
+  flex-direction: column;
+  color: var(--color);
+}
+.connected {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+
+  font-weight: 500;
+  font-size: 11px;
+  line-height: 16px;
+  letter-spacing: 0.01em;
+}
+.pubkey {
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 16px;
+  text-align: left;
+}
+</style>
