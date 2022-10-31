@@ -53,17 +53,23 @@
   }
 </script>
 
-<button {...$$restProps} on:click={click} disabled={disabled || spin} class:selected class:dimmed>
-  <div class="flex-row align-center">
-    {#if spin}
-      <div class="spinner"></div>
-    {:else}
-      <slot />
-    {/if}
-  </div>
-</button>
+<div class="root">
+  <button {...$$restProps} on:click={click} disabled={disabled || spin} class:selected class:dimmed>
+    <div class="flex-row align-center">
+      {#if spin}
+        <div class="spinner"></div>
+      {:else}
+        <slot />
+      {/if}
+    </div>
+  </button>
+</div>
 
 <style>
+.root {
+  display: contents;
+  ---border-width: var(--border-width, 2px);
+}
 button {
   background-image: var(--background-image, linear-gradient(90deg, #F9F03E 0%, #9DEDA2 100%));
   font-weight: var(--font-weight, 700);
@@ -92,11 +98,11 @@ button.white,button.light,button.blue,button.grey {
 /* border */
 button.white,button.light {
   background-image: linear-gradient(to right, #F9F03E 0%, #9DEDA2 100%);
-  padding: 2px;
+  padding: var(---border-width);
 }
 button.blue {
   background: rgba(46, 108, 255, 0.2);
-  padding: 2px;
+  padding: var(---border-width);
 }
 button.grey {
   background: #E9E9E9;
@@ -106,7 +112,7 @@ button.white > div,button.light > div, button.blue > div {
   padding: var(--padding, 10px 23px);  /* parent padding - 2px (pseudo-border) */
 }
 button.selected {
-  border: 2px solid #FF8A00;
+  border: var(---border-width) solid #FF8A00;
   box-shadow: none;
 }
 button.dimmed {
