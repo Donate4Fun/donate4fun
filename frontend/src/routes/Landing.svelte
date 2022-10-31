@@ -77,26 +77,33 @@
 <ExtensionPopup bind:show={extensionPopupShown} />
 <div class="landing">
   <section class="header" id="main">
-    <h1>One click instant donations with <span class="gradient-light">Bitcoin ⚡ Lightning on Youtube. <span class="gradient-dark">Near zero fees.</span></span></h1>
-    <div class="annotation">
-      🔥Instant delivery and withdraw with Lightning network. No KYC.🔥
+    <div class="main-upper">
+      <div class="main-upper-left">
+        <h1>One click instant donations with <span class="gradient-light">Bitcoin ⚡ Lightning on Youtube. <span class="gradient-dark">Near zero fees.</span></span></h1>
+        <div class="annotation">
+          🔥Instant delivery and withdraw with Lightning network. No KYC.🔥
+        </div>
+        <div class="desktop-only" on:click={showExtensionPopup}>
+          <Button --width=300px>Get Extension</Button>
+        </div>
+        <form on:submit|preventDefault={submitEmail} class="mobile-only flex-column gap-18 text-align-center">
+          Currently we support only desktop browsers.
+          <Input bind:value={email} placeholder="Add your email" />
+          <Button type=submit>
+            {#if emailAdded === null}
+              Notify me when app is ready
+            {:else if emailAdded === true}
+              You've been subscribed!
+            {:else if emailAdded === false}
+              Already subscribed!
+            {/if}
+          </Button>
+        </form>
+      </div>
+      <div class="main-upper-right">
+        <img src="/static/popup-screenshot.png" alt="extension screenshot" height=500>
+      </div>
     </div>
-    <div class="desktop-only" on:click={showExtensionPopup}>
-      <Button --width=300px>Get Extension</Button>
-    </div>
-    <form on:submit|preventDefault={submitEmail} class="mobile-only flex-column gap-18 text-align-center">
-      Currently we support only desktop browsers.
-      <Input bind:value={email} placeholder="Add your email" />
-      <Button type=submit>
-        {#if emailAdded === null}
-          Notify me when app is ready
-        {:else if emailAdded === true}
-          You've been subscribed!
-        {:else if emailAdded === false}
-          Already subscribed!
-        {/if}
-      </Button>
-    </form>
     <video autoplay muted loop src="/static/sample.webm" width=640px />
   </section>
   <section id="howto">
@@ -177,7 +184,6 @@
   display: flex;
   flex-direction: column;
   gap: 88px;
-  padding-top: 140px;
 }
 section {
   display: flex;
@@ -198,13 +204,42 @@ h1, h2 {
     font-size: 32px;
     line-height: 40px;
   }
+  .main-upper {
+    margin-top: 40px;
+    flex-direction: column-reverse;
+    gap: 72px;
+  }
+  .main-upper-left h1 {
+    text-align: center;
+    flex-grow: 0;
+  }
+  .main-upper-left, .main-upper-right {
+    justify-content: center
+  }
   :not(#main) > h1 {
     margin-bottom: 28px;
+  }
+  .header video {
+    display: none;
+  }
+  .half-box {
+    width: 100%;
+    padding: 28px;
+  }
+  .faq {
+    margin: 0 -28px;
   }
 }
 @media (min-width: 641px) {
   h1 {
     line-height: 56px;
+  }
+  .main-upper {
+    margin-top: 112px;
+    gap: 64px;
+  }
+  .main-upper-left h1 {
+    text-align: left;
   }
   #main > h1 {
     font-size: 44px;
@@ -214,6 +249,14 @@ h1, h2 {
   :not(#main) > h1 {
     font-size: 40px;
     margin-bottom: 28px;
+  }
+  .half-box {
+    width: 560px;
+    padding: 40px;
+    min-height: 535px;
+  }
+  .faq {
+    margin: 0 -40px;
   }
 }
 .gradient-light {
@@ -230,27 +273,23 @@ h1, h2 {
   background-clip: text;
   text-fill-color: transparent;
 }
-@media (min-width: 641px) {
-  .half-box {
-    width: 560px;
-    padding: 40px;
-    min-height: 535px;
-  }
-  .faq {
-    margin: 0 -40px;
-  }
+.main-upper {
+  display: flex;
+  padding: 0 24px;
 }
-@media (max-width: 640px) {
-  .header video {
-    display: none;
-  }
-  .half-box {
-    width: 100%;
-    padding: 28px;
-  }
-  .faq {
-    margin: 0 -28px;
-  }
+.main-upper-left {
+  margin-top: 40px;
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  max-width: 613px;
+}
+.main-upper-right {
+  display: flex;
+}
+.main-upper-right img {
+  filter: drop-shadow(0px 20px 50px rgba(42, 73, 148, 0.15));
+  border-radius: 16px;
 }
 #main .annotation {
   margin-top: 32px;
@@ -258,7 +297,6 @@ h1, h2 {
   font-weight: 500;
   font-size: 20px;
   line-height: 30px;
-  text-align: center;
 }
 #main video {
   margin-top: 56px;
