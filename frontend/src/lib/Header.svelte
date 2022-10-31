@@ -68,6 +68,7 @@ header {
   z-index: 100;
   background: rgba(247, 249, 255, 0.8);
   backdrop-filter: blur(12px);
+  box-shadow: 0px 1px 0px rgba(0, 0, 0, 0.05);
 }
 .userpic {
   --width: 48px;
