@@ -21,8 +21,9 @@ const plugins = import.meta.env.DEV ? [] : [
 // >> TypeError: 'addEventListener' called on an object that does not implement interface EventTarget.
 // window object does not implement EventTarget inside content script context
 // (it's used here https://github.com/DavidWells/analytics/blob/052bd9262f92758f024248b35dc044d7aca74d4a/packages/analytics-core/src/utils/handleNetworkEvents.js#L5)
-const origAdd = window.addEventListener;
-window.addEventListener = () => {};
+const origAdd = window?.addEventListener;
+if (window)
+  window.addEventListener = () => {};
 export const analytics = Analytics({
   app: "donate4fun",
   plugins: [
@@ -30,7 +31,8 @@ export const analytics = Analytics({
     ...websiteOnlyPlugins,
   ],
 });
-window.addEventListener = origAdd;
+if (window)
+  window.addEventListener = origAdd;
 
 analytics.on("ready", () => {
   if (!isInsideExtension()) {
