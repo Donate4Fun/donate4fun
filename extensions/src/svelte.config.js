@@ -7,10 +7,4 @@ export default {
   },
   preprocess: [],
   onwarn: (warning, handler) => handler(warning),
-  // plugin options
-  vitePlugin: {
-    //include: ["Bolt.svelte"],
-    // experimental options
-    experimental: {},
-  }
 };
