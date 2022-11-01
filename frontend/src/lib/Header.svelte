@@ -122,10 +122,6 @@ header {
   }
 }
 @media (min-width: 641px) {
-  .connect-button {
-    width: 204px;
-    --padding: 11px 22px;
-  }
   header {
     padding-left: 28px;
     padding-right: 40px;
@@ -134,12 +130,6 @@ header {
 @media (max-width: 1000px) {
   .quick-links {
     display: none;
-  }
-  .connect-button {
-    width: 180px;
-    font-size: 15px;
-    line-height: 18px;
-    --padding: 11px 20px;
   }
 }
 @media (min-width: 1001px) {
