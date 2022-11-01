@@ -81,7 +81,7 @@
       <div class="main-upper-left">
         <h1>One click instant donations with <span class="gradient-light">Bitcoin ⚡ Lightning on Youtube. <span class="gradient-dark">Near zero fees.</span></span></h1>
         <div class="annotation">
-          🔥Instant delivery and withdraw with Lightning network. No KYC.🔥
+          🔥Instant delivery and withdraw with Lightning network. No KYC.
         </div>
         <div class="desktop-only" on:click={showExtensionPopup}>
           <Button --width=300px>Get Extension</Button>
@@ -207,6 +207,9 @@ h1, h2 {
     font-size: 32px;
     line-height: 40px;
   }
+  #main .annotation {
+    text-align: center;
+  }
   .main-upper {
     margin-top: 40px;
     flex-direction: column-reverse;
@@ -240,11 +243,6 @@ h1, h2 {
   }
   .main-upper-left h1 {
     text-align: left;
-  }
-  #main > h1 {
-    font-size: 44px;
-    width: 100%;
-    max-width: 700px;
   }
   :not(#main) > h1 {
     font-size: 40px;
@@ -282,7 +280,7 @@ h1, h2 {
   display: flex;
   flex-grow: 1;
   flex-direction: column;
-  max-width: 613px;
+  max-width: 620px;
 }
 .main-upper-right {
   display: flex;
@@ -290,6 +288,9 @@ h1, h2 {
 .main-upper-right img {
   filter: drop-shadow(0px 20px 50px rgba(42, 73, 148, 0.15));
   border-radius: 16px;
+}
+#main {
+  gap: 140px;
 }
 #main .annotation {
   margin-top: 32px;
@@ -299,9 +300,10 @@ h1, h2 {
   line-height: 30px;
 }
 #main video {
-  margin-top: 56px;
   box-shadow: 10px 15px 20px rgba(209, 217, 230, 0.15);
   border-radius: 20px;
+  max-width: 100%;
+  padding: 0 16px;
 }
 .half-box {
   display: flex;
