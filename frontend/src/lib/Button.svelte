@@ -1,6 +1,7 @@
 <script>
   import { navigate } from "svelte-navigator";
   import { custom_event, get_current_component } from 'svelte/internal'
+  import Loader from "$lib/Loader.svelte"
 
   export let link = null;
   export let target = null;
@@ -57,7 +58,9 @@
   <button {...$$restProps} on:click={click} disabled={disabled || spin} class:selected class:dimmed>
     <div class="flex-row align-center">
       {#if spin}
-        <div class="spinner"></div>
+        <div class="loader">
+          <Loader />
+        </div>
       {:else}
         <slot />
       {/if}
@@ -133,16 +136,9 @@ button:disabled {
 button:hover:enabled {
   box-shadow: 0px 8px 20px rgba(185, 192, 204, 0.6);
 }
-.spinner::after {
-  display: inline-block;
-  animation: dotty steps(1,end) 1s infinite;
-  content: '';
-}
-@keyframes dotty {
-  0%   { content: ''; }
-  25%  { content: '.'; }
-  50%  { content: '..'; }
-  75%  { content: '...'; }
-  100% { content: ''; }
+.loader {
+  display: flex;
+  align-items: center;
+  height: 1.219em; /* try to emulate 1lh (line-height) unit */
 }
 </style>
