@@ -1,9 +1,5 @@
 <div class="parent">
-  <div class="small">
-    <img class=text src="/static/D.svg" alt="D" width=28>
-  </div>
   <div class="full">
-    <img src="/static/ln-icon.svg" alt="bolt" height=40>
     <div class="stroke-text">
       <svg class="back" height=40 width=200>
         <text class="stroke" x="5px" y="33px">
@@ -49,15 +45,5 @@ div.text {
   stroke: #2E6CFF;
   stroke-width: 8px;
   fill: none;
-}
-@media only screen and (max-width: 640px) {
-  .full {
-    display: none;
-  }
-}
-@media (min-width: 641px) {
-  .small {
-    display: none;
-  }
 }
 </style>
