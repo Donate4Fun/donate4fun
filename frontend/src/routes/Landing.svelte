@@ -235,7 +235,7 @@ h1, h2 {
     line-height: 56px;
   }
   .main-upper {
-    margin-top: 112px;
+    margin-top: 80px;
     gap: 64px;
   }
   .main-upper-left h1 {
