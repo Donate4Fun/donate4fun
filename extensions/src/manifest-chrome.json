@@ -72,7 +72,8 @@
       "static/global.css",
       "static/defaults.css",
       "static/lottie-arrow.json",
-      "static/youtube.svg"
+      "static/youtube.svg",
+      "static/loader.svg"
     ],
     "matches": [
       "https://*.youtube.com/*"
