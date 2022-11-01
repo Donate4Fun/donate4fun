@@ -104,7 +104,10 @@
         <img src="/static/popup-screenshot.png" alt="extension screenshot" height=500>
       </div>
     </div>
-    <video autoplay muted loop src="/static/sample.webm" width=640px />
+    <video autoplay muted loop playsinline width=796px>
+      <!-- source src="/static/sample2.webm" type="video/webm" / -->
+      <source src="/static/sample2.mp4" type="video/mp4" />
+    </video>
   </section>
   <section id="howto">
     <h1 class="gradient-light">How to donate</h1>
@@ -218,9 +221,6 @@ h1, h2 {
   }
   :not(#main) > h1 {
     margin-bottom: 28px;
-  }
-  .header video {
-    display: none;
   }
   .half-box {
     width: 100%;
