@@ -71,7 +71,8 @@
 <style>
 .root {
   display: contents;
-  ---border-width: var(--border-width, 2px);
+  --border-width-secondary: var(--border-width, 2px);
+  --border-width-primary: var(--border-width, 4px);
 }
 button {
   background-image: var(--background-image, linear-gradient(90deg, #F9F03E 0%, #9DEDA2 100%));
@@ -85,7 +86,7 @@ button {
   transition: all 0.2s ease;
   box-shadow: 0px 10px 40px rgba(46, 108, 255, 0.2), 10px 15px 20px rgba(209, 217, 230, 0.15);
 
-  border: 4px solid var(--link-color);
+  border: var(--border-width-primary) solid var(--link-color);
   border-radius: 100px;
   letter-spacing: 0.02em;
 }
@@ -101,11 +102,11 @@ button.white,button.light,button.blue,button.grey {
 /* border */
 button.white,button.light {
   background-image: linear-gradient(to right, #F9F03E 0%, #9DEDA2 100%);
-  padding: var(---border-width);
+  padding: var(--border-width-secondary);
 }
 button.blue {
   background: rgba(46, 108, 255, 0.2);
-  padding: var(---border-width);
+  padding: var(--border-width-secondary);
 }
 button.grey {
   background: #E9E9E9;
@@ -115,7 +116,7 @@ button.white > div,button.light > div, button.blue > div {
   padding: var(--padding, 10px 23px);  /* parent padding - 2px (pseudo-border) */
 }
 button.selected {
-  border: var(---border-width) solid #FF8A00;
+  border: var(--border-width-secondary) solid #FF8A00;
   box-shadow: none;
 }
 button.dimmed {
