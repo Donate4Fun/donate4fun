@@ -57,10 +57,8 @@
 header {
   display: flex;
   align-items: center;
-  gap: 56px;
   place-content: space-between;
   width: 100%;
-  height: 88px;
   box-sizing: border-box;
   font-size: 15px;
   position: sticky;
@@ -69,6 +67,7 @@ header {
   background: rgba(247, 249, 255, 0.8);
   backdrop-filter: blur(12px);
   box-shadow: 0px 1px 0px rgba(0, 0, 0, 0.05);
+  transition: ease 0.3s;
 }
 .userpic {
   --width: 48px;
@@ -119,12 +118,15 @@ header {
   header {
     padding-left: 18px;
     padding-right: 24px;
+    height: 72px;
   }
 }
 @media (min-width: 641px) {
   header {
     padding-left: 28px;
     padding-right: 40px;
+    height: 88px;
+    gap: 56px;
   }
 }
 @media (max-width: 1000px) {
