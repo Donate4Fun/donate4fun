@@ -1,7 +1,6 @@
 todo:
 - add text for investors and vision
 - complete google oauth verification
-- add more wallets to landing step 2
 - revert donations after 3 months of donatee absense
 - withdraw from donator balance
 - add analytics to extension
@@ -19,18 +18,25 @@ nice to be done:
 - e2e testing with cypress or playwright
 
 look-and-feel:
-- restyle youtube bolt animation and popup animation
+- restyle youtube bolt animation and popup animation (think of new round YouTube style)
 - login page: add confirmation to reset wallet / disconnect
 - speed up first donation on a video (dont wait for youtube api)
 - https://blaze-slider.dev/ for donations list on landing
 - animate landing elements on scroll (difficult =()
+- better images for Chrome Web Store and AMO
 
 bugs:
 - add spinner to fulfillment page
 - fulfill invoice: 'need help' is not visible on small screens (x800)
 - refresh extension popup balance after fulfill
 
+marketing:
+- boltz.fun post
+- stacker.news post
+- /r/lightningnetwork post
+
 fixed:
+- add more wallets to landing step 2
 - variable donation amount in bolt button
 - pause toast timer while tab is in background (works only in chrome)
 - confetti on welcome page
