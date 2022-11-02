@@ -79,9 +79,15 @@
   <section class="header" id="main">
     <div class="main-upper">
       <div class="main-upper-left">
-        <h1>One click instant donations with <span class="gradient-light">Bitcoin ⚡ Lightning on Youtube. <span class="gradient-dark">Near zero fees.</span></span></h1>
+        <h1>
+          One click instant donations for YouTubers.
+          <span class="gradient extra-light">No extra fees.</span>
+          <span class="gradient dark">
+            Powered by Bitcoin ⚡️ Lightning.
+          </span>
+        </h1>
         <div class="annotation">
-          🔥Instant delivery and withdraw with Lightning network. No KYC.
+          🔥Support creators with Bitcoin Lightning. Easy donations and withdrawals. No registration or KYC.
         </div>
         <div class="desktop-only" on:click={showExtensionPopup}>
           <Button --width=300px>Get Extension</Button>
@@ -104,17 +110,20 @@
         <img src="/static/popup-screenshot.png" alt="extension screenshot" height=500>
       </div>
     </div>
+  </section>
+  <section id="video">
+    <h1 class="gradient light">How it works</h1>
     <video autoplay muted loop playsinline width=796px>
       <!-- source src="/static/sample2.webm" type="video/webm" / -->
       <source src="/static/sample2.mp4" type="video/mp4" />
     </video>
   </section>
   <section id="howto">
-    <h1 class="gradient-light">How to donate</h1>
+    <h1 class="gradient light">3 steps to donate</h1>
     <LandingSteps />
   </section>
   <section id="donatees">
-    <h1 class="gradient-dark">Top donated</h1>
+    <h1 class="gradient dark">Top donated</h1>
     {#await loadRecentDonatees() then}
       <div class="donatees">
         <div class="flex-row gap-20">
@@ -127,14 +136,14 @@
   </section>
   <section id="claim">
     <img src="/static/coin.png" alt="bitcoin" width=88 height=88>
-    <h1 class="gradient-light">Want to get your donations?</h1>
+    <h1 class="gradient light">Want to get your donations?</h1>
     <Button class="white" --width=300px link={resolve("/prove/youtube")}>Claim here</Button>
   </section>
   <div class="flex-row gap-20 justify-center flex-wrap">
     <Section>
       <div class="half-box">
         <div class="faq-header">
-          <h2 class="gradient-dark">FAQ</h2>
+          <h2 class="gradient dark">FAQ</h2>
           <a href="/faq" use:link>View all<img src="/static/arrow-right.svg" alt="arrow-right"></a>
         </div>
         <div class="faq"><FAQ /></div>
@@ -142,7 +151,7 @@
     </Section>
     <Section>
       <div class="half-box" id="team">
-        <h2 class="gradient-dark">Team</h2>
+        <h2 class="gradient dark">Team</h2>
         <div class="annotation">
           <p>Passionate founders. Big dreamers.</p>
           <p>Proven builders. Ready to change the game.</p>
@@ -151,7 +160,7 @@
           <Person
             name="Nikolay Bryskin"
             title="Founder, developer and creator"
-            photo="/static/nbryskin.jpeg"
+            photo="/static/nbryskin-cartoon.jpeg"
             linkedin="https://linkedin.com/nbryskin"
             twitter="https://twitter.com/nbryskin"
             github="https://github.com/nikicat"
@@ -172,7 +181,7 @@
   </div>
   <section id="roadmap">
     <a href="https://github.com/orgs/Donate4Fun/projects/1" target=_blank>
-      <h1 class="gradient-dark roadmap">Roadmap<sup>
+      <h1 class="gradient dark roadmap">Roadmap<sup>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M 2,2 22,2 22,22 M 22,2 2,22" stroke="#004EE7" stroke-width="3" stroke-linejoin="round"/>
           </svg>
@@ -257,30 +266,35 @@ h1, h2 {
     margin: 0 -40px;
   }
 }
-.gradient-light {
-  background: linear-gradient(89.59deg, #FF9634 27.11%, #DC24A9 92.47%);
-  -webkit-background-clip: text;
+.gradient {
   -webkit-text-fill-color: transparent;
-  background-clip: text;
   text-fill-color: transparent;
 }
-.gradient-dark {
-  background: linear-gradient(90deg, #FF4B4B 0%, #DC24A9 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.extra-light {
+  background: linear-gradient(90deg, #FF9634 10%, #FF4D00 90%);
   background-clip: text;
-  text-fill-color: transparent;
+  -webkit-background-clip: text;
+}
+.light {
+  background: linear-gradient(89.59deg, #FF9634 27.11%, #DC24A9 92.47%);
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+.dark {
+  background: linear-gradient(90deg, #FF4B4B 0%, #DC24A9 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
 }
 .main-upper {
   display: flex;
+  align-items: center;
   padding: 0 24px;
 }
 .main-upper-left {
-  margin-top: 40px;
   display: flex;
   flex-grow: 1;
   flex-direction: column;
-  max-width: 620px;
+  max-width: 730px;
 }
 .main-upper-right {
   display: flex;
@@ -299,7 +313,7 @@ h1, h2 {
   font-size: 20px;
   line-height: 30px;
 }
-#main video {
+video {
   box-shadow: 10px 15px 20px rgba(209, 217, 230, 0.15);
   border-radius: 20px;
   max-width: 100%;
