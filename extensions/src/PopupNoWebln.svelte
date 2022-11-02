@@ -41,7 +41,7 @@
         link="https://github.com/Donate4Fun/donate4fun/blob/master/docs/HELP.md#what-wallet-should-i-use"
       >Fulfill your wallet. How?</Button>
     {:else}
-      <p class="message">You haven't enought sats and WebLN-enabled wallet is not available. You may either</p>
+      <p class="message">You don't have enought sats and WebLN-enabled wallet is not available. You may either</p>
       <Button
         --height=72px
         class=light
