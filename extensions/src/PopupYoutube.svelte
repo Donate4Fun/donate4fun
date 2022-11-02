@@ -93,9 +93,9 @@
         </div>
         {#await $me then me}
           {#if amount <= me.donator.balance}
-            <Button --width=100% on:click={donate} --padding="9px">Donate</Button>
+            <Button --width=100% on:click={donate} --padding="9px" --border-width="0">Donate</Button>
           {:else}
-            <Button --width=100% on:click={donate} --padding="9px">Donate with WebLN</Button>
+            <Button --width=100% on:click={donate} --padding="9px" --border-width="0">Donate with WebLN</Button>
           {/if}
         {/await}
       </div>
