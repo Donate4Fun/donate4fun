@@ -21,6 +21,7 @@
   import PrivacyPage from "./routes/Privacy.svelte";
   import Welcome from "./routes/Welcome.svelte";
   import FAQPage from "./routes/FAQ.svelte";
+  import InstallWebLNWalletPage from "./routes/InstallWebLNWalletPage.svelte";
 
   const url = "";
 
@@ -56,6 +57,7 @@
     <Route path="privacy"><PrivacyPage /></Route>
     <Route path="welcome"><Welcome /></Route>
     <Route path="faq"><FAQPage /></Route>
+    <Route path="install-webln-wallet"><InstallWebLNWalletPage /></Route>
     <Route path="/"><Landing /></Route>
     <Route component={NotFoundPage}></Route>
   </Page>
