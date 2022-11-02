@@ -44,8 +44,8 @@
       contentScript.onPaid(await contentScript.donate(amount, target));
     } catch (err) {
       console.error("Failed to donate", err);
-      if (err.message === "No webln found")
-        navigate(`/nowebln/${amount}`);
+      const rejected = err.message === 'User rejected';
+      navigate(`/nowebln/${amount}/${rejected}`);
     }
   }
 </script>

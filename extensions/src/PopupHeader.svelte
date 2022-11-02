@@ -64,9 +64,13 @@
                 <Fa icon={faWindowRestore} size=2x color={iconColor} />
                 <span>Create popup window</span>
               </div>
-              <div on:click={() => navigate('/nowebln/1000')}>
+              <div on:click={() => navigate('/nowebln/1000/false')}>
                 <Fa icon={faHashtag} size=2x color={iconColor} />
-                <span>Open NoWebLN page</span>
+                <span>Open no WebLN page</span>
+              </div>
+              <div on:click={() => navigate('/nowebln/1000/true')}>
+                <Fa icon={faHashtag} size=2x color={iconColor} />
+                <span>Open WebLN rejected page</span>
               </div>
             {/if}
           {/await}
