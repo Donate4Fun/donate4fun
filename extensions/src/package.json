@@ -1,6 +1,6 @@
 {
   "name": "browser-extension-donate4fun-firefox",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "Donate4Fun Firefox extension.",
   "homepage": "https://donate4.fun",
   "type": "module",
