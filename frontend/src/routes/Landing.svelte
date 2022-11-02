@@ -79,15 +79,17 @@
   <section class="header" id="main">
     <div class="main-upper">
       <div class="main-upper-left">
-        <h1>
-          One click instant donations for YouTubers.
-          <span class="gradient extra-light">No extra fees.</span>
-          <span class="gradient dark">
-            Powered by Bitcoin ⚡️ Lightning.
-          </span>
-        </h1>
-        <div class="annotation">
-          🔥Support creators with Bitcoin Lightning. Easy donations and withdrawals. No registration or KYC.
+        <div class="main-upper-left-upper">
+          <h1>
+            One click instant donations for YouTubers.
+            <span class="gradient extra-light">No extra fees.</span>
+            <span class="gradient dark">
+              Powered by Bitcoin ⚡️ Lightning.
+            </span>
+          </h1>
+          <div class="annotation">
+            🔥Support creators with Bitcoin Lightning. Easy donations and withdrawals. No registration or KYC.
+          </div>
         </div>
         <div class="desktop-only" on:click={showExtensionPopup}>
           <Button --width=300px>Get Extension</Button>
@@ -204,6 +206,7 @@ section {
 }
 h1 {
   color: var(--link-color);
+  margin-bottom: 28px;
 }
 h1, h2 {
   font-family: 'Montserrat';
@@ -216,11 +219,13 @@ h1, h2 {
     font-size: 32px;
     line-height: 40px;
   }
+  #main {
+    margin-top: 40px;
+  }
   #main .annotation {
     text-align: center;
   }
   .main-upper {
-    margin-top: 40px;
     flex-direction: column-reverse;
     gap: 72px;
   }
@@ -230,9 +235,6 @@ h1, h2 {
   }
   .main-upper-left, .main-upper-right {
     justify-content: center
-  }
-  :not(#main) > h1 {
-    margin-bottom: 28px;
   }
   .half-box {
     width: 100%;
@@ -245,17 +247,18 @@ h1, h2 {
 @media (min-width: 641px) {
   h1 {
     line-height: 56px;
+    font-size: 40px;
+  }
+  #main {
+    margin-top: 80px;
+    margin-bottom: 72px;
   }
   .main-upper {
-    margin-top: 80px;
     gap: 64px;
   }
   .main-upper-left h1 {
     text-align: left;
-  }
-  :not(#main) > h1 {
-    font-size: 40px;
-    margin-bottom: 28px;
+    margin-bottom: 0;
   }
   .half-box {
     width: 560px;
@@ -295,6 +298,12 @@ h1, h2 {
   flex-grow: 1;
   flex-direction: column;
   max-width: 730px;
+  gap: 44px;
+}
+.main-upper-left-upper {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 .main-upper-right {
   display: flex;
@@ -307,8 +316,6 @@ h1, h2 {
   gap: 140px;
 }
 #main .annotation {
-  margin-top: 32px;
-  margin-bottom: 42px;
   font-weight: 500;
   font-size: 20px;
   line-height: 30px;
@@ -342,7 +349,7 @@ h2 {
 .faq :global(details:nth-child(n+5)) {
   display: none;
 }
-.annotation {
+#team .annotation {
   margin-top: 16px;
   margin-bottom: 40px;
 }
