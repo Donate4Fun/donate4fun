@@ -65,9 +65,9 @@
       <div class="filled">
         <div class="filled-header">
           <img src="./static/youtube.svg" height=16 alt="youtube logo">
-          <div>
+          <div class="donate-to">
             Donate to
-            <span class="channel-title">{channelTitle}</span>
+            <span class="channel-title ellipsis">{channelTitle}</span>
           </div>
           {#if channelLogo}
             <img width=44 height=44 class="circular" src={channelLogo} alt="channel logo">
@@ -137,13 +137,18 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-
   font-size: 16px;
   line-height: 22px;
-  font-weight: 800;
+}
+.donate-to {
+  display: flex;
+  white-space: nowrap;
+  min-width: 0;
+  gap: 0.5em;
+  font-weight: 400;
 }
 .channel-title {
-  color: var(--link-color);
+  font-weight: 800;
 }
 .amount {
   display: flex;
