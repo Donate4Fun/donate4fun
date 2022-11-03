@@ -51,38 +51,36 @@
 
 <style>
 .comment {
-  padding: 1px;
   position: absolute;
-  top: 100%; /* place under the bolt vertically */
+  top: 120%; /* place under the bolt vertically */
   left: -80px; /* center horizontally under the bolt button */
   font-size: 12px;
-  /*background-image: linear-gradient(to right, #F9F03E 0%, #9DEDA2 100%);
-  border-radius: 8px;*/
-  background-color: var(--yt-spec-brand-background-primary);
+  /* simulate new round YouTube style */
+  border-radius: 12px;
+  background-color: var(--yt-spec-menu-background);
+  box-shadow: 0px 4px 32px 0px var(--yt-spec-static-overlay-background-light);
+
   animation: moveit 900ms ease forwards;
   z-index: var(--ytd-z-index-toggle-button-tooltip);
   opacity: 1;
-  border: 1px solid var(--yt-spec-call-to-action);
 }
 .inner-comment {
   padding: 7px 28px 8px 28px;
   gap: 9px;
   background-color: var(--yt-spec-badge-chip-background);
   color: var(--yt-spec-text-primary);
-  /*border-radius: 7px;*/
+  border-radius: inherit;
 }
 button {
   border: 0;
   gap: 10px;
   background-color: var(--yt-spec-call-to-action);
   color: var(--yt-spec-text-primary-inverse);
-  border-radius: var(--yt-button-border-radius,3px);
+  border-radius: 18px;
   font-size: var(--ytd-tab-system-font-size);
   font-weight: var(--ytd-tab-system-font-weight);
   font-family: inherit;
-  letter-spacing: var(--ytd-tab-system-letter-spacing);
   padding: var(--yt-button-padding-minus-border);
-  text-transform: uppercase;
   user-select: none;
   cursor: pointer;
 }
