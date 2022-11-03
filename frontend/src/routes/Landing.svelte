@@ -162,7 +162,7 @@
           <Person
             name="Nikolay Bryskin"
             title="Founder, developer and creator"
-            photo="/static/nbryskin-cartoon.jpeg"
+            photo="/static/nbryskin-cartoon-70.jpeg"
             linkedin="https://linkedin.com/nbryskin"
             twitter="https://twitter.com/nbryskin"
             github="https://github.com/nikicat"
