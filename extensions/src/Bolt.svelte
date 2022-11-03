@@ -114,11 +114,11 @@
 </script>
 
 <div class="root" class:shorts class:full={!shorts}>
-  <div class="button">
+  <div class="button" on:mousedown={onMouseDown} on:mouseup={onMouseUp} on:mouseleave={onMouseUp} disabled={animate}>
     {#if confetti}
       <Confetti />
     {/if}
-    <button class="bolt-button" on:mousedown={onMouseDown} on:mouseup={onMouseUp} on:mouseleave={onMouseUp} disabled={animate}>
+    <button class="bolt-button">
       <div class="icon" class:animate>
         <svg viewBox="60 60 160 160" xmlns="http://www.w3.org/2000/svg">
           <g>
@@ -145,26 +145,38 @@
   overflow-y: visible !important; /* show our absolutely positioned popups */
   width: 99.999% !important; /* trigger youtube action buttons recalculation (they use ResizeObserver)*/
 }
+:global(#donate4fun-button) {
+  margin-right: 8px;
+}
 .root {
   position: relative;
   width: 100%;
   --yt-button-icon-padding: 6px;
 }
 .button {
+  /* youtube round style */
   display: flex;
-  flex-direction: column;
   align-items: center;
+  padding: 0 16px;
+  height: 36px;
+  background-color: var(--yt-spec-badge-chip-background);
+  border-radius: 18px;
+  cursor: pointer;
+}
+.button:hover {
+  background-color: var(--yt-spec-mono-tonal-hover);
+  border-color: transparent;
 }
 .bolt-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
   padding-right: var(--yt-button-icon-padding,8px);
   color: inherit;
   border-width: 0;
   background-color: transparent;
   font-family: inherit;
+  cursor: pointer;
 }
 .shorts .bolt-button {
   flex-direction: column;
@@ -176,7 +188,6 @@
 }
 .icon {
   line-height: 1;
-  padding: var(--yt-button-icon-padding,8px);
   color: var(--yt-button-color,inherit);
   background-color: transparent;
   text-transform: var(--yt-button-text-transform,inherit);
@@ -184,10 +195,13 @@
   position: relative;
   box-sizing: border-box;
   font-size: 0;
+
+  margin-left: -6px;
+  margin-right: 6px;
 }
 .full .icon {
-  width: var(--yt-button-icon-size,var(--yt-icon-width,40px));
-  height: var(--yt-button-icon-size,var(--yt-icon-height,40px));
+  width: 24px;
+  height: 24px;
 }
 .shorts .icon {
   height: var(--iron-icon-height,24px);
