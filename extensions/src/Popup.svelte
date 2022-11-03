@@ -53,7 +53,7 @@
   <title>Donate4.Fun</title>
 </svelte:head>
 
-<div class="flex-column height-full justify-space-between gradient">
+<div class="popup gradient">
   <div class="inner">
     {#await load() then}
       <Router history={hashHistory} primary={false}>
@@ -74,6 +74,18 @@
 </div>
 
 <style>
+:global(body) {
+  width: 380px;
+  height: 600px;
+  overflow: hidden;
+}
+.popup {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  justify-content: space-between;
+}
 .gradient {
   background: linear-gradient(
     119.1deg,
