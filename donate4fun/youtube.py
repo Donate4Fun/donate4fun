@@ -151,6 +151,7 @@ async def query_or_fetch_youtube_channel(channel_id: str, db: DbSession) -> Yout
         if channel.last_fetched_at is None or channel.last_fetched_at < datetime.utcnow() - settings.youtube.refresh_timeout:
             logger.debug("youtube channel %s is too old, refreshing", channel)
             raise ChannelIsTooOld
+        return channel
     except (NoResultFound, ChannelIsTooOld):
         channel: YoutubeChannel = await fetch_youtube_channel(channel_id)
         await db.save_youtube_channel(channel)
