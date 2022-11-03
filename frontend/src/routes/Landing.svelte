@@ -109,7 +109,7 @@
         </form>
       </div>
       <div class="main-upper-right">
-        <img src="/static/popup-screenshot.png" alt="extension screenshot" height=500>
+        <img src="/static/popup-screenshot.svg" alt="extension screenshot" height=500>
       </div>
     </div>
   </section>
