@@ -34,7 +34,7 @@
 
   async function load() {
     youtube_channel = await api.get(`youtube-channel/${channel_id}`);
-    title.set(`Donate4Fun to {youtube_channel.title}`);
+    title.set(`Donate4Fun to ${youtube_channel.title}`);
   }
 
   async function donate(e) {
@@ -48,10 +48,6 @@
   }
 </script>
 
-<header>
-  <h1>Donate your favorite blogger</h1>
-  Instant delivery with Lightning network. No KYC.
-</header>
 <Section>
   {#await load()}
     <Loading />
@@ -80,6 +76,7 @@
 header {
   margin-bottom: 56px;
   font-size: 24px;
+  text-align: center;
 }
 header > h1 {
   margin-bottom: 16px;
@@ -90,7 +87,7 @@ form {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 36px 46px 40px 46px;
+  padding: 60px 72px;
   width: 640px;
   box-sizing: border-box;
 }
@@ -112,6 +109,7 @@ form > div {
   width: 250px;
   margin-left: 16px;
   margin-right: 20px;
+  flex-grow: 1;
 }
 form :global(button) {
   width: 204px;
