@@ -124,6 +124,7 @@
   overflow: hidden;
   display: block;
   white-space: nowrap;
+  width: 100%;
 }
 .nowrap {
   white-space: nowrap;
