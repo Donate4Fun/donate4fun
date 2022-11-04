@@ -95,8 +95,8 @@ h1 {
   font-weight: 900;
 }
 .main {
+  padding: 36px 0 54px;
   width: 640px;
-  padding: 36px 172px 54px 172px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -106,6 +106,7 @@ a.qrcode {
   margin-bottom: 32px;
 }
 div.buttons {
+  padding: 0 172px;
   width: 100%;
   display: flex;
   flex-direction: column;

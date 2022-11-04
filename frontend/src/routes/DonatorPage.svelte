@@ -50,7 +50,7 @@
       <Userpic user={donator} class="userpic" --width=88px/>
       {#if itsMe}
         <div style="height: 21px;"></div>
-        <MeNamePubkey />
+        <MeNamePubkey align="center" />
         <div style="height: 32px;"></div>
         <MeBalance />
       {:else}

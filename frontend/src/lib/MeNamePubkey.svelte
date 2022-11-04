@@ -1,8 +1,10 @@
 <script>
   import { me } from "$lib/session.js";
+
+  export let align = "start";
 </script>
 
-<div class="outer">
+<div class="outer" style:align-items={align}>
   {#await $me then me}
     <p class="name ellipsis" title={me.donator.name}>{me.donator.name}</p>
     {#if me.connected}

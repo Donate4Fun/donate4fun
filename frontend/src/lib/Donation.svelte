@@ -34,7 +34,10 @@
   <Loading/>
 {:then me}
   <ChannelLogo url={donation.youtube_channel.thumbnail_url} size=72px />
-  <div class="header">Great! You've sent <Amount amount={donation.amount}/> to <YoutubeChannel channel={donation.youtube_channel}/></div>
+  <div class="header">
+    <p>Great! You've sent <Amount amount={donation.amount}/> to</p>
+    <YoutubeChannel channel={donation.youtube_channel}/>
+  </div>
   {#if me.donator.id === donation.donator_id}
     <Infobox>Copy and share the message with the link or just tell {donation.youtube_channel.title} to receive the donation here at «Donate4Fun»</Infobox>
     <div>
@@ -49,7 +52,7 @@
       <li>Scroll to comments section and focus "Add a comment..." field</li>
       <li>Paste a comment from clipboard and post it</li>
     </ol>
-    <Editable class=message message={donation.message} />
+    <Editable class=message message={message} />
     <Button on:click={copyAndShare} class="copy-button">Copy and Share</Button>
     <Button on:click={() => dispatch("close")} class="grey">Back</Button>
   {/if}
@@ -61,23 +64,16 @@ main {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 32px;
   padding: 44px 84px 40px 84px;
 }
-main > .header {
-  margin-top: 16px;
-  margin-bottom: 22px;
-}
-main > :global(.message) {
-  margin-top: 52px;
-  margin-bottom: 28px;
-}
-main > :global(.copy-button) {
-  margin-bottom: 20px;
-}
 .header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
   font-weight: 900;
   font-size: 24px;
-  text-align: center;
 }
 main > :global(button) {
   width: 402px;
