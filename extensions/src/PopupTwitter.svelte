@@ -6,38 +6,29 @@
   import Button from "$lib/Button.svelte";
   import NumberedItem from "$lib/NumberedItem.svelte";
   import AmountSelection from "$lib/AmountSelection.svelte";
-  import { me } from "$lib/session.js";
-  import { youtube_video_url, youtube_channel_url } from "$lib/utils.js";
   import { worker, connectToPage, browser } from "./common.js";
 
-  let videoId;
-  let channelId;
-  let channelTitle;
-  let channelLogo;
+  let tweetId;
+  let authorName;
+  let authorImage;
   let contentScript;
-  export let amount = 100;
 
   const navigate = useNavigate();
 
   async function load() {
-    cLog("load youtube", window.location.hash);
     contentScript = await connectToPage();
     if (!contentScript)
       return;
-    if (await contentScript.isVideoPage()) {
-      videoId = await contentScript.getVideoId();
-      cLog("videoid", videoId);
-    } else if (await contentScript.isChannelPage()) {
-      channelId = await contentScript.getChannelId();
-      cLog("channelid", channelId);
+    if (await contentScript.isTweetPage()) {
+      tweetId = await contentScript.getTweetId();
+      authorName = await contentScript.getAuthorName();
+      authorImage = await contentScript.getAuthorImage();
     }
-    channelTitle = await contentScript.getChannelTitle();
-    channelLogo = await contentScript.getChannelLogo();
   }
 
-  async function donate() {
+  async function donate(amount) {
     try {
-      const target = videoId ? youtube_video_url(videoId) : youtube_channel_url(channelId);
+      const target = tweetUrl(tweetId);
       contentScript.onPaid(await contentScript.donate(amount, target));
     } catch (err) {
       console.error("Failed to donate", err);
@@ -49,37 +40,28 @@
  
 <PopupSection>
   {#await load() then}
-    {#if !videoId && !channelId}
+    {#if !tweetId}
       <div class="empty">
         <NumberedItem number=1>
-          <span>Open video channel or author you want to donate to</span>
+          <span>Open a tweet or author you want to donate to</span>
         </NumberedItem>
         <NumberedItem number=2>
-          <span>Click a ⚡ icon under video or use this popup</span>
+          <span>Click a ⚡ icon under the tweet or use this popup</span>
         </NumberedItem>
       </div>
     {:else}
       <div class="filled">
         <div class="filled-header">
-          <img src="./static/youtube.svg" height=16 alt="youtube logo">
+          <img src="./static/twitter.svg" height=16 alt="twitter logo">
           <div class="donate-to">
             Donate to
-            <span class="channel-title ellipsis">{channelTitle}</span>
+            <span class="channel-title ellipsis">{authorName}</span>
           </div>
-          {#if channelLogo}
-            <img width=44 height=44 class="circular" src={channelLogo} alt="channel logo">
+          {#if authorImage}
+            <img width=44 height=44 class="circular" src={authorImage} alt="avatar">
           {/if}
         </div>
-        <div class="amount">
-          <AmountSelection bind:amount={amount} />
-        </div>
-        {#await $me then me}
-          {#if amount <= me.donator.balance}
-            <Button --width=100% on:click={donate} --padding="9px" --border-width="0">Donate</Button>
-          {:else}
-            <Button --width=100% on:click={donate} --padding="9px" --border-width="0">Donate with WebLN</Button>
-          {/if}
-        {/await}
+        <AmountSelection donate={donate} />
       </div>
     {/if}
   {/await}
@@ -125,10 +107,5 @@
 }
 .channel-title {
   font-weight: 800;
-}
-.amount {
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
 }
 </style>

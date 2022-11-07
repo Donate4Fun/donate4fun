@@ -73,8 +73,11 @@ class Invoice(BaseModel):
         return datetime.fromtimestamp(int(settle_date))
 
 
-class YoutubeChannel(BaseModel):
+class IdModel(BaseModel):
     id: UUID = Field(default_factory=uuid4)
+
+
+class YoutubeChannel(IdModel):
     title: str
     channel_id: str
     thumbnail_url: Url | None
@@ -85,14 +88,29 @@ class YoutubeChannel(BaseModel):
         orm_mode = True
 
 
-class YoutubeVideo(BaseModel):
-    id: UUID = Field(default_factory=uuid4)
+class YoutubeVideo(IdModel):
     youtube_channel: YoutubeChannel
     title: str
     video_id: str
     thumbnail_url: Url | None
     total_donated: int = 0
     default_audio_language: str | None
+
+    class Config:
+        orm_mode = True
+
+
+class TwitterAuthor(IdModel):
+    handle: str
+    name: str | None
+    avatar: Url | None
+
+    class Config:
+        orm_mode = True
+
+
+class TwitterTweet(IdModel):
+    twitter_id: int
 
     class Config:
         orm_mode = True
@@ -129,10 +147,12 @@ class Donation(BaseModel):
     r_hash: RequestHash | None
     donator_id: UUID
     donator: Donator
-    youtube_channel: YoutubeChannel | None
     receiver: Donator | None
     amount: int
+    youtube_channel: YoutubeChannel | None
     youtube_video: YoutubeVideo | None
+    twitter_author: TwitterAuthor | None
+    twitter_tweet: TwitterTweet | None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     message: str | None = None
     paid_at: datetime | None = None

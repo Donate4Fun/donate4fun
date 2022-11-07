@@ -61,8 +61,7 @@ function makeConfig(name, options) {
       }),
       // we'll extract any component CSS out into
       // a separate file - better for performance
-      //css({ output: `${name}.css` }),
-      styles({mode: ["extract", `${name}.css`]}),
+      styles({mode: ["extract", `${path.basename(name)}.css`]}),
 
       // If you have external dependencies installed from
       // npm, you'll most likely need these plugins. In
@@ -143,6 +142,7 @@ export default [
   makeConfig('background'),
   makeConfig('contentscript', {footer: "app;"}), // we need to return pormise from contentscript.js to wait in scripting.executeScript
   makeConfig('contentscripts/donate4.fun', {dir: 'contentscripts'}),
+  makeConfig('contentscripts/twitter', {dir: 'contentscripts', footer: "app;"}),
   makeConfig('webln'),
   makeConfig('globalobj'),
   {
@@ -165,8 +165,10 @@ export default [
           staticFile("D-*.png"),
           staticFile("lottie-arrow.json"),
           staticFile("youtube.svg"),
+          staticFile("twitter.svg"),
           staticFile("checkbox.svg"),
           staticFile("loader.svg"),
+          staticFile("bolt-mono.svg"),
           { src: "background.html", dest: "../firefox" },
           manifestFile("manifest-firefox.json", "../firefox/manifest.json", patchFirefoxManifest),
           manifestFile("manifest-chrome.json", "../chrome/manifest.json", patchChromeManifest),
