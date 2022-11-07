@@ -20,11 +20,13 @@
     B+YCAhYWFgAAAA==
   r_hash: !!python/object/new:donate4fun.types.RequestHash
     args:
-    - b"\xad\x19\xa4\xcea'Y\xe9\xa3\x9b\xcf2&u\xcaS\x902\xc7\x00\xb1}\x02g\x0e\xc1\xd5+\xc2a\xff\x19"
+    - b'G\x92\x1c@\x1cF\xd0\xc3\x1c\xf7\x9d[\xc7IE\xfdP/\xdb\xcb\xc70\xef\xc0M\xdb\x9c[\xaf7P\xca'
     state:
       data: !!binary |
         aGFzaA==
   receiver: null
+  twitter_author: null
+  twitter_tweet: null
   youtube_channel:
     balance: 20
     channel_id: q2dsaf

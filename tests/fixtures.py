@@ -6,7 +6,7 @@ import logging
 import time
 from datetime import datetime
 from base64 import urlsafe_b64encode
-from functools import partial
+from itertools import count
 from uuid import UUID
 
 import anyio
@@ -14,13 +14,17 @@ import pytest
 import ecdsa
 from authlib.jose import jwt
 from asgi_testclient import TestClient
+from sqlalchemy import update
 
 from donate4fun.app import create_app, addLoggingLevel
 from donate4fun.models import Invoice, Donation
 from donate4fun.lnd import LndClient
-from donate4fun.settings import load_settings, Settings, DbSettings
-from donate4fun.db import DbSession, Database, update, DonatorDb
-from donate4fun.models import RequestHash, PaymentRequest, YoutubeChannel, Donator, BaseModel, YoutubeVideo
+from donate4fun.settings import load_settings, Settings, DbSettings, LndSettings
+from donate4fun.db import DbSession, Database
+from donate4fun.db_models import DonatorDb
+from donate4fun.models import (
+    RequestHash, PaymentRequest, YoutubeChannel, Donator, BaseModel, YoutubeVideo, TwitterAuthor, TwitterTweet,
+)
 from donate4fun.pubsub import PubSubBroker
 
 
@@ -178,25 +182,16 @@ def freeze_payment_request(monkeypatch):
 
 
 @pytest.fixture
-def freeze_donation_id(monkeypatch):
-    monkeypatch.setattr(Donation.__fields__['id'], 'default_factory', partial(UUID, int=1))
-    return UUID(int=1)
+def freeze_uuids(monkeypatch):
+    def make_gen():
+        c = count(1)
+        return lambda: UUID(int=next(c))
+    for model in [Donation, YoutubeChannel, YoutubeVideo, TwitterAuthor, TwitterTweet]:
+        monkeypatch.setattr(model.__fields__['id'], 'default_factory', make_gen())
 
 
 @pytest.fixture
-def freeze_youtube_channel_id(monkeypatch):
-    monkeypatch.setattr(YoutubeChannel.__fields__['id'], 'default_factory', partial(UUID, int=1))
-    return UUID(int=1)
-
-
-@pytest.fixture
-def freeze_youtube_video_id(monkeypatch):
-    monkeypatch.setattr(YoutubeVideo.__fields__['id'], 'default_factory', partial(UUID, int=1))
-    return UUID(int=1)
-
-
-@pytest.fixture
-async def unpaid_donation_fixture(app, db, donator_id, freeze_donation_id, freeze_youtube_channel_id):
+async def unpaid_donation_fixture(app, db, donator_id, freeze_uuids):
     async with db.session() as db_session:
         youtube_channel = YoutubeChannel(
             channel_id='q2dsaf', title='asdzxc', thumbnail_url='1wdasd',
@@ -270,3 +265,8 @@ async def rich_donator(db, registered_donator):
             .where(DonatorDb.id == registered_donator.id)
         )
         return await db_session.query_donator(registered_donator.id)
+
+
+@pytest.fixture
+async def payer_lnd():
+    return LndClient(LndSettings(url='http://localhost:10002', lnurl_base_url='http://test'))

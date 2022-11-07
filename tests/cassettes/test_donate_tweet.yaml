@@ -1,0 +1,101 @@
+interactions:
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - Bearer AAAAAAAAAAAAAAAAAAAAAAUVjAEAAAAADHO9PINZPSJhWZuqLDHh%2BXijCck%3DvN16Lxq5p7CUsCte2vTOF2opcKlXRwGF0yKPEhngIGJkMVcjho
+      connection:
+      - keep-alive
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.0
+    method: GET
+    uri: https://api.twitter.com/2/users/by/username/donate4_fun?user.fields=id%2Cname%2Cprofile_image_url
+  response:
+    content: '{"data":{"name":"Donate4.Fun","username":"donate4_fun","profile_image_url":"https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_normal.png","id":"1572908920485576704"}}'
+    headers:
+      api-version:
+      - '2.55'
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '168'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Mon, 07 Nov 2022 19:33:41 UTC
+      perf:
+      - '7626143928'
+      server:
+      - tsa_o
+      set-cookie:
+      - guest_id=v1%3A166784962158437132; Max-Age=34214400; Expires=Fri, 08 Dec 2023
+        19:33:41 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      strict-transport-security:
+      - max-age=631138519
+      x-access-level:
+      - read
+      x-connection-hash:
+      - 49cefd57f59cb98aa4da3b57b12934fd47263e5c576419cb3a3d9bd456ff8963
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '300'
+      x-rate-limit-remaining:
+      - '299'
+      x-rate-limit-reset:
+      - '1667850521'
+      x-response-time:
+      - '133'
+      x-transaction-id:
+      - 1e852b2f46a4c252
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: '{"memo": "Donate4.Fun to donate4_fun", "value": 100, "expiry": 3600, "private":
+      true}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '85'
+      content-type:
+      - application/json
+      host:
+      - localhost:10001
+      user-agent:
+      - python-httpx/0.23.0
+    method: POST
+    uri: http://localhost:10001/v1/invoices
+  response:
+    content: '{"r_hash":"qsLLpAdCUT1S0WN2D4Nulx27SHvSEdViG1r+ay+x/QU=", "payment_request":"lnbcrt1u1p3kjhv4pp54tpvhfq8gfgn65k3vdmqlqmwjuwmkjrm6gga2csmttlxkta3l5zsdp2g3hkuct5v56zu3n4dcs8gmeqv3hkuct5v5697en4dccqzpgxqrrsssp5eazqjl4zzn63uez2qtd8dskvzre656zzwv652fv3arff5qcskg9s9qyyssqqh5ptq558kx8pzwehmj0hclcpwrugv7zzn3k4jt4fsyrlu5e84gpsrxvgrgrjxd5r4zgjkmhxpcs2tuszgxlhwtqa0mastjazazwpwgq2kgkwp",
+      "add_index":"3169", "payment_addr":"z0QJfqIU9R5kSgLadsLMEPOqaEJzNUUlkejSmgMQsgs="}'
+    headers:
+      Content-Length:
+      - '461'
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 07 Nov 2022 19:33:42 GMT
+      Grpc-Metadata-Content-Type:
+      - application/grpc
+    http_version: HTTP/1.1
+    status_code: 200
+version: 1

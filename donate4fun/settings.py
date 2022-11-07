@@ -26,6 +26,10 @@ class YoutubeSettings(BaseModel):
     refresh_timeout: timedelta
 
 
+class TwitterSettings(BaseModel):
+    bearer_token: str
+
+
 class DbSettings(BaseModel):
     url: str
     echo: bool = False
@@ -106,6 +110,7 @@ def yaml_config_source(settings: BaseSettings) -> dict[str, Any]:
 class Settings(BaseSettings):
     lnd: LndSettings
     youtube: YoutubeSettings
+    twitter: TwitterSettings
     db: DbSettings
     log: LoggingConfig
     fastapi: FastApiSettings

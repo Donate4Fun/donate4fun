@@ -26,11 +26,13 @@ from .models import (
     WithdrawalToken, BaseModel, Notification, Credentials, SubscribeEmailRequest,
 )
 from .types import ValidationError, RequestHash, PaymentRequest
+from .donatees import validate_target, apply_target
 from .youtube import (
-    validate_target, apply_target, find_comment, YoutubeDonatee, query_or_fetch_youtube_video,
+    YoutubeDonatee, find_comment,
     query_or_fetch_youtube_channel, ChannelInfo, fetch_user_channel,
 )
-from .db import NoResultFound, DonationDb, DbSession, WithdrawalDb
+from .db import NoResultFound, DbSession
+from .db_models import DonationDb, WithdrawalDb
 from .settings import settings
 
 logger = logging.getLogger(__name__)
@@ -51,7 +53,9 @@ def get_donator(request: Request):
 
 def make_memo(donation: Donation) -> str:
     if donation.youtube_channel:
-        return f"Donate4.fun to {donation.youtube_channel.title}"
+        return f"Donate4.Fun to {donation.youtube_channel.title}"
+    elif donation.twitter_author:
+        return f"Donate4.Fun to {donation.twitter_author.handle}"
     elif donation.receiver:
         if donation.receiver.id == donation.donator.id:
             return f"[Donate4.fun] fulfillment for {donation.receiver.name}"
@@ -100,15 +104,11 @@ async def donate(
         return DonateResponse(donation=donation, payment_request=invoice.payment_request)
 
 
-@router.post("/donatee", response_model=YoutubeChannel)
-async def donatee_by_url(request: YoutubeChannelRequest, db=Depends(get_db_session)):
+@router.post("/youtube-channel-by-url", response_model=YoutubeChannel)
+async def youtube_channel_by_url(request: YoutubeChannelRequest, db=Depends(get_db_session)):
     donatee: YoutubeDonatee = await validate_target(request.target)
-    if donatee.video_id:
-        youtube_video = await query_or_fetch_youtube_video(video_id=donatee.video_id, db=db)
-        youtube_channel = youtube_video.channel
-    elif donatee.channel_id:
-        youtube_channel = await query_or_fetch_youtube_channel(channel_id=donatee.channel_id, db=db)
-    return youtube_channel
+    await donatee.fetch(db)
+    return donatee.youtube_channel
 
 
 @router.get("/donation/{donation_id}", response_model=DonateResponse)
@@ -494,7 +494,7 @@ async def ownership_check(donator=Depends(get_donator), db=Depends(get_db_sessio
     )
     channels = []
     for channel_id in channel_ids:
-        youtube_channel = await query_or_fetch_youtube_channel(channel_id, db)
+        youtube_channel: YoutubeChannel = await query_or_fetch_youtube_channel(channel_id, db)
         await db.link_youtube_channel(youtube_channel, donator)
         channels.append(youtube_channel)
     return channels
