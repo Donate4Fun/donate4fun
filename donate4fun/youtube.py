@@ -1,15 +1,13 @@
 import json
 import logging
-import re
 from functools import wraps
 from dataclasses import dataclass
 from datetime import datetime
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs
 
 from aiogoogle import Aiogoogle
 from aiogoogle.auth.creds import ClientCreds, ServiceAccountCreds
 from pydantic import BaseModel
-from email_validator import validate_email
 from sqlalchemy.orm.exc import NoResultFound
 
 from .settings import settings
@@ -64,6 +62,13 @@ class YoutubeDonatee:
     channel_id: str | None = None
     video_id: str | None = None
 
+    async def fetch(self, donation: Donation, db: DbSession):
+        if self.video_id:
+            donation.youtube_video = await query_or_fetch_youtube_video(video_id=self.video_id, db=db)
+            donation.youtube_channel = donation.youtube_video.youtube_channel
+        elif self.channel_id:
+            donation.youtube_channel = await query_or_fetch_youtube_channel(channel_id=self.channel_id, db=db)
+
 
 def validate_youtube_url(parsed) -> YoutubeDonatee:
     parts = parsed.path.split('/')
@@ -114,7 +119,7 @@ def get_service_account_creds():
     )
 
 
-async def query_or_fetch_youtube_video(video_id: str, db: DbSession):
+async def query_or_fetch_youtube_video(video_id: str, db: DbSession) -> YoutubeVideo:
     try:
         return await db.query_youtube_video(video_id=video_id)
     except NoResultFound:
@@ -191,58 +196,6 @@ async def fetch_user_channel(request, code: str) -> ChannelInfo:
             ),
         )
     return await fetch_channel_by_owner(full_user_creds)
-
-
-async def validate_target(target: str):
-    if re.match(r'https?://.+', target):
-        return await validate_target_url(target)
-    return validate_email(target).email
-
-
-async def validate_target_url(target: Url):
-    parsed = urlparse(target)
-    if parsed.hostname in ['youtube.com', 'www.youtube.com', 'youtu.be']:
-        return validate_youtube_url(parsed)
-    elif parsed.hostname in ['twitter.com', 'www.twitter.com']:
-        return validate_twitter_url(parsed)
-    else:
-        raise UnsupportedTarget("URL is invalid")
-
-
-@dataclass
-class TwitterDonatee:
-    author_handle: str
-    tweet_id: str | None = None
-
-
-class UnsupportedTwitterUrl(Exception):
-    pass
-
-
-def validate_twitter_url(parsed) -> TwitterDonatee:
-    parts = parsed.path.split('/')
-    if len(parts) == 2:
-        return TwitterDonatee(author_handle=parts[1])
-    elif len(parts) == 4 and parts[2] == 'status':
-        return TwitterDonatee(tweet_id=parts[3], author_handle=parts[1])
-    else:
-        raise UnsupportedTwitterUrl
-
-
-async def apply_target(donation: Donation, target: str, db: DbSession):
-    donatee = await validate_target(target)
-
-    if isinstance(donatee, YoutubeDonatee):
-        if donatee.video_id:
-            donation.youtube_video = await query_or_fetch_youtube_video(video_id=donatee.video_id, db=db)
-            donation.youtube_channel = donation.youtube_video.youtube_channel
-        elif donatee.channel_id:
-            donation.youtube_channel = await query_or_fetch_youtube_channel(channel_id=donatee.channel_id, db=db)
-    elif isinstance(donatee, TwitterDonatee):
-        donation.twitter_author = await db.get_or_create_twitter_author(donatee.author_handle)
-        donation.twitter_tweet_id = await db.get_or_create_twitter_tweet(donatee.tweet_id)
-    else:
-        raise NotImplementedError
 
 
 @withyoutube

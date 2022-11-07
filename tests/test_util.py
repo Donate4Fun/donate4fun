@@ -1,7 +1,15 @@
 from contextvars import ContextVar
+from contextlib import asynccontextmanager
+from uuid import UUID
 
-import yaml
+import anyio
 import pytest
+import yaml
+from vcr.filters import replace_query_parameters
+
+from donate4fun.models import Donator
+from donate4fun.db import Notification
+from tests.fixtures import Session, Settings
 
 
 # This file is needed because pytest modifies "assert" only in test_*.py files
@@ -53,3 +61,42 @@ def verify_response(response, name, status_code=None):
 
 
 freeze_time = pytest.mark.freeze_time('2022-02-02 22:22:22', ignore=['logging'])
+
+
+@asynccontextmanager
+async def check_notification(client, topic: str, id_: UUID):
+    async with client.ws_session(f"/api/v1/subscribe/{topic}:{id_}") as ws:
+        yield
+        with anyio.fail_after(5):
+            notification = Notification.parse_obj(await ws.receive_json())
+        assert notification.status == 'OK'
+
+
+def login_to(client, settings: Settings, donator: Donator):
+    # Relogin to rich donator (with balance > 0)
+    client.cookies = dict(session=Session(donator=donator.id, jwt_secret=settings.jwt_secret).to_jwt())
+
+
+def remove_credentials_and_testclient(request):
+    if 'grpc-metadata-macaroon' in request.headers:
+        del request.headers['grpc-metadata-macaroon']
+    if request.host == 'youtube.googleapis.com':
+        # WORKAROUND: key is a private credential
+        replace_query_parameters(request, [('key', None)])
+    if request.host == 'test':
+        # Ignore testclient requests
+        return None
+    if request.host.startswith('localhost'):
+        # Ignore requests to lnd
+        return None
+    return request
+
+
+def remove_url(response):
+    # WORKAROUND: this is a fix for vcrpy async handler
+    if 'url' in response:
+        response['url'] = ''
+    return response
+
+
+mark_vcr = pytest.mark.vcr(before_record_request=remove_credentials_and_testclient, before_record_response=remove_url)

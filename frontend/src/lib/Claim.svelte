@@ -20,7 +20,7 @@
     spin = true;
     error = null;
     try {
-      const channel = await api.post(`donatee`, {target: donatee})
+      const channel = await api.post(`youtube-channel-by-url`, {target: donatee})
       navigate(`/youtube/${channel.id}`);
     } catch (exc) {
       console.error(exc);

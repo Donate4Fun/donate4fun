@@ -11,7 +11,8 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from .core import payreq_to_datauri, get_db_session, get_lnd
 from .models import DonationRequest, Donation, YoutubeChannel
 from .types import Url, UnsupportedTarget
-from .youtube import fetch_user_channel, ChannelInfo, validate_target, query_or_fetch_youtube_channel
+from .donatees import validate_target
+from .youtube import fetch_user_channel, ChannelInfo, query_or_fetch_youtube_channel
 from .settings import settings
 from .lnd import LndClient, Invoice
 

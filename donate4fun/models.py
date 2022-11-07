@@ -101,16 +101,17 @@ class YoutubeVideo(IdModel):
 
 
 class TwitterAuthor(IdModel):
+    user_id: int
     handle: str
     name: str | None
-    avatar: Url | None
+    profile_image_url: Url | None
 
     class Config:
         orm_mode = True
 
 
 class TwitterTweet(IdModel):
-    twitter_id: int
+    tweet_id: int
 
     class Config:
         orm_mode = True

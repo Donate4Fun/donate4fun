@@ -14,6 +14,8 @@ json:
     paid_at: null
     r_hash: aGFzaA==
     receiver: null
+    twitter_author: null
+    twitter_tweet: null
     youtube_channel:
       balance: 0
       channel_id: UC3ptU7hyNeFlJdvQj2nZHJg
@@ -21,25 +23,6 @@ json:
       last_fetched_at: '2022-02-02T22:22:22'
       thumbnail_url: https://yt3.ggpht.com/XRROgwcAhtZPrd7FWz0jLU3b1ii45tmP1SX9BvWrZOFl4iTDKoSruJtK0wm8q4Lf2PlVJmoGTw=s240-c-k-c0x00ffffff-no-rj
       title: Alex007SC2
-    youtube_video:
-      default_audio_language: ru
-      id: 00000000-0000-0000-0000-000000000001
-      thumbnail_url: https://i.ytimg.com/vi/7qH7WMzqOlU/default.jpg
-      title: "\u0418\u0413\u0420\u042B \u041F\u041E\u0416\u0418\u041B\u041E\u0413\u041E\
-        \ \u0413\u0415\u0419\u041C\u0415\u0420\u0410: \u041F\u0435\u0440\u0432\u0430\
-        \u044F \u043B\u0430\u0434\u0434\u0435\u0440\u043D\u0430\u044F \u0441\u0435\
-        \u0441\u0441\u0438\u044F \u0421\u0435\u043A\u0440\u0435\u0442\u043D\u043E\u0433\
-        \u043E \u0410\u0433\u0435\u043D\u0442\u0430 \u0432 StarCraft II \u043F\u043E\
-        \u0441\u043B\u0435 \u0442\u0440\u0438\u0434\u0446\u0430\u0442\u0438\u043B\u0435\
-        \u0442\u0438\u044F!"
-      total_donated: 0
-      video_id: 7qH7WMzqOlU
-      youtube_channel:
-        balance: 0
-        channel_id: UC3ptU7hyNeFlJdvQj2nZHJg
-        id: 00000000-0000-0000-0000-000000000001
-        last_fetched_at: '2022-02-02T22:22:22'
-        thumbnail_url: https://yt3.ggpht.com/XRROgwcAhtZPrd7FWz0jLU3b1ii45tmP1SX9BvWrZOFl4iTDKoSruJtK0wm8q4Lf2PlVJmoGTw=s240-c-k-c0x00ffffff-no-rj
-        title: Alex007SC2
+    youtube_video: null
   payment_request: lnbcsomething
 status_code: 200
