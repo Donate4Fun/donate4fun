@@ -3,6 +3,7 @@
   import { Router, Link, Route, navigate, createHistory } from "svelte-navigator";
   import PopupMain from "./PopupMain.svelte";
   import PopupYoutube from "./PopupYoutube.svelte";
+  import PopupTwitter from "./PopupTwitter.svelte";
   import PopupHeader from "./PopupHeader.svelte";
   import PopupNoWebln from "./PopupNoWebln.svelte";
   import { apiOrigin } from "$lib/api.js";
@@ -64,6 +65,10 @@
         <Route path="youtube">
           <PopupHeader />
           <PopupYoutube bind:amount={amount} />
+        </Route>
+        <Route path="twitter">
+          <PopupHeader />
+          <PopupTwitter bind:amount={amount} />
         </Route>
         <Route path="nowebln/:amount/:rejected" let:params>
           <PopupNoWebln amount={params.amount} rejected={params.rejected} historySource={hashSource}/>

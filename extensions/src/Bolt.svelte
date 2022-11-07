@@ -1,14 +1,17 @@
 <script>
-  import { onMount, onDestroy, tick } from 'svelte';
-  import { subscribe, get } from "$lib/api.js";
+  import { onMount, onDestroy, tick } from "svelte";
+  import { backIn, expoIn } from "svelte/easing";
   import { Confetti } from "svelte-confetti";
-  import { worker, pageScript, donate } from "./common.js";
+
+  import { subscribe, get } from "$lib/api.js";
+  import { worker, pageScript, donate, getStatic } from "./common.js";
   import { cLog, cInfo } from "$lib/log.js";
+  import Bolt from "$lib/Bolt.svelte";
   import { getVideoId, postComment, isShorts } from "./youtube.js";
   import CommentTip from "./CommentTip.svelte";
+  import HoldButton from "$lib/HoldButton.svelte";
 
 	export let text = '…';
-  export let animate = false;
   export let loading = true;
 
   let isCommentPosted = false;
@@ -18,6 +21,8 @@
   let donation = {amount: null};
   let commentTipElement;
   let shorts = isShorts();
+  let amount = 0;
+  let donating;
 
   async function fetchStats() {
     const videoId = getVideoId();
@@ -31,13 +36,14 @@
     return await worker.fetch("get", path);
   }
 
-  async function doDonate(amount) {
-    animate = true;
+  async function doDonate(event) {
+    donating = true;
+    amount = event.detail.amount || await worker.getConfig("amount");
     let donation_;
     try {
       donation_ = await donate(amount, window.location.href);
     } catch (err) {
-      animate = false;
+      donating = false;
       cInfo("Payment failed", err);
       const rejected = err.message === 'User rejected';
       worker.createPopup(`nowebln/${amount}/${rejected}`);
@@ -47,7 +53,7 @@
   }
 
   export async function onPaid(donation_) {
-    animate = false;
+    donating = false;
     confetti = false;
     await tick();
     confetti = true;
@@ -89,51 +95,51 @@
     await videoWS.close();
   });
 
-  let holdAmount;
-  let holdInterval = null;
-  let showConfirmation = false;
-
-  function onMouseDown() {
-    holdAmount = 0;
-    holdInterval = setInterval(() => {
-      holdAmount += 10;
-    }, 100);
-  }
-
-  async function onMouseUp() {
-    if (holdInterval) {
-      clearInterval(holdInterval);
-      holdInterval = null;
-      const amount = holdAmount || await worker.getConfig("amount");
-      holdAmount = 0;
-      doDonate(amount);
-    }
-  }
+	function popOut(node, { duration }) {
+		return {
+			duration,
+			css: (t, u) => {
+        if (donating) {
+          const eased = expoIn(t);
+          return `
+            transform: scale(${eased});
+          `;
+        } else {
+          const eased = backIn(u);
+          return `
+            transform: scale(${1 + eased});
+            opacity: ${1 - eased};
+          `;
+        }
+			}
+		};
+	}
 
   cLog("Created Bolt");
 </script>
 
 <div class="root" class:shorts class:full={!shorts}>
-  <div class="button" on:mousedown={onMouseDown} on:mouseup={onMouseUp} on:mouseleave={onMouseUp} disabled={animate}>
-    {#if confetti}
-      <Confetti />
-    {/if}
-    <button class="bolt-button">
-      <div class="icon" class:animate>
-        <svg viewBox="60 60 160 160" xmlns="http://www.w3.org/2000/svg">
-          <g>
-            <path class="bolt" d="M79.7609 144.047L173.761 63.0466C177.857 60.4235 181.761 63.0466 179.261 67.5466L149.261 126.547H202.761C202.761 126.547 211.261 126.547 202.761 133.547L110.261 215.047C103.761 220.547 99.261 217.547 103.761 209.047L132.761 151.547H79.7609C79.7609 151.547 71.2609 151.547 79.7609 144.047Z" stroke-width="10"></path>
-          </g>
-        </svg>
-      </div>
-      <div class="text" class:loading>{text}</div>
-    </button>
-    <div class="tooltip tooltip-hover" style:visibility={holdAmount ? 'hidden' : 'visible'} style-target="tooltip">
-      Donate sats
-    </div>
-    <div class="tooltip" style:display={holdAmount ? 'block' : 'none'} style-target="tooltip">
-      ⚡{holdAmount} sat
-    </div>
+  <div class="button" disabled={donating}>
+    <HoldButton bind:amount={amount} on:release={doDonate}>
+      {#if confetti}
+        <Confetti />
+      {/if}
+      <button class="bolt-button">
+        <div class="icon" class:animate={donating}>
+          <Bolt />
+        </div>
+        <div class="text" class:loading>{text}</div>
+      </button>
+      {#if amount}
+        <div class="tooltip" style:display=block out:popOut={{duration: 200}}>
+          ⚡{amount.toFixed()} sats
+        </div>
+      {:else if !donating && !showCommentTip}
+        <div class="tooltip tooltip-hover">
+          Donate sats
+        </div>
+      {/if}
+    </HoldButton>
   </div>
   {#if showCommentTip}
     <CommentTip bind:element={commentTipElement} amount={donation.amount} on:comment={onCommentClick} on:click-outside={() => {showCommentTip = false;}} />
@@ -212,7 +218,6 @@
   font-size: 1.2rem;
   line-height: 1.8rem;
   font-weight: 400;
-  display: block;
   outline: none;
   -webkit-font-smoothing: antialiased;
   background-color: var(--paper-tooltip-background, #616161);
@@ -263,10 +268,6 @@
   letter-spacing: var(--ytd-tab-system-letter-spacing);
   text-transform: var(--ytd-tab-system-text-transform);
 }
-.bolt {
-  fill: var(--iron-icon-fill-color,currentcolor);
-  stroke: var(--iron-icon-stroke-color,none);
-}
 .loading {
   overflow: hidden;
   display: inline-block;
@@ -298,6 +299,19 @@
   to {
     transform: scale(2);
     opacity: 0%;
+  }
+}
+@keyframes dff-amount-hide {
+  0% {
+    animation-timing-function: ease-out;
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.8);
+  }
+  100% {
+    transform: scale(3);
+    opacity: 0.1;
   }
 }
 </style>

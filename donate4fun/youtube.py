@@ -65,7 +65,7 @@ class YoutubeDonatee:
     video_id: str | None = None
 
 
-async def validate_youtube_url(parsed) -> YoutubeDonatee:
+def validate_youtube_url(parsed) -> YoutubeDonatee:
     parts = parsed.path.split('/')
     if parts[1] == 'watch':
         video_id = parse_qs(parsed.query)['v'][0]
@@ -202,9 +202,31 @@ async def validate_target(target: str):
 async def validate_target_url(target: Url):
     parsed = urlparse(target)
     if parsed.hostname in ['youtube.com', 'www.youtube.com', 'youtu.be']:
-        return await validate_youtube_url(parsed)
+        return validate_youtube_url(parsed)
+    elif parsed.hostname in ['twitter.com', 'www.twitter.com']:
+        return validate_twitter_url(parsed)
     else:
         raise UnsupportedTarget("URL is invalid")
+
+
+@dataclass
+class TwitterDonatee:
+    author_handle: str
+    tweet_id: str | None = None
+
+
+class UnsupportedTwitterUrl(Exception):
+    pass
+
+
+def validate_twitter_url(parsed) -> TwitterDonatee:
+    parts = parsed.path.split('/')
+    if len(parts) == 2:
+        return TwitterDonatee(author_handle=parts[1])
+    elif len(parts) == 4 and parts[2] == 'status':
+        return TwitterDonatee(tweet_id=parts[3], author_handle=parts[1])
+    else:
+        raise UnsupportedTwitterUrl
 
 
 async def apply_target(donation: Donation, target: str, db: DbSession):
@@ -216,6 +238,9 @@ async def apply_target(donation: Donation, target: str, db: DbSession):
             donation.youtube_channel = donation.youtube_video.youtube_channel
         elif donatee.channel_id:
             donation.youtube_channel = await query_or_fetch_youtube_channel(channel_id=donatee.channel_id, db=db)
+    elif isinstance(donatee, TwitterDonatee):
+        donation.twitter_author = await db.get_or_create_twitter_author(donatee.author_handle)
+        donation.twitter_tweet_id = await db.get_or_create_twitter_tweet(donatee.tweet_id)
     else:
         raise NotImplementedError
 

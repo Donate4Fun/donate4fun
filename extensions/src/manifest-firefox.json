@@ -20,7 +20,8 @@
     "cookies",
     "scripting",
     "https://*.donate4.fun/*",
-    "https://*.youtube.com/*"
+    "https://*.youtube.com/*",
+    "https://*.twitter.com/*"
   ],
   "background": {
     "page": "background.html"
@@ -44,6 +45,18 @@
     "run_at": "document_start",
     "matches": [
       "*://*.donate4.fun/*"
+    ]
+  },{
+    "js": [
+      "contentscripts/twitter.js"
+    ],
+    "css": [
+      "contentscripts/twitter.css",
+      "static/global.css"
+    ],
+    "run_at": "document_end",
+    "matches": [
+      "*://*.twitter.com/*"
     ]
   }],
   "browser_action":  {

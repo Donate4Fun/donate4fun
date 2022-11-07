@@ -20,7 +20,8 @@
     "https://*.donate4.fun/*",
     "https://youtube.com/*",
     "https://www.youtube.com/*",
-    "https://m.youtube.com/*"
+    "https://m.youtube.com/*",
+    "https://*.twitter.com/*"
   ],
   "background": {
     "service_worker": "background.js",
@@ -49,6 +50,17 @@
     "matches": [
       "*://*.donate4.fun/*"
     ]
+  },{
+    "js": [
+      "contentscripts/twitter.js"
+    ],
+    "css": [
+      "contentscripts/twitter.css",
+      "static/global.css"
+    ],
+    "matches": [
+      "*://*.twitter.com/*"
+    ]
   }],
   "action":  {
     "default_icon":  {
@@ -73,7 +85,8 @@
       "static/defaults.css",
       "static/lottie-arrow.json",
       "static/youtube.svg",
-      "static/loader.svg"
+      "static/loader.svg",
+      "static/bolt-mono.svg"
     ],
     "matches": [
       "https://*.youtube.com/*"
@@ -86,6 +99,17 @@
     ],
     "matches": [
       "*://*.donate4.fun/*"
+    ]
+  },{
+    "resources": [
+      "webln.js",
+      "webln.js.map",
+      "contentscripts/twitter.js.map",
+      "static/global.css",
+      "static/bolt-mono.svg"
+    ],
+    "matches": [
+      "https://*.twitter.com/*"
     ]
   }]
 }
