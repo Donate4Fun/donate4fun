@@ -1,14 +1,14 @@
 <script>
   import { useNavigate } from "svelte-navigator";
 
-  import PopupSection from "./PopupSection.svelte";
+  import PopupSection from "$extlib/PopupSection.svelte";
   import cLog from "$lib/log.js";
   import Button from "$lib/Button.svelte";
   import NumberedItem from "$lib/NumberedItem.svelte";
   import AmountSelection from "$lib/AmountSelection.svelte";
   import { me } from "$lib/session.js";
   import { youtube_video_url, youtube_channel_url } from "$lib/utils.js";
-  import { worker, connectToPage, browser } from "./common.js";
+  import { worker, connectToPage, browser } from "$extlib/common.js";
 
   let videoId;
   let channelId;
@@ -71,15 +71,8 @@
           {/if}
         </div>
         <div class="amount">
-          <AmountSelection bind:amount={amount} />
+          <AmountSelection donate={donate} />
         </div>
-        {#await $me then me}
-          {#if amount <= me.donator.balance}
-            <Button --width=100% on:click={donate} --padding="9px" --border-width="0">Donate</Button>
-          {:else}
-            <Button --width=100% on:click={donate} --padding="9px" --border-width="0">Donate with WebLN</Button>
-          {/if}
-        {/await}
       </div>
     {/if}
   {/await}

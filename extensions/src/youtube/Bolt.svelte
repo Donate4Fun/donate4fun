@@ -4,7 +4,7 @@
   import { Confetti } from "svelte-confetti";
 
   import { subscribe, get } from "$lib/api.js";
-  import { worker, pageScript, donate, getStatic } from "./common.js";
+  import { worker, pageScript, donate, getStatic } from "$extlib/common.js";
   import { cLog, cInfo } from "$lib/log.js";
   import Bolt from "$lib/Bolt.svelte";
   import { getVideoId, postComment, isShorts } from "./youtube.js";

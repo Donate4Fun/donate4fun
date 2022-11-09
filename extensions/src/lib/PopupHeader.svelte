@@ -10,7 +10,6 @@
   import Button from "$lib/Button.svelte";
   import MeNamePubkey from "$lib/MeNamePubkey.svelte";
   import MeBalance from "$lib/MeBalance.svelte";
-  import DonateYoutube from "./DonateYoutube.svelte";
   import { worker, browser, connectToPage, createPopup } from "./common.js";
   import cLog from "$lib/log.js";
   import { resolve } from "$lib/utils.js";

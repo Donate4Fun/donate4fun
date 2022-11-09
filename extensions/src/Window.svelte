@@ -1,5 +1,5 @@
 <script>
-  import CommentTip from "./CommentTip.svelte";
+  import CommentTip from "./youtube/CommentTip.svelte";
 </script>
 
 <svelte:head>

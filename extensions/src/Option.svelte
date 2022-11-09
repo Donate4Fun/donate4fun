@@ -1,6 +1,6 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
-  import Slider from "./Slider.svelte";
+  import Slider from "$extlib/Slider.svelte";
   import Input from "$lib/Input.svelte";
 
   export let key;

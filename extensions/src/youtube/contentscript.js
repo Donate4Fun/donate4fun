@@ -6,7 +6,7 @@ import {
   donate,
   browser,
   injectPageScript,
-} from "./common.js";
+} from "$extlib/common.js";
 import {
   waitLoaded,
   getButtons,

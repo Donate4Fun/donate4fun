@@ -1,7 +1,7 @@
 <script>
   import Button from "$lib/Button.svelte";
   import NumberedItem from "$lib/NumberedItem.svelte";
-  import PopupSection from "./PopupSection.svelte";
+  import PopupSection from "$extlib/PopupSection.svelte";
   import cLog from "$lib/log.js";
 
   function close() {

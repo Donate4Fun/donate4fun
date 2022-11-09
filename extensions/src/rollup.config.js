@@ -76,6 +76,7 @@ function makeConfig(name, options) {
       alias({
         entries: {
           '$lib': path.resolve(__dirname, '../../frontend/src/lib'),
+          '$extlib': path.resolve(__dirname, './lib'),
         },
       }),
       replace({
@@ -140,9 +141,9 @@ export default [
   makeConfig('popup'),
   makeConfig('window'),
   makeConfig('background'),
-  makeConfig('contentscript', {footer: "app;"}), // we need to return pormise from contentscript.js to wait in scripting.executeScript
-  makeConfig('contentscripts/donate4.fun', {dir: 'contentscripts'}),
-  makeConfig('contentscripts/twitter', {dir: 'contentscripts', footer: "app;"}),
+  makeConfig('youtube/contentscript', {dir: 'youtube', footer: "app;"}), // we need to return pormise from contentscript.js to wait in scripting.executeScript
+  makeConfig('twitter/contentscript', {dir: 'twitter', footer: "app;"}),
+  makeConfig('donate4.fun/contentscript', {dir: 'donate4.fun'}),
   makeConfig('webln'),
   makeConfig('globalobj'),
   {

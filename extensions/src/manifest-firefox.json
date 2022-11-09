@@ -28,10 +28,10 @@
   },
   "content_scripts":  [{
     "js": [
-      "contentscript.js"
+      "youtube/contentscript.js"
     ],
     "css": [
-      "contentscript.css",
+      "youtube/contentscript.css",
       "static/global.css"
     ],
     "run_at": "document_end",
@@ -40,7 +40,7 @@
     ]
   },{
     "js": [
-      "contentscripts/donate4.fun.js"
+      "donate4.fun/contentscript.js"
     ],
     "run_at": "document_start",
     "matches": [
@@ -48,10 +48,10 @@
     ]
   },{
     "js": [
-      "contentscripts/twitter.js"
+      "twitter/contentscript.js"
     ],
     "css": [
-      "contentscripts/twitter.css",
+      "twitter/contentscript.css",
       "static/global.css"
     ],
     "run_at": "document_end",

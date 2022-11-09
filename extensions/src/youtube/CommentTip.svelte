@@ -1,8 +1,8 @@
 <script>
 	import { createEventDispatcher, onMount } from 'svelte';
   import Button from "$lib/Button.svelte";
-  import Arrow2 from "./Arrow2.svelte";
-  import { getStatic } from "./common.js";
+  import Arrow2 from "$extlib/Arrow2.svelte";
+  import { getStatic } from "$extlib/common.js";
   import { isCommentEnabled } from "./youtube.js";
 
   export let element = null;
