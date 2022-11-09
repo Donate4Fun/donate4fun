@@ -1,11 +1,12 @@
 import yaml
 import os
 import logging
+import logging.config
 import socket
 from datetime import timedelta
 from typing import Any
 from contextvars import ContextVar
-from contextlib import asynccontextmanager, contextmanager
+from contextlib import contextmanager
 
 from pydantic import BaseSettings, BaseModel, Field, AnyUrl
 
@@ -169,8 +170,8 @@ class ContextualObject:
 settings = ContextualObject("settings")
 
 
-@asynccontextmanager
-async def load_settings():
+@contextmanager
+def load_settings():
     _settings = Settings()
     with settings.assign(_settings):
         log_config = _settings.log.dict(by_alias=True)

@@ -143,33 +143,34 @@ async def main():
 
 
 async def create_db():
-    async with load_settings() as settings:
+    with load_settings() as settings:
         db = Database(settings.db)
         await db.create_tables()
 
 
 async def create_table(tablename: str):
-    async with load_settings() as settings:
+    with load_settings() as settings:
         db = Database(settings.db)
         await db.create_table(tablename)
 
 
 async def serve():
     addLoggingLevel('TRACE', 5, 'trace')
-    async with load_settings() as settings, create_app(settings) as app:
-        if settings.bugsnag.enabled:
-            bugsnag.configure(**settings.bugsnag.dict(), project_root=os.path.dirname(__file__))
-        lnd = LndClient(settings.lnd)
-        db = Database(settings.db)
-        pubsub = PubSubBroker()
-        app.db = db
-        app.lnd = lnd
-        app.pubsub = pubsub
-        async with pubsub.run(db), monitor_invoices(lnd, db), anyio.create_task_group() as tg:
-            app.task_group = tg
-            hyper_config = Config.from_mapping(settings.hypercorn)
-            hyper_config.accesslog = logging.getLogger('hypercorn.acceslog')
-            await hypercorn_serve(BugsnagMiddleware(app), hyper_config)
+    with load_settings() as settings:
+        async with create_app(settings) as app:
+            if settings.bugsnag.enabled:
+                bugsnag.configure(**settings.bugsnag.dict(), project_root=os.path.dirname(__file__))
+            lnd = LndClient(settings.lnd)
+            db = Database(settings.db)
+            pubsub = PubSubBroker()
+            app.db = db
+            app.lnd = lnd
+            app.pubsub = pubsub
+            async with pubsub.run(db), monitor_invoices(lnd, db), anyio.create_task_group() as tg:
+                app.task_group = tg
+                hyper_config = Config.from_mapping(settings.hypercorn)
+                hyper_config.accesslog = logging.getLogger('hypercorn.acceslog')
+                await hypercorn_serve(BugsnagMiddleware(app), hyper_config)
 
 
 # https://stackoverflow.com/a/35804945/1022684

@@ -86,7 +86,7 @@ async def donate(
     elif request.target:
         await apply_target(donation, request.target, db_session)
     else:
-        raise ValidationError("donation should have a target, channel_id or receier_id")
+        raise ValidationError("donation should have a target, channel_id or receiver_id")
     donator = await load_donator(db_session, donator.id)
     # If donator has enough money (and not fulfilling his own balance) - try to pay donation instantly
     use_balance = request.receiver_id != donator.id and donator.balance >= request.amount

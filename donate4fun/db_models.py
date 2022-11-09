@@ -1,6 +1,7 @@
 from sqlalchemy import Column, TIMESTAMP, String, BigInteger, ForeignKey, func, text
 from sqlalchemy.dialects.postgresql import UUID as Uuid
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.orm import declarative_base, relationship, foreign
+from sqlalchemy.schema import CheckConstraint
 
 Base = declarative_base()
 
@@ -56,6 +57,10 @@ class TwitterAuthorDb(Base):
     name = Column(String)
     profile_image_url = Column(String)
 
+    balance = Column(BigInteger, nullable=False, server_default=text('0'))
+    total_donated = Column(BigInteger, nullable=False, server_default=text('0'))
+    last_fetched_at = Column(TIMESTAMP)
+
 
 class DonatorDb(Base):
     __tablename__ = 'donator'
@@ -69,20 +74,31 @@ class DonatorDb(Base):
     linked_youtube_channels = relationship(
         YoutubeChannelDb,
         lazy='noload',
-        secondary=lambda: Base.metadata.tables['youtube_channel_link'],
+        foreign_keys=lambda: YoutubeChannelLink.donator_id,
+        secondary=lambda: YoutubeChannelLink.__table__,
+        primaryjoin=lambda: DonatorDb.id == YoutubeChannelLink.donator_id,
+        secondaryjoin=lambda: YoutubeChannelDb.id == foreign(YoutubeChannelLink.youtube_channel_id),
     )
 
 
 class DonationDb(Base):
     __tablename__ = 'donation'
+    __table_args__ = (
+        CheckConstraint(
+            'num_nonnulls(' + ','.join(['receiver_id', 'youtube_channel_id', 'twitter_author_id']) + ') = 1',
+            name='has_a_single_target',
+        ),
+    )
 
     id = Column(Uuid(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4())
     created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
 
     r_hash = Column(String, unique=True)
     amount = Column(BigInteger, nullable=False)
-    donator_id = Column(Uuid(as_uuid=True), ForeignKey(DonatorDb.id), nullable=False)
-    donator = relationship(DonatorDb, lazy='joined', foreign_keys=[donator_id])
+    donator_id = Column(Uuid(as_uuid=True), nullable=False)
+    donator = relationship(
+        DonatorDb, lazy='joined', foreign_keys=[donator_id], primaryjoin=lambda: DonationDb.donator_id == DonatorDb.id,
+    )
     paid_at = Column(TIMESTAMP)
     cancelled_at = Column(TIMESTAMP)
 
@@ -106,7 +122,7 @@ class YoutubeChannelLink(Base):
     __tablename__ = 'youtube_channel_link'
 
     youtube_channel_id = Column(Uuid(as_uuid=True), ForeignKey(YoutubeChannelDb.id), primary_key=True)
-    donator_id = Column(Uuid(as_uuid=True), ForeignKey(DonatorDb.id), primary_key=True)
+    donator_id = Column(Uuid(as_uuid=True), primary_key=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
 
 
@@ -114,15 +130,16 @@ class WithdrawalDb(Base):
     __tablename__ = 'withdrawal'
 
     id = Column(Uuid(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4())
-    donator_id = Column(Uuid(as_uuid=True), ForeignKey(DonatorDb.id), nullable=False)
+    donator_id = Column(Uuid(as_uuid=True), nullable=False)
+    donator = relationship(
+        DonatorDb, lazy='joined', foreign_keys=[donator_id], primaryjoin=lambda: WithdrawalDb.donator_id == DonatorDb.id,
+    )
     youtube_channel_id = Column(Uuid(as_uuid=True), ForeignKey(YoutubeChannelDb.id), nullable=False)
+    youtube_channel = relationship(YoutubeChannelDb, lazy='joined')
     amount = Column(BigInteger)
 
     created_at = Column(TIMESTAMP, nullable=False)
     paid_at = Column(TIMESTAMP)
-
-    donator = relationship(DonatorDb, lazy='joined')
-    youtube_channel = relationship(YoutubeChannelDb, lazy='joined')
 
 
 class EmailNotificationDb(Base):

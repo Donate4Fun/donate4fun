@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 import httpx
 
@@ -58,4 +59,5 @@ async def fetch_twitter_author(handle: str) -> TwitterAuthor:
             handle=data['username'],
             name=data['name'],
             profile_image_url=data['profile_image_url'],
+            last_fetched_at=datetime.utcnow(),
         )
