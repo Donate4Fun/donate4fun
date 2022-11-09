@@ -89,7 +89,7 @@ async def settings():
         addLoggingLevel('TRACE', 5, 'trace')
     except AttributeError:
         pass
-    async with load_settings() as settings:
+    with load_settings() as settings:
         settings.lnd.url = 'http://localhost:10001'
         settings.lnd.macaroon_by_network = None
         settings.fastapi.debug = False  # We need to disable Debug Toolbar to avoid zero-division error (because of freezegun)

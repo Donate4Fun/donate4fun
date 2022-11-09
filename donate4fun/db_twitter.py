@@ -55,4 +55,4 @@ class TwitterDbMixin:
             select(TwitterAuthorDb)
             .where(TwitterAuthorDb.handle == handle)
         )
-        return TwitterAuthor.from_orm(**resp.scalars().one())
+        return TwitterAuthor.from_orm(resp.scalars().one())

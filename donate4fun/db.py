@@ -8,7 +8,6 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import sessionmaker, join
 from sqlalchemy.orm.exc import NoResultFound  # noqa - imported from other modules
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy_utils.functions import get_referencing_foreign_keys
 
 from .models import Donator, YoutubeChannel, Notification, Credentials
 from .settings import DbSettings
@@ -32,11 +31,6 @@ class Database:
         async with self.engine.begin() as conn:
             await conn.execute(text('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"'))
             await conn.run_sync(Base.metadata.create_all)
-            for foreign_key in get_referencing_foreign_keys(DonatorDb):
-                table_name = foreign_key.parent.table.name
-                await conn.execute(text(
-                    f'ALTER TABLE {table_name} DROP CONSTRAINT IF EXISTS {table_name}_{foreign_key.parent.key}_fkey'
-                ))
 
     async def create_table(self, tablename: str):
         async with self.engine.begin() as conn:
