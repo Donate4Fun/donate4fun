@@ -1,4 +1,4 @@
-import {worker, waitElement, sleep, pageScript} from "./common.js";
+import {worker, waitElement, sleep, pageScript} from "$extlib/common.js";
 import cLog from "$lib/log.js";
 
 function isInViewport(element) {

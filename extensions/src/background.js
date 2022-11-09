@@ -4,7 +4,7 @@ import {
   getCurrentTab,
   injectContentScript,
   createPopup,
-} from "./common.js";
+} from "$extlib/common.js";
 import cLog from "$lib/log.js";
 
 async function handleFetch(method, path, data) {

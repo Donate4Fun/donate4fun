@@ -1,12 +1,12 @@
 <script>
   import { useNavigate } from "svelte-navigator";
 
-  import PopupSection from "./PopupSection.svelte";
   import cLog from "$lib/log.js";
   import Button from "$lib/Button.svelte";
   import NumberedItem from "$lib/NumberedItem.svelte";
   import AmountSelection from "$lib/AmountSelection.svelte";
-  import { worker, connectToPage, browser } from "./common.js";
+  import { worker, connectToPage, browser } from "$extlib/common.js";
+  import PopupSection from "$extlib/PopupSection.svelte";
 
   let tweetId;
   let authorName;

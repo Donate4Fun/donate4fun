@@ -2,16 +2,16 @@
   import { onDestroy } from "svelte";
   import { Router, Link, Route, navigate, createHistory } from "svelte-navigator";
   import PopupMain from "./PopupMain.svelte";
-  import PopupYoutube from "./PopupYoutube.svelte";
-  import PopupTwitter from "./PopupTwitter.svelte";
-  import PopupHeader from "./PopupHeader.svelte";
+  import PopupYoutube from "./youtube/Popup.svelte";
+  import PopupTwitter from "./twitter/Popup.svelte";
+  import PopupHeader from "$extlib/PopupHeader.svelte";
   import PopupNoWebln from "./PopupNoWebln.svelte";
   import { apiOrigin } from "$lib/api.js";
   import { webOrigin } from "$lib/utils.js";
   import { cookies } from "$lib/session.js";
-  import { worker, getCurrentTab, browser, connectToPage } from "./common.js";
+  import { worker, getCurrentTab, browser, connectToPage } from "$extlib/common.js";
   import { cLog, cInfo } from "$lib/log.js";
-  import createHashSource from "./hashHistory.js";
+  import createHashSource from "$extlib/hashHistory.js";
 
   const hashSource = createHashSource();
   const hashHistory = createHistory(hashSource);

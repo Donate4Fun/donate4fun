@@ -1,6 +1,6 @@
-import TwitterBolt from "../TwitterBolt.svelte";
-import cLog from "$lib/log.js";
-import { registerHandlers } from "../common.js";
+import Bolt from "./Bolt.svelte";
+import { cLog, cError } from "$lib/log.js";
+import { registerHandlers, injectPageScript } from "$extlib/common.js";
 
 const buttonClass = "donate4fun";
 let observer;
@@ -51,7 +51,8 @@ async function patchTweet(tweet) {
   const anchor = tweet.querySelector('a[dir="auto"]');
   if (anchor === null)
     return;
-  const bolt = new TwitterBolt({
+  }
+  const bolt = new Bolt({
     target: boltButton,
     props: {
       tweetUrl: anchor.href,

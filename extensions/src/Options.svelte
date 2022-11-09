@@ -1,6 +1,6 @@
 <script>
   import Option from "./Option.svelte";
-  import { worker } from "./common.js";
+  import { worker } from "$extlib/common.js";
   import cLog from "$lib/log.js";
 
   let options;
