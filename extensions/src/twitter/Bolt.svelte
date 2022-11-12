@@ -6,7 +6,7 @@
   import Bolt from "$lib/Bolt.svelte";
   import HoldButton from "$lib/HoldButton.svelte";
   import { cLog, cInfo } from "$lib/log.js";
-  import { worker, donate, getStatic } from "./common.js";
+  import { worker, donate, getStatic, waitElement, pageScript, selectByPattern } from "$extlib/common.js";
 
   export let tweetUrl;
   let donating = false;
@@ -14,6 +14,7 @@
   let confetti = false;
   let hasReply = false;
   let elem;
+  let lottiePlayer;
 
   async function doDonate(event) {
     donating = true;
@@ -30,29 +31,34 @@
     }
   }
 
-  export async function onPaid(donation_) {
+  export async function onPaid(donation) {
     donating = false;
     confetti = false;
     await tick();
     confetti = true;
-    if (await worker.getConfig("enableComment") && !hasReply) {
-      postReply(donation_);
-    }
+    await tick();
+    const lottie = lottiePlayer.getLottie();
+    lottie.addEventListener("complete", async () => {
+      confetti = false;
+      cLog("amount", donation.amount);
+      if (await worker.getConfig("enableComment") && !hasReply) {
+        await postReply(donation.amount);
+      }
+    });
   }
 
-  function postReply() {
+  async function postReply(amount) {
     const replyButton = elem.parentElement.parentElement.querySelector('[data-testid="reply"]');
     replyButton.click();
-    cLog("posting comment", language, amount);
-    let comment;
-    try {
-      comment = await worker.getConfig(`defaultComment_${language}`);
-    } catch (exc) {
-      comment = await worker.getConfig("defaultComment");
-    }
-    comment.replace('%amount%', amount);
-    document.activeElement.textContent = comment;
-    await pageScript.emulateKeypresses(":focus");
+    await waitElement('[contenteditable="true"]');
+    cLog("posting comment", amount);
+    let comment = await worker.getConfig("twitterDefaultReply");
+    comment = comment.replace('%amount%', amount);
+    await pageScript.emulateKeypresses(":focus", comment);
+    const textElement = document.activeElement.querySelector('[data-text="true"]');
+    if (textElement === null)
+      return;
+    selectByPattern(textElement, /^.+!/g)
   }
 </script>
 
@@ -67,6 +73,7 @@
       controls={null}
       controlsLayout={[]}
       height={null}
+      bind:this={lottiePlayer}
     />
   {:else}
     <HoldButton bind:amount={amount} on:release={doDonate}>

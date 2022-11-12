@@ -39,7 +39,6 @@ function destroyBolt() {
 async function init() {
   cLog("Loading...");
   window.dispatchEvent(new CustomEvent("dff-unload"));
-  // page script is needed only for webln to work
   await injectPageScript("webln.js");
   window.addEventListener("yt-navigate-finish", load, true);
   window.addEventListener("yt-navigate-start", destroyBolt, true);

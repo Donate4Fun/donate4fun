@@ -71,6 +71,17 @@ const Options = {
     default: true,
     description: "Enable bolt button on YouTube",
   },
+  twitter: {
+    type: "section",
+    name: "Twitter options",
+    options: {
+      twitterDefaultReply: {
+        type: "text",
+        default: "Absolutely! Take a %amount% sats tip @donate4_fun",
+        description: "Default Twitter reply",
+      },
+    },
+  },
   dev: {
     type: "section",
     name: "Developer options",

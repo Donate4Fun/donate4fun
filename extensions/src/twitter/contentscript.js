@@ -7,6 +7,7 @@ let observer;
 
 async function init() {
   cLog("loading");
+  await injectPageScript("webln.js");
   registerHandlers({
     getTweetInfo,
     popupPath: () => "/twitter",
@@ -16,8 +17,14 @@ async function init() {
   observer = observe();
 }
 
+function isTweetPage() {
+  const { tweetUrl } = getTweetInfo();
+  // location.href could be wrong if tweet editor is open
+  return /^https:\/\/twitter.com\/\w+\/status\/\d+/.test(tweetUrl);
+}
+
 function getTweetInfo() {
-  const tweetUrl = location.href;
+  const tweetUrl = document.querySelector('meta[property="og:url"]').content;
   const avatar = document.querySelector('div[data-testid="Tweet-User-Avatar"]');
   const authorUrl = avatar?.querySelector('a')?.href;
   const authorAvatar = avatar?.querySelector('img')?.src;
@@ -49,13 +56,19 @@ async function patchTweet(tweet) {
   boltButton.className = buttonClass;
   buttons.insertBefore(boltButton, likeButton.parentElement.nextSibling);
   const anchor = tweet.querySelector('a[dir="auto"]');
-  if (anchor === null)
+  let tweetUrl;
+  if (anchor !== null)
+    tweetUrl = anchor.href;
+  else if (isTweetPage())
+    ({ tweetUrl } = getTweetInfo());
+  else {
+    cError("Tweet has no url nor this is tweet page", tweet);
     return;
   }
   const bolt = new Bolt({
     target: boltButton,
     props: {
-      tweetUrl: anchor.href,
+      tweetUrl,
     },
   });
 }

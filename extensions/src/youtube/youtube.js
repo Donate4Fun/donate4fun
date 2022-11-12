@@ -1,4 +1,11 @@
-import {worker, waitElement, sleep, pageScript} from "$extlib/common.js";
+import {
+  worker,
+  waitElement,
+  sleep,
+  pageScript,
+  selectByPattern,
+} from "$extlib/common.js";
+import { analytics } from "$lib/analytics.js";
 import cLog from "$lib/log.js";
 
 function isInViewport(element) {
@@ -172,45 +179,33 @@ async function postComment(language, amount) {
     comment = await worker.getConfig("defaultComment");
   }
 
-  comment.replace('%amount%', amount);
+  comment = comment.replace('%amount%', amount);
 
   // Scroll to comments section
-  const comments = await waitElement("comments");
+  const comments = await waitElement("#comments");
   comments.scrollIntoView({behavior: "smooth"});
 
   // "Click" on a comment input placeholder
-  const commentPlaceholder = await waitElement("simplebox-placeholder");
+  const commentPlaceholder = await waitElement("#simplebox-placeholder");
   commentPlaceholder.scrollIntoView({behavior: "smooth"});
   commentPlaceholder.click();
-  //commentPlaceholder.dispatchEvent(new Event("focus", {bubble: true}));
 
-  const commentInput = await waitElement("contenteditable-root");
+  const commentInput = await waitElement("#contenteditable-root");
   commentInput.scrollIntoView({behavior: "smooth", block: "center"});
 
   // Enter comment text
-  //commentInput.dispatchEvent(new Event('focus', {bubbles: true}));
   commentInput.textContent = comment;
-  await pageScript.emulateKeypresses("#contenteditable-root");
+  await pageScript.emulateKeypresses("#contenteditable-root", "");
 
-  const pattern = /^.+!/g;
-  const selection = window.getSelection();
-  const textNode = commentInput.childNodes[0];
-  let match;
-  selection.removeAllRanges();
-  while (match = pattern.exec(comment)) {
-    // Select customizable part of text
-    const range = document.createRange();
-    range.setStart(textNode, match.index);
-    range.setEnd(textNode, pattern.lastIndex);
-    selection.addRange(range);
-  }
+  selectByPattern(commentInput, /^.+!/g);
   commentInput.focus();
 
-  const submitButton = await waitElement('submit-button');
+  const submitButton = await waitElement('#submit-button');
   cLog("patching click for", submitButton);
   return new Promise((resolve, reject) => {
     submitButton.addEventListener("click", () => {
       cLog("comment posted");
+      analytics.track(`youtube-comment-posted`, { vid: getVideoId() })
       resolve();
     }, true);
   });
