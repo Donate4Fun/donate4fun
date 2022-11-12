@@ -16,6 +16,7 @@ from lnpayencode import lndecode, LnAddr
 from .settings import LndSettings, settings
 from .types import RequestHash, PaymentRequest
 from .models import Invoice
+from .core import as_task
 
 logger = logging.getLogger(__name__)
 
@@ -140,20 +141,8 @@ class LndClient:
         return resp['state']
 
 
-@asynccontextmanager
+@as_task
 async def monitor_invoices(lnd_client, db):
-    task = asyncio.create_task(monitor_invoices_loop(lnd_client, db))
-    try:
-        yield
-    finally:
-        task.cancel()
-        try:
-            await task
-        except asyncio.CancelledError:
-            pass
-
-
-async def monitor_invoices_loop(lnd_client, db):
     while True:
         try:
             await monitor_invoices_step(lnd_client, db)

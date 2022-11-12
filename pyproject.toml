@@ -8,7 +8,7 @@ authors = ["Nikolay Bryskin <nbryskin@gmail.com>"]
 python = "^3.10"
 httpx = "^0.23.0"
 fastapi = "^0.77.1"
-qrcode = "^7.3.1"
+qrcode = {extras = ["pil"], version = "^7.3.1"}
 uvicorn = "^0.17.6"
 Jinja2 = "^3.1.2"
 pymaging = {git = "https://github.com/ojii/pymaging.git"}
@@ -36,6 +36,7 @@ ecdsa = "^0.17.0"
 rollbar = "^0.16.3"
 pyinstrument = "^4.3.0"
 alembic = "^1.8.1"
+authlib = {git = "https://github.com/nikicat/authlib"}
 
 [tool.poetry.dev-dependencies]
 ipython = "^8.3.0"

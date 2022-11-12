@@ -1,12 +1,34 @@
+import asyncio
+import logging
+import time
+import secrets
+import io
+from uuid import UUID
+from base64 import b64encode
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
+from urllib.parse import urljoin, quote_plus
+from typing import Any
+from itertools import groupby
+from functools import partial
 
+import qrcode
+import anyio
 import httpx
+from qrcode.image.styledpil import StyledPilImage
+from qrcode.image.styles.colormasks import HorizontalGradiantColorMask
+from lnurl.core import _url_encode as lnurl_encode
+from starlette.datastructures import URL
+from authlib.integrations.httpx_client import AsyncOAuth1Client, AsyncOAuth2Client
 
-from .db import DbSession, NoResultFound
-from .models import Donation, TwitterAuthor, TwitterTweet
+from .db import DbSession, NoResultFound, Database
+from .models import Donation, TwitterAuthor, TwitterTweet, WithdrawalToken
 from .types import ValidationError
 from .settings import settings
+from .core import app, as_task, register_command, catch_exceptions
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -45,15 +67,96 @@ async def query_or_fetch_twitter_author(db: DbSession, handle: str) -> TwitterAu
     return author
 
 
-async def fetch_twitter_author(handle: str) -> TwitterAuthor:
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            f'https://api.twitter.com/2/users/by/username/{handle}',
-            params={'user.fields': 'id,name,profile_image_url'},
-            headers=dict(Authorization=f'Bearer {settings.twitter.bearer_token}'),
+async def api_request(method, client, api_path, **kwargs) -> dict[str, Any]:
+    response = await client.request(
+        method=method,
+        url=urljoin('https://api.twitter.com/2/', api_path),
+        **kwargs
+    )
+    response.raise_for_status()
+    data = response.json()
+    return data.get('data') or data
+
+
+api_get = partial(api_request, 'GET')
+api_post = partial(api_request, 'POST')
+
+
+async def save_token(db: Database, token: dict[str, Any], refresh_token: str):
+    logger.debug(f"new token: {token} ({refresh_token})")
+    async with db.session() as db_session:
+        await db_session.save_oauth_token('twitter_oauth2', token)
+
+
+@asynccontextmanager
+async def make_oauth2_client(token=None, update_token=None):
+    oauth = settings.twitter.oauth
+    async with AsyncOAuth2Client(
+        client_id=oauth.client_id,
+        client_secret=oauth.client_secret,
+        scope="tweet.read users.read dm.read dm.write offline.access",
+        token_endpoint='https://api.twitter.com/2/oauth2/token',
+        redirect_uri='https://donate4.fun/api/v1/twitter/oauth-callback',
+        code_challenge_method='S256',
+        token=token,
+        update_token=update_token,
+    ) as client:
+        yield client
+
+
+@asynccontextmanager
+async def make_oauth1_client():
+    oauth = settings.twitter.oauth
+    async with AsyncOAuth1Client(
+        client_id=oauth.consumer_key,
+        client_secret=oauth.consumer_secret,
+        redirect_uri='oob',
+    ) as client:
+        yield client
+
+
+@asynccontextmanager
+async def make_noauth_client():
+    token = settings.twitter.bearer_token
+    async with httpx.AsyncClient(headers=dict(authorization=f'Bearer {token}')) as client:
+        yield client
+
+
+@register_command
+async def obtain_twitter_oauth2_token():
+    async with make_oauth2_client() as client:
+        code_verifier = secrets.token_urlsafe(43)
+        url, state = client.create_authorization_url(
+            url='https://twitter.com/i/oauth2/authorize', code_verifier=code_verifier,
         )
-        response.raise_for_status()
-        data = response.json()['data']
+        authorization_response = input(f"Follow this url and enter resulting url after redirect: {url}\n")
+        token: dict[str, Any] = await client.fetch_token(
+            authorization_response=authorization_response,
+            code_verifier=code_verifier,
+        )
+        db = Database(settings.db)
+        async with db.session() as db_session:
+            await db_session.save_oauth_token('twitter_oauth2', token)
+
+
+@register_command
+async def obtain_twitter_oauth1_token():
+    async with make_oauth1_client() as client:
+        await client.fetch_request_token('https://api.twitter.com/oauth/request_token')
+        auth_url = client.create_authorization_url('https://api.twitter.com/oauth/authorize')
+        pin: str = input(f"Open this url {auth_url} and paste here PIN:\n")
+        token: dict[str, Any] = await client.fetch_access_token('https://api.twitter.com/oauth/access_token', verifier=pin)
+        db = Database(settings.db)
+        async with db.session() as db_session:
+            await db_session.save_oauth_token('twitter_oauth1', token)
+
+
+async def fetch_twitter_author(handle: str) -> TwitterAuthor:
+    async with make_noauth_client() as client:
+        data = await api_get(
+            client, f'users/by/username/{handle}',
+            params={'user.fields': 'id,name,profile_image_url'},
+        )
         return TwitterAuthor(
             user_id=int(data['id']),
             handle=data['username'],
@@ -61,3 +164,190 @@ async def fetch_twitter_author(handle: str) -> TwitterAuthor:
             profile_image_url=data['profile_image_url'],
             last_fetched_at=datetime.utcnow(),
         )
+
+
+@dataclass
+class DirectMessage:
+    is_me: bool
+    text: str
+    created_at: datetime
+
+
+async def fetch_conversations(client):
+    logger.trace("fetching new twitter direct messages")
+    events = await api_get(
+        client, 'dm_events',
+        params={'dm_event.fields': 'sender_id,created_at,dm_conversation_id', 'max_results': 100},
+    )
+
+    def keyfunc(event):
+        return event['dm_conversation_id']
+    for dm_conversation_id, conversation_events in groupby(sorted(events, key=keyfunc), keyfunc):
+        peer_id, me_id = map(int, dm_conversation_id.split('-'))
+        sorted_events = sorted(conversation_events, key=lambda event: event['created_at'])
+        last_message = sorted_events[-1]
+        created_at = datetime.fromisoformat(last_message['created_at'][:-1])  # Remove trailing Z
+        if int(last_message['sender_id']) == me_id and created_at < datetime.utcnow() - timedelta(minutes=2):
+            # Ignore chats where last message is ours and old
+            continue
+        yield dm_conversation_id
+
+
+class Conversation:
+    def __init__(self, oauth1_client, oauth2_client, db: Database, conversation_id: str):
+        self.oauth1_client = oauth1_client
+        self.oauth2_client = oauth2_client
+        self.db = db
+        self.is_stale = False
+        self.conversation_id: str = conversation_id
+        self.peer_id = int(conversation_id.split('-', 1)[0])
+
+    async def fetch_messages(self):
+        events = await api_get(
+            self.oauth2_client, f'dm_conversations/{self.conversation_id}/dm_events',
+            params={'dm_event.fields': 'sender_id,created_at,dm_conversation_id', 'max_results': 100},
+        )
+        return [DirectMessage(
+            text=event['text'],
+            created_at=datetime.fromisoformat(event['created_at'][:-1]),  # Remove trailing Z
+            is_me=int(event['sender_id']) != self.peer_id,
+        ) for event in events]
+
+    async def reply_no_donations(self):
+        url = (
+            "https://twitter.com/intent/tweet?text="
+            + quote_plus("Tip me #Bitcoin through a #LightningNetwork using https://donate4.fun")
+        )
+        await self.send_text(f"You have no donations, but if you want any then tweet about us {url}")
+
+    async def send_text(self, text: str, **params):
+        logger.trace("Sending text to %d: %s", self.peer_id, text)
+        await api_post(
+            self.oauth2_client, f'dm_conversations/{self.conversation_id}/messages',
+            json=dict(text=text, **params),
+        )
+
+    async def conversate(self, text: str):
+        await self.send_text(text)
+        start = time.time()
+        while time.time() < start + settings.twitter.answer_timeout:
+            await api_get(self.oauth2_client, f'dm_conversations/{self.conversation_id}/dm_events')
+
+    @catch_exceptions
+    async def chat_loop(self):
+        while True:
+            history = await self.fetch_messages()
+            if not history:
+                break
+            # Twitter API always returns messages in descending order by created_at
+            last_message = history[0]
+            logger.trace("last message %s", last_message)
+            if last_message.is_me and last_message.created_at < datetime.utcnow() - timedelta(minutes=2):
+                break
+            elif not last_message.is_me:
+                logger.info(f"answering to {last_message}")
+                # For now every incoming message is handled as if user wants to withdraw
+                await self.answer_withdraw()
+            await asyncio.sleep(5)
+        self.is_stale = True
+
+    async def answer_withdraw(self):
+        async with self.db.session() as db_session:
+            await self.send_text(settings.twitter.greeting)
+            try:
+                author: TwitterAuthor = await db_session.query_twitter_author(user_id=self.peer_id)
+            except NoResultFound:
+                await self.reply_no_donations()
+            else:
+                if author.total_donated == 0:
+                    await self.reply_no_donations()
+                elif author.balance == 0:
+                    await self.send_text("All donations have been claimed.")
+                elif author.balance < settings.min_withdraw:
+                    await self.send_text(
+                        f"You have {author.balance} sats, but minimum withdraw amount is {settings.min_withdraw} sats."
+                    )
+                else:
+                    await self.send_text(f"You have {author.balance} sats! I'll generate a withdraw qr-code in a moment.")
+                    withdrawal_id: UUID = await db_session.create_withdrawal(twitter_author_id=author.id)
+                    token = WithdrawalToken(
+                        withdrawal_id=withdrawal_id,
+                    )
+                    url = app.url_path_for('lnurl_withdraw').make_absolute_url(settings.lnd.lnurl_base_url)
+                    withdraw_url = URL(url).include_query_params(token=token.to_jwt())
+                    lnurl = lnurl_encode(str(withdraw_url))
+                    qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H)
+                    qr.add_data(lnurl)
+                    image: StyledPilImage = qr.make_image(
+                        image_factory=StyledPilImage,
+                        color_mask=HorizontalGradiantColorMask(),
+                        embeded_image_path="./static/qr-logo.png",  # FIXME
+                    )
+                    data = io.BytesIO()
+                    image.save(data, "PNG")
+                    media: dict[str, Any] = await upload_media(self.oauth1_client, data.getvalue())
+                    await self.send_text(
+                        "Here are your withdrawal invoice. Scan it with your Bitcoin Lightning Wallet.",
+                        attachments=[dict(media_id=str(media['media_id']))],
+                    )
+
+
+async def upload_media(client, image: bytes) -> str:
+    response = await api_post(
+        client, 'https://upload.twitter.com/1.1/media/upload.json',
+        params=dict(
+            media_category='tweet_image',
+        ),
+        data=dict(media=b64encode(image).decode()),
+    )
+    logger.trace("Media uploaded: %s", response)
+    return response
+
+
+@register_command
+async def test_upload_media():
+    async with Database(settings.db).session() as db_session:
+        token = await db_session.query_oauth_token('twitter_oauth1')
+    async with make_oauth1_client() as client:
+        client.token = token
+        try:
+            await upload_media(client, open('frontend/public/static/D-16.png', 'rb').read())
+        except httpx.HTTPStatusError as exc:
+            auth_header = exc.request.headers['authorization']
+            logger.exception("Failed to upload image:\n%s\n%s\n%s", auth_header, exc.request.headers, exc.response.json())
+
+
+@as_task
+async def run_twitter_bot_restarting(db: Database):
+    while True:
+        try:
+            await run_twitter_bot(db)
+        except Exception:
+            logger.exception("Exception while running Twitter bot")
+            await asyncio.sleep(15)
+
+
+async def run_twitter_bot(db: Database):
+    conversations = {}
+    async with db.session() as db_session:
+        oauth1_token = await db_session.query_oauth_token('twitter_oauth1')
+        oauth2_token = await db_session.query_oauth_token('twitter_oauth2')
+        logger.debug("Using tokens %s %s", oauth1_token, oauth2_token)
+
+    oauth1_ctx = make_oauth1_client()
+    oauth2_ctx = make_oauth2_client(token=oauth2_token, update_token=partial(save_token, db))
+    async with oauth1_ctx as oauth1_client, oauth2_ctx as oauth2_client, anyio.create_task_group() as tg:
+        oauth1_client.token = oauth1_token
+        while True:
+            async for conversation_id in fetch_conversations(oauth2_client):
+                if conversation_id not in conversations:
+                    logger.debug("Creating conversation %s", conversation_id)
+                    conversations[conversation_id] = conversation = Conversation(
+                        conversation_id=conversation_id, db=db, oauth2_client=oauth2_client, oauth1_client=oauth1_client,
+                    )
+                    tg.start_soon(conversation.chat_loop)
+            for conversation_id, conversation in conversations.copy().items():
+                if conversation.is_stale:
+                    logger.debug("Removing conversation %s", conversation_id)
+                    del conversations[conversation_id]
+            await asyncio.sleep(10)
