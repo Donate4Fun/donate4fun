@@ -73,16 +73,6 @@
 </Section>
 
 <style>
-header {
-  margin-bottom: 56px;
-  font-size: 24px;
-  text-align: center;
-}
-header > h1 {
-  margin-bottom: 16px;
-  font-size: 44px;
-  font-weight: 900;
-}
 form {
   display: flex;
   flex-direction: column;
