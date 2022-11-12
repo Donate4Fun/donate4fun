@@ -75,6 +75,8 @@
       height={null}
       bind:this={lottiePlayer}
     />
+  {:else if donating}
+    <div>...</div>
   {:else}
     <HoldButton bind:amount={amount} on:release={doDonate}>
       {#if amount}
@@ -103,7 +105,7 @@
 }
 .amount {
   font-weight: 700;
-  color: rgb(231, 233, 234);
+  color: rgb(15, 20, 25);
 }
 .amount-container {
   height: calc(1.25em + 16px);
@@ -123,6 +125,9 @@
 @media (prefers-color-scheme: dark) {
   .container {
     color: rgb(113, 118, 123);
+  }
+  .amount {
+    color: rgb(231, 233, 234);
   }
 }
 .bolt-circle:hover {
