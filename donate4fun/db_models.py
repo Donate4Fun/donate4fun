@@ -1,5 +1,5 @@
 from sqlalchemy import Column, TIMESTAMP, String, BigInteger, ForeignKey, func, text
-from sqlalchemy.dialects.postgresql import UUID as Uuid
+from sqlalchemy.dialects.postgresql import UUID as Uuid, JSONB
 from sqlalchemy.orm import declarative_base, relationship, foreign
 from sqlalchemy.schema import CheckConstraint
 
@@ -128,18 +128,27 @@ class YoutubeChannelLink(Base):
 
 class WithdrawalDb(Base):
     __tablename__ = 'withdrawal'
+    __table_args__ = (
+        CheckConstraint(
+            'num_nonnulls(' + ','.join(['youtube_channel_id', 'twitter_author_id']) + ') = 1',
+            name='has_a_single_target',
+        ),
+    )
 
     id = Column(Uuid(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4())
-    donator_id = Column(Uuid(as_uuid=True), nullable=False)
+    amount = Column(BigInteger)
+    created_at = Column(TIMESTAMP, nullable=False)
+    paid_at = Column(TIMESTAMP)
+    donator_id = Column(Uuid(as_uuid=True))
     donator = relationship(
         DonatorDb, lazy='joined', foreign_keys=[donator_id], primaryjoin=lambda: WithdrawalDb.donator_id == DonatorDb.id,
     )
-    youtube_channel_id = Column(Uuid(as_uuid=True), ForeignKey(YoutubeChannelDb.id), nullable=False)
-    youtube_channel = relationship(YoutubeChannelDb, lazy='joined')
-    amount = Column(BigInteger)
 
-    created_at = Column(TIMESTAMP, nullable=False)
-    paid_at = Column(TIMESTAMP)
+    youtube_channel_id = Column(Uuid(as_uuid=True), ForeignKey(YoutubeChannelDb.id))
+    youtube_channel = relationship(YoutubeChannelDb, lazy='joined')
+
+    twitter_author_id = Column(Uuid(as_uuid=True), ForeignKey(TwitterAuthorDb.id))
+    twitter_author = relationship(TwitterAuthorDb, lazy='joined')
 
 
 class EmailNotificationDb(Base):
@@ -148,6 +157,13 @@ class EmailNotificationDb(Base):
     id = Column(Uuid(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4())
     email = Column(String, unique=True)
     created_at = Column(TIMESTAMP, nullable=False)
+
+
+class OAuthTokenDb(Base):
+    __tablename__ = 'oauth_token'
+
+    name = Column(String, primary_key=True)
+    token = Column(JSONB, nullable=False)
 
 
 Base.registry.configure()  # Create backrefs

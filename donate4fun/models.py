@@ -103,6 +103,8 @@ class YoutubeVideo(IdModel):
 class TwitterAuthor(IdModel):
     user_id: int
     handle: str
+    balance: int = 0
+    total_donated: int = 0
     name: str | None
     profile_image_url: Url | None
 

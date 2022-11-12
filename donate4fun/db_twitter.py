@@ -1,11 +1,12 @@
 from uuid import UUID
+from typing import Any
 
 from sqlalchemy import select, func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm.exc import NoResultFound  # noqa
 
 from .models import TwitterAuthor, TwitterTweet
-from .db_models import TwitterAuthorDb, TwitterTweetDb
+from .db_models import TwitterAuthorDb, TwitterTweetDb, OAuthTokenDb
 
 
 class TwitterDbMixin:
@@ -50,9 +51,29 @@ class TwitterDbMixin:
             id_ = resp.scalar()
         author.id = id_
 
-    async def query_twitter_author(self, handle: str) -> TwitterAuthor:
+    async def query_twitter_author(self, **filter_by) -> TwitterAuthor:
         resp = await self.execute(
             select(TwitterAuthorDb)
-            .where(TwitterAuthorDb.handle == handle)
+            .filter_by(**filter_by)
         )
         return TwitterAuthor.from_orm(resp.scalars().one())
+
+
+class OAuthTokenDbMixin:
+    async def query_oauth_token(self, name: str) -> dict[str, Any]:
+        result = await self.execute(
+            select(OAuthTokenDb.token)
+            .where(OAuthTokenDb.name == name)
+        )
+        return result.scalars().one()
+
+    async def save_oauth_token(self, name: str, token: dict[str, Any]):
+        await self.execute(
+            insert(OAuthTokenDb)
+            .values(name=name, token=token)
+            .on_conflict_do_update(
+                index_elements=[OAuthTokenDb.name],
+                set_=dict(token=token),
+                where=OAuthTokenDb.name == name,
+            )
+        )

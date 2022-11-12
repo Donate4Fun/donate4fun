@@ -5,10 +5,11 @@ import logging.config
 import socket
 from datetime import timedelta
 from typing import Any
-from contextvars import ContextVar
 from contextlib import contextmanager
 
 from pydantic import BaseSettings, BaseModel, Field, AnyUrl
+
+from .core import ContextualObject
 
 Url = str
 logger = logging.getLogger(__name__)
@@ -27,8 +28,17 @@ class YoutubeSettings(BaseModel):
     refresh_timeout: timedelta
 
 
+class TwitterOAuth(BaseModel):
+    client_id: str
+    client_secret: str
+    consumer_key: str
+    consumer_secret: str
+
+
 class TwitterSettings(BaseModel):
     bearer_token: str
+    greeting: str
+    oauth: TwitterOAuth
 
 
 class DbSettings(BaseModel):
@@ -146,25 +156,6 @@ class Settings(BaseSettings):
                 yaml_config_source,
                 env_settings,
             )
-
-
-class ContextualObject:
-    def __init__(self, name: str):
-        self.__dict__['var'] = ContextVar(name)
-
-    @contextmanager
-    def assign(self, var):
-        token = self.__dict__['var'].set(var)
-        try:
-            yield self
-        finally:
-            self.var.reset(token)
-
-    def __getattr__(self, attrname):
-        return getattr(self.__dict__['var'].get(), attrname)
-
-    def __setattr__(self, attrname, value):
-        return setattr(self.__dict__['var'].get(), attrname, value)
 
 
 settings = ContextualObject("settings")

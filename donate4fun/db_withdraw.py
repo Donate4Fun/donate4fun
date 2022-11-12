@@ -9,14 +9,13 @@ from .db_models import WithdrawalDb, YoutubeChannelDb
 
 
 class WithdrawalDbMixin:
-    async def create_withdrawal(self, youtube_channel_id: UUID, donator_id: UUID) -> UUID:
+    async def create_withdrawal(self, **values) -> UUID:
         result = await self.execute(
             insert(WithdrawalDb)
-            .values(dict(
-                donator_id=donator_id,
-                youtube_channel_id=youtube_channel_id,
+            .values(
                 created_at=datetime.utcnow(),
-            ))
+                **values,
+            )
             .returning(WithdrawalDb.id)
         )
         return result.scalars().one()

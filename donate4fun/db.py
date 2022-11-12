@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from .models import Donator, YoutubeChannel, Notification, Credentials
 from .settings import DbSettings
 from .db_youtube import YoutubeDbMixin
-from .db_twitter import TwitterDbMixin
+from .db_twitter import TwitterDbMixin, OAuthTokenDbMixin
 from .db_donations import DonationsDbMixin
 from .db_withdraw import WithdrawalDbMixin
 from .db_models import (
@@ -62,7 +62,7 @@ class Database:
             yield session
 
 
-class DbSession(YoutubeDbMixin, TwitterDbMixin, DonationsDbMixin, WithdrawalDbMixin):
+class DbSession(YoutubeDbMixin, TwitterDbMixin, DonationsDbMixin, WithdrawalDbMixin, OAuthTokenDbMixin):
     def __init__(self, db, session):
         self.db = db
         self.session = session

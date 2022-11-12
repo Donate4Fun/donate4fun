@@ -24,6 +24,8 @@ from .db import Database, NoResultFound
 from .lnd import monitor_invoices, LndClient
 from .pubsub import PubSubBroker
 from .types import ValidationError
+from .twitter import run_twitter_bot_restarting
+from .core import app, register_command, commands
 from . import api, web
 
 logger = logging.getLogger(__name__)
@@ -134,43 +136,44 @@ class AuthMiddleware(AuthlibMiddleware):
 
 async def main():
     command = sys.argv[1] if len(sys.argv) > 1 else 'serve'
-    commands = dict(
-        serve=serve,
-        createdb=create_db,
-        createtable=create_table,
-    )
-    await commands[command](*sys.argv[2:])
+    with load_settings():
+        await commands[command](*sys.argv[2:])
 
 
+@register_command
 async def create_db():
-    with load_settings() as settings:
-        db = Database(settings.db)
-        await db.create_tables()
+    db = Database(settings.db)
+    await db.create_tables()
 
 
+@register_command
 async def create_table(tablename: str):
-    with load_settings() as settings:
-        db = Database(settings.db)
-        await db.create_table(tablename)
+    db = Database(settings.db)
+    await db.create_table(tablename)
 
 
+@register_command
 async def serve():
     addLoggingLevel('TRACE', 5, 'trace')
     with load_settings() as settings:
-        async with create_app(settings) as app:
+        async with create_app(settings) as app_:
             if settings.bugsnag.enabled:
                 bugsnag.configure(**settings.bugsnag.dict(), project_root=os.path.dirname(__file__))
             lnd = LndClient(settings.lnd)
             db = Database(settings.db)
             pubsub = PubSubBroker()
-            app.db = db
-            app.lnd = lnd
-            app.pubsub = pubsub
-            async with pubsub.run(db), monitor_invoices(lnd, db), anyio.create_task_group() as tg:
-                app.task_group = tg
-                hyper_config = Config.from_mapping(settings.hypercorn)
-                hyper_config.accesslog = logging.getLogger('hypercorn.acceslog')
-                await hypercorn_serve(BugsnagMiddleware(app), hyper_config)
+            app_.db = db
+            app_.lnd = lnd
+            app_.pubsub = pubsub
+            with app.assign(app_):
+                pubsub_ctx = pubsub.run(db)
+                monitor_invoices_ctx = monitor_invoices(lnd, db)
+                twitter_bot_ctx = run_twitter_bot_restarting(db)
+                async with pubsub_ctx, monitor_invoices_ctx, twitter_bot_ctx, anyio.create_task_group() as tg:
+                    app_.task_group = tg
+                    hyper_config = Config.from_mapping(settings.hypercorn)
+                    hyper_config.accesslog = logging.getLogger('hypercorn.acceslog')
+                    await hypercorn_serve(BugsnagMiddleware(app_), hyper_config)
 
 
 # https://stackoverflow.com/a/35804945/1022684
