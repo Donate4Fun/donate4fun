@@ -164,7 +164,7 @@ export default [
           staticFile("global.css"),
           staticFile("defaults.css"),
           staticFile("D-*.png"),
-          staticFile("lottie-arrow.json"),
+          staticFile("lottie-*.json"),
           staticFile("youtube.svg"),
           staticFile("twitter.svg"),
           staticFile("checkbox.svg"),

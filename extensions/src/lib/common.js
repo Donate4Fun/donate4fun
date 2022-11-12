@@ -202,15 +202,15 @@ async function createPopup(path) {
   cLog("opened popup", window);
 }
 
-async function waitElement(id) {
+async function waitElement(selector) {
   let timeout = 3000;
   const step = 100;
   do {
-    const element = document.getElementById(id);
+    const element = document.querySelector(selector);
     if (element)
       return element;
     if (timeout <= 0)
-      throw new Error(`No such element #${id}`);
+      throw new Error(`No element with selector ${selector}`);
     await sleep(step);
     timeout -= step;
   } while (true);
@@ -271,6 +271,21 @@ async function injectPageScript(filename) {
   cLog("page script responded");
 }
 
+function selectByPattern(inputElement, pattern) {
+  const selection = window.getSelection();
+  const textNode = inputElement.childNodes[0];
+  let match;
+  selection.removeAllRanges();
+  while (match = pattern.exec(inputElement.textContent)) {
+    cLog("Match", match, textNode);
+    // Select customizable part of text
+    const range = document.createRange();
+    range.setStart(textNode, match.index);
+    range.setEnd(textNode, pattern.lastIndex);
+    selection.addRange(range);
+  }
+}
+
 export {
   worker,
   registerHandlers,
@@ -286,4 +301,5 @@ export {
   getStatic,
   donate,
   injectPageScript,
+  selectByPattern,
 };
