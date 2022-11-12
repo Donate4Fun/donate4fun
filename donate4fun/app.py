@@ -1,7 +1,7 @@
 import logging
 import sys
 import os
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, AsyncExitStack
 
 import anyio
 import bugsnag
@@ -166,11 +166,12 @@ async def serve():
             app_.lnd = lnd
             app_.pubsub = pubsub
             with app.assign(app_):
-                pubsub_ctx = pubsub.run(db)
-                monitor_invoices_ctx = monitor_invoices(lnd, db)
-                twitter_bot_ctx = run_twitter_bot_restarting(db)
-                async with pubsub_ctx, monitor_invoices_ctx, twitter_bot_ctx, anyio.create_task_group() as tg:
-                    app_.task_group = tg
+                async with AsyncExitStack() as stack:
+                    await stack.enter_async_context(pubsub.run(db))
+                    await stack.enter_async_context(monitor_invoices(lnd, db))
+                    app_.task_group = await stack.enter_async_context(anyio.create_task_group())
+                    if settings.twitter.enable_bot:
+                        await stack.enter_async_context(run_twitter_bot_restarting(db))
                     hyper_config = Config.from_mapping(settings.hypercorn)
                     hyper_config.accesslog = logging.getLogger('hypercorn.acceslog')
                     await hypercorn_serve(BugsnagMiddleware(app_), hyper_config)
