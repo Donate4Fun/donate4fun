@@ -3,6 +3,7 @@ import logging
 import time
 import secrets
 import io
+import os
 from uuid import UUID
 from base64 import b64encode
 from contextlib import asynccontextmanager
@@ -17,7 +18,6 @@ import qrcode
 import anyio
 import httpx
 from qrcode.image.styledpil import StyledPilImage
-from qrcode.image.styles.colormasks import HorizontalGradiantColorMask
 from lnurl.core import _url_encode as lnurl_encode
 from starlette.datastructures import URL
 from authlib.integrations.httpx_client import AsyncOAuth1Client, AsyncOAuth2Client
@@ -26,7 +26,7 @@ from .db import DbSession, NoResultFound, Database
 from .models import Donation, TwitterAuthor, TwitterTweet, WithdrawalToken
 from .types import ValidationError
 from .settings import settings
-from .core import app, as_task, register_command, catch_exceptions
+from .core import as_task, register_command, catch_exceptions
 
 logger = logging.getLogger(__name__)
 
@@ -74,8 +74,13 @@ async def api_request(method, client, api_path, **kwargs) -> dict[str, Any]:
         **kwargs
     )
     response.raise_for_status()
-    data = response.json()
-    return data.get('data') or data
+    if response.status_code == 204:
+        return
+    elif response.headers['content-type'].split(';', 1)[0] == 'application/json':
+        data = response.json()
+        return data.get('data') or data
+    else:
+        return response.content
 
 
 api_get = partial(api_request, 'GET')
@@ -269,39 +274,94 @@ class Conversation:
                     )
                 else:
                     await self.send_text(f"You have {author.balance} sats! I'll generate a withdraw qr-code in a moment.")
-                    withdrawal_id: UUID = await db_session.create_withdrawal(twitter_author_id=author.id)
-                    token = WithdrawalToken(
-                        withdrawal_id=withdrawal_id,
-                    )
-                    url = app.url_path_for('lnurl_withdraw').make_absolute_url(settings.lnd.lnurl_base_url)
-                    withdraw_url = URL(url).include_query_params(token=token.to_jwt())
-                    lnurl = lnurl_encode(str(withdraw_url))
-                    qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H)
-                    qr.add_data(lnurl)
-                    image: StyledPilImage = qr.make_image(
-                        image_factory=StyledPilImage,
-                        color_mask=HorizontalGradiantColorMask(),
-                        embeded_image_path="./static/qr-logo.png",  # FIXME
-                    )
-                    data = io.BytesIO()
-                    image.save(data, "PNG")
-                    media: dict[str, Any] = await upload_media(self.oauth1_client, data.getvalue())
+                    lnurl: str = await create_withdrawal(db_session, twitter_author_id=author.id)
+                    qrcode: bytes = make_qr_code(lnurl)
+                    media_id: int = await upload_media(self.oauth1_client, qrcode, 'image/png')
                     await self.send_text(
-                        "Here are your withdrawal invoice. Scan it with your Bitcoin Lightning Wallet.",
-                        attachments=[dict(media_id=str(media['media_id']))],
+                        "Here are your withdrawal invoice. Scan it with your Bitcoin Lightning Wallet."
+                        f" Or copy LNURL: {lnurl}",
+                        attachments=[dict(media_id=str(media_id))],
                     )
 
 
-async def upload_media(client, image: bytes) -> str:
-    response = await api_post(
-        client, 'https://upload.twitter.com/1.1/media/upload.json',
-        params=dict(
-            media_category='tweet_image',
-        ),
-        data=dict(media=b64encode(image).decode()),
+async def create_withdrawal(db_session, **kwargs):
+    withdrawal_id: UUID = await db_session.create_withdrawal()
+    token = WithdrawalToken(withdrawal_id=withdrawal_id)
+    url = urljoin(settings.lnd.lnurl_base_url, '/lnurl/withdraw')
+    withdraw_url = URL(url).include_query_params(token=token.to_jwt())
+    return lnurl_encode(str(withdraw_url))
+
+
+def make_qr_code(data: str) -> bytes:
+    qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H)
+    qr.add_data(data)
+    image: StyledPilImage = qr.make_image()
+    image_data = io.BytesIO()
+    image.save(image_data, "PNG")
+    return image_data.getvalue()
+
+
+@register_command
+async def make_withdrawal_lnurl(author_id):
+    async with Database(settings.db).session() as db_session:
+        lnurl: str = await create_withdrawal(db_session, twitter_author_id=author_id)
+        print(f"lightning:{lnurl.lower()}")
+
+
+@register_command
+async def test_make_qr_code(author_id):
+    async with Database(settings.db).session() as db_session:
+        lnurl: str = await create_withdrawal(db_session, twitter_author_id=author_id)
+    qrcode = make_qr_code(lnurl)
+    filename = 'tmp-qrcode.png'
+    with open(filename, 'wb') as f:
+        f.write(qrcode)
+    os.system(f'xdg-open {filename}')
+
+
+async def upload_media(client, image: bytes, mime_type: str) -> int:
+    upload_url = 'https://upload.twitter.com/1.1/media/upload.json'
+    media_info = await api_post(
+        client, upload_url, params=dict(
+            command='INIT',
+            total_bytes=len(image),
+            media_type=mime_type,
+            media_category='dm_image',
+        )
     )
-    logger.trace("Media uploaded: %s", response)
-    return response
+    media_id = media_info['media_id']
+    await api_post(
+        client, upload_url,
+        data=dict(
+            command='APPEND',
+            media_id=media_id,
+            segment_index=0,
+            media_data=b64encode(image).decode(),
+        ),
+    )
+    state_response = await api_post(
+        client, upload_url,
+        params=dict(
+            command='FINALIZE',
+            media_id=media_id,
+        ),
+    )
+    if 'processing_info' in state_response:
+        while True:
+            info = state_response['processing_info']
+            if info['state'] == 'succeeded':
+                break
+            check_after_secs = info['check_after_secs']
+            logger.debug("upload_media: state is %s, sleeping for %d seconds", info, check_after_secs)
+            await asyncio.sleep(check_after_secs)
+            state_response = await api_post(
+                client, upload_url, params=dict(
+                    command='STATUS',
+                    media_id=media_id,
+                )
+            )
+    logger.trace("Media uploaded: %s", state_response)
+    return media_id
 
 
 @register_command

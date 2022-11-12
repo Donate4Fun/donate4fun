@@ -38,6 +38,7 @@ class TwitterOAuth(BaseModel):
 class TwitterSettings(BaseModel):
     bearer_token: str
     greeting: str
+    enable_bot: bool
     oauth: TwitterOAuth
 
 

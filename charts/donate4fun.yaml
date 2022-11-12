@@ -33,6 +33,9 @@ backend:
       refresh_timeout: P1D
       oauth:
         redirect_base_url: https://donate4.fun
+    twitter:
+      greeting: "Hey! I'm a Donate4Fun Twitter bot. I'll check if you have any tips or donations."
+      enable_bot: true
     lnd:
       url: http://lnd-prod.lnd-prod
       lnurl_base_url: https://donate4.fun
