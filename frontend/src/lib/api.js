@@ -48,6 +48,8 @@ function fullpath(path) {
 
 function subscribe(topic, options) {
   const origin = store_get(apiOrigin).replace('http', 'ws');
+  if (!origin)
+    throw new Error("apiOrigin is not defined");
   const wsUri = `${origin}/api/v1/subscribe/${topic}`;
   const ws = new WebSocket(wsUri, options);
   const origReady = ws.ready.bind(ws);

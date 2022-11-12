@@ -8,9 +8,9 @@
   import { worker, connectToPage, browser } from "$extlib/common.js";
   import PopupSection from "$extlib/PopupSection.svelte";
 
-  let tweetId;
+  let tweetUrl;
   let authorName;
-  let authorImage;
+  let authorAvatar;
   let contentScript;
 
   const navigate = useNavigate();
@@ -20,16 +20,13 @@
     if (!contentScript)
       return;
     if (await contentScript.isTweetPage()) {
-      tweetId = await contentScript.getTweetId();
-      authorName = await contentScript.getAuthorName();
-      authorImage = await contentScript.getAuthorImage();
+      ({ tweetUrl, authorName, authorAvatar } = await contentScript.getTweetInfo());
     }
   }
 
   async function donate(amount) {
     try {
-      const target = tweetUrl(tweetId);
-      contentScript.onPaid(await contentScript.donate(amount, target));
+      contentScript.onPaid(await contentScript.donate(amount, tweetUrl));
     } catch (err) {
       console.error("Failed to donate", err);
       const rejected = err.message === 'User rejected';
@@ -40,7 +37,7 @@
  
 <PopupSection>
   {#await load() then}
-    {#if !tweetId}
+    {#if !tweetUrl}
       <div class="empty">
         <NumberedItem number=1>
           <span>Open a tweet or author you want to donate to</span>
@@ -57,8 +54,8 @@
             Donate to
             <span class="channel-title ellipsis">{authorName}</span>
           </div>
-          {#if authorImage}
-            <img width=44 height=44 class="circular" src={authorImage} alt="avatar">
+          {#if authorAvatar}
+            <img width=44 height=44 class="circular" src={authorAvatar} alt="avatar">
           {/if}
         </div>
         <AmountSelection donate={donate} />

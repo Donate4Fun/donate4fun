@@ -236,7 +236,7 @@ async function donate(amount, target) {
   } else {
     return await new Promise(async (resolve, reject) => {
       // If donation is not paid using balance then try to use WebLN
-      const ws = subscribe(`donation:${donation.id}`);
+      const ws = subscribe(`donation:${donation.id}`, { autoReconnect: false });
       ws.on("notification", async () => {
         await ws.close();
         resolve(donation);
