@@ -1,3 +1,8 @@
+ideas:
+- twitter donations
+- notifications about donations
+- fiat conversion
+
 todo:
 - add text for investors and vision
 - complete google oauth verification
