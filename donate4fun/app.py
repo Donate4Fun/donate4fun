@@ -141,6 +141,14 @@ async def main():
 
 
 @register_command
+async def help():
+    """Show this help"""
+    print('Available commands:\n\n' + '\n'.join(
+        f'{command}\t- {func.__doc__}' if func.__doc__ else command for command, func in commands.items()
+    ))
+
+
+@register_command
 async def create_db():
     db = Database(settings.db)
     await db.create_tables()
