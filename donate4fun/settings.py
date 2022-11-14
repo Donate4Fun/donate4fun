@@ -62,14 +62,6 @@ class FilterConfig(BaseModel):
     name: str
 
 
-class HandlerConfig(BaseModel):
-    class_: str = Field(None, alias='class')
-    level: str = None
-    formatter: str = None
-    filters: list[str] = []
-    stream: str = None
-
-
 class LoggerConfig(BaseModel):
     level: str
     propagate: bool = True
@@ -81,7 +73,7 @@ class LoggingConfig(BaseModel):
     version: int
     formatters: dict[str, FormatterConfig] = {}
     filters: dict[str, FilterConfig] = {}
-    handlers: dict[str, HandlerConfig] = {}
+    handlers: dict[str, Any] = {}
     loggers: dict[str, LoggerConfig] = {}
     root: LoggerConfig
     disable_existing_loggers: bool
