@@ -1,6 +1,6 @@
 import logging
 import math
-from uuid import UUID, uuid4
+from uuid import UUID
 from typing import Literal
 from functools import partial
 from urllib.parse import urlencode
@@ -34,21 +34,13 @@ from .youtube import (
 from .db import NoResultFound, DbSession
 from .db_models import DonationDb, WithdrawalDb
 from .settings import settings
+from .api_utils import get_donator
+from . import api_twitter
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 router.route_class = RollbarLoggingRoute
-
-
-def get_donator(request: Request):
-    creds = Credentials(**request.session)
-    if creds.donator is not None:
-        donator = Donator(id=creds.donator)
-    else:
-        donator = Donator(id=uuid4())
-        creds.donator = donator.id
-    request.session.update(**creds.to_json_dict())
-    return donator
+router.include_router(api_twitter.router)
 
 
 def make_memo(donation: Donation) -> str:
@@ -319,7 +311,8 @@ async def send_withdrawal(
                 await lnd.pay_invoice(payment_request)
             except Exception as exc:
                 logger.exception("Failed to send withdrawal payment")
-                bugsnag.notify(exc)
+                if settings.bugsnag.enabled:
+                    bugsnag.notify(exc)
                 status = 'ERROR'
                 message = str(exc)
             else:
@@ -331,7 +324,8 @@ async def send_withdrawal(
             )
     except Exception as exc:
         logger.exception("Internal error in send_withdrawal")
-        bugsnag.notify(exc)
+        if settings.bugsnag.enabled:
+            bugsnag.notify(exc)
         raise
 
 

@@ -79,6 +79,14 @@ class DonatorDb(Base):
         primaryjoin=lambda: DonatorDb.id == YoutubeChannelLink.donator_id,
         secondaryjoin=lambda: YoutubeChannelDb.id == foreign(YoutubeChannelLink.youtube_channel_id),
     )
+    linked_twitter_authors = relationship(
+        TwitterAuthorDb,
+        lazy='noload',
+        foreign_keys=lambda: TwitterAuthorLink.donator_id,
+        secondary=lambda: TwitterAuthorLink.__table__,
+        primaryjoin=lambda: DonatorDb.id == TwitterAuthorLink.donator_id,
+        secondaryjoin=lambda: TwitterAuthorDb.id == foreign(TwitterAuthorLink.twitter_author_id),
+    )
 
 
 class DonationDb(Base):
@@ -122,6 +130,14 @@ class YoutubeChannelLink(Base):
     __tablename__ = 'youtube_channel_link'
 
     youtube_channel_id = Column(Uuid(as_uuid=True), ForeignKey(YoutubeChannelDb.id), primary_key=True)
+    donator_id = Column(Uuid(as_uuid=True), primary_key=True)
+    created_at = Column(TIMESTAMP, server_default=func.now())
+
+
+class TwitterAuthorLink(Base):
+    __tablename__ = 'twitter_author_link'
+
+    twitter_author_id = Column(Uuid(as_uuid=True), ForeignKey(TwitterAuthorDb.id), primary_key=True)
     donator_id = Column(Uuid(as_uuid=True), primary_key=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
 

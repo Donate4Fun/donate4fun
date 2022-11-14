@@ -4,6 +4,7 @@ import time
 import secrets
 import io
 import os
+import re
 from uuid import UUID
 from base64 import b64encode
 from contextlib import asynccontextmanager
@@ -21,9 +22,10 @@ from qrcode.image.styledpil import StyledPilImage
 from lnurl.core import _url_encode as lnurl_encode
 from starlette.datastructures import URL
 from authlib.integrations.httpx_client import AsyncOAuth1Client, AsyncOAuth2Client
+from furl import furl
 
 from .db import DbSession, NoResultFound, Database
-from .models import Donation, TwitterAuthor, TwitterTweet, WithdrawalToken
+from .models import Donation, TwitterAuthor, TwitterTweet, WithdrawalToken, Donator
 from .types import ValidationError
 from .settings import settings
 from .core import as_task, register_command, catch_exceptions
@@ -58,11 +60,11 @@ def validate_twitter_url(parsed) -> TwitterDonatee:
         raise UnsupportedTwitterUrl
 
 
-async def query_or_fetch_twitter_author(db: DbSession, handle: str) -> TwitterAuthor:
+async def query_or_fetch_twitter_author(db: DbSession, **params) -> TwitterAuthor:
     try:
-        author: TwitterAuthor = await db.query_twitter_author(handle=handle)
+        author: TwitterAuthor = await db.query_twitter_author(**params)
     except NoResultFound:
-        author: TwitterAuthor = await fetch_twitter_author(handle)
+        author: TwitterAuthor = await fetch_twitter_author(**params)
         await db.save_twitter_author(author)
     return author
 
@@ -156,12 +158,15 @@ async def obtain_twitter_oauth1_token():
             await db_session.save_oauth_token('twitter_oauth1', token)
 
 
-async def fetch_twitter_author(handle: str) -> TwitterAuthor:
+async def fetch_twitter_author(handle: str | None = None, user_id: int | None = None) -> TwitterAuthor:
     async with make_noauth_client() as client:
-        data = await api_get(
-            client, f'users/by/username/{handle}',
-            params={'user.fields': 'id,name,profile_image_url'},
-        )
+        if handle is not None:
+            path = f'users/by/username/{handle}'
+        elif user_id is not None:
+            path = f'users/{user_id}'
+        else:
+            raise ValueError("One of handle or user_id should be provided")
+        data = await api_get(client, path, params={'user.fields': 'id,name,profile_image_url'})
         return TwitterAuthor(
             user_id=int(data['id']),
             handle=data['username'],
@@ -196,6 +201,14 @@ async def fetch_conversations(client):
             # Ignore chats where last message is ours and old
             continue
         yield dm_conversation_id
+
+
+def get_prove_text_regexp():
+    return re.compile(make_prove_message(r'(?P<donator_id>[a-z0-9\-]+)'))
+
+
+def make_prove_message(donator_id: UUID | str):
+    return f'Hereby I confirm that {donator_id} is my Donate4Fun account id'
 
 
 class Conversation:
@@ -251,10 +264,24 @@ class Conversation:
                 break
             elif not last_message.is_me:
                 logger.info(f"answering to {last_message}")
-                # For now every incoming message is handled as if user wants to withdraw
-                await self.answer_withdraw()
+                for message in history:
+                    if message.is_me:
+                        continue
+                    if match := get_prove_text_regexp().match(last_message.text):
+                        await self.link_twitter_account(match.group('donator_id'))
+                        break
+                else:
+                    await self.answer_withdraw()
             await asyncio.sleep(5)
         self.is_stale = True
+
+    async def link_twitter_account(self, donator_id: str):
+        logger.info(f"Linking Twitter account {self.peer_id} to {donator_id}")
+        async with self.db.session() as db_session:
+            author: TwitterAuthor = await query_or_fetch_twitter_author(db_session, user_id=self.peer_id)
+            await db_session.link_twitter_account(twitter_author=author, donator=Donator(id=donator_id))
+        claim_url = furl(settings.redirect_base_url) / 'twitter' / str(author.id)
+        await self.send_text(f"Your account is successefully linked. Go to {claim_url} to claim your donations.")
 
     async def answer_withdraw(self):
         async with self.db.session() as db_session:

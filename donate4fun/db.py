@@ -16,7 +16,7 @@ from .db_twitter import TwitterDbMixin, OAuthTokenDbMixin
 from .db_donations import DonationsDbMixin
 from .db_withdraw import WithdrawalDbMixin
 from .db_models import (
-    Base, DonatorDb,  DonationDb, EmailNotificationDb, YoutubeChannelDb, YoutubeChannelLink,
+    Base, DonatorDb,  DonationDb, EmailNotificationDb, YoutubeChannelDb,
 )
 
 logger = logging.getLogger(__name__)
@@ -99,14 +99,6 @@ class DbSession(YoutubeDbMixin, TwitterDbMixin, DonationsDbMixin, WithdrawalDbMi
         )
         scalar = result.scalars().one()
         return Donator.from_orm(scalar)
-
-    async def query_donator_youtube_channels(self, donator_id: UUID) -> list[YoutubeChannel]:
-        result = await self.execute(
-            select(YoutubeChannelDb)
-            .join(YoutubeChannelLink, YoutubeChannelDb.id == YoutubeChannelLink.youtube_channel_id)
-            .where(YoutubeChannelLink.donator_id == donator_id)
-        )
-        return [YoutubeChannel.from_orm(obj) for obj in result.unique().scalars()]
 
     async def commit(self):
         return await self.session.commit()
