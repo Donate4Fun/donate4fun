@@ -5,10 +5,12 @@
   import Userpic from "$lib/Userpic.svelte";
   import Button from "$lib/Button.svelte";
   import WalletLogin from "$lib/WalletLogin.svelte";
+  import ClaimPopup from "$lib/ClaimPopup.svelte";
   import { me } from "$lib/session.js";
   import { resolve } from "$lib/utils.js";
 
   let showMenu = false;
+  let showClaim = false;
 </script>
 
 <div class="menu-popup" on:click={() => { showMenu = false; }} style:visibility={showMenu ? "visible" : "hidden"}>
@@ -20,7 +22,7 @@
     <ul>
       <li><a href="https://github.com/Donate4Fun/donate4fun/blob/master/docs/HELP.md" target="_blank">Docs</a></li>
       <li><a href="https://github.com/orgs/Donate4Fun/projects/1" target="_blank">Roadmap</a></li>
-      <li><a use:link href="/prove/youtube">Claim donations</a></li>
+      <li><a use:link href="#" on:click={() => {showClaim = true;}}>Claim donations</a></li>
       <li><a use:link href="/login">Connect wallet</li>
       <li><a use:link href="/#team">Team</a></li>
       {#await $me then me}
@@ -29,6 +31,7 @@
     </ul>
   </nav>
 </div>
+<ClaimPopup bind:show={showClaim} />
 <header>
   <div class="logo">
     <a use:link href="/"><Logo /></a>
@@ -36,7 +39,7 @@
   <nav class="quick-links">
     <a target=_blank href="https://github.com/orgs/Donate4Fun/projects/1">Roadmap</a>
     <a target=_blank href="https://github.com/Donate4Fun/donate4fun/blob/master/docs/HELP.md">Docs</a>
-    <a use:link href="/prove/youtube">Claim donations</a>
+    <a use:link href="#" on:click={() => {showClaim = true;}}>Claim donations</a>
   </nav>
   <div class="right">
     <div class="connect-button">

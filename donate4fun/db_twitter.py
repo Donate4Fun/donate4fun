@@ -5,8 +5,8 @@ from sqlalchemy import select, func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm.exc import NoResultFound  # noqa
 
-from .models import TwitterAuthor, TwitterTweet
-from .db_models import TwitterAuthorDb, TwitterTweetDb, OAuthTokenDb
+from .models import TwitterAuthor, TwitterTweet, Donator
+from .db_models import TwitterAuthorDb, TwitterTweetDb, OAuthTokenDb, TwitterAuthorLink
 
 
 class TwitterDbMixin:
@@ -57,6 +57,24 @@ class TwitterDbMixin:
             .filter_by(**filter_by)
         )
         return TwitterAuthor.from_orm(resp.scalars().one())
+
+    async def query_donator_twitter_accounts(self, donator_id: UUID) -> list[TwitterAuthor]:
+        result = await self.execute(
+            select(TwitterAuthorDb)
+            .join(TwitterAuthorLink, TwitterAuthorDb.id == TwitterAuthorLink.twitter_author_id)
+            .where(TwitterAuthorLink.donator_id == donator_id)
+        )
+        return [TwitterAuthor.from_orm(obj) for obj in result.unique().scalars()]
+
+    async def link_twitter_account(self, twitter_author: TwitterAuthor, donator: Donator):
+        await self.execute(
+            insert(TwitterAuthorLink)
+            .values(
+                twitter_author_id=twitter_author.id,
+                donator_id=donator.id,
+            )
+            .on_conflict_do_nothing()
+        )
 
 
 class OAuthTokenDbMixin:

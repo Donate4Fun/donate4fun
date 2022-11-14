@@ -110,3 +110,11 @@ class YoutubeDbMixin:
             .where(YoutubeVideoDb.video_id == video_id)
         )
         return YoutubeVideo.from_orm(resp.scalars().one())
+
+    async def query_donator_youtube_channels(self, donator_id: UUID) -> list[YoutubeChannel]:
+        result = await self.execute(
+            select(YoutubeChannelDb)
+            .join(YoutubeChannelLink, YoutubeChannelDb.id == YoutubeChannelLink.youtube_channel_id)
+            .where(YoutubeChannelLink.donator_id == donator_id)
+        )
+        return [YoutubeChannel.from_orm(obj) for obj in result.unique().scalars()]

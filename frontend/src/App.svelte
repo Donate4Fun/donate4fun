@@ -13,6 +13,8 @@
   import WithdrawPage from "./routes/WithdrawPage.svelte";
   import YoutubeLinkPage from "./routes/YoutubeLinkPage.svelte";
   import YoutubeProvePage from "./routes/YoutubeProvePage.svelte";
+  import TwitterProvePage from "./routes/TwitterProvePage.svelte";
+  import TwitterAuthorPage from "./routes/TwitterAuthorPage.svelte";
   import LoginPage from "./routes/LoginPage.svelte";
   import Test from "./routes/Test.svelte";
   import Landing from "./routes/Landing.svelte";
@@ -47,9 +49,11 @@
     <Route path="youtube/:channel_id" component="{YoutubeChannelPage}" />
     <Route path="youtube/:channel_id/withdraw" component="{WithdrawPage}" />
     <Route path="youtube/:channel_id/link" component="{YoutubeLinkPage}" />
+    <Route path="twitter/:account_id" component="{TwitterAuthorPage}"/>
     <Route path="donate/:channel_id" component="{DonatePage}" />
     <Route path="fulfill/:donator_id" component="{FulfillPage}" />
     <Route path="prove/youtube" component={YoutubeProvePage} />
+    <Route path="prove/twitter" component={TwitterProvePage} />
     <Route path="login" component={LoginPage} />
     <Route path="main" component={Main} />
     <Route path="test" component={Test} />

@@ -1,11 +1,13 @@
 <script>
   import { fade } from 'svelte/transition';
+
   export let show;
 </script>
 
 {#if show}
   <div transition:fade="{{ duration: 200 }}" class="overlay" on:click={() => show = false}>
     <div class="popup" on:click|stopPropagation={() => {}}>
+      <img class="close" on:click={() => show = false} alt=close src="/static/cross.svg">
       <slot />
     </div>
   </div>
@@ -30,9 +32,13 @@
   border-radius: 24px;
   background: white;
   box-shadow: 0px 25.6px 57.6px rgba(0, 0, 0, 0.22);
-  padding: 58px 36px 32px;
+  padding: 16px 16px 24px 36px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 18px;
+}
+.close {
+  align-self: end;
+  cursor: pointer;
 }
 </style>
