@@ -172,8 +172,11 @@ browser.runtime.onInstalled.addListener(async (details) => {
     const host = await getConfig("apiHost");
     browser.tabs.create({url: `${host}/welcome`});
   }
+  // Firefox updates scripts by itselft, no need to reload
+  if (browser.runtime.getManifest()['manifest_version'] === 2)
+    return;
   for (const contentScript of browser.runtime.getManifest().content_scripts)
-    for (const tab of await browser.tabs.query({url: contentScript.matches}))
+    for (const tab of await browser.tabs.query({url: contentScript.matches})) {
       try {
         await injectContentScript(tab, contentScript);
       } catch (err) {
@@ -182,6 +185,7 @@ browser.runtime.onInstalled.addListener(async (details) => {
         if (err.message !== 'An unexpected error occurred')
           console.error("Failed to inject content script", err, tab, contentScript);
       }
+    }
 });
 
 registerHandlers({
