@@ -16,7 +16,7 @@
   let message;
 
   async function load() {
-    youtube_channel = await api.get(`youtube-channel/${channel_id}`);
+    youtube_channel = await api.get(`youtube/channel/${channel_id}`);
     message = `⚡ Donate4Fun to me here ${get(webOrigin)}/d/${youtube_channel.channel_id}`;
     $title = `Collect donations for ${youtube_channel.title} with Bitcoin Lightning`;
   }

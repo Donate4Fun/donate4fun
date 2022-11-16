@@ -8,8 +8,8 @@
 
 <main>
   {#await $me then me}
-    <div style="grid-row: sats;" class="amount flex-row justify-center">
-      <Amount class="font-24 font-weight-700i grid-column-2 text-align-center" amount={me.donator.balance} />
+    <div style="grid-row: sats;" class="amount">
+      <Amount amount={me.donator.balance} />
     </div>
     <FiatAmount
       style="grid-row: fiat; line-height: 16px;"
@@ -17,7 +17,7 @@
     <Button
       style="grid-row: fulfill;"
       target={isExtension ? "_blank" : null}
-      link={resolve(`/fulfill/${me.donator.id}`)}
+      link={resolve("/fulfill/me")}
       class=white
       --padding="10px 41px"
     >Fulfill</Button>
@@ -28,5 +28,13 @@
 main {
   display: grid;
   grid-template-rows: [sats] 29px 12px [fiat] 16px 20px [fulfill] 41px;
+}
+.amount {
+  display: flex;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 700;
+  text-align: center;
+  grid-template-columns: repeat(2, 1fr);
 }
 </style>

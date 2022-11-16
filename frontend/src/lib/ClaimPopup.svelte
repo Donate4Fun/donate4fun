@@ -9,11 +9,11 @@
   <div class="container">
     <h1>Where did you receive a donation?</h1>
     <div class="list">
-      <a class="item" use:link href="/prove/youtube">
+      <a class="item" use:link on:click={() => show = false} href="/youtube/prove">
         <img alt=youtube src="/static/youtube.svg">
         <div class="text">YouTube</div>
       </a>
-      <a class="item" href="/prove/twitter">
+      <a class="item" use:link on:click={() => show = false} href="/twitter/prove">
         <img alt=twitter src="/static/twitter.svg">
         <div class="text">Twitter</div>
       </a>

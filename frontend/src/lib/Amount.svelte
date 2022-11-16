@@ -2,13 +2,14 @@
   export let amount;
 </script>
 
-<span {...$$restProps}>
+<span class="container">
   <span class="amount">{amount.toLocaleString('ru')}</span> sats
 </span>
 
 <style>
-span {
+.container {
   color: #19B400;
+  white-space: nowrap;
 }
 .amount {
   font-weight: 700;

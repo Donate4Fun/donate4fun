@@ -44,16 +44,20 @@
 
 <Router url={url} primary={false}>
   <Page>
+    <Route path="youtube/*">
+      <Route path="prove" component={YoutubeProvePage} />
+      <Route path=":channel_id" component="{YoutubeChannelPage}" />
+      <Route path=":channel_id/link" component="{YoutubeLinkPage}" />
+    </Route>
+    <Route path="twitter/*">
+      <Route path="prove" component={TwitterProvePage} />
+      <Route path=":account_id" component="{TwitterAuthorPage}"/>
+    </Route>
+    <Route path="me/withdraw" component="{WithdrawPage}" />
     <Route path="donation/:donation_id" component="{DonationPage}" />
     <Route path="donator/:donator_id" component="{DonatorPage}" />
-    <Route path="youtube/:channel_id" component="{YoutubeChannelPage}" />
-    <Route path="youtube/:channel_id/withdraw" component="{WithdrawPage}" />
-    <Route path="youtube/:channel_id/link" component="{YoutubeLinkPage}" />
-    <Route path="twitter/:account_id" component="{TwitterAuthorPage}"/>
     <Route path="donate/:channel_id" component="{DonatePage}" />
     <Route path="fulfill/:donator_id" component="{FulfillPage}" />
-    <Route path="prove/youtube" component={YoutubeProvePage} />
-    <Route path="prove/twitter" component={TwitterProvePage} />
     <Route path="login" component={LoginPage} />
     <Route path="main" component={Main} />
     <Route path="test" component={Test} />

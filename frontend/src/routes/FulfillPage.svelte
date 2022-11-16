@@ -13,6 +13,7 @@
   import ChannelLogo from "$lib/ChannelLogo.svelte";
   import {resolve} from "$lib/utils.js";
   import title from "$lib/title.js";
+  import cLog from "$lib/log.js";
 
   export let donator_id;
   export let location;
@@ -37,8 +38,15 @@
       amount = parseInt(urlParams.get("amount"));
   });
 
-  async function load() {
-    const donator = await api.get(`donator/${donator_id}`);
+  async function load(me) {
+    cLog("load");
+    let donator;
+    if (donator_id === 'me') {
+      donator = me.donator;
+      donator_id = donator.id;
+    } else {
+      donator = await api.get(`donator/${donator_id}`);
+    }
     title.set(`Fulfill balance for ${donator.name}`);
     return donator;
   }
@@ -62,7 +70,7 @@
       {:else}
         <h1 class="text-align-center">Donate to </h1>
       {/if}
-      {#await load() then donator}
+      {#await load(me) then donator}
         <Donator user={donator} />
       {/await}
       <div class="amount">

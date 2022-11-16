@@ -47,7 +47,7 @@
         {/if}
       {/await}
     </div>
-    <Button class="grey" on:click={() => navigate(-1)}>Cancel</Button>
+    <Button class="grey" on:click={() => navigate(-1)}>Back</Button>
   </main>
 </Section>
 
