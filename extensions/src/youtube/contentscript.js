@@ -67,6 +67,7 @@ async function init() {
     cLog("Youtube is already loaded, patching");
     await patchButtons(getButtons());
   }
+  cLog("Finished loading");
   return "123";  // for easier debugging
 }
 

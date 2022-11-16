@@ -1,5 +1,5 @@
 import browser from "webextension-polyfill";
-import cLog from "$lib/log.js";
+import { cLog, cError } from "$lib/log.js";
 import { subscribe } from "$lib/api.js";
 
 async function callBackground(request) {
@@ -160,22 +160,16 @@ async function handleMessage(handler, args) {
   }
 }
 
-async function handleMessageWrapper(request, sendResponse) {
-    const [moduleName, funcName] = request.command.split('.');
-    const module = await import(moduleName);
-    const func = module[funcName];
-    sendResponse(await handleMessage(func, request.args));
-}
-
 function registerHandlers(handlers) {
   browser.runtime.onMessage.addListener((request, sender) => {
     if (request.type !== 'donate4fun-request')
       return false;
     const handler = handlers[request.command];
     if (!handler) {
-      console.error(`Unexpected command ${request.command}`);
+      cError(`Unexpected command ${request.command}`);
       return false;
     } else {
+      cLog("Received request", request);
       return handleMessage(handler, request.args);
     }
   });
