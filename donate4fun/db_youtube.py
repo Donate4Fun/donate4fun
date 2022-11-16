@@ -1,20 +1,28 @@
 from uuid import UUID
+from datetime import datetime
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm.exc import NoResultFound  # noqa
 
-from .models import Donator, YoutubeChannel, YoutubeVideo
-from .db_models import YoutubeChannelDb, YoutubeVideoDb, YoutubeChannelLink
+from .models import Donator, YoutubeChannel, YoutubeVideo, YoutubeChannelOwned
+from .db_models import YoutubeChannelDb, YoutubeVideoDb, YoutubeChannelLink, TransferDb, DonatorDb
 
 
 class YoutubeDbMixin:
-    async def query_youtube_channel(self, youtube_channel_id: UUID) -> YoutubeChannel:
+    async def query_youtube_channel(self, youtube_channel_id: UUID, owner_id: UUID) -> YoutubeChannelOwned:
         resp = await self.execute(
-            select(YoutubeChannelDb)
-            .where(YoutubeChannelDb.id == youtube_channel_id)
+            select(*YoutubeChannelDb.__table__.c, YoutubeChannelLink.donator_id.is_not(None).label('is_my'))
+            .join(YoutubeChannelLink, YoutubeChannelDb.id == YoutubeChannelLink.youtube_channel_id, isouter=True)
+            .where(
+                (YoutubeChannelDb.id == youtube_channel_id)
+                & (
+                    (YoutubeChannelLink.donator_id == owner_id)
+                    | YoutubeChannelLink.donator_id.is_(None)
+                )
+            )
         )
-        return YoutubeChannel.from_orm(resp.scalars().one())
+        return YoutubeChannelOwned.from_orm(resp.one())
 
     async def find_youtube_channel(self, channel_id: str) -> YoutubeChannel:
         resp = await self.execute(
@@ -94,8 +102,8 @@ class YoutubeDbMixin:
             id_ = resp.scalar()
         youtube_video.id = id_
 
-    async def link_youtube_channel(self, youtube_channel: YoutubeChannel, donator: Donator):
-        await self.execute(
+    async def link_youtube_channel(self, youtube_channel: YoutubeChannel, donator: Donator) -> bool:
+        result = await self.execute(
             insert(YoutubeChannelLink)
             .values(
                 youtube_channel_id=youtube_channel.id,
@@ -103,6 +111,7 @@ class YoutubeDbMixin:
             )
             .on_conflict_do_nothing()
         )
+        return result.rowcount == 1
 
     async def query_youtube_video(self, video_id: str) -> YoutubeVideo:
         resp = await self.execute(
@@ -118,3 +127,36 @@ class YoutubeDbMixin:
             .where(YoutubeChannelLink.donator_id == donator_id)
         )
         return [YoutubeChannel.from_orm(obj) for obj in result.unique().scalars()]
+
+    async def transfer_youtube_donations(self, youtube_channel: YoutubeChannel, donator: Donator) -> int:
+        """
+        Transfers money from YouTube channel balance to donator balance
+        Returns amount transferred
+        """
+        result = await self.execute(
+            select(YoutubeChannelDb.balance)
+            .with_for_update()
+            .where(YoutubeChannelDb.id == youtube_channel.id)
+        )
+        amount: int = result.scalar()
+        await self.execute(
+            insert(TransferDb)
+            .values(
+                amount=amount,
+                donator_id=donator.id,
+                youtube_channel_id=youtube_channel.id,
+                created_at=datetime.utcnow(),
+            )
+        )
+        await self.execute(
+            update(YoutubeChannelDb)
+            .values(balance=YoutubeChannelDb.balance - amount)
+            .where(YoutubeChannelDb.id == youtube_channel.id)
+        )
+        await self.execute(
+            update(DonatorDb)
+            .values(balance=DonatorDb.balance + amount)
+            .where(DonatorDb.id == donator.id)
+        )
+        await self.object_changed('donator', donator.id)
+        return amount

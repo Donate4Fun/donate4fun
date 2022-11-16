@@ -55,10 +55,6 @@ class DonateRequest(BaseModel):
     message: str | None
 
 
-class YoutubeChannelRequest(BaseModel):
-    target: HttpUrl | str
-
-
 class Invoice(BaseModel):
     r_hash: RequestHash
     payment_request: PaymentRequest
@@ -86,6 +82,10 @@ class YoutubeChannel(IdModel):
 
     class Config:
         orm_mode = True
+
+
+class YoutubeChannelOwned(YoutubeChannel):
+    is_my: bool | None = None
 
 
 class YoutubeVideo(IdModel):

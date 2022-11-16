@@ -129,13 +129,14 @@ class ServerNameMiddleware:
 
 class AuthMiddleware(AuthlibMiddleware):
     def __init__(self, settings: Settings, **kwargs):
-        super().__init__(**kwargs, secret_key=settings.jwt_secret, same_site="None", https_only=settings.cookie_https_only)
+        super().__init__(**kwargs, secret_key=settings.jwt_secret, same_site="None", https_only=settings.cookie_secure)
         if not settings.cookie_http_only:
             self.security_flags = self.security_flags.replace('httponly; ', '')
 
 
 async def main():
     command = sys.argv[1] if len(sys.argv) > 1 else 'serve'
+    addLoggingLevel('TRACE', 5, 'trace')
     with load_settings():
         await commands[command](*sys.argv[2:])
 
@@ -162,27 +163,27 @@ async def create_table(tablename: str):
 
 @register_command
 async def serve():
-    addLoggingLevel('TRACE', 5, 'trace')
-    with load_settings() as settings:
-        async with create_app(settings) as app_:
-            if settings.bugsnag.enabled:
-                bugsnag.configure(**settings.bugsnag.dict(), project_root=os.path.dirname(__file__))
-            lnd = LndClient(settings.lnd)
-            db = Database(settings.db)
-            pubsub = PubSubBroker()
-            app_.db = db
-            app_.lnd = lnd
-            app_.pubsub = pubsub
-            with app.assign(app_):
-                async with AsyncExitStack() as stack:
-                    await stack.enter_async_context(pubsub.run(db))
-                    await stack.enter_async_context(monitor_invoices(lnd, db))
-                    app_.task_group = await stack.enter_async_context(anyio.create_task_group())
-                    if settings.twitter.enable_bot:
-                        await stack.enter_async_context(run_twitter_bot_restarting(db))
-                    hyper_config = Config.from_mapping(settings.hypercorn)
-                    hyper_config.accesslog = logging.getLogger('hypercorn.acceslog')
-                    await hypercorn_serve(BugsnagMiddleware(app_), hyper_config)
+    async with create_app(settings) as app_:
+        if settings.bugsnag.enabled:
+            bugsnag.configure(**settings.bugsnag.dict(), project_root=os.path.dirname(__file__))
+        lnd = LndClient(settings.lnd)
+        db = Database(settings.db)
+        pubsub = PubSubBroker()
+        app_.db = db
+        app_.lnd = lnd
+        app_.pubsub = pubsub
+        with app.assign(app_):
+            async with AsyncExitStack() as stack:
+                await stack.enter_async_context(pubsub.run(db))
+                await stack.enter_async_context(monitor_invoices(lnd, db))
+                app_.task_group = await stack.enter_async_context(anyio.create_task_group())
+                if settings.twitter.enable_bot:
+                    await stack.enter_async_context(run_twitter_bot_restarting(db))
+                hyper_config = Config.from_mapping(settings.hypercorn)
+                hyper_config.accesslog = logging.getLogger('hypercorn.acceslog')
+                if settings.bugsnag.enabled:
+                    app_ = BugsnagMiddleware(app_)
+                await hypercorn_serve(app_, hyper_config)
 
 
 # https://stackoverflow.com/a/35804945/1022684

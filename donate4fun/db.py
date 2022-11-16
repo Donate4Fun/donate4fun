@@ -74,7 +74,11 @@ class DbSession(YoutubeDbMixin, TwitterDbMixin, DonationsDbMixin, WithdrawalDbMi
         return await self.session.execute(query)
 
     async def notify(self, channel: str, notification: Notification):
+        logger.trace("notify %s %s", channel, notification)
         await self.execute(select(func.pg_notify(channel, notification.json())))
+
+    async def object_changed(self, object_class: str, object_id: UUID):
+        return await self.notify(f'{object_class}:{object_id}', Notification(id=object_id, status='OK'))
 
     async def save_donator(self, donator: Donator):
         await self.execute(

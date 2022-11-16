@@ -1,15 +1,21 @@
 import json
+from functools import partial
 from uuid import UUID
 from datetime import datetime
 from urllib.parse import urlparse, parse_qs, urlunparse
 
 import pytest
 import ecdsa
+import anyio
 from lnurl.helpers import _lnurl_decode
+from anyio.abc import TaskStatus
+from sqlalchemy import update
 
-from donate4fun.api import DonateRequest, DonateResponse
-from donate4fun.lnd import monitor_invoices, LndClient
+from donate4fun.api import DonateRequest, DonateResponse, WithdrawResponse, LnurlWithdrawResponse
+from donate4fun.lnd import monitor_invoices, LndClient, Invoice
 from donate4fun.models import Donation, Donator, SubscribeEmailRequest
+from donate4fun.db import Notification
+from donate4fun.db_models import DonatorDb
 
 from tests.test_util import verify_fixture, verify_response, check_response, freeze_time, check_notification, login_to
 from tests.fixtures import Settings
@@ -140,3 +146,97 @@ async def test_disconnect_wallet(client, settings: Settings, registered_donator:
     check_response(await client.post("/api/v1/disconnect-wallet"))
     me_response = check_response(await client.get("/api/v1/donator/me"))
     assert me_response.json()['donator']['lnauth_pubkey'] == None  # noqa
+
+
+@pytest.mark.parametrize('balance, amount_diff, balance_diff, status, message, is_ok', [
+    (20, -1, 0, 'OK', None, True), (20, 0, 0, 'OK', None, True),
+    (20, 1, 0, 'OK', None, False), (20, 0, -1, 'OK', None, False),
+    (10**8, 0, 0, 'ERROR', 'FAILURE_REASON_INSUFFICIENT_BALANCE', False),
+])
+async def test_withdraw(
+    client, payer_lnd, balance, amount_diff, balance_diff, status,
+    message, is_ok, settings, db, pubsub, registered_donator,
+):
+    """
+    balance is initial donator balance
+    amount_diff is a difference between balance and invoice amount
+    balance_diff is a difference between balance after initiaing withdrawal and before commiting invoice to emulate double-spend
+    """
+    donator = registered_donator
+    login_to(client, settings, donator)
+    async with db.session() as db_session:
+        await db_session.execute(
+            update(DonatorDb)
+            .values(balance=balance)
+            .where(DonatorDb.id == donator.id)
+        )
+
+    resp = await client.get('/api/v1/me/withdraw')
+    check_response(resp, 200)
+    response = WithdrawResponse(**resp.json())
+    assert response.amount == balance
+    decoded_url = _lnurl_decode(response.lnurl)
+    lnurl_response = await client.get(decoded_url)
+    lnurl_data = LnurlWithdrawResponse(**lnurl_response.json())
+    assert lnurl_data.min_sats == settings.min_withdraw
+    assert lnurl_data.max_sats == balance
+    invoice: Invoice = await payer_lnd.create_invoice(
+        memo=lnurl_data.default_description,
+        value=balance + amount_diff,
+    )
+    if balance_diff:
+        # Test double-spend
+        async with db.session() as db_session:
+            await db_session.execute(
+                update(DonatorDb)
+                .values(balance=DonatorDb.balance + balance_diff)
+                .where(DonatorDb.id == donator.id)
+            )
+    async with anyio.create_task_group() as tg:
+        client.app.task_group = tg
+        if is_ok:
+            await tg.start(wait_for_payment, payer_lnd, invoice.r_hash)
+            await tg.start(partial(
+                wait_for_withdrawal,
+                withdrawal_id=response.withdrawal_id,
+                client=client,
+                amount_diff=amount_diff,
+                status=status,
+                message=message,
+            ))
+        callback_response = await client.get(lnurl_data.callback, params=dict(k1=lnurl_data.k1, pr=invoice.payment_request))
+        check_response(callback_response, 200)
+        assert callback_response.json()['status'] == 'OK' if is_ok else 'ERROR', callback_response.json()['reason']
+        print("wait for task complete")
+    # Check final balance
+    async with db.session() as db_session:
+        donator: Donator = await db_session.query_donator(donator_id=donator.id)
+        assert donator.balance == -amount_diff if is_ok else balance
+
+
+async def wait_for_payment(lnd_client, r_hash, *, task_status: TaskStatus):
+    print("starting wait_for_payment")
+    async for data in lnd_client.subscribe("/v1/invoices/subscribe"):
+        if data is None:
+            task_status.started()
+            continue
+        invoice: Invoice = Invoice(**data['result'])
+        assert invoice.r_hash == r_hash
+        assert invoice.state == 'SETTLED'
+        print("invoice settled")
+        break
+    print("stopping wait_for_payment")
+
+
+async def wait_for_withdrawal(
+    client, withdrawal_id: UUID, amount_diff: int, status: str, message: str, task_status: TaskStatus,
+):
+    print("starting wait_for_withdrawal")
+    async with client.ws_session(f"/api/v1/subscribe/withdrawal:{withdrawal_id}") as ws:
+        task_status.started()
+        msg = await ws.receive_json()
+        notification = Notification(**msg)
+        assert notification.id == withdrawal_id
+        assert notification.status == status
+        assert notification.message == message
+    print("stopping wait_for_withdrawal")

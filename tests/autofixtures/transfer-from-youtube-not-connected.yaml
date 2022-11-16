@@ -1,0 +1,5 @@
+json:
+  error: You should have a connected auth method to claim donations
+  status: error
+  type: ValidationError
+status_code: 400

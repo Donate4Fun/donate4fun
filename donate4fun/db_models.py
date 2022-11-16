@@ -89,11 +89,15 @@ class DonatorDb(Base):
     )
 
 
+def num_nonnulls(*columns):
+    return 'num_nonnulls(' + ','.join(columns) + ')'
+
+
 class DonationDb(Base):
     __tablename__ = 'donation'
     __table_args__ = (
         CheckConstraint(
-            'num_nonnulls(' + ','.join(['receiver_id', 'youtube_channel_id', 'twitter_author_id']) + ') = 1',
+            num_nonnulls('receiver_id', 'youtube_channel_id', 'twitter_author_id') + '=1',
             name='has_a_single_target',
         ),
     )
@@ -143,10 +147,13 @@ class TwitterAuthorLink(Base):
 
 
 class WithdrawalDb(Base):
+    """
+    Withdrawal from donator balance (or from youtube/twitter unitl migration to TransferDb) to his lightning wallet
+    """
     __tablename__ = 'withdrawal'
     __table_args__ = (
         CheckConstraint(
-            'num_nonnulls(' + ','.join(['youtube_channel_id', 'twitter_author_id']) + ') = 1',
+            num_nonnulls('youtube_channel_id', 'twitter_author_id') + '<=1',
             name='has_a_single_target',
         ),
     )
@@ -155,10 +162,34 @@ class WithdrawalDb(Base):
     amount = Column(BigInteger)
     created_at = Column(TIMESTAMP, nullable=False)
     paid_at = Column(TIMESTAMP)
-    donator_id = Column(Uuid(as_uuid=True))
+    donator_id = Column(Uuid(as_uuid=True), nullable=False)
     donator = relationship(
         DonatorDb, lazy='joined', foreign_keys=[donator_id], primaryjoin=lambda: WithdrawalDb.donator_id == DonatorDb.id,
     )
+
+    youtube_channel_id = Column(Uuid(as_uuid=True), ForeignKey(YoutubeChannelDb.id))
+    youtube_channel = relationship(YoutubeChannelDb, lazy='joined')
+
+    twitter_author_id = Column(Uuid(as_uuid=True), ForeignKey(TwitterAuthorDb.id))
+    twitter_author = relationship(TwitterAuthorDb, lazy='joined')
+
+
+class TransferDb(Base):
+    """
+    Transfer from donation target (youtube, twitter, etc.) to a donator balance
+    """
+    __tablename__ = 'transfer'
+    __table_args__ = (
+        CheckConstraint(
+            num_nonnulls('youtube_channel_id', 'twitter_author_id') + '=1',
+            name='has_a_single_target',
+        ),
+    )
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4())
+    amount = Column(BigInteger, nullable=False)
+    created_at = Column(TIMESTAMP, nullable=False)
+    donator_id = Column(Uuid(as_uuid=True), ForeignKey(DonatorDb.id), nullable=False)
 
     youtube_channel_id = Column(Uuid(as_uuid=True), ForeignKey(YoutubeChannelDb.id))
     youtube_channel = relationship(YoutubeChannelDb, lazy='joined')
