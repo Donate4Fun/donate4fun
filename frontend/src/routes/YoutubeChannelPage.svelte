@@ -13,21 +13,18 @@
   import api from "$lib/api.js";
   import { me, reloadMe } from "$lib/session.js";
   import title from "$lib/title.js";
+  import { youtube_channel_url } from "$lib/utils.js";
 
   export let channel_id;
 
-  let youtube_channel;
-  let sum_donated;
+  let channel;
   let donations;
   let error;
   let showSuccess = false;
   let balance;
   let lnurl;
   let amount;
-  let youtube_channel_url;
   let show_more_donations;
-
-  const min_withdraw = 100;
 
   const resolve = useResolve();
 
@@ -35,22 +32,19 @@
     showSuccess = false;
     amount = null;
     try {
-      await reloadMe();  // force reload to refresh youtube channels
-      youtube_channel = await api.get(`youtube-channel/${channel_id}`);
-      $title = `Claim donations for ${youtube_channel.title} [${youtube_channel.id}]`
-      balance = youtube_channel.balance;
-      youtube_channel_url = `https://youtube.com/channel/${youtube_channel.channel_id}`
+      channel = await api.get(`youtube/channel/${channel_id}`);
+      $title = `Claim donations for ${channel.title} [${channel.id}]`
       donations = await api.get(`donations/by-donatee/${channel_id}`);
-      sum_donated = donations.reduce((accum, donation) => accum + donation.amount, 0);
       return await me.get();
     } catch (err) {
       console.log(err)
       error = err.response.data.detail;
     }
   }
-  async function link_youtube() {
-    const response = await api.get(`link-youtube-channel`);
-    window.location.href = response.url;
+
+  async function claim() {
+    await api.post(`youtube/channel/${channel_id}/transfer`);
+    await load();
   }
 </script>
 
@@ -59,21 +53,20 @@
     {#await load()}
       <Loading />
     {:then me}
-      <h1>Donations to <a href={youtube_channel_url} target=_blank>{youtube_channel.title}</a></h1>
-      <ChannelLogo url={youtube_channel.thumbnail_url} />
+      <h1>Donations to <YoutubeChannel channel={channel} /></h1>
+      <ChannelLogo url={channel.thumbnail_url} />
       <div class="controls">
-      {#if balance >= min_withdraw}
-        <div class="available">Available BTC to withdraw: <Amount amount={balance} /></div>
-        {#if me.youtube_channels.filter(elem => elem.id === channel_id).length > 0}
-          <Button class="withdraw" link='{resolve("withdraw")}'>Withdraw</Button>
+        <div class="available">Available to claim: <Amount amount={channel.balance} /></div>
+        {#if channel.is_my}
+          {#if me.connected}
+            <Button disabled={channel.balance === 0} on:click={claim}>Take donations</Button>
+          {:else}
+            <Button link={resolve('/login')}></Button>
+          {/if}
         {:else}
           <Infobox>You can withdraw donations if the channel belongs to you. Confirm by linking your Youtube channel.</Infobox>
           <Button link="/prove/youtube">Link your Youtube channel</Button>
         {/if}
-      {:else}
-        <div class="available">Available BTC: <Amount amount={balance} /></div>
-        <Infobox class="red">Minimum amount to withdraw: {min_withdraw} sats</Infobox>
-      {/if}
         <Button class="want-more white" link={resolve("link")}>Want more donations?</Button>
       </div>
       <div class="table">

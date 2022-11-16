@@ -12,6 +12,9 @@
   import Separator from "$lib/Separator.svelte";
   import MeNamePubkey from "$lib/MeNamePubkey.svelte";
   import MeBalance from "$lib/MeBalance.svelte";
+  import Infobox from "$lib/Infobox.svelte";
+  import LinkedYoutubeChannels from "$lib/LinkedYoutubeChannels.svelte";
+  import LinkedTwitterAccounts from "$lib/LinkedTwitterAccounts.svelte";
   import { me, reloadMe } from "$lib/session.js";
   import api from "$lib/api.js";
   import { link } from "svelte-navigator";
@@ -19,45 +22,50 @@
   import title from "$lib/title.js";
 
   export let donator_id;
-  export let navigate;
   let itsMe;
   let donator;
   let donations;
 
-  async function load(donator_id, me) {
-    const mee = await me;
-    itsMe = donator_id === mee.donator?.id;
+  const min_withdraw = 100;
+
+  async function load(donator_id, me_) {
+    const me = await me_;
+    itsMe = donator_id === me.donator?.id;
     if (itsMe) {
       await reloadMe();
-      donator = mee.donator;
+      donator = me.donator;
     } else {
       donator = await api.get(`donator/${donator_id}`);
     }
     title.set(`Donator profile for ${donator.name}`);
     donations = await api.get(`donations/by-donator/${donator_id}`);
-  }
-
-  async function donate() {
-    navigate(`/fulfill/${donator.id}`);
+    return me;
   }
 </script>
 
 <Section>
-  <div class="flex-column align-center gap-8 main">
-    {#await load(donator_id, $me)}
-      <Loading/>
-    {:then}
+  <div class="main">
+    {#await load(donator_id, $me) then me}
       <Userpic user={donator} class="userpic" --width=88px/>
       {#if itsMe}
         <div style="height: 21px;"></div>
         <MeNamePubkey align="center" />
         <div style="height: 32px;"></div>
-        <MeBalance />
+        <div class="balance-actions">
+          {#if me.connected}
+            <MeBalance />
+            <Button title="Minimum amount to withdraw is {min_withdraw} sats" class="white" disabled={donator.balance <= min_withdraw} link="/me/withdraw">Withdraw</Button>
+          {:else}
+            <Button link="/login">Connect a wallet</Button>
+          {/if}
+        </div>
+        <LinkedYoutubeChannels />
+        <LinkedTwitterAccounts />
       {:else}
         <p>{donator.name}</p>
         <Button link="/fulfill/{donator_id}">Donate</Button>
       {/if}
-      <div class=transactions><Separator>Transactions</Separator></div>
+      <div class=transactions><Separator>History</Separator></div>
       <div class="table">
         <div class="head">
           <div>Date</div>
@@ -98,7 +106,17 @@
 
 <style>
 .main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   padding: 36px 119px 123px;
+}
+.balance-actions {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 .transactions {
   margin-top: 56px;

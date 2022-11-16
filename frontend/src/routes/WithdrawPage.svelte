@@ -1,5 +1,5 @@
 <script>
-  import {createEventDispatcher, onDestroy} from "svelte";
+  import { createEventDispatcher, onDestroy } from "svelte";
   import { link, useResolve } from "svelte-navigator";
   import Loading from "$lib/Loading.svelte";
   import Donator from "$lib/Donator.svelte";
@@ -12,15 +12,13 @@
   import ChannelLogo from "$lib/ChannelLogo.svelte";
   import title from "$lib/title.js";
   import api from "$lib/api.js";
+  import { notify } from "$lib/notifications.js";
 
-  export let channel_id;
   export let navigate;
 
-  let youtube_channel;
   let amount;
   let loading = false;
   let showSuccess = false;
-  let youtube_channel_url;
 
   const min_withdraw = 100;
   const dispatch = createEventDispatcher();
@@ -29,13 +27,10 @@
   onDestroy(() => ws?.close());
 
   async function load() {
-    const base = `youtube-channel/${channel_id}`;
-    youtube_channel = await api.get(base);
     try {
-      const response = await api.get(`${base}/withdraw`);
-      amount = response.amount;
-      title.set(`Withdraw ${amount} sats for ${youtube_channel.title} [${youtube_channel.id}]`);
-      ws = await api.subscribe(`withdrawal:${channel_id}`);
+      const response = await api.get("me/withdraw");
+      title.set(`Withdraw ${response.amount} sats`);
+      ws = await api.subscribe(`withdrawal:${response.withdrawal_id}`);
       ws.on("notification", async (msg) => {
         await ws.close();
         if (msg.status === 'ERROR') {
@@ -44,7 +39,7 @@
         showSuccess = true;
       });
       await ws.ready();
-      return response.lnurl;
+      return response;
     } catch (err) {
       console.log(err);
       if (err.response.status === 403 || (err.response.data.status === 'error' && err.response.data.type === 'ValidationError'))
@@ -55,20 +50,15 @@
 
 <Section>
   <div class="withdraw">
-    {#await load()}
-      <Loading />
-    {:then lnurl}
+    {#await load() then { lnurl, amount }}
       <h1>Withdraw <Amount amount={amount} /></h1>
       {#if showSuccess}
         <img src="/static/success.png" class="success" alt="success">
         <div class="donations-claimed">Donations claimed</div>
         <div class="buttons success">
-          <Button link={resolve("../link")}>Want more donations?</Button>
           <Button class="grey" on:click={() => navigate(-1)}>Close</Button>
         </div>
       {:else}
-        <ChannelLogo url={youtube_channel.thumbnail_url} />
-        {#if lnurl}
           <a class="qrcode" href="lightning:{lnurl}"><QRCode value={lnurl} /></a>
           <div class="buttons">
             <a href="lightning:{lnurl}" class="open-in-wallet"><Button>Open in wallet</Button></a>
@@ -83,7 +73,6 @@
             <a href="https://blixtwallet.github.io" target="_blank">Blixt</a>
             .
           </div>
-        {/if}
       {/if}
     {/await}
   </div>

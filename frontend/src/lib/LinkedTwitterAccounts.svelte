@@ -1,38 +1,37 @@
 <script>
-  import YoutubeChannel from "$lib/YoutubeChannel.svelte";
+  import TwitterAccount from "$lib/TwitterAccount.svelte";
   import ChannelLogo from "$lib/ChannelLogo.svelte";
   import Button from "$lib/Button.svelte";
   import Amount from "$lib/Amount.svelte";
   import api from "$lib/api.js";
 
-  export let channels;
+  export let accounts;
 
-  async function take(channel) {
-    await api.post(`/youtube/channel/${channel.id}/transfer`);
+  async function take(account) {
+    await api.post(`/twitter/account/${account.id}/transfer`);
     await load();
   }
 
   async function load() {
-    channels = await api.get("youtube/linked-channels");
+    accounts = await api.get("twitter/linked-accounts");
   }
 </script>
 
 <div class="container">
   <div class="header">
-    <h2>Linked YouTube channels</h2>
-    <Button --width=70px link="/youtube/prove">Add</Button>
+    <h2>Linked Twitter accounts</h2>
+    <Button --width=70px link="/twitter/prove">Add</Button>
   </div>
   {#await load() then}
     <ul>
-      {#each channels as channel}
+      {#each accounts as account}
       <li>
-        <ChannelLogo url={channel.thumbnail_url} size=40px />
         <div class="channel-name">
-          <YoutubeChannel linkto=withdraw channel={channel} />
+          <TwitterAccount linkto=withdraw account={account} />
         </div>
-        <Amount amount={channel.balance} />
+        <Amount amount={account.balance} />
         <div class="withdraw-button">
-          <Button disabled={channel.balance === 0} on:click={() => take(channel)} --border-width=0>Take</Button>
+          <Button disabled={account.balance === 0} on:click={() => take(account)} --border-width=0>Take</Button>
         </div>
       </li>
       {/each}

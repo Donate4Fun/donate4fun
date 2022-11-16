@@ -7,28 +7,26 @@
   import Button from "$lib/Button.svelte";
   import Infobox from "$lib/Infobox.svelte";
   import Separator from "$lib/Separator.svelte";
-  import LinkedYoutubeChannels from "$lib/LinkedYoutubeChannels.svelte";
   import { me, reloadMe } from "$lib/session.js";
   import { sleep } from "$lib/utils.js";
   import api from "$lib/api.js";
   import title from "$lib/title.js";
 
   export let navigate;
-  let checkPressed = false;
 
   async function check() {
     await sleep(5000);
-    await api.post("me/youtube/check-ownership");
-    await reloadMe();
-    checkPressed = true;
+    const newChannels = await api.post("youtube/check-ownership");
+    if (newChannels.length !== 0)
+      navigate(-1);
   }
 
   async function loadProveMessage() {
-    return (await api.get("me/youtube/ownership-message")).message;
+    return (await api.get("youtube/ownership-message")).message;
   }
 
   async function useOAuth() {
-    const response = await api.get("me/youtube/oauth");
+    const response = await api.get("youtube/oauth");
     window.location.href = response.url;
   }
 
@@ -73,20 +71,7 @@
         </summary>
       </li>
     </ol>
-    <div>
-      {#await $me then me}
-        {#if me.youtube_channels.length}
-          <h2>Linked channels</h2>
-          <LinkedYoutubeChannels youtube_channels={me.youtube_channels} />
-        {:else if checkPressed}
-          No comments found, try again.
-        {/if}
-      {/await}
-    </div>
-    <Separator>OR</Separator>
-    <Button class="white" on:click={useOAuth}>Use Google OAuth instead</Button>
-    <Infobox>Until this app is verified by Google you will see a warning message. It's OK to bypass it. <a href="https://donate4fun.notion.site/How-to-prove-ownership-of-your-YouTube-channel-c514b950fef74ef8a5886af2926f9392">More info</a></Infobox>
-    <Button class="grey" on:click={() => navigate(-1)}>Cancel</Button>
+    <Button class="grey" on:click={() => navigate(-1)}>Back</Button>
   </main>
 </Section>
 
