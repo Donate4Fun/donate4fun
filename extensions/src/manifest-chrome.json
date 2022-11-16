@@ -29,13 +29,14 @@
   },
   "minimum_chrome_version": "99",
   "content_scripts":  [{
-    "js":  [
-      "contentscript.js"
+    "js": [
+      "youtube/contentscript.js"
     ],
     "css": [
-      "contentscript.css",
+      "youtube/contentscript.css",
       "static/global.css"
     ],
+    "run_at": "document_end",
     "matches": [
       "*://youtube.com/*",
       "*://www.youtube.com/*",
@@ -44,7 +45,7 @@
     "exclude_matches": [ "*://*.music.youtube.com/*" ]
   },{
     "js": [
-      "contentscripts/donate4.fun.js"
+      "donate4.fun/contentscript.js"
     ],
     "run_at": "document_start",
     "matches": [
@@ -52,12 +53,13 @@
     ]
   },{
     "js": [
-      "contentscripts/twitter.js"
+      "twitter/contentscript.js"
     ],
     "css": [
-      "contentscripts/twitter.css",
+      "twitter/contentscript.css",
       "static/global.css"
     ],
+    "run_at": "document_end",
     "matches": [
       "*://*.twitter.com/*"
     ]
@@ -79,7 +81,7 @@
     "resources": [
       "webln.js",
       "webln.js.map",
-      "contentscript.js.map",
+      "youtube/contentscript.js.map",
       "static/success.png",
       "static/global.css",
       "static/defaults.css",
@@ -95,7 +97,7 @@
     "resources": [
       "globalobj.js",
       "globalobj.js.map",
-      "contentscripts/donate4.fun.js.map"
+      "donate4.fun/contentscripts.js.map"
     ],
     "matches": [
       "*://*.donate4.fun/*"
@@ -104,7 +106,7 @@
     "resources": [
       "webln.js",
       "webln.js.map",
-      "contentscripts/twitter.js.map",
+      "twitter/contentscripts.js.map",
       "static/global.css",
       "static/bolt-mono.svg"
     ],

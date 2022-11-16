@@ -36,8 +36,11 @@
     ],
     "run_at": "document_end",
     "matches": [
-      "https://*.youtube.com/*"
-    ]
+      "*://youtube.com/*",
+      "*://www.youtube.com/*",
+      "*://m.youtube.com/*"
+    ],
+    "exclude_matches": [ "*://*.music.youtube.com/*" ]
   },{
     "js": [
       "donate4.fun/contentscript.js"
