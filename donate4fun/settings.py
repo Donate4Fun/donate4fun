@@ -128,7 +128,7 @@ class Settings(BaseSettings):
     withdraw_timeout: int
     ownership_message: str
     cookie_domain: str | None = None
-    cookie_https_only: bool = True
+    cookie_secure: bool = True
     cookie_http_only: bool = False
     latest_donations_count: int = 50
     redirect_base_url: str = ''
@@ -146,8 +146,8 @@ class Settings(BaseSettings):
         ):
             return (
                 init_settings,
-                yaml_config_source,
                 env_settings,
+                yaml_config_source,
             )
 
 

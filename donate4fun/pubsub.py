@@ -9,7 +9,8 @@ from .db import Database
 logger = logging.getLogger(__name__)
 
 
-async def callback_wrapper(callback: Callable, conn, pid, channel, payload: str):
+async def callback_wrapper(callback: Callable, conn, pid, channel: str, payload: str):
+    logger.trace("delivering to %s: %s", channel, payload)
     try:
         if asyncio.iscoroutinefunction(callback):
             return await callback(payload)

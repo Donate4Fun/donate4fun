@@ -5,16 +5,18 @@ from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from .types import NotFound
-from .db_models import WithdrawalDb, YoutubeChannelDb
+from .db_models import WithdrawalDb, DonatorDb
+from .models import Notification
 
 
 class WithdrawalDbMixin:
-    async def create_withdrawal(self, **values) -> UUID:
+    async def create_withdrawal(self, donator: DonatorDb) -> UUID:
         result = await self.execute(
             insert(WithdrawalDb)
             .values(
                 created_at=datetime.utcnow(),
-                **values,
+                donator_id=donator.id,
+                amount=donator.balance,
             )
             .returning(WithdrawalDb.id)
         )
@@ -27,36 +29,38 @@ class WithdrawalDbMixin:
         )
         return result.scalars().one()
 
-    async def lock_withdrawal(self, withdrawal_id: UUID):
-        result = await self.execute(
-            select(WithdrawalDb)
-            .with_for_update(of=WithdrawalDb)
-            .where(
-                (WithdrawalDb.id == withdrawal_id)
-                & WithdrawalDb.paid_at.is_(None)
-            )
-        )
-        return result.scalars().one()
-
-    async def withdraw(self, withdrawal_id: UUID, youtube_channel_id: UUID, amount: int) -> int:
+    async def withdraw(self, withdrawal_id: UUID, amount: int) -> int:
         """
-        return new balance
+        Save withdrawal changes to db - this happens after the payment
+        Returns new balance
         """
-        result = await self.execute(
-            update(YoutubeChannelDb)
-            .where((YoutubeChannelDb.id == youtube_channel_id) & (YoutubeChannelDb.balance >= amount))
-            .values(balance=YoutubeChannelDb.balance - amount)
-            .returning(YoutubeChannelDb.balance)
-        )
-        new_balance = result.scalars().one()
         result = await self.execute(
             update(WithdrawalDb)
             .values(
                 paid_at=datetime.utcnow(),
                 amount=amount,
             )
-            .where(WithdrawalDb.id == withdrawal_id)
+            .where(
+                (WithdrawalDb.id == withdrawal_id)
+                & WithdrawalDb.paid_at.is_(None)
+                & (WithdrawalDb.amount >= amount)
+            )
+            .returning(WithdrawalDb.donator_id)
         )
         if result.rowcount != 1:
-            raise NotFound(f"Withdrawal {withdrawal_id} does not exist")
-        return new_balance
+            raise NotFound(f"Withdrawal {withdrawal_id} does not exist or haven't enough money")
+        donator_id = result.scalar()
+        result = await self.execute(
+            update(DonatorDb)
+            .where(
+                (DonatorDb.id == donator_id)
+                & (DonatorDb.balance >= amount)
+            )
+            .values(balance=DonatorDb.balance - amount)
+            .returning(DonatorDb.balance)
+        )
+        if result.rowcount != 1:
+            raise NotFound(f"Donator {donator_id} does not exist or haven't enough money")
+        await self.notify(f'withdrawal:{withdrawal_id}', Notification(id=withdrawal_id, status='OK'))
+        await self.object_changed('donator', donator_id)
+        return result.scalar()

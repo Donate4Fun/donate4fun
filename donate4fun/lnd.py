@@ -3,8 +3,9 @@ import asyncio
 import os.path
 import json
 import logging
+import math
 from functools import cached_property
-from typing import Any
+from typing import Any, Literal
 from contextlib import asynccontextmanager
 
 import anyio
@@ -12,11 +13,15 @@ import httpx
 from anyio import TASK_STATUS_IGNORED
 from anyio.abc import TaskStatus
 from lnpayencode import lndecode, LnAddr
+from lnurl.helpers import _lnurl_decode
+from lnurl.models import LnurlResponseModel
+from lnurl.types import MilliSatoshi
+from pydantic import Field, AnyUrl
 
 from .settings import LndSettings, settings
 from .types import RequestHash, PaymentRequest
 from .models import Invoice
-from .core import as_task
+from .core import as_task, register_command
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +32,26 @@ State = str
 
 class PayInvoiceError(Exception):
     pass
+
+
+class LnurlWithdrawResponse(LnurlResponseModel):
+    """
+    Override default lnurl model to allow http:// callback urls
+    """
+    tag: Literal["withdrawRequest"] = "withdrawRequest"
+    callback: AnyUrl
+    k1: str
+    min_withdrawable: MilliSatoshi = Field(..., alias="minWithdrawable")
+    max_withdrawable: MilliSatoshi = Field(..., alias="maxWithdrawable")
+    default_description: str = Field("", alias="defaultDescription")
+
+    @property
+    def min_sats(self) -> int:
+        return int(math.ceil(self.min_withdrawable / 1000))
+
+    @property
+    def max_sats(self) -> int:
+        return int(math.floor(self.max_withdrawable / 1000))
 
 
 class LndClient:
@@ -72,10 +97,12 @@ class LndClient:
     async def subscribe(self, api: str, **request: Data):
         # WORKAROUND: This should be after the request but
         # lnd does not return headers until the first event, so it deadlocks
+        logger.trace("subscribe %s", api)
 
         async def request_impl(queue):
             async with self.request(api, method='GET', json=request, timeout=None) as resp:
                 async for line in resp.aiter_lines():
+                    logger.trace("subscribe line %s", line)
                     await queue.put(json.loads(line))
 
         async with anyio.create_task_group() as tg:
@@ -175,3 +202,19 @@ async def monitor_invoices_step(lnd_client, db, *, task_status: TaskStatus = TAS
                     logger.exception("Error while handling donation notification from lnd")
     finally:
         logger.debug("Stopped monitoring invoices")
+
+
+@register_command
+async def pay_withdraw_request(lnurl: str):
+    decoded_url = _lnurl_decode(lnurl)
+    logger.debug("decoded lnurl: %s", decoded_url)
+    async with httpx.AsyncClient() as client:
+        lnurl_response = await client.get(decoded_url)
+        lnurl_data = LnurlWithdrawResponse(**lnurl_response.json())
+        logger.debug("received response: %s", lnurl_data)
+        lnd = LndClient(settings.lnd)
+        invoice: Invoice = await lnd.create_invoice(
+            memo=lnurl_data.default_description,
+            value=lnurl_data.max_sats,
+        )
+        await client.get(lnurl_data.callback, params=dict(k1=lnurl_data.k1, pr=invoice.payment_request))
