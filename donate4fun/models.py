@@ -6,6 +6,7 @@ import json
 
 import jwt
 from pydantic import BaseModel as PydanticBaseModel, validator, HttpUrl, Field, root_validator, EmailStr
+from pydantic.datetime_parse import parse_datetime
 from funkybob import UniqueRandomNameGenerator
 from multiavatar.multiavatar import multiavatar
 
@@ -51,6 +52,7 @@ class DonateRequest(BaseModel):
     amount: int
     receiver_id: UUID | None
     channel_id: UUID | None
+    twitter_author_id: UUID | None
     target: HttpUrl | None
     message: str | None
 
@@ -66,7 +68,7 @@ class Invoice(BaseModel):
 
     @validator('settle_date', pre=True)
     def settle_date_validate(cls, settle_date):
-        return datetime.fromtimestamp(int(settle_date))
+        return parse_datetime(int(settle_date)).replace(tzinfo=None)
 
 
 class IdModel(BaseModel):
@@ -77,6 +79,7 @@ class YoutubeChannel(IdModel):
     title: str
     channel_id: str
     thumbnail_url: Url | None
+    banner_url: Url | None
     balance: int = 0
     last_fetched_at: datetime | None
 
@@ -100,7 +103,7 @@ class YoutubeVideo(IdModel):
         orm_mode = True
 
 
-class TwitterAuthor(IdModel):
+class TwitterAccount(IdModel):
     user_id: int
     handle: str
     balance: int = 0
@@ -110,6 +113,10 @@ class TwitterAuthor(IdModel):
 
     class Config:
         orm_mode = True
+
+
+class TwitterAccountOwned(TwitterAccount):
+    is_my: bool | None = None
 
 
 class TwitterTweet(IdModel):
@@ -154,7 +161,7 @@ class Donation(BaseModel):
     amount: int
     youtube_channel: YoutubeChannel | None
     youtube_video: YoutubeVideo | None
-    twitter_author: TwitterAuthor | None
+    twitter_author: TwitterAccount | None
     twitter_tweet: TwitterTweet | None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     message: str | None = None
@@ -203,3 +210,7 @@ class Credentials(BaseModel):
 
 class SubscribeEmailRequest(BaseModel):
     email: EmailStr
+
+
+class TransferResponse(BaseModel):
+    amount: int

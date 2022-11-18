@@ -15,6 +15,7 @@ class YoutubeChannelDb(Base):
     channel_id = Column(String, unique=True, nullable=False)
     title = Column(String)
     thumbnail_url = Column(String)
+    banner_url = Column(String)
 
     balance = Column(BigInteger, nullable=False, server_default=text('0'))
     total_donated = Column(BigInteger, nullable=False, server_default=text('0'))

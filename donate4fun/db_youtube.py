@@ -10,17 +10,16 @@ from .db_models import YoutubeChannelDb, YoutubeVideoDb, YoutubeChannelLink, Tra
 
 
 class YoutubeDbMixin:
-    async def query_youtube_channel(self, youtube_channel_id: UUID, owner_id: UUID) -> YoutubeChannelOwned:
+    async def query_youtube_channel(self, youtube_channel_id: UUID, owner_id: UUID | None = None) -> YoutubeChannelOwned:
+        owner_links = select(YoutubeChannelLink).where(YoutubeChannelLink.donator_id == owner_id).subquery()
         resp = await self.execute(
-            select(*YoutubeChannelDb.__table__.c, YoutubeChannelLink.donator_id.is_not(None).label('is_my'))
-            .join(YoutubeChannelLink, YoutubeChannelDb.id == YoutubeChannelLink.youtube_channel_id, isouter=True)
-            .where(
-                (YoutubeChannelDb.id == youtube_channel_id)
-                & (
-                    (YoutubeChannelLink.donator_id == owner_id)
-                    | YoutubeChannelLink.donator_id.is_(None)
-                )
+            select(*YoutubeChannelDb.__table__.c, owner_links.c.donator_id.is_not(None).label('is_my'))
+            .join(
+                owner_links,
+                onclause=YoutubeChannelDb.id == owner_links.c.youtube_channel_id,
+                isouter=True,
             )
+            .where(YoutubeChannelDb.id == youtube_channel_id)
         )
         return YoutubeChannelOwned.from_orm(resp.one())
 
@@ -54,10 +53,12 @@ class YoutubeDbMixin:
                 set_={
                     YoutubeChannelDb.title: youtube_channel.title,
                     YoutubeChannelDb.thumbnail_url: youtube_channel.thumbnail_url,
+                    YoutubeChannelDb.banner_url: youtube_channel.banner_url,
                 },
                 where=(
                     (func.coalesce(YoutubeChannelDb.title, '') != youtube_channel.title)
                     | (func.coalesce(YoutubeChannelDb.thumbnail_url, '') != youtube_channel.thumbnail_url)
+                    | (func.coalesce(YoutubeChannelDb.banner_url, '') != youtube_channel.banner_url)
                 ),
             )
             .returning(YoutubeChannelDb.id)

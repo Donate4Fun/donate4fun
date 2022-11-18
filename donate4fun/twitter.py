@@ -25,7 +25,7 @@ from authlib.integrations.httpx_client import AsyncOAuth1Client, AsyncOAuth2Clie
 from furl import furl
 
 from .db import DbSession, NoResultFound, Database
-from .models import Donation, TwitterAuthor, TwitterTweet, WithdrawalToken, Donator
+from .models import Donation, TwitterAccount, TwitterTweet, WithdrawalToken, Donator
 from .types import ValidationError
 from .settings import settings
 from .core import as_task, register_command, catch_exceptions
@@ -60,13 +60,13 @@ def validate_twitter_url(parsed) -> TwitterDonatee:
         raise UnsupportedTwitterUrl
 
 
-async def query_or_fetch_twitter_author(db: DbSession, **params) -> TwitterAuthor:
+async def query_or_fetch_twitter_author(db: DbSession, **params) -> TwitterAccount:
     try:
-        author: TwitterAuthor = await db.query_twitter_author(**params)
+        account: TwitterAccount = await db.query_twitter_account(**params)
     except NoResultFound:
-        author: TwitterAuthor = await fetch_twitter_author(**params)
-        await db.save_twitter_author(author)
-    return author
+        account: TwitterAccount = await fetch_twitter_author(**params)
+        await db.save_twitter_account(account)
+    return account
 
 
 async def api_request(method, client, api_path, **kwargs) -> dict[str, Any]:
@@ -158,7 +158,7 @@ async def obtain_twitter_oauth1_token():
             await db_session.save_oauth_token('twitter_oauth1', token)
 
 
-async def fetch_twitter_author(handle: str | None = None, user_id: int | None = None) -> TwitterAuthor:
+async def fetch_twitter_author(handle: str | None = None, user_id: int | None = None) -> TwitterAccount:
     async with make_noauth_client() as client:
         if handle is not None:
             path = f'users/by/username/{handle}'
@@ -167,7 +167,7 @@ async def fetch_twitter_author(handle: str | None = None, user_id: int | None = 
         else:
             raise ValueError("One of handle or user_id should be provided")
         data = await api_get(client, path, params={'user.fields': 'id,name,profile_image_url'})
-        return TwitterAuthor(
+        return TwitterAccount(
             user_id=int(data['id']),
             handle=data['username'],
             name=data['name'],
@@ -278,7 +278,7 @@ class Conversation:
     async def link_twitter_account(self, donator_id: str):
         logger.info(f"Linking Twitter account {self.peer_id} to {donator_id}")
         async with self.db.session() as db_session:
-            author: TwitterAuthor = await query_or_fetch_twitter_author(db_session, user_id=self.peer_id)
+            author: TwitterAccount = await query_or_fetch_twitter_author(db_session, user_id=self.peer_id)
             await db_session.link_twitter_account(twitter_author=author, donator=Donator(id=donator_id))
         claim_url = furl(settings.redirect_base_url) / 'twitter' / str(author.id)
         await self.send_text(f"Your account is successefully linked. Go to {claim_url} to claim your donations.")
@@ -287,7 +287,7 @@ class Conversation:
         async with self.db.session() as db_session:
             await self.send_text(settings.twitter.greeting)
             try:
-                author: TwitterAuthor = await db_session.query_twitter_author(user_id=self.peer_id)
+                author: TwitterAccount = await db_session.query_twitter_author(user_id=self.peer_id)
             except NoResultFound:
                 await self.reply_no_donations()
             else:
