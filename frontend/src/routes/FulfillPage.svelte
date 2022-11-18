@@ -83,7 +83,11 @@
       <div class="button">
         {#if me.connected}
           <Button on:click={donate} disabled={amountError}>
-            <span>Fulfill</span>
+            {#if me.donator.id === donator_id}
+              <span>Fulfill</span>
+            {:else}
+              <span>Donate</span>
+            {/if}
           </Button>
         {:else}
           <Button link={resolve('/login') + '?return=' + location.pathname} disabled={amountError}>

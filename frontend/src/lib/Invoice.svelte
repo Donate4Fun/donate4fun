@@ -8,13 +8,14 @@
   import YoutubeChannel from "$lib/YoutubeChannel.svelte";
   import Donator from "$lib/Donator.svelte";
   import NeedHelp from "$lib/NeedHelp.svelte";
-  import { partial } from "$lib/utils.js";
+  import { partial, sendPayment } from "$lib/utils.js";
   import api from "$lib/api.js";
   import { me } from "$lib/session.js";
 
   export let donation;
-  export let payment_request;
+  export let paymentRequest;
 
+  let showQR = false;
   let ws;
   onDestroy(async () => {
     await ws?.close();
@@ -23,7 +24,7 @@
 	const dispatch = createEventDispatcher();
 
   async function subscribe() {
-    ws = api.subscribe(`donation:${donation.id}`);
+    ws = api.subscribe(`donation:${donation.id}`, { autoReconnect: false });
     ws.on("notification", async (notification) => {
       if (notification.status === 'OK') {
         await ws.close();
@@ -31,7 +32,18 @@
         dispatch('paid', response.donation);
       }
     });
-    await ws.ready();
+    await ws.ready(3000);
+  }
+
+  async function payWithWebLN() {
+    // Show payment dialog (or pay silently if budget allows)
+    try {
+      await sendPayment(paymentRequest);
+      return true;
+    } catch (err) {
+      // If WebLN fails show QR code
+      return false;
+    }
   }
 </script>
 
@@ -39,25 +51,21 @@
   {#await subscribe()}
     <Loading />
   {:then}
-    {#if donation.youtube_channel}
-      <h1>Donate <Amount amount={donation.amount} /> to</h1>
-      <YoutubeChannel channel={donation.youtube_channel} />
-    {:else if donation.receiver}
-      {#await $me then me}
-        {#if donation.receiver.id === me.donator.id}
-          <h1>Fulfill <Amount amount={donation.amount} /> to your wallet</h1>
-        {:else}
-          <h1>Donate <Amount amount={donation.amount} /> to <Donator user={donation.receiver} /></h1>
-        {/if}
-      {/await}
-    {/if}
-    <a href="lightning:{payment_request}"><QRCode value={payment_request} /></a>
-    <div class="buttons flex-column gap-20">
-      <Button link="lightning:{payment_request}" --width=100%>Open in Wallet</Button>
-      <Lnurl lnurl={payment_request} --width=100% />
-      <Button on:click={partial(dispatch, "cancel")} class="grey" --width=100%>Back</Button>
-      <div class="need-help"><NeedHelp /></div>
-    </div>
+    {#await payWithWebLN()}
+      Trying to pay using WebLN
+    {:then waitWebLN}
+      {#if waitWebLN}
+        <Loading />
+      {:else}
+        <a href="lightning:{paymentRequest}"><QRCode value={paymentRequest} /></a>
+        <div class="buttons">
+          <Button link="lightning:{paymentRequest}" --width=100%>Open in Wallet</Button>
+          <Lnurl lnurl={paymentRequest} --width=100% />
+          <Button on:click={() => dispatch("cancel")} class="grey" --width=100%>Back</Button>
+          <div class="need-help"><NeedHelp /></div>
+        </div>
+      {/if}
+    {/await}
   {/await}
 </main>
 
@@ -67,13 +75,7 @@ main {
   flex-direction: column;
   align-items: center;
   gap: 20px;
-  padding: 58px 16px 56px;
-}
-h1 {
-  font-weight: 900;
-  margin-top: 0;
-  margin-bottom: 20px;
-  text-align: center;
+  width: 300px;
 }
 .need-help {
   width: 100%;
@@ -83,6 +85,10 @@ h1 {
   justify-content: center;
 }
 .buttons {
-  width: 295px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
 }
 </style>

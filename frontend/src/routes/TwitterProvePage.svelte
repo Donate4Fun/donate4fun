@@ -23,7 +23,7 @@
   }
 
   async function loadLinkedTwitterAccounts() {
-    return (await api.get("twitter/linked-accounts"));
+    return (await api.get("twitter/linked"));
   }
 
   title.set("Link Twitter account");

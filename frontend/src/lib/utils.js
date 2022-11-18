@@ -73,3 +73,14 @@ export const weblnPresent = makeStore(isWeblnPresent);
 export function toText(amount) {
   return amount >= 1000 ? `${amount / 1000} K` : amount;
 }
+
+export async function sendPayment(request) {
+  if (!window.webln)
+    throw new Error("No webln found");
+  if (!webln.enabled) {
+    // Show connect dialog
+    await webln.enable();
+  }
+  const result = await webln.sendPayment(request);
+  cLog("webln.sendPayment result", result);
+}

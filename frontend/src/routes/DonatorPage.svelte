@@ -2,7 +2,6 @@
   import Loading from "$lib/Loading.svelte";
   import Userpic from "$lib/Userpic.svelte";
   import Section from "$lib/Section.svelte";
-  import YoutubeChannel from "$lib/YoutubeChannel.svelte";
   import YoutubeVideo from "$lib/YoutubeVideo.svelte";
   import Donator from "$lib/Donator.svelte";
   import Amount from "$lib/Amount.svelte";
@@ -13,8 +12,10 @@
   import MeNamePubkey from "$lib/MeNamePubkey.svelte";
   import MeBalance from "$lib/MeBalance.svelte";
   import Infobox from "$lib/Infobox.svelte";
-  import LinkedYoutubeChannels from "$lib/LinkedYoutubeChannels.svelte";
-  import LinkedTwitterAccounts from "$lib/LinkedTwitterAccounts.svelte";
+  import LinkedItems from "$lib/LinkedItems.svelte";
+  import TwitterAccount from "$lib/TwitterAccount.svelte";
+  import YoutubeChannel from "$lib/YoutubeChannel.svelte";
+  import ChannelLogo from "$lib/ChannelLogo.svelte";
   import { me, reloadMe } from "$lib/session.js";
   import api from "$lib/api.js";
   import { link } from "svelte-navigator";
@@ -25,8 +26,6 @@
   let itsMe;
   let donator;
   let donations;
-
-  const min_withdraw = 100;
 
   async function load(donator_id, me_) {
     const me = await me_;
@@ -54,13 +53,21 @@
         <div class="balance-actions">
           {#if me.connected}
             <MeBalance />
-            <Button title="Minimum amount to withdraw is {min_withdraw} sats" class="white" disabled={donator.balance <= min_withdraw} link="/me/withdraw">Withdraw</Button>
           {:else}
             <Button link="/login">Connect a wallet</Button>
           {/if}
         </div>
-        <LinkedYoutubeChannels />
-        <LinkedTwitterAccounts />
+        <div style="height: 56px;"></div>
+        <LinkedItems let:item={channel} basePath="youtube" transferPath="channel">
+          <ChannelLogo url={channel.thumbnail_url} size=40px />
+          <div class="channel-name">
+            <YoutubeChannel linkto="withdraw" channel={channel} />
+          </div>
+        </LinkedItems>
+        <div style="height: 40px;"></div>
+        <LinkedItems let:item={account} basePath="twitter" transferPath="account">
+          <TwitterAccount account={account} />
+        </LinkedItems>
       {:else}
         <p>{donator.name}</p>
         <Button link="/fulfill/{donator_id}">Donate</Button>
@@ -110,13 +117,16 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 36px 119px 123px;
+  padding: 36px 24px 123px;
 }
 .balance-actions {
   width: 300px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+.channel-name {
+  width: 100%;
 }
 .transactions {
   margin-top: 56px;

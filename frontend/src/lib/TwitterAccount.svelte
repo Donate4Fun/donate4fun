@@ -1,11 +1,13 @@
 <script>
+  import { link } from "svelte-navigator";
+
   export let account;
   export let externalLink = false;
 
-  $: link = externalLink ? `https://twitter.com/${account.handle}` : `/twitter/${account.id}`;
+  $: pageLink = externalLink ? `https://twitter.com/${account.handle}` : `/twitter/${account.id}`;
 </script>
 
-<a href={link} class="container">
+<a use:link href={pageLink} class="container">
   <img class="avatar" alt=avatar src={account.profile_image_url} />
   <span class="name">{account.name}</span>
   <span class="handle">@{account.handle}</span>
