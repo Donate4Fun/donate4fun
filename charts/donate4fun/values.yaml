@@ -17,10 +17,10 @@ backend:
   resources:
     limits:
       cpu: 150m
-      memory: 412Mi
+      memory: 712Mi
     requests:
       cpu: 150m
-      memory: 412Mi
+      memory: 712Mi
 frontend:
   port: 8081
   image:
