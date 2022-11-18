@@ -138,7 +138,9 @@ async def main():
     command = sys.argv[1] if len(sys.argv) > 1 else 'serve'
     addLoggingLevel('TRACE', 5, 'trace')
     with load_settings():
-        await commands[command](*sys.argv[2:])
+        result = await commands[command](*sys.argv[2:])
+        if result is not None:
+            print(result)
 
 
 @register_command
