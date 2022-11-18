@@ -7,7 +7,7 @@
   import Spinner from "$lib/Spinner.svelte";
   import YoutubeChannel from "$lib/YoutubeChannel.svelte";
   import ChannelLogo from "$lib/ChannelLogo.svelte";
-  import LinkedYoutubeChannels from "$lib/LinkedYoutubeChannels.svelte";
+  import LinkedItems from "$lib/LinkedItems.svelte";
   import api from "$lib/api.js";
   import { me } from "$lib/session.js";
 
@@ -38,7 +38,8 @@
       {#if $me.youtube_channels.length > 0}
         <h2>Linked YouTube channels:</h2>
       {/if}
-      <LinkedYoutubeChannels youtube_channels={$me.youtube_channels} />
+      <LinkedItems items={$me.youtube_channels}>
+      </LinkedItems>
     {/await}
     <div class="link"><Button link={resolve("/prove/youtube")}>Link your Youtube channel</Button></div>
     <form on:submit|preventDefault={claim}>

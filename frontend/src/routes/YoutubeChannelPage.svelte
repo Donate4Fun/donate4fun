@@ -1,91 +1,82 @@
 <script>
-  import {link, useResolve} from "svelte-navigator";
-  import Loading from "$lib/Loading.svelte";
-  import Donator from "$lib/Donator.svelte";
-  import Datetime from "$lib/Datetime.svelte";
+  import { link, useResolve } from "svelte-navigator";
+
+  import Loader from "$lib/Loader.svelte";
   import Amount from "$lib/Amount.svelte";
-  import Error from "$lib/Error.svelte";
   import Button from "$lib/Button.svelte";
   import YoutubeChannel from "$lib/YoutubeChannel.svelte";
   import Section from "$lib/Section.svelte";
-  import Infobox from "$lib/Infobox.svelte";
   import ChannelLogo from "$lib/ChannelLogo.svelte";
-  import api from "$lib/api.js";
-  import { me, reloadMe } from "$lib/session.js";
+  import DonationsTable from "$lib/DonationsTable.svelte";
+  import PaymentWidget from "$lib/PaymentWidget.svelte";
+  import { api } from "$lib/api.js";
+  import { me } from "$lib/session.js";
   import title from "$lib/title.js";
-  import { youtube_channel_url } from "$lib/utils.js";
 
   export let channel_id;
 
   let channel;
   let donations;
-  let error;
-  let showSuccess = false;
-  let balance;
-  let lnurl;
-  let amount;
-  let show_more_donations;
+  $: baseUrl = `youtube/channel/${channel_id}`;
 
   const resolve = useResolve();
 
   async function load() {
-    showSuccess = false;
-    amount = null;
-    try {
-      channel = await api.get(`youtube/channel/${channel_id}`);
-      $title = `Claim donations for ${channel.title} [${channel.id}]`
-      donations = await api.get(`donations/by-donatee/${channel_id}`);
-      return await me.get();
-    } catch (err) {
-      console.log(err)
-      error = err.response.data.detail;
-    }
+    channel = await api.get(baseUrl);
+    $title = `Donate to ${channel.title} YouTube channel`
+    donations = await api.get(`${baseUrl}/donations/by-donatee`);
+    return await me.get();
   }
 
   async function claim() {
-    await api.post(`youtube/channel/${channel_id}/transfer`);
+    await api.post(`${baseUrl}/transfer`);
     await load();
   }
 </script>
 
-<Section>
-  <div class="youtube-channel">
-    {#await load()}
-      <Loading />
-    {:then me}
-      <h1>Donations to <YoutubeChannel channel={channel} /></h1>
-      <ChannelLogo url={channel.thumbnail_url} />
+<div class="container">
+  {#await load()}
+    <Loader />
+  {:then me}
+    <Section>
+      {#if channel.banner_url}
+        <div class="banner" style="background-image: url({channel.banner_url})"></div>
+      {/if}
+      <div class="youtube-channel">
+        <h1>
+          <img alt=youtube src="/static/youtube.svg" width=20>
+          Donate to <YoutubeChannel channel={channel} />
+          <ChannelLogo url={channel.thumbnail_url} size=44px />
+        </h1>
+        <PaymentWidget target={{channel_id: channel.id}} on:paid={load} />
+      </div>
+    </Section>
+
+    <div class="details">
       <div class="controls">
-        <div class="available">Available to claim: <Amount amount={channel.balance} /></div>
         {#if channel.is_my}
+          <div class="available">Available to claim: <Amount amount={channel.balance} /></div>
           {#if me.connected}
             <Button disabled={channel.balance === 0} on:click={claim}>Take donations</Button>
           {:else}
-            <Button link={resolve('/login')}></Button>
+            <Button link={resolve('/login')}>Take donations</Button>
           {/if}
         {:else}
-          <Infobox>You can withdraw donations if the channel belongs to you. Confirm by linking your Youtube channel.</Infobox>
-          <Button link="/prove/youtube">Link your Youtube channel</Button>
+          <Button class="white" link="/youtube/prove">This is my channel</Button>
         {/if}
-        <Button class="want-more white" link={resolve("link")}>Want more donations?</Button>
+        <Button class="white" link={resolve("link")}>Want more donations?</Button>
       </div>
-      <div class="table">
-        <div class="head">
-          <div>Name</div><div>Date</div><div>Amount</div>
-        </div>
-        <div class="body">
-          {#each donations as donation}
-            <Donator user={donation.donator} class="ellipsis"/>
-            <Datetime dt={donation.paid_at} />
-            <Amount amount={donation.amount} />
-          {/each}
-        </div>
-      </div>
-    {/await}
-  </div>
-</Section>
+      <DonationsTable donations={donations} />
+    </div>
+  {/await}
+</div>
 
 <style>
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
 .youtube-channel {
   padding: 36px 70px 74px;
   display: flex;
@@ -95,38 +86,35 @@
   width: 640px;
   box-sizing: border-box;
 }
+.banner {
+  width: 100%;
+  height: 102px;
+  background-repeat: no-repeat;
+  background-size: 100%;
+  background-position: center;
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+}
 h1 {
-  text-align: center;
-  font-weight: 900;
-  font-size: 24px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 400;
+}
+.details {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 640px;
 }
 .controls {
   display: flex;
   gap: 20px;
   flex-direction: column;
   align-items: center;
-}
-.table {
-  font-size: 12px;
-}
-.head {
-  color:  rgba(0, 0, 0, 0.6);
-  text-align: left;
-}
-.body {
-  font-weight: 500;
-  padding: 0 1em 1em 1em;
-}
-.table .head,.table .body {
-  color: rgba(0, 0, 0, 0.6);
-  text-align: left;
-  display: contents;
-}
-.table {
-  font-size: 12px;
-  display: grid;
-  grid-template-columns: 200px 120px 99px;
-  column-gap: 20px;
-  row-gap: 26px;
 }
 </style>

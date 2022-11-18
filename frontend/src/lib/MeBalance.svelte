@@ -4,6 +4,8 @@
   import Button from "$lib/Button.svelte";
   import {me} from "$lib/session.js";
   import {resolve, isExtension} from "$lib/utils.js";
+
+  const withdrawMin = 100;
 </script>
 
 <main>
@@ -14,13 +16,22 @@
     <FiatAmount
       style="grid-row: fiat; line-height: 16px;"
       class="font-12 font-weight-400 text-align-center" amount={me.donator.balance} />
-    <Button
-      style="grid-row: fulfill;"
-      target={isExtension ? "_blank" : null}
-      link={resolve("/fulfill/me")}
-      class=white
-      --padding="10px 41px"
-    >Fulfill</Button>
+    <div class="buttons">
+      <Button
+        target={isExtension ? "_blank" : null}
+        link={resolve("/fulfill/me")}
+        class=white
+        --width=125px
+      >Fulfill</Button>
+      <Button
+        title="Minimum amount to withdraw is {withdrawMin} sats"
+        disabled={me.donator.balance <= withdrawMin}
+        target={isExtension ? "_blank" : null}
+        link={resolve("/me/withdraw")}
+        class="white"
+        --width=125px
+      >Withdraw</Button>
+    </div>
   {/await}
 </main>
 
@@ -36,5 +47,12 @@ main {
   font-weight: 700;
   text-align: center;
   grid-template-columns: repeat(2, 1fr);
+}
+.buttons {
+  grid-row: fulfill;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  height: 40px;
 }
 </style>

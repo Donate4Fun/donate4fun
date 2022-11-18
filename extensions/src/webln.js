@@ -1,4 +1,5 @@
 import cLog from "$lib/log.js";
+import { sendPayment } from "$lib/utils.js";
 
 if (!window.donate4funPageScriptLoaded) {
   window.donate4funPageScriptLoaded = true;
@@ -25,17 +26,6 @@ if (!window.donate4funPageScriptLoaded) {
     cLog("[dff] pagescript responding with", message);
     window.postMessage(message);
   });
-
-  async function sendPayment(request) {
-    if (!window.webln)
-      throw new Error("No webln found");
-    if (!webln.enabled) {
-      // Show connect dialog
-      await webln.enable();
-    }
-    const result = await webln.sendPayment(request);
-    cLog("webln.sendPayment result", result);
-  }
 
   async function emulateKeypresses(selector, content) {
     const element = selector === ':focus' ? document.activeElement : document.querySelector(selector);

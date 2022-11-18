@@ -5,7 +5,7 @@ import { writable, get as store_get } from 'svelte/store';
 import { sleep } from "$lib/utils.js";
 import { analytics } from "$lib/analytics.js";
 
-const apiOrigin = writable(window.location.origin);
+export const apiOrigin = writable(window.location.origin);
 
 class ApiError extends Error {
   constructor(response) {
@@ -46,7 +46,7 @@ function fullpath(path) {
   return store_get(apiOrigin) + `/api/v1/${path}`;
 }
 
-function subscribe(topic, options) {
+export function subscribe(topic, options) {
   const origin = store_get(apiOrigin).replace('http', 'ws');
   if (!origin)
     throw new Error("apiOrigin is not defined");
@@ -71,7 +71,7 @@ function subscribe(topic, options) {
   return ws;
 };
 
-async function post(path, body) {
+export async function post(path, body) {
   analytics.track(`api-${path}`);
   try {
     const resp = await axios.post(fullpath(path), body);
@@ -81,7 +81,7 @@ async function post(path, body) {
   }
 }
 
-async function get(path) {
+export async function get(path) {
   try {
     return handle_response(await axios.get(fullpath(path)));
   } catch (error) {
@@ -94,14 +94,10 @@ globalThis.onError = function(message, source, lineno, colno, error) {
   notify("Error", message, "error");
 }
 
-export {
-  get,
-  post,
-  subscribe,
-  apiOrigin,
-};
-export default {
+export const api = {
   get,
   post,
   subscribe,
 };
+
+export default api;

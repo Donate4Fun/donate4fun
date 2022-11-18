@@ -142,11 +142,4 @@ li > div {
   align-items: center;
   gap: 12px;
 }
-h2 {
-  font-weight: 600;
-  font-size: 11px;
-  text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.8);
-  margin: 0;
-}
 </style>

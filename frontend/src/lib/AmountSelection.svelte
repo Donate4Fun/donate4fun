@@ -1,6 +1,4 @@
 <script>
-  import { createEventDispatcher } from 'svelte';
-
   import Input from "$lib/Input.svelte";
   import FiatAmount from "$lib/FiatAmount.svelte";
   import Button from "$lib/Button.svelte";
@@ -13,7 +11,6 @@
   const amounts = [100, 1000, 10000];
   const amountMin = 10;
   const amountMax = 1000000;
-  const dispatch = createEventDispatcher();
 </script>
 
 <div class="container">
@@ -35,9 +32,9 @@
   </div>
   {#await $me then me}
     {#if amount <= me.donator.balance}
-      <Button --width=100% on:click={donate} --padding="9px" --border-width="0">Donate</Button>
+      <Button --width=100% on:click={() => donate(amount)} --padding="9px" --border-width="0">Donate</Button>
     {:else}
-      <Button --width=100% on:click={donate} --padding="9px" --border-width="0">Donate with WebLN</Button>
+      <Button --width=100% on:click={() => donate(amount)} --padding="9px" --border-width="0">Donate with WebLN</Button>
     {/if}
   {/await}
 </div>
@@ -47,6 +44,7 @@
   display: flex;
   flex-direction: column;
   gap: 32px;
+  width: 300px;
 }
 .input {
   font-weight: 400;

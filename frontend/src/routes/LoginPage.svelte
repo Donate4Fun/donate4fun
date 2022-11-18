@@ -61,9 +61,9 @@
     <div class="main">
       <h1>
         {#if me.donator.lnauth_pubkey}
-          Change Bitcoin Lightning wallet
+          Change a Bitcoin Lightning wallet
         {:else}
-          Connect Bitcoin Lightning wallet
+          Connect a Bitcoin Lightning wallet
         {/if}
       </h1>
       {#await load() then lnurl}

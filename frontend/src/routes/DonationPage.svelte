@@ -5,6 +5,8 @@
   import Invoice from "$lib/Invoice.svelte";
   import Section from "$lib/Section.svelte";
   import Button from "$lib/Button.svelte";
+  import Amount from "$lib/Amount.svelte";
+  import YoutubeChannel from "$lib/YoutubeChannel.svelte";
   import title from "$lib/title.js";
   import api from "$lib/api.js";
   import {notify} from "$lib/notifications.js";
@@ -67,7 +69,19 @@
           </div>
         {/if}
       {:else}
-        <Invoice donation={donation} payment_request={payment_request} on:cancel={() => navigate(-1)} on:paid={paid} />
+        {#if donation.youtube_channel}
+          <h1>Donate <Amount amount={donation.amount} /> to</h1>
+          <YoutubeChannel channel={donation.youtube_channel} />
+        {:else if donation.receiver}
+          {#await $me then me}
+            {#if donation.receiver.id === me.donator.id}
+              <h1>Fulfill <Amount amount={donation.amount} /> to your wallet</h1>
+            {:else}
+              <h1>Donate <Amount amount={donation.amount} /> to <Donator user={donation.receiver} /></h1>
+            {/if}
+          {/await}
+        {/if}
+        <Invoice donation={donation} paymentRequest={payment_request} on:cancel={() => navigate(-1)} on:paid={paid} />
       {/if}
     {/await}
   </div>
