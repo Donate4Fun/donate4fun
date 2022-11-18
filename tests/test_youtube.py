@@ -6,7 +6,8 @@ import pytest
 
 from donate4fun.api import DonateRequest, DonateResponse
 from donate4fun.lnd import monitor_invoices, LndClient
-from donate4fun.models import Donation, YoutubeChannel, Donator
+from donate4fun.models import Donation, YoutubeChannel, Donator, YoutubeChannelOwned
+from donate4fun.youtube import query_or_fetch_youtube_video
 
 from tests.test_util import verify_fixture, verify_response, check_response, freeze_time, check_notification, login_to, mark_vcr
 
@@ -198,3 +199,37 @@ async def test_recent_donatees(client, db, paid_donation_fixture, rich_donator, 
 def login_youtuber(client, client_session, youtube_channel):
     client_session.youtube_channels = [youtube_channel.id]
     client.cookies['session'] = client_session.to_jwt()
+
+
+async def test_link_youtube_channel(db_session):
+    donator = Donator(id=UUID(int=0))
+    reference_channels = []
+    for i in range(3):
+        youtube_channel = YoutubeChannel(
+            id=UUID(int=i),
+            channel_id=f"UCzxczxc{i}",
+            title="channel_title",
+            thumbnail_url="https://thumbnail.url/asd",
+        )
+        reference_channels.append(youtube_channel)
+        await db_session.save_youtube_channel(youtube_channel)
+        await db_session.link_youtube_channel(youtube_channel, donator)
+    youtube_channels: list[YoutubeChannel] = await db_session.query_donator_youtube_channels(donator.id)
+    assert youtube_channels == reference_channels
+    channel: YoutubeChannelOwned = await db_session.query_youtube_channel(
+        youtube_channel_id=reference_channels[0].id, owner_id=UUID(int=0)
+    )
+    assert channel.is_my
+    channel: YoutubeChannelOwned = await db_session.query_youtube_channel(
+        youtube_channel_id=reference_channels[0].id, owner_id=UUID(int=1)
+    )
+    assert not channel.is_my
+
+
+@mark_vcr
+@pytest.mark.parametrize('video_id', ['VOG-fFhq7kk', 'tOu3f-j4ukY'])
+async def test_query_or_fetch_youtube_video(db_session, video_id):
+    """
+    One channel has banner, other not
+    """
+    await query_or_fetch_youtube_video(video_id='VOG-fFhq7kk', db=db_session)

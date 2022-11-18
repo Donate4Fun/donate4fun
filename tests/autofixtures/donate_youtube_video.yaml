@@ -18,6 +18,7 @@ json:
     twitter_tweet: null
     youtube_channel:
       balance: 0
+      banner_url: https://yt3.ggpht.com/PBjLOoFvBS5u0GTtAQpoRfZdPr1FviiGQjwp0FrvFJYbnXiynyG-AdGxDQQSP9MbA6PfvDq-VQ
       channel_id: UC3ptU7hyNeFlJdvQj2nZHJg
       id: 00000000-0000-0000-0000-000000000001
       last_fetched_at: '2022-02-02T22:22:22'
@@ -38,6 +39,7 @@ json:
       video_id: 7qH7WMzqOlU
       youtube_channel:
         balance: 0
+        banner_url: https://yt3.ggpht.com/PBjLOoFvBS5u0GTtAQpoRfZdPr1FviiGQjwp0FrvFJYbnXiynyG-AdGxDQQSP9MbA6PfvDq-VQ
         channel_id: UC3ptU7hyNeFlJdvQj2nZHJg
         id: 00000000-0000-0000-0000-000000000001
         last_fetched_at: '2022-02-02T22:22:22'

@@ -23,7 +23,7 @@ from donate4fun.settings import load_settings, Settings, DbSettings, LndSettings
 from donate4fun.db import DbSession, Database
 from donate4fun.db_models import DonatorDb
 from donate4fun.models import (
-    RequestHash, PaymentRequest, YoutubeChannel, Donator, BaseModel, YoutubeVideo, TwitterAuthor, TwitterTweet,
+    RequestHash, PaymentRequest, YoutubeChannel, Donator, BaseModel, YoutubeVideo, TwitterAccount, TwitterTweet,
 )
 from donate4fun.pubsub import PubSubBroker
 
@@ -186,7 +186,7 @@ def freeze_uuids(monkeypatch):
     def make_gen():
         c = count(1)
         return lambda: UUID(int=next(c))
-    for model in [Donation, YoutubeChannel, YoutubeVideo, TwitterAuthor, TwitterTweet]:
+    for model in [Donation, YoutubeChannel, YoutubeVideo, TwitterAccount, TwitterTweet]:
         monkeypatch.setattr(model.__fields__['id'], 'default_factory', make_gen())
 
 

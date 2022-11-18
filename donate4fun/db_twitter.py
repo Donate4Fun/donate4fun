@@ -1,12 +1,13 @@
 from uuid import UUID
 from typing import Any
+from datetime import datetime
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm.exc import NoResultFound  # noqa
 
-from .models import TwitterAuthor, TwitterTweet, Donator
-from .db_models import TwitterAuthorDb, TwitterTweetDb, OAuthTokenDb, TwitterAuthorLink
+from .models import TwitterAccount, TwitterTweet, Donator, TwitterAccountOwned
+from .db_models import TwitterAuthorDb, TwitterTweetDb, OAuthTokenDb, TwitterAuthorLink, DonatorDb, TransferDb
 
 
 class TwitterDbMixin:
@@ -25,7 +26,7 @@ class TwitterDbMixin:
             id_ = resp.scalar()
         tweet.id = id_
 
-    async def save_twitter_author(self, author: TwitterAuthor):
+    async def save_twitter_account(self, author: TwitterAccount):
         resp = await self.execute(
             insert(TwitterAuthorDb)
             .values(author.dict())
@@ -51,22 +52,15 @@ class TwitterDbMixin:
             id_ = resp.scalar()
         author.id = id_
 
-    async def query_twitter_author(self, **filter_by) -> TwitterAuthor:
-        resp = await self.execute(
-            select(TwitterAuthorDb)
-            .filter_by(**filter_by)
-        )
-        return TwitterAuthor.from_orm(resp.scalars().one())
-
-    async def query_donator_twitter_accounts(self, donator_id: UUID) -> list[TwitterAuthor]:
+    async def query_donator_twitter_accounts(self, donator_id: UUID) -> list[TwitterAccount]:
         result = await self.execute(
             select(TwitterAuthorDb)
             .join(TwitterAuthorLink, TwitterAuthorDb.id == TwitterAuthorLink.twitter_author_id)
             .where(TwitterAuthorLink.donator_id == donator_id)
         )
-        return [TwitterAuthor.from_orm(obj) for obj in result.unique().scalars()]
+        return [TwitterAccount.from_orm(obj) for obj in result.unique().scalars()]
 
-    async def link_twitter_account(self, twitter_author: TwitterAuthor, donator: Donator):
+    async def link_twitter_account(self, twitter_author: TwitterAccount, donator: Donator):
         await self.execute(
             insert(TwitterAuthorLink)
             .values(
@@ -75,6 +69,52 @@ class TwitterDbMixin:
             )
             .on_conflict_do_nothing()
         )
+
+    async def query_twitter_account(self, owner_id: UUID | None = None, **filter_by) -> TwitterAccountOwned:
+        owner_links = select(TwitterAuthorLink).where(TwitterAuthorLink.donator_id == owner_id).subquery()
+        accounts = select(TwitterAuthorDb).filter_by(**filter_by).subquery()
+        resp = await self.execute(
+            select(accounts, owner_links.c.donator_id.is_not(None).label('is_my'))
+            .join(
+                owner_links,
+                onclause=accounts.c.id == owner_links.c.twitter_author_id,
+                isouter=True,
+            )
+        )
+        return TwitterAccountOwned.from_orm(resp.one())
+
+    async def transfer_twitter_donations(self, twitter_account: TwitterAccount, donator: Donator) -> int:
+        """
+        Transfers money from Twitter account balance to donator balance
+        Returns amount transferred
+        """
+        result = await self.execute(
+            select(TwitterAuthorDb.balance)
+            .with_for_update()
+            .where(TwitterAuthorDb.id == twitter_account.id)
+        )
+        amount: int = result.scalar()
+        await self.execute(
+            insert(TransferDb)
+            .values(
+                amount=amount,
+                donator_id=donator.id,
+                twitter_author_id=twitter_account.id,
+                created_at=datetime.utcnow(),
+            )
+        )
+        await self.execute(
+            update(TwitterAuthorDb)
+            .values(balance=TwitterAuthorDb.balance - amount)
+            .where(TwitterAuthorDb.id == twitter_account.id)
+        )
+        await self.execute(
+            update(DonatorDb)
+            .values(balance=DonatorDb.balance + amount)
+            .where(DonatorDb.id == donator.id)
+        )
+        await self.object_changed('donator', donator.id)
+        return amount
 
 
 class OAuthTokenDbMixin:

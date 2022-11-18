@@ -4,19 +4,18 @@ from uuid import UUID
 from fastapi import Depends, APIRouter, Request, HTTPException
 from fastapi.responses import JSONResponse, RedirectResponse
 from aiogoogle import Aiogoogle
-from pydantic import AnyHttpUrl, HttpUrl
+from pydantic import AnyHttpUrl
 from sqlalchemy.orm.exc import NoResultFound
 
 from .api_utils import get_donator, load_donator
 from .core import get_db_session
-from .models import BaseModel, YoutubeVideo, YoutubeChannel, Donator, YoutubeChannelOwned
+from .models import BaseModel, YoutubeVideo, YoutubeChannel, Donator, YoutubeChannelOwned, Donation, TransferResponse
 from .youtube import (
-    YoutubeDonatee, find_comment,
-    query_or_fetch_youtube_channel, ChannelInfo, fetch_user_channel,
+    find_comment, query_or_fetch_youtube_channel, ChannelInfo, fetch_user_channel,
 )
+from .db_models import DonationDb
 from .settings import settings
 from .types import ValidationError
-from .donatees import validate_target
 
 
 router = APIRouter(prefix='/youtube')
@@ -123,10 +122,6 @@ async def youtube_channel(channel_id: UUID, db=Depends(get_db_session), me=Depen
     return await db.query_youtube_channel(channel_id, owner_id=me.id)
 
 
-class TransferResponse(BaseModel):
-    amount: int
-
-
 @router.post('/channel/{channel_id}/transfer', response_model=TransferResponse)
 async def youtube_channel_transfer(channel_id: UUID, db=Depends(get_db_session), donator: Donator = Depends(get_donator)):
     donator = await load_donator(db, donator.id)
@@ -140,17 +135,11 @@ async def youtube_channel_transfer(channel_id: UUID, db=Depends(get_db_session),
     return TransferResponse(amount=amount)
 
 
-class YoutubeChannelRequest(BaseModel):
-    target: HttpUrl | str
-
-
-@router.post("/channel-by-url", response_model=YoutubeChannel)
-async def youtube_channel_by_url(request: YoutubeChannelRequest, db=Depends(get_db_session)):
-    donatee: YoutubeDonatee = await validate_target(request.target)
-    await donatee.fetch(db)
-    return donatee.youtube_channel
-
-
-@router.get("/linked-channels", response_model=list[YoutubeChannel])
+@router.get("/linked", response_model=list[YoutubeChannel])
 async def my_linked_youtube_channels(db=Depends(get_db_session), me=Depends(get_donator)):
     return await db.query_donator_youtube_channels(me.id)
+
+
+@router.get("/channel/{channel_id}/donations/by-donatee", response_model=list[Donation])
+async def donatee_donations(channel_id: UUID, db=Depends(get_db_session)):
+    return await db.query_donations((DonationDb.youtube_channel_id == channel_id) & DonationDb.paid_at.isnot(None))

@@ -125,11 +125,6 @@ async def donator_donations(donator_id: UUID, db=Depends(get_db_session)):
     return await db.query_donations((DonationDb.donator_id == donator_id) & DonationDb.paid_at.isnot(None))
 
 
-@router.get("/donations/by-donatee/{donatee_id}", response_model=list[Donation])
-async def donatee_donations(donatee_id: UUID, db=Depends(get_db_session)):
-    return await db.query_donations((DonationDb.youtube_channel_id == donatee_id) & DonationDb.paid_at.isnot(None))
-
-
 class StatusResponse(BaseModel):
     db: str
     lnd: str

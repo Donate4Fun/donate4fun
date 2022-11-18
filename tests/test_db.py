@@ -76,21 +76,3 @@ async def test_listen_notify(db, pubsub):
 async def test_db(db_session):
     db_status = await db_session.query_status()
     assert db_status == 'ok'
-
-
-async def test_link_youtube_channel(db_session):
-    donator = Donator(id=UUID(int=0))
-    await db_session.login_donator(donator.id, 'lnauth_pub_key')
-    reference_channels = []
-    for i in range(3):
-        youtube_channel = YoutubeChannel(
-            id=UUID(int=i),
-            channel_id=f"UCzxczxc{i}",
-            title="channel_title",
-            thumbnail_url="https://thumbnail.url/asd",
-        )
-        reference_channels.append(youtube_channel)
-        await db_session.save_youtube_channel(youtube_channel)
-        await db_session.link_youtube_channel(youtube_channel, donator)
-    youtube_channels: list[YoutubeChannel] = await db_session.query_donator_youtube_channels(donator.id)
-    assert youtube_channels == reference_channels

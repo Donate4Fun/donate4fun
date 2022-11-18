@@ -144,7 +144,7 @@ class DbSession(YoutubeDbMixin, TwitterDbMixin, DonationsDbMixin, WithdrawalDbMi
 
         return Credentials(donator=registered_donator_id, lnauth_pubkey=key)
 
-    async def query_recently_donated_donatees(self, limit=20, limit_days=7) -> list[YoutubeChannel]:
+    async def query_recently_donated_donatees(self, limit=20, limit_days=180) -> list[YoutubeChannel]:
         resp = await self.execute(
             select(
                 YoutubeChannelDb.id,

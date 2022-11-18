@@ -1,0 +1,68 @@
+interactions:
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - Bearer AAAAAAAAAAAAAAAAAAAAAM2SjQEAAAAATvwK3CA%2FZZLPbXjRTV9JuYyhNbY%3DQEktpAB2BYRBtioRryYjjHOEKjvSb1HR26PjONkefPfdFmuR57
+      connection:
+      - keep-alive
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.0
+    method: GET
+    uri: https://api.twitter.com/2/users/by/username/donate4_fun?user.fields=id%2Cname%2Cprofile_image_url
+  response:
+    content: "{\"data\":{\"username\":\"donate4_fun\",\"profile_image_url\":\"https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_normal.png\",\"name\":\"Donate4.Fun
+      \u26A1\",\"id\":\"1572908920485576704\"}}"
+    headers:
+      api-version:
+      - '2.55'
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '178'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Fri, 18 Nov 2022 09:53:33 UTC
+      perf:
+      - '7626143928'
+      server:
+      - tsa_o
+      set-cookie:
+      - guest_id=v1%3A166876521316042652; Max-Age=34214400; Expires=Tue, 19 Dec 2023
+        09:53:33 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      strict-transport-security:
+      - max-age=631138519
+      x-access-level:
+      - read
+      x-connection-hash:
+      - 0dce4230cc3fadb7ea0e882b80d552a94a8ffb0278a02a2772ecac6f551722e0
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '300'
+      x-rate-limit-remaining:
+      - '299'
+      x-rate-limit-reset:
+      - '1668766113'
+      x-response-time:
+      - '135'
+      x-transaction-id:
+      - 7d48fd0ccdfc3dcc
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 200
+version: 1

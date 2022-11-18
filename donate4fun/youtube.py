@@ -9,11 +9,13 @@ from aiogoogle import Aiogoogle
 from aiogoogle.auth.creds import ClientCreds, ServiceAccountCreds
 from pydantic import BaseModel
 from sqlalchemy.orm.exc import NoResultFound
+from glom import glom
 
 from .settings import settings
 from .types import UnsupportedTarget, Url, ValidationError
-from .db import DbSession
+from .db import DbSession, Database
 from .models import YoutubeVideo, YoutubeChannel, Donation
+from .core import register_command
 
 ChannelId = str
 VideoId = str
@@ -35,14 +37,16 @@ class YoutubeChannelNotFound(ValidationError):
 class ChannelInfo(BaseModel):
     id: ChannelId
     title: str
-    thumbnail: Url
+    thumbnail: Url | None
+    banner: Url | None
 
     @classmethod
     def from_api(cls, data):
         return cls(
             id=data['id'],
             title=data['snippet']['title'],
-            thumbnail=data['snippet']['thumbnails']['medium']['url'],
+            thumbnail=glom(data, 'snippet.thumbnails.medium.url', default=None),
+            banner=glom(data, 'brandingSettings.image.bannerExternalUrl', default=None),
         )
 
     @property
@@ -163,6 +167,14 @@ async def query_or_fetch_youtube_channel(channel_id: str, db: DbSession) -> Yout
         return channel
 
 
+@register_command
+async def fetch_and_save_youtube_channel(channel_id: str):
+    channel: YoutubeChannel = await fetch_youtube_channel(channel_id)
+    async with Database(settings.db).session() as db:
+        await db.save_youtube_channel(channel)
+
+
+@register_command
 @withyoutube
 async def fetch_youtube_channel(aiogoogle, youtube, channel_id: str) -> YoutubeChannel:
     if not channel_id.startswith('UC'):
@@ -170,7 +182,7 @@ async def fetch_youtube_channel(aiogoogle, youtube, channel_id: str) -> YoutubeC
         channel_id = None
     else:
         username = None
-    req = youtube.channels.list(id=channel_id, forUsername=username, part='snippet')
+    req = youtube.channels.list(id=channel_id, forUsername=username, part='snippet,brandingSettings')
     res = await aiogoogle.as_api_key(req)
     if res['pageInfo']['totalResults'] == 0:
         raise YoutubeChannelNotFound("Invalid YouTube channel")
@@ -183,6 +195,7 @@ async def fetch_youtube_channel(aiogoogle, youtube, channel_id: str) -> YoutubeC
         title=api_channel.title,
         thumbnail_url=api_channel.thumbnail,
         last_fetched_at=datetime.utcnow(),
+        banner_url=api_channel.banner,
     )
 
 
