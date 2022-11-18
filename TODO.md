@@ -18,7 +18,13 @@ nice to be done:
 - accept BTC fulfillments (Boltz)
 - subscribe to changes using VAPID instead of websockets
 - enable loop and pool in lnd
-- integrate ramp.network for fiat fulfillments
+- fiat payments:
+  - https://ramp.network
+  - http://moonpay.com/
+  - https://www.simplex.com/
+  - https://switchere.com/
+  - https://bitpapa.com
+  - https://www.bybit.com
 - integrate https://github.com/snok/asgi-correlation-id
 - e2e testing with cypress or playwright
 
