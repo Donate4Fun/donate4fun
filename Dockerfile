@@ -1,11 +1,15 @@
-FROM python:3.10.6-alpine
+FROM python:3.10.8
 
-RUN apk --update --no-cache add alpine-sdk libffi-dev rust cargo openssl-dev
+#RUN apk --update --no-cache add alpine-sdk libffi-dev rust cargo openssl-dev
+ENV DEBIAN_FRONTEND=noninteractive
+#RUN apt update && apt install -y libffi-dev openssl-dev && rm -rf /var/lib/apt/lists/*
 RUN pip install --upgrade pip && pip install poetry
 
 WORKDIR /app
 COPY pyproject.toml poetry.lock /app/
 RUN poetry install
+RUN poetry run playwright install chromium
+RUN poetry run playwright install-deps
 COPY donate4fun /app/donate4fun
 COPY frontend /app/frontend
 CMD ["poetry", "run", "python", "-m", "donate4fun"]

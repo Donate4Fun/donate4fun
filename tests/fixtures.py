@@ -17,15 +17,16 @@ from asgi_testclient import TestClient
 from sqlalchemy import update
 
 from donate4fun.app import create_app, addLoggingLevel
+from donate4fun.api_utils import task_group
 from donate4fun.models import Invoice, Donation
-from donate4fun.lnd import LndClient
+from donate4fun.lnd import LndClient, lnd as lnd_var
 from donate4fun.settings import load_settings, Settings, DbSettings, LndSettings
-from donate4fun.db import DbSession, Database
+from donate4fun.db import DbSession, Database, db as db_var
 from donate4fun.db_models import DonatorDb
 from donate4fun.models import (
     RequestHash, PaymentRequest, YoutubeChannel, Donator, BaseModel, YoutubeVideo, TwitterAccount, TwitterTweet,
 )
-from donate4fun.pubsub import PubSubBroker
+from donate4fun.pubsub import PubSubBroker, pubsub as pubsub_var
 
 
 logger = logging.getLogger(__name__)
@@ -143,18 +144,17 @@ async def lnd_server(event_loop):
 
 
 @pytest.fixture
-async def app(db, settings, lnd_server):
-    async with create_app(settings) as app:
-        app.db = db
-        app.lnd = LndClient(settings.lnd)
-        yield app
+async def pubsub(db):
+    pubsub = PubSubBroker()
+    async with pubsub.run(db):
+        yield pubsub
 
 
 @pytest.fixture
-async def pubsub(app, db):
-    app.pubsub = PubSubBroker()
-    async with app.pubsub.run(db):
-        yield app.pubsub
+async def app(db, settings, lnd_server, pubsub):
+    async with create_app(settings) as app, anyio.create_task_group() as tg:
+        with db_var.assign(db), lnd_var.assign(LndClient(settings.lnd)), pubsub_var.assign(pubsub), task_group.assign(tg):
+            yield app
 
 
 @pytest.fixture
@@ -191,13 +191,13 @@ def freeze_uuids(monkeypatch):
 
 
 @pytest.fixture
-async def unpaid_donation_fixture(app, db, donator_id, freeze_uuids):
+async def unpaid_donation_fixture(app, db, donator_id, freeze_uuids, settings):
     async with db.session() as db_session:
         youtube_channel = YoutubeChannel(
             channel_id='q2dsaf', title='asdzxc', thumbnail_url='1wdasd',
         )
         await db_session.save_youtube_channel(youtube_channel)
-        invoice: Invoice = await app.lnd.create_invoice(memo="Donate4.fun to asdzxc", value=100)
+        invoice: Invoice = await LndClient(settings.lnd).create_invoice(memo="Donate4.fun to asdzxc", value=100)
         donation: Donation = Donation(
             donator=Donator(id=donator_id),
             amount=20,
@@ -270,3 +270,16 @@ async def rich_donator(db, registered_donator):
 @pytest.fixture
 async def payer_lnd():
     return LndClient(LndSettings(url='http://localhost:10002', lnurl_base_url='http://test'))
+
+
+@pytest.fixture
+async def twitter_account(app, db, freeze_uuids):
+    async with db.session() as db_session:
+        account = TwitterAccount(
+            user_id=1572908920485576704,
+            handle='donate4_fun',
+            name='Donate4.Fun ⚡',
+            profile_image_url='https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_normal.png',
+        )
+        await db_session.save_twitter_account(account)
+        return account

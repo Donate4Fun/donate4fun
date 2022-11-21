@@ -4,6 +4,7 @@ ingress:
 
 backend:
   config:
+    base_url: https://stage.donate4.fun
     bugsnag:
       enabled: false
       release_stage: staging
@@ -18,3 +19,5 @@ backend:
       loggers:
         httpx:
           level: INFO
+        donate4fun.screenshot:
+          level: TRACE

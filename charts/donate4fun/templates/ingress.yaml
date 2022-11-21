@@ -35,6 +35,13 @@ spec:
             name: {{ $fullName }}
             port:
               name: http-backend
+      - path: /preview/
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ $fullName }}
+            port:
+              name: http-backend
       - path: /d/
         pathType: Prefix
         backend:
@@ -49,13 +56,27 @@ spec:
             name: {{ $fullName }}
             port:
               name: http-backend
-      - path: /
+      - path: /static
         pathType: Prefix
         backend:
           service:
             name: {{ $fullName }}
             port:
               name: http-frontend
+      - path: /assets
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ $fullName }}
+            port:
+              name: http-frontend
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ $fullName }}
+            port:
+              name: http-backend
 ---
 {{- if eq .Values.ingress.className "gce" }}
 apiVersion: networking.gke.io/v1beta1

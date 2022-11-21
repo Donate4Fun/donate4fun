@@ -4,6 +4,7 @@ from functools import partial
 from typing import Callable
 from contextlib import asynccontextmanager
 
+from .core import ContextualObject
 from .db import Database
 
 logger = logging.getLogger(__name__)
@@ -55,3 +56,6 @@ class PubSubBroker:
             raw_connection = await connection.get_raw_connection()
             self.asyncpg_connection = raw_connection.connection._connection
             yield
+
+
+pubsub = ContextualObject('pubsub')

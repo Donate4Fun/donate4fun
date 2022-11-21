@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 class OAuthSettings(BaseModel):
     client_id: str
     client_secret: str
-    redirect_base_url: AnyUrl
 
 
 class YoutubeSettings(BaseModel):
@@ -127,11 +126,13 @@ class Settings(BaseSettings):
     fee_limit: int
     withdraw_timeout: int
     ownership_message: str
+    release: bool
+    base_url: AnyUrl
+    frontend_port: int
     cookie_domain: str | None = None
     cookie_secure: bool = True
     cookie_http_only: bool = False
     latest_donations_count: int = 50
-    redirect_base_url: str = ''
     server_name: str = ''
 
     class Config:

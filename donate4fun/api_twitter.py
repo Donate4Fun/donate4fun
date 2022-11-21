@@ -1,13 +1,18 @@
 from uuid import UUID
 
 from fastapi import Depends, APIRouter, HTTPException
-from .models import TwitterAccount, TransferResponse, Donator, TwitterAccountOwned
-from .core import get_db_session
+from .models import TwitterAccount, TransferResponse, Donator, TwitterAccountOwned, Donation
 from .types import ValidationError
-from .api_utils import get_donator, load_donator
+from .api_utils import get_donator, load_donator, get_db_session
 from .twitter import make_prove_message
+from .db_models import DonationDb
 
 router = APIRouter(prefix='/twitter')
+
+
+@router.get("/account/{account_id}", response_model=TwitterAccountOwned)
+async def twitter_account(account_id: UUID, db=Depends(get_db_session), me=Depends(get_donator)):
+    return await db.query_twitter_account(id=account_id, owner_id=me.id)
 
 
 @router.get("/linked", response_model=list[TwitterAccount])
@@ -31,3 +36,8 @@ async def twitter_account_transfer(account_id: UUID, db=Depends(get_db_session),
     if account.balance != 0:
         amount = await db.transfer_twitter_donations(twitter_account=account, donator=donator)
     return TransferResponse(amount=amount)
+
+
+@router.get("/account/{account_id}/donations/by-donatee", response_model=list[Donation])
+async def donatee_donations(account_id: UUID, db=Depends(get_db_session)):
+    return await db.query_donations((DonationDb.twitter_author_id == account_id) & DonationDb.paid_at.isnot(None))

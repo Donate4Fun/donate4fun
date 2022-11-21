@@ -3,14 +3,24 @@
 
   export let account;
   export let externalLink = false;
+  export let showHandle = false;
+  export let imagePlacement = 'before';
 
   $: pageLink = externalLink ? `https://twitter.com/${account.handle}` : `/twitter/${account.id}`;
+  $: imageUrl = account.profile_image_url.replace('_normal', '_x96');
 </script>
 
 <a use:link href={pageLink} class="container">
-  <img class="avatar" alt=avatar src={account.profile_image_url} />
+  {#if imagePlacement === 'before'}
+    <img class="avatar" alt=avatar src={imageUrl} />
+  {/if}
   <span class="name">{account.name}</span>
-  <span class="handle">@{account.handle}</span>
+  {#if showHandle}
+    <span class="handle">@{account.handle}</span>
+  {/if}
+  {#if imagePlacement === 'after'}
+    <img class="avatar" alt=avatar src={imageUrl} />
+  {/if}
 </a>
 
 <style>
@@ -20,8 +30,8 @@
   gap: 16px;
 }
 .avatar {
-  width: 32px;
-  height: 32px;
+  width: var(--image-size, 32px);
+  height: var(--image-size, 32px);
   border-radius: 100%;
 }
 .handle {

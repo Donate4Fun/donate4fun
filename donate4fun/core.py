@@ -8,29 +8,11 @@ from functools import wraps
 
 import qrcode
 import httpx
-from fastapi import Request, WebSocket
 from qrcode.image.pure import PymagingImage
 
 from .types import PaymentRequest
 
 logger = logging.getLogger(__name__)
-
-
-async def get_db_session(request: Request):
-    async with request.app.db.session() as session:
-        yield session
-
-
-async def get_db(request: Request):
-    return request.app.db
-
-
-async def get_lnd(request: Request):
-    return request.app.lnd
-
-
-async def get_pubsub(websocket: WebSocket):
-    return websocket.app.pubsub
 
 
 def payreq_to_datauri(pay_req: PaymentRequest):
@@ -115,7 +97,6 @@ def catch_exceptions(func):
         try:
             return await func(*args, **kwargs)
         except httpx.HTTPStatusError as exc:
-            breakpoint()
             logger.exception("API exception in %s: %s", func.__name__, exc.response.content)
         except Exception:
             logger.exception("Exception in %s", func.__name__)

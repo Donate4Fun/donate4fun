@@ -12,7 +12,7 @@ from anyio.abc import TaskStatus
 from sqlalchemy import update
 
 from donate4fun.api import DonateRequest, DonateResponse, WithdrawResponse, LnurlWithdrawResponse
-from donate4fun.lnd import monitor_invoices, LndClient, Invoice
+from donate4fun.lnd import monitor_invoices, LndClient, Invoice, lnd
 from donate4fun.models import Donation, Donator, SubscribeEmailRequest
 from donate4fun.db import Notification
 from donate4fun.db_models import DonatorDb
@@ -48,7 +48,7 @@ async def test_get_donation(client, unpaid_donation_fixture: Donation, freeze_re
 
 async def test_fulfill(
     client, app, freeze_uuids, payer_lnd: LndClient, settings,
-    freeze_request_hash_json, pubsub, registered_donator,
+    freeze_request_hash_json, registered_donator, db
 ):
     amount = 30
     donate_response: DonateResponse = await client.post(
@@ -61,7 +61,7 @@ async def test_fulfill(
     payment_request = donate_response.json()['payment_request']
     check_donation_notification = check_notification(client, 'donation', donation_id)
     check_donator_notification = check_notification(client, 'donator', registered_donator.id)
-    async with monitor_invoices(app.lnd, app.db), check_donation_notification, check_donator_notification:
+    async with monitor_invoices(lnd, db), check_donation_notification, check_donator_notification:
         await payer_lnd.pay_invoice(payment_request)
     donation_response = await client.get(f"/api/v1/donation/{donation_id}")
     check_response(donation_response, 200)
@@ -73,7 +73,7 @@ async def test_fulfill(
 
 
 @pytest.mark.freeze_time('2022-02-02 22:22:22')
-async def test_websocket(client, unpaid_donation_fixture, db, freeze_request_hash_json, pubsub):
+async def test_websocket(client, unpaid_donation_fixture, db, freeze_request_hash_json):
     messages = []
     # Test with two concurrent websockets (there were bugs with it)
     donation_ws_ctx_1 = client.ws_session(f'/api/v1/subscribe/donation:{unpaid_donation_fixture.id}')
@@ -97,7 +97,7 @@ async def test_state(client):
     ('signup', None),
     ('signin', pytest.lazy_fixture('registered_donator')),
 ])
-async def test_lnauth(client, case_name, _registered_donator, donator_id, pubsub):
+async def test_lnauth(client, case_name, _registered_donator, donator_id):
     """
     donator_id: temporary donator id (like those given to user when he opens the site without session)
     """
@@ -118,6 +118,7 @@ async def test_lnauth(client, case_name, _registered_donator, donator_id, pubsub
             key=sk.verifying_key.to_string().hex(),
             **{k: v[0] for k, v in query.items()},
         ))
+        check_response(callback_response)
         assert callback_response.json()['status'] == 'OK'
         verify_response(callback_response, 'lnauth-callback', 200)
         msg = await ws.receive_json()
@@ -155,7 +156,7 @@ async def test_disconnect_wallet(client, settings: Settings, registered_donator:
 ])
 async def test_withdraw(
     client, payer_lnd, balance, amount_diff, balance_diff, status,
-    message, is_ok, settings, db, pubsub, registered_donator,
+    message, is_ok, settings, db, registered_donator,
 ):
     """
     balance is initial donator balance
@@ -215,7 +216,6 @@ async def test_withdraw(
 
 
 async def wait_for_payment(lnd_client, r_hash, *, task_status: TaskStatus):
-    print("starting wait_for_payment")
     async for data in lnd_client.subscribe("/v1/invoices/subscribe"):
         if data is None:
             task_status.started()
@@ -223,20 +223,16 @@ async def wait_for_payment(lnd_client, r_hash, *, task_status: TaskStatus):
         invoice: Invoice = Invoice(**data['result'])
         assert invoice.r_hash == r_hash
         assert invoice.state == 'SETTLED'
-        print("invoice settled")
         break
-    print("stopping wait_for_payment")
 
 
 async def wait_for_withdrawal(
     client, withdrawal_id: UUID, amount_diff: int, status: str, message: str, task_status: TaskStatus,
 ):
-    print("starting wait_for_withdrawal")
     async with client.ws_session(f"/api/v1/subscribe/withdrawal:{withdrawal_id}") as ws:
         task_status.started()
         msg = await ws.receive_json()
         notification = Notification(**msg)
         assert notification.id == withdrawal_id
-        assert notification.status == status
+        assert notification.status == status, notification.message
         assert notification.message == message
-    print("stopping wait_for_withdrawal")

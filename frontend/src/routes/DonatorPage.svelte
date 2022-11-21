@@ -89,7 +89,9 @@
           {#if donation.youtube_video}
             <YoutubeVideo video={donation.youtube_video} />
           {:else if donation.youtube_channel}
-            <YoutubeChannel channel={donation.youtube_channel} class="ellipsis" logo />
+            <YoutubeChannel channel={donation.youtube_channel} class="ellipsis" linkto=withdraw logo />
+          {:else if donation.twitter_account}
+            <TwitterAccount account={donation.twitter_account} class="ellipsis" />
           {:else}
             <Donator user={donation.receiver} ellipsis --gap=5px />
           {/if}
