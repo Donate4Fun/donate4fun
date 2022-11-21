@@ -17,8 +17,7 @@ interactions:
     method: GET
     uri: https://api.twitter.com/2/users/by/username/donate4_fun?user.fields=id%2Cname%2Cprofile_image_url
   response:
-    content: "{\"data\":{\"username\":\"donate4_fun\",\"profile_image_url\":\"https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_normal.png\",\"name\":\"Donate4.Fun
-      \u26A1\",\"id\":\"1572908920485576704\"}}"
+    content: "{\"data\":{\"username\":\"donate4_fun\",\"name\":\"Donate4.Fun \u26A1\",\"id\":\"1572908920485576704\",\"profile_image_url\":\"https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_normal.png\"}}"
     headers:
       api-version:
       - '2.55'
@@ -29,24 +28,24 @@ interactions:
       content-encoding:
       - gzip
       content-length:
-      - '178'
+      - '176'
       content-type:
       - application/json; charset=utf-8
       date:
-      - Fri, 18 Nov 2022 09:53:33 UTC
+      - Mon, 21 Nov 2022 18:07:11 UTC
       perf:
       - '7626143928'
       server:
       - tsa_o
       set-cookie:
-      - guest_id=v1%3A166876521316042652; Max-Age=34214400; Expires=Tue, 19 Dec 2023
-        09:53:33 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      - guest_id=v1%3A166905403164014819; Max-Age=34214400; Expires=Fri, 22 Dec 2023
+        18:07:11 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
       strict-transport-security:
       - max-age=631138519
       x-access-level:
       - read
       x-connection-hash:
-      - 0dce4230cc3fadb7ea0e882b80d552a94a8ffb0278a02a2772ecac6f551722e0
+      - ec0c6ac1690e92156210bd79ae4450151af075f1b358c5b0996f72a5631034be
       x-content-type-options:
       - nosniff
       x-frame-options:
@@ -56,11 +55,11 @@ interactions:
       x-rate-limit-remaining:
       - '299'
       x-rate-limit-reset:
-      - '1668766113'
+      - '1669054931'
       x-response-time:
-      - '135'
+      - '131'
       x-transaction-id:
-      - 7d48fd0ccdfc3dcc
+      - 734537c62705bb9e
       x-xss-protection:
       - '0'
     http_version: HTTP/1.1

@@ -43,7 +43,7 @@ class TwitterDonatee:
             tweet = TwitterTweet(tweet_id=self.tweet_id)
             await db.get_or_create_tweet(tweet)
             donation.twitter_tweet = tweet
-        donation.twitter_account = await query_or_fetch_twitter_author(db=db, handle=self.author_handle)
+        donation.twitter_account = await query_or_fetch_twitter_account(db=db, handle=self.author_handle)
 
 
 class UnsupportedTwitterUrl(ValidationError):
@@ -60,7 +60,7 @@ def validate_twitter_url(parsed) -> TwitterDonatee:
         raise UnsupportedTwitterUrl
 
 
-async def query_or_fetch_twitter_author(db: DbSession, **params) -> TwitterAccount:
+async def query_or_fetch_twitter_account(db: DbSession, **params) -> TwitterAccount:
     try:
         account: TwitterAccount = await db.query_twitter_account(**params)
     except NoResultFound:
@@ -72,7 +72,7 @@ async def query_or_fetch_twitter_author(db: DbSession, **params) -> TwitterAccou
 @register_command
 async def fetch_and_save_twitter_account(handle: str):
     async with db.session() as db_session:
-        await query_or_fetch_twitter_author(db_session, handle=handle)
+        await query_or_fetch_twitter_account(db_session, handle=handle)
 
 
 async def api_request(method, client, api_path, **kwargs) -> dict[str, Any]:
@@ -284,7 +284,7 @@ class Conversation:
     async def link_twitter_account(self, donator_id: str):
         logger.info(f"Linking Twitter account {self.peer_id} to {donator_id}")
         async with self.db.session() as db_session:
-            author: TwitterAccount = await query_or_fetch_twitter_author(db_session, user_id=self.peer_id)
+            author: TwitterAccount = await query_or_fetch_twitter_account(db_session, user_id=self.peer_id)
             await db_session.link_twitter_account(twitter_author=author, donator=Donator(id=donator_id))
         claim_url = furl(settings.base_url) / 'twitter' / str(author.id)
         await self.send_text(f"Your account is successefully linked. Go to {claim_url} to claim your donations.")

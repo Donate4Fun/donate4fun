@@ -17,7 +17,7 @@ interactions:
     method: GET
     uri: https://api.twitter.com/2/users/12345?user.fields=id%2Cname%2Cprofile_image_url
   response:
-    content: '{"data":{"name":"ID 12345","username":"harperreed","profile_image_url":"https://pbs.twimg.com/profile_images/58849851/harper_4_normal.jpg","id":"12345"}}'
+    content: '{"data":{"name":"ID 12345","username":"harperreed","id":"12345","profile_image_url":"https://pbs.twimg.com/profile_images/58849851/harper_4_normal.jpg"}}'
     headers:
       api-version:
       - '2.55'
@@ -28,24 +28,24 @@ interactions:
       content-encoding:
       - gzip
       content-length:
-      - '144'
+      - '143'
       content-type:
       - application/json; charset=utf-8
       date:
-      - Fri, 18 Nov 2022 09:53:33 UTC
+      - Mon, 21 Nov 2022 18:07:12 UTC
       perf:
       - '7626143928'
       server:
       - tsa_o
       set-cookie:
-      - guest_id=v1%3A166876521360148017; Max-Age=34214400; Expires=Tue, 19 Dec 2023
-        09:53:33 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      - guest_id=v1%3A166905403210205181; Max-Age=34214400; Expires=Fri, 22 Dec 2023
+        18:07:12 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
       strict-transport-security:
       - max-age=631138519
       x-access-level:
       - read
       x-connection-hash:
-      - 8e1485888aad339348cc13cf65fbcdc2ede13848fcade4656e34b39b31ebc81a
+      - d24832660650556aafecebedc4a2b213b91c0e634f4cc842156679ae0cdede38
       x-content-type-options:
       - nosniff
       x-frame-options:
@@ -55,11 +55,11 @@ interactions:
       x-rate-limit-remaining:
       - '299'
       x-rate-limit-reset:
-      - '1668766113'
+      - '1669054932'
       x-response-time:
-      - '124'
+      - '128'
       x-transaction-id:
-      - bf54c2759eac6297
+      - 5ee120c2799cdb23
       x-xss-protection:
       - '0'
     http_version: HTTP/1.1
