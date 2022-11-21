@@ -1,5 +1,5 @@
 <script>
-  import { useResolve } from "svelte-navigator";
+  import { link, useResolve } from "svelte-navigator";
 
   import Loader from "$lib/Loader.svelte";
   import Amount from "$lib/Amount.svelte";
@@ -7,9 +7,8 @@
   import YoutubeChannel from "$lib/YoutubeChannel.svelte";
   import Section from "$lib/Section.svelte";
   import ChannelLogo from "$lib/ChannelLogo.svelte";
-  import DonationsTable from "$lib/DonationsTable.svelte";
-  import PaymentWidget from "$lib/PaymentWidget.svelte";
   import { api } from "$lib/api.js";
+  import { me } from "$lib/session.js";
   import title from "$lib/title.js";
 
   export let channel_id;
@@ -22,36 +21,42 @@
 
   async function load() {
     channel = await api.get(baseUrl);
-    $title = `Donate to ${channel.title} YouTube channel`
-    donations = await api.get(`${baseUrl}/donations/by-donatee`);
+    $title = `Manage ${channel.title} YouTube channel`
+    return await me.get();
+  }
+
+  async function claim() {
+    await api.post(`${baseUrl}/transfer`);
+    await load();
   }
 </script>
 
 <div class="container">
   {#await load()}
     <Loader />
-  {:then}
+  {:then me}
     <Section>
-      {#if channel.banner_url}
-        <div class="banner" style="background-image: url({channel.banner_url})"></div>
-      {/if}
       <div class="youtube-channel">
         <h1>
           <img alt=youtube src="/static/youtube.svg" width=20>
-          Donate to <YoutubeChannel channel={channel} />
+          <YoutubeChannel channel={channel} />
           <ChannelLogo url={channel.thumbnail_url} size=44px />
         </h1>
-        <PaymentWidget target={{channel_id: channel.id}} on:paid={load} />
+      </div>
+      <div class="controls">
+        {#if channel.is_my}
+          <div class="available">Available to claim: <Amount amount={channel.balance} /></div>
+          {#if me.connected}
+            <Button disabled={channel.balance === 0} on:click={claim}>Collect donations</Button>
+          {:else}
+            <Button link='/login'>Login to collect donations</Button>
+          {/if}
+        {:else}
+          <Button class="white" link="/youtube/prove">This is my channel</Button>
+        {/if}
+        <Button class="white" link={resolve("../link")}>Want more donations?</Button>
       </div>
     </Section>
-
-    <div class="details">
-      <div class="controls">
-        <Button class="grey" link={resolve("owner")}>This is my channel</Button>
-        <Button class="grey" link={resolve("link")}>Want more donations?</Button>
-      </div>
-      <DonationsTable donations={donations} />
-    </div>
   {/await}
 </div>
 
@@ -70,15 +75,6 @@
   width: 640px;
   box-sizing: border-box;
 }
-.banner {
-  width: 100%;
-  height: 102px;
-  background-repeat: no-repeat;
-  background-size: 100%;
-  background-position: center;
-  border-top-left-radius: inherit;
-  border-top-right-radius: inherit;
-}
 h1 {
   display: flex;
   gap: 8px;
@@ -88,16 +84,10 @@ h1 {
   line-height: 22px;
   font-weight: 400;
 }
-.details {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  width: 640px;
-}
 .controls {
   display: flex;
   gap: 20px;
+  flex-direction: column;
   align-items: center;
 }
 </style>

@@ -35,7 +35,7 @@ class RequestHash(str):
         elif isinstance(b64data, str):
             return cls(urlsafe_b64decode(b64data))
         else:
-            breakpoint()
+            raise ValueError("Argument should be of type {cls} or str, not {type(b64data)}")
 
     @property
     def as_hex(self):

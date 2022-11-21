@@ -14,7 +14,7 @@ json:
     paid_at: null
     r_hash: aGFzaA==
     receiver: null
-    twitter_author:
+    twitter_account:
       balance: 0
       handle: donate4_fun
       id: 00000000-0000-0000-0000-000000000001

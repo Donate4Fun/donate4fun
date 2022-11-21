@@ -7,8 +7,7 @@ from aiogoogle import Aiogoogle
 from pydantic import AnyHttpUrl
 from sqlalchemy.orm.exc import NoResultFound
 
-from .api_utils import get_donator, load_donator
-from .core import get_db_session
+from .api_utils import get_donator, load_donator, get_db_session
 from .models import BaseModel, YoutubeVideo, YoutubeChannel, Donator, YoutubeChannelOwned, Donation, TransferResponse
 from .youtube import (
     find_comment, query_or_fetch_youtube_channel, ChannelInfo, fetch_user_channel,
@@ -73,7 +72,7 @@ async def login_via_google(request: Request, donator=Depends(get_donator)):
     url = aiogoogle.oauth2.authorization_url(
         client_creds=dict(
             scopes=['https://www.googleapis.com/auth/youtube.readonly'],
-            redirect_uri=request.app.url_path_for('auth_google').make_absolute_url(settings.youtube.oauth.redirect_base_url),
+            redirect_uri=request.app.url_path_for('auth_google').make_absolute_url(settings.base_url),
             **settings.youtube.oauth.dict(),
         ),
         state=GoogleAuthState(last_url=request.headers['referer'], donator_id=donator.id).to_jwt(),

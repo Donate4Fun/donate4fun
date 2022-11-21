@@ -46,7 +46,7 @@ class DonationsDbMixin:
                 receiver_id=donation.receiver and donation.receiver.id,
                 youtube_channel_id=donation.youtube_channel and donation.youtube_channel.id,
                 youtube_video_id=donation.youtube_video and donation.youtube_video.id,
-                twitter_author_id=donation.twitter_author and donation.twitter_author.id,
+                twitter_author_id=donation.twitter_account and donation.twitter_account.id,
                 twitter_tweet_id=donation.twitter_tweet and donation.twitter_tweet.id,
             )
         )

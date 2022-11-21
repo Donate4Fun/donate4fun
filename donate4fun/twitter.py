@@ -24,7 +24,7 @@ from starlette.datastructures import URL
 from authlib.integrations.httpx_client import AsyncOAuth1Client, AsyncOAuth2Client
 from furl import furl
 
-from .db import DbSession, NoResultFound, Database
+from .db import DbSession, NoResultFound, Database, db
 from .models import Donation, TwitterAccount, TwitterTweet, WithdrawalToken, Donator
 from .types import ValidationError
 from .settings import settings
@@ -43,7 +43,7 @@ class TwitterDonatee:
             tweet = TwitterTweet(tweet_id=self.tweet_id)
             await db.get_or_create_tweet(tweet)
             donation.twitter_tweet = tweet
-        donation.twitter_author = await query_or_fetch_twitter_author(db=db, handle=self.author_handle)
+        donation.twitter_account = await query_or_fetch_twitter_author(db=db, handle=self.author_handle)
 
 
 class UnsupportedTwitterUrl(ValidationError):
@@ -67,6 +67,12 @@ async def query_or_fetch_twitter_author(db: DbSession, **params) -> TwitterAccou
         account: TwitterAccount = await fetch_twitter_author(**params)
         await db.save_twitter_account(account)
     return account
+
+
+@register_command
+async def fetch_and_save_twitter_account(handle: str):
+    async with db.session() as db_session:
+        await query_or_fetch_twitter_author(db_session, handle=handle)
 
 
 async def api_request(method, client, api_path, **kwargs) -> dict[str, Any]:
@@ -280,7 +286,7 @@ class Conversation:
         async with self.db.session() as db_session:
             author: TwitterAccount = await query_or_fetch_twitter_author(db_session, user_id=self.peer_id)
             await db_session.link_twitter_account(twitter_author=author, donator=Donator(id=donator_id))
-        claim_url = furl(settings.redirect_base_url) / 'twitter' / str(author.id)
+        claim_url = furl(settings.base_url) / 'twitter' / str(author.id)
         await self.send_text(f"Your account is successefully linked. Go to {claim_url} to claim your donations.")
 
     async def answer_withdraw(self):
@@ -392,13 +398,29 @@ async def upload_media(client, image: bytes, mime_type: str) -> int:
 
 
 @register_command
+async def get_profile_banner():
+    async with Database(settings.db).session() as db_session:
+        token = await db_session.query_oauth_token('twitter_oauth1')
+    async with make_oauth1_client() as client:
+        client.token = token
+        url = 'https://api.twitter.com/1.1/users/profile_banner.json'
+        try:
+            response = await api_get(client, url, params=dict(screen_name='elonmusk'))
+        except httpx.HTTPStatusError as exc:
+            auth_header = exc.request.headers['authorization']
+            logger.exception("Failed to get banner image:\n%s\n%s\n%s", auth_header, exc.request.headers, exc.response.json())
+        else:
+            print(response.json())
+
+
+@register_command
 async def test_upload_media():
     async with Database(settings.db).session() as db_session:
         token = await db_session.query_oauth_token('twitter_oauth1')
     async with make_oauth1_client() as client:
         client.token = token
         try:
-            await upload_media(client, open('frontend/public/static/D-16.png', 'rb').read())
+            await upload_media(client, open('frontend/public/static/D-16.png', 'rb').read(), 'image/png')
         except httpx.HTTPStatusError as exc:
             auth_header = exc.request.headers['authorization']
             logger.exception("Failed to upload image:\n%s\n%s\n%s", auth_header, exc.request.headers, exc.response.json())

@@ -21,7 +21,7 @@ from pydantic import Field, AnyUrl
 from .settings import LndSettings, settings
 from .types import RequestHash, PaymentRequest
 from .models import Invoice
-from .core import as_task, register_command
+from .core import as_task, register_command, ContextualObject
 
 logger = logging.getLogger(__name__)
 
@@ -166,6 +166,9 @@ class LndClient:
     async def query_state(self) -> State:
         resp = await self.query('GET', '/v1/state')
         return resp['state']
+
+
+lnd = ContextualObject('lnd')
 
 
 @as_task

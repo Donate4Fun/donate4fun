@@ -4,7 +4,11 @@ from fastapi import Request
 from sqlalchemy.orm.exc import NoResultFound  # noqa - imported from other modules
 
 from .models import Donator, Credentials
-from .db import DbSession
+from .db import DbSession, db
+from .core import ContextualObject
+
+
+task_group = ContextualObject('task_group')
 
 
 def get_donator(request: Request):
@@ -23,3 +27,8 @@ async def load_donator(db: DbSession, donator_id: UUID) -> Donator:
         return await db.query_donator(donator_id)
     except NoResultFound:
         return Donator(id=donator_id)
+
+
+async def get_db_session():
+    async with db.session() as session:
+        yield session

@@ -10,11 +10,12 @@
   import FulfillPage from "./routes/FulfillPage.svelte";
   import DonationPage from "./routes/DonationPage.svelte";
   import YoutubeChannelPage from "./routes/YoutubeChannelPage.svelte";
+  import YoutubeChannelOwnerPage from "./routes/YoutubeChannelOwnerPage.svelte";
   import WithdrawPage from "./routes/WithdrawPage.svelte";
   import YoutubeLinkPage from "./routes/YoutubeLinkPage.svelte";
   import YoutubeProvePage from "./routes/YoutubeProvePage.svelte";
   import TwitterProvePage from "./routes/TwitterProvePage.svelte";
-  import TwitterAuthorPage from "./routes/TwitterAuthorPage.svelte";
+  import TwitterAccountPage from "./routes/TwitterAccountPage.svelte";
   import LoginPage from "./routes/LoginPage.svelte";
   import Test from "./routes/Test.svelte";
   import Landing from "./routes/Landing.svelte";
@@ -48,10 +49,11 @@
       <Route path="prove" component={YoutubeProvePage} />
       <Route path=":channel_id" component="{YoutubeChannelPage}" />
       <Route path=":channel_id/link" component="{YoutubeLinkPage}" />
+      <Route path=":channel_id/owner" component="{YoutubeChannelOwnerPage}" />
     </Route>
     <Route path="twitter/*">
       <Route path="prove" component={TwitterProvePage} />
-      <Route path=":account_id" component="{TwitterAuthorPage}"/>
+      <Route path=":account_id" component="{TwitterAccountPage}"/>
     </Route>
     <Route path="me/withdraw" component="{WithdrawPage}" />
     <Route path="donation/:donation_id" component="{DonationPage}" />

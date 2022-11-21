@@ -1,11 +1,10 @@
 import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
-import { replaceCodePlugin } from "vite-plugin-replace";
 import alias from '@rollup/plugin-alias';
+import outputManifest from 'rollup-plugin-output-manifest';
 import path from 'path';
 
 const apiUrl = process.env.API_URL || 'http://localhost:8000';
-const baseUrl = process.env.BASE_URL;
 
 const httpProxy = {
   target: apiUrl,
@@ -13,18 +12,6 @@ const httpProxy = {
   secure: false,
   cookieDomainRewrite: 'http://localhost',
 };
-
-const htmlPlugin = () => {
-  return {
-    name: 'html-transform',
-    transformIndexHtml(html) {
-      return html.replaceAll(
-        /%BASE_URL%/g,
-        baseUrl,
-      )
-    }
-  }
-}
 
 export default defineConfig({
   build: {
@@ -35,12 +22,12 @@ export default defineConfig({
             '$lib': path.resolve('src/lib'),
           },
         }),
+        outputManifest.default(),
       ],
     },
   },
   plugins: [
     svelte(),
-    htmlPlugin(),
   ],
   optimizeDeps: { exclude: ["svelte-navigator"] },
   resolve: {
@@ -60,6 +47,10 @@ export default defineConfig({
       '/api/': httpProxy,
       '/d/': httpProxy,
       '/js/script.js': httpProxy,
+      '/youtube/': httpProxy,
+      '/twitter/': httpProxy,
+      '/preview/': httpProxy,
+      '^/$': httpProxy,
     },
   },
 })

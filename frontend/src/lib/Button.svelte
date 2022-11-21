@@ -56,7 +56,7 @@
 
 <div class="root">
   <button {...$$restProps} on:click={click} disabled={disabled || spin} class:selected class:dimmed>
-    <div class="flex-row align-center">
+    <div class="inner">
       {#if spin}
         <div class="loader">
           <Loader />
@@ -73,6 +73,11 @@
   display: contents;
   --border-width-secondary: var(--border-width, 2px);
   --border-width-primary: var(--border-width, 4px);
+}
+.inner {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
 }
 button {
   background-image: var(--background-image, linear-gradient(90deg, #F9F03E 0%, #9DEDA2 100%));

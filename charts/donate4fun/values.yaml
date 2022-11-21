@@ -16,10 +16,10 @@ backend:
     tag: ""
   resources:
     limits:
-      cpu: 150m
+      cpu: 450m
       memory: 712Mi
     requests:
-      cpu: 150m
+      cpu: 450m
       memory: 712Mi
 frontend:
   port: 8081

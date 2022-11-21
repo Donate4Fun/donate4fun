@@ -31,8 +31,6 @@ backend:
       include_server_header: false
     youtube:
       refresh_timeout: P1D
-      oauth:
-        redirect_base_url: https://donate4.fun
     twitter:
       greeting: "Hey! I'm a Donate4Fun Twitter bot. I'll check if you have any tips or donations."
       enable_bot: true
@@ -45,6 +43,9 @@ backend:
     ownership_message: "I confirm that donate 4 fun account {donator_id} could withdraw my donations."
     cookie_domain: donate4.fun
     latest_donations_count: 50
+    frontend_port: 80
+    release: true
+    base_url: https://donate4.fun
     fastapi:
       debug: false
       root_path: ""
@@ -57,7 +58,7 @@ backend:
       handlers:
         stderr:
           class: logging.StreamHandler
-          level: DEBUG
+          level: TRACE
           formatter: std
           stream: ext://sys.stderr
       loggers:

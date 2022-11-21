@@ -22,7 +22,7 @@
     <ul>
       <li><a href="https://github.com/Donate4Fun/donate4fun/blob/master/docs/HELP.md" target="_blank">Docs</a></li>
       <li><a href="https://github.com/orgs/Donate4Fun/projects/1" target="_blank">Roadmap</a></li>
-      <li><a use:link href="#" on:click={() => {showClaim = true;}}>Claim donations</a></li>
+      <li><a href={"#"} on:click={() => {showClaim = true;}}>Claim donations</a></li>
       <li><a use:link href="/login">Connect wallet</li>
       <li><a use:link href="/#team">Team</a></li>
       {#await $me then me}
@@ -39,7 +39,7 @@
   <nav class="quick-links">
     <a target=_blank href="https://github.com/orgs/Donate4Fun/projects/1">Roadmap</a>
     <a target=_blank href="https://github.com/Donate4Fun/donate4fun/blob/master/docs/HELP.md">Docs</a>
-    <a use:link href="#" on:click={() => {showClaim = true;}}>Claim donations</a>
+    <a href={'#'} on:click={() => {showClaim = true; return false;}}>Claim donations</a>
   </nav>
   <div class="right">
     <div class="connect-button">

@@ -6,15 +6,16 @@ from datetime import datetime
 
 import bugsnag
 import ecdsa
-from fastapi import APIRouter, WebSocket, Request, Depends, Query, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, Request, Depends, Query, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from lnurl.core import _url_encode as lnurl_encode
 from lnpayencode import lndecode, LnAddr
 from anyio.abc import TaskStatus
 from rollbar.contrib.fastapi.routing import RollbarLoggingRoute
 from starlette.datastructures import URL
+from httpx import HTTPStatusError
+from pydantic import ValidationError as PydanticValidationError
 
-from .core import get_db_session, get_lnd, get_pubsub
 from .models import (
     Donation, Donator, Invoice, DonateResponse, DonateRequest, YoutubeChannel,
     WithdrawalToken, BaseModel, Notification, Credentials, SubscribeEmailRequest,
@@ -22,24 +23,69 @@ from .models import (
 from .types import ValidationError, RequestHash, PaymentRequest
 from .donatees import apply_target
 from .db_models import DonationDb, WithdrawalDb
+from .db import NoResultFound
 from .settings import settings
-from .api_utils import get_donator, load_donator
-from .lnd import PayInvoiceError, LnurlWithdrawResponse
+from .api_utils import get_donator, load_donator, get_db_session, task_group
+from .lnd import PayInvoiceError, LnurlWithdrawResponse, lnd
+from .pubsub import pubsub
 from . import api_twitter, api_youtube
 
+
+def http_status_error_handler(request, exc):
+    logger.debug(f"{request.url}: Upstream error", exc_info=exc)
+    status_code = exc.response.status_code
+    body = exc.response.json()
+    return JSONResponse(status_code=500, content={"message": f"Upstream server returned {status_code}: {body}"})
+
+
+def no_result_found_handler(request, exc):
+    return JSONResponse(status_code=404, content=dict(message="Item not found"))
+
+
+def validation_error_handler(request, exc):
+    return JSONResponse(
+        status_code=400,
+        content=dict(
+            status="error",
+            type=type(exc).__name__,
+            error=str(exc),
+        ),
+    )
+
+
+def pydantic_validation_error_handler(request, exc):
+    logger.debug(f"{request.url}: Validation error", exc_info=exc)
+    return JSONResponse(
+        status_code=400,
+        content=dict(
+            status="error",
+            type=type(exc).__name__,
+            error=exc.errors()[0]['msg'],
+        ),
+    )
+
+
 logger = logging.getLogger(__name__)
-router = APIRouter()
+router = app = FastAPI(
+    exception_handlers={
+        HTTPStatusError: http_status_error_handler,
+        NoResultFound: no_result_found_handler,
+        ValidationError: validation_error_handler,
+        PydanticValidationError: pydantic_validation_error_handler,
+    },
+)
+
 router.route_class = RollbarLoggingRoute
-router.include_router(api_twitter.router)
-router.include_router(api_youtube.router)
-router.include_router(api_youtube.legacy_router)
+app.include_router(api_twitter.router)
+app.include_router(api_youtube.router)
+app.include_router(api_youtube.legacy_router)
 
 
 def make_memo(donation: Donation) -> str:
     if donation.youtube_channel:
         return f"Donate4.Fun to {donation.youtube_channel.title}"
-    elif donation.twitter_author:
-        return f"Donate4.Fun to {donation.twitter_author.handle}"
+    elif donation.twitter_account:
+        return f"Donate4.Fun to {donation.twitter_account.handle}"
     elif donation.receiver:
         if donation.receiver.id == donation.donator.id:
             return f"[Donate4.fun] fulfillment for {donation.receiver.name}"
@@ -52,7 +98,6 @@ def make_memo(donation: Donation) -> str:
 @router.post("/donate", response_model=DonateResponse)
 async def donate(
     web_request: Request, request: DonateRequest, donator: Donator = Depends(get_donator), db_session=Depends(get_db_session),
-    lnd=Depends(get_lnd),
  ) -> DonateResponse:
     logger.debug(f"Donator {donator.id} wants to donate {request.amount} to {request.target or request.channel_id}")
     donation = Donation(
@@ -67,6 +112,8 @@ async def donate(
         donation.receiver = receiver
     elif request.channel_id:
         donation.youtube_channel = await db_session.query_youtube_channel(youtube_channel_id=request.channel_id)
+    elif request.twitter_account_id:
+        donation.twitter_account = await db_session.query_twitter_account(id=request.twitter_account_id)
     elif request.target:
         await apply_target(donation, request.target, db_session)
     else:
@@ -89,7 +136,7 @@ async def donate(
 
 
 @router.get("/donation/{donation_id}", response_model=DonateResponse)
-async def donation(donation_id: UUID, db_session=Depends(get_db_session), lnd=Depends(get_lnd)):
+async def donation(donation_id: UUID, db_session=Depends(get_db_session)):
     donation: Donation = await db_session.query_donation(id=donation_id)
     if donation.paid_at is None:
         invoice: Invoice = await lnd.lookup_invoice(donation.r_hash)
@@ -104,7 +151,7 @@ async def donation(donation_id: UUID, db_session=Depends(get_db_session), lnd=De
 
 
 @router.post("/donation/{donation_id}/cancel")
-async def cancel_donation(donation_id: UUID, db=Depends(get_db_session), lnd=Depends(get_lnd)):
+async def cancel_donation(donation_id: UUID, db=Depends(get_db_session)):
     """
     It only works for HODL invoices
     """
@@ -131,7 +178,7 @@ class StatusResponse(BaseModel):
 
 
 @router.get("/status")
-async def status(db=Depends(get_db_session), lnd=Depends(get_lnd)):
+async def status(db=Depends(get_db_session)):
     return StatusResponse(
         db=await db.query_status(),
         lnd=await lnd.query_state(),
@@ -166,8 +213,9 @@ async def lnurl_withdraw(request: Request, token: str, db=Depends(get_db_session
     decoded = WithdrawalToken.from_jwt(token)
     withdrawal: WithdrawalDb = await db.query_withdrawal(decoded.withdrawal_id)
     donator: Donator = await db.query_donator(withdrawal.donator.id)
+    callback_url = f"{settings.lnd.lnurl_base_url}{URL(request.url_for('withdraw_callback')).path}"
     return LnurlWithdrawResponse(
-        callback=request.app.url_path_for('withdraw_callback').make_absolute_url(settings.lnd.lnurl_base_url),
+        callback=callback_url,
         k1=token,
         default_description=f'Donate4.Fun withdrawal for "{donator.name}"',
         min_withdrawable=settings.min_withdraw * 1000,
@@ -176,7 +224,7 @@ async def lnurl_withdraw(request: Request, token: str, db=Depends(get_db_session
 
 
 @router.get('/lnurl/withdraw-callback', response_class=JSONResponse)
-async def withdraw_callback(request: Request, k1: str, pr: str, db=Depends(get_db_session), lnd=Depends(get_lnd)):
+async def withdraw_callback(request: Request, k1: str, pr: str, db=Depends(get_db_session)):
     try:
         token = WithdrawalToken.from_jwt(k1)
         withdrawal: WithdrawalDb = await db.query_withdrawal(token.withdrawal_id)
@@ -190,7 +238,7 @@ async def withdraw_callback(request: Request, k1: str, pr: str, db=Depends(get_d
                 f"Invoice amount {invoice_amount_sats} is not in allowed bounds [{min_amount}, {max_amount}]"
             )
         # According to https://github.com/fiatjaf/lnurl-rfc/blob/luds/03.md payment should not block response
-        await request.app.task_group.start(partial(
+        await task_group.start(partial(
             send_withdrawal,
             withdrawal_id=withdrawal.id,
             amount=invoice_amount_sats,
@@ -241,7 +289,7 @@ class LoginLnurlResponse(BaseModel):
 
 @router.get('/lnauth/{nonce}', response_model=LoginLnurlResponse)
 async def login_lnauth(request: Request, nonce: UUID, donator=Depends(get_donator)):
-    url_start = request.app.url_path_for('lnauth_callback').make_absolute_url(settings.lnd.lnurl_base_url)
+    url_start = f"{settings.lnd.lnurl_base_url}{URL(request.url_for('lnauth_callback')).path}"
     query_string = urlencode(dict(
         tag='login',
         k1=donator.id.bytes.hex() + nonce.bytes.hex(),  # k1 size should be 32 bytes
@@ -282,11 +330,14 @@ async def disconnect_wallet(db=Depends(get_db_session), donator=Depends(get_dona
 
 
 @router.websocket('/subscribe/{topic}')
-async def subscribe(websocket: WebSocket, topic: str, pubsub=Depends(get_pubsub)):
+async def subscribe(websocket: WebSocket, topic: str):
+    logger.trace("Websocket connection request: %s", topic)
+
     async def send_to_websocket(msg: str):
         await websocket.send_text(msg)
 
     await websocket.accept()
+    logger.trace("Websocket connection accepted: %s", topic)
     async with pubsub.subscribe(topic, send_to_websocket):
         while True:
             try:
@@ -334,7 +385,7 @@ async def withdraw(request: Request, db=Depends(get_db_session), me: Donator = D
     token = WithdrawalToken(
         withdrawal_id=withdrawal_id,
     )
-    url = request.app.url_path_for('lnurl_withdraw').make_absolute_url(settings.lnd.lnurl_base_url)
+    url = f"{settings.lnd.lnurl_base_url}{URL(request.url_for('lnurl_withdraw')).path}"
     withdraw_url = URL(url).include_query_params(token=token.to_jwt())
     return WithdrawResponse(
         lnurl=lnurl_encode(str(withdraw_url)),

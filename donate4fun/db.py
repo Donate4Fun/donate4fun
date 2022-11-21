@@ -9,6 +9,7 @@ from sqlalchemy.orm import sessionmaker, join
 from sqlalchemy.orm.exc import NoResultFound  # noqa - imported from other modules
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 
+from .core import ContextualObject
 from .models import Donator, YoutubeChannel, Notification, Credentials
 from .settings import DbSettings
 from .db_youtube import YoutubeDbMixin
@@ -60,6 +61,9 @@ class Database:
     async def raw_session(self):
         async with self.session_maker() as session:
             yield session
+
+
+db = ContextualObject("db")
 
 
 class DbSession(YoutubeDbMixin, TwitterDbMixin, DonationsDbMixin, WithdrawalDbMixin, OAuthTokenDbMixin):

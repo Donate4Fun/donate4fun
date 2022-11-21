@@ -52,7 +52,7 @@ class DonateRequest(BaseModel):
     amount: int
     receiver_id: UUID | None
     channel_id: UUID | None
-    twitter_author_id: UUID | None
+    twitter_account_id: UUID | None
     target: HttpUrl | None
     message: str | None
 
@@ -161,7 +161,7 @@ class Donation(BaseModel):
     amount: int
     youtube_channel: YoutubeChannel | None
     youtube_video: YoutubeVideo | None
-    twitter_author: TwitterAccount | None
+    twitter_account: TwitterAccount | None
     twitter_tweet: TwitterTweet | None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     message: str | None = None

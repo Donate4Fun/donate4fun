@@ -4,7 +4,7 @@
   import Loader from "$lib/Loader.svelte";
   import Amount from "$lib/Amount.svelte";
   import Button from "$lib/Button.svelte";
-  import YoutubeChannel from "$lib/YoutubeChannel.svelte";
+  import TwitterAccount from "$lib/TwitterAccount.svelte";
   import Section from "$lib/Section.svelte";
   import ChannelLogo from "$lib/ChannelLogo.svelte";
   import DonationsTable from "$lib/DonationsTable.svelte";
@@ -12,17 +12,25 @@
   import { api } from "$lib/api.js";
   import title from "$lib/title.js";
 
-  export let channel_id;
+  export let account_id;
 
-  let channel;
+  let account;
   let donations;
-  $: baseUrl = `youtube/channel/${channel_id}`;
+  let shareUrl;
+
+  $: baseUrl = `twitter/account/${account_id}`;
+  $: {
+    shareUrl = new URL('https://twitter.com/intent/tweet');
+    shareUrl.searchParams.append('text', 'Donate me');
+    shareUrl.searchParams.append('url', location.href);
+    shareUrl.searchParams.append('via', 'donate4_fun');
+  }
 
   const resolve = useResolve();
 
   async function load() {
-    channel = await api.get(baseUrl);
-    $title = `Donate to ${channel.title} YouTube channel`
+    account = await api.get(baseUrl);
+    $title = `Donate to @${account.handle} Twitter account`
     donations = await api.get(`${baseUrl}/donations/by-donatee`);
   }
 </script>
@@ -32,22 +40,25 @@
     <Loader />
   {:then}
     <Section>
-      {#if channel.banner_url}
-        <div class="banner" style="background-image: url({channel.banner_url})"></div>
+      {#if account.banner_url}
+        <div class="banner" style="background-image: url({account.banner_url})"></div>
       {/if}
       <div class="youtube-channel">
         <h1>
-          <img alt=youtube src="/static/youtube.svg" width=20>
-          Donate to <YoutubeChannel channel={channel} />
-          <ChannelLogo url={channel.thumbnail_url} size=44px />
+          <img alt=youtube src="/static/twitter.svg" width=20>
+          Donate to <TwitterAccount showHandle={false} imagePlacement=after --image-size=44px account={account} />
         </h1>
-        <PaymentWidget target={{channel_id: channel.id}} on:paid={load} />
+        <PaymentWidget target={{twitter_account_id: account.id}} on:paid={load} />
+        <Button class="white" link={shareUrl} target="_blank">
+          <img alt=youtube src="/static/twitter.svg" width=20>
+          Share
+        </Button>
       </div>
     </Section>
 
     <div class="details">
       <div class="controls">
-        <Button class="grey" link={resolve("owner")}>This is my channel</Button>
+        <Button class="grey" link={resolve("owner")}>This is my account</Button>
         <Button class="grey" link={resolve("link")}>Want more donations?</Button>
       </div>
       <DonationsTable donations={donations} />

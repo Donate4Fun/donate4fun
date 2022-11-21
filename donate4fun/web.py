@@ -1,90 +1,47 @@
-import datetime
 import json
+import datetime
 from uuid import UUID
+from typing import Any
 from xml.etree import ElementTree as ET
 
+import httpx
 from mako.lookup import TemplateLookup
 from aiogoogle import Aiogoogle
-from fastapi import Request, Form, Query, APIRouter, Depends, Response
+from fastapi import Request, Response, FastAPI, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 
-from .core import payreq_to_datauri, get_db_session, get_lnd
-from .models import DonationRequest, Donation, YoutubeChannel
-from .types import Url, UnsupportedTarget
-from .donatees import validate_target
+from .api_utils import get_db_session
+from .models import YoutubeChannel
 from .youtube import fetch_user_channel, ChannelInfo, query_or_fetch_youtube_channel
 from .settings import settings
-from .lnd import LndClient, Invoice
-
-templates = TemplateLookup(
-    directories=['donate4fun/templates'],
-    strict_undefined=True,
-    imports=['from donate4fun.mako import query'],
-)
 
 
-def TemplateResponse(name, *args, **kwargs) -> HTMLResponse:
-    return HTMLResponse(templates.get_template(name).render(*args, **kwargs))
+app = FastAPI()
 
 
-router = APIRouter()
+async def fetch_manifest() -> dict[str, Any]:
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(f'http://localhost:{settings.frontend_port}/manifest.json')
+        return resp.json()
 
 
-@router.get("/")
-async def donate(request: Request, donatee: str | None = Query(...)):
-    return TemplateResponse("donate.html", request=request, donatee=donatee)
-
-
-@router.post("/donate")
-async def donate_form(
-    request: Request,
-    amount: float = Form(...),
-    target: Url = Form(...),
-    donator: Url = Form(...),
-    trigger: Url = Form(...),
-    message: Url = Form(...),
-    lnd: LndClient = Depends(get_lnd),
-):
-    try:
-        donatee, trigger = await validate_target(target)
-    except UnsupportedTarget:
-        return TemplateResponse("unsupported.html",  request=request, donatee=donatee)
-
-    invoice: lnd.Invoice = await lnd.create_invoice(memo=f"donate4.fun to {donatee}", amount=amount)
-    req = DonationRequest(
-        r_hash=invoice.r_hash,
-        donator=donator,
-        donatee=donatee,
-        trigger=trigger,
-        message=message,
+@app.get("/")
+@app.get("/youtube/{youtube_channel_id}")
+@app.get("/twitter/{twitter_account_id}")
+async def index(request: Request, youtube_channel_id: UUID | None = None, twitter_account_id: UUID | None = None):
+    if twitter_account_id is not None:
+        og_image_path = f'/preview/twitter/{twitter_account_id}'
+    elif youtube_channel_id is not None:
+        og_image_path = f'/preview/youtube/{youtube_channel_id}'
+    else:
+        og_image_path = '/static/sharing.png'
+    manifest = await fetch_manifest() if settings.release else None
+    return TemplateResponse(
+        "index.html", request=request, og_image_path=og_image_path, manifest=manifest,
     )
-    return RedirectResponse(request.url_for('donate_invoice', token=req.to_jwt()))
 
 
-@router.get("/donation/{donation_id}", response_class=HTMLResponse)
-async def donate_invoice(request: Request, donation_id: str, db=Depends(get_db_session), lnd=Depends(get_lnd)):
-    donation: Donation = await db.query_donation(donation_id)
-    if donation.paid_at is None:
-        invoice: Invoice = await lnd.fetch_invoice(donation.r_hash)
-        if invoice.amt_paid > 0:
-            await db.donation_paid(donation_id=donation_id, amount=invoice.amt_paid)
-        else:
-            return TemplateResponse(
-                "donation-todo.html",
-                request=request,
-                qrcode=payreq_to_datauri(invoice.payment_request),
-                invoice=invoice,
-            )
-    return RedirectResponse(request.url_for('donation', id=donation.id))
-
-
-@router.get('/donation/{donation_id}')
-async def donation(request: Request, donation_id: UUID, db=Depends(get_db_session)):
-    donation: Donation = await db.query_donation(donation_id=donation_id)
-    return TemplateResponse("donation-done.html", request=request, donation=donation)
-
-
-@router.get('/login/google')
+@app.get('/login/google')
 async def login_via_google(request: Request, orig_channel_id: str):
     aiogoogle = Aiogoogle()
     uri = aiogoogle.oauth2.authorization_url(
@@ -97,7 +54,7 @@ async def login_via_google(request: Request, orig_channel_id: str):
     return RedirectResponse(uri)
 
 
-@router.get('/auth/google', response_class=JSONResponse)
+@app.get('/auth/google', response_class=JSONResponse)
 async def auth_google(
     request: Request, error: str = None, error_description: str = None, code: str = None, db_session=Depends(get_db_session)
 ):
@@ -115,42 +72,9 @@ async def auth_google(
         raise Exception("Something's probably wrong with your callback")
 
 
-@router.get('/donatee')
-async def donatee(request: Request, donatee: Url = Query(...), db_session=Depends(get_db_session)):
-    donations = await db_session.query_donations(donatee=donatee)
-    sum_unclaimed = sum(d.amount for d in donations if d.claimed_at is None) / 1000
-    return TemplateResponse(
-        "donatee.html",
-        request=request,
-        sum_donated=sum(d.amount for d in donations) / 1000,
-        sum_unclaimed=sum_unclaimed,
-        is_claim_allowed=sum_unclaimed >= settings.min_withdrawal,
-        donatee=donatee,
-        donations=donations,
-    )
-
-
-@router.post('/claim')
-async def claim(request: Request, donatee: Url = Query(...), db_session=Depends(get_db_session)):
-    donations = await db_session.query_donations(donatee=donatee)
-    for donation in donations:
-        pass
-
-
-@router.get('/donator/{donator}')
-async def donator(request: Request, donator: str):
-    return None
-
-
-@router.get('/donations')
-async def donations(request: Request, db_session=Depends(get_db_session)):
-    donations = await db_session.query_donations(donatee=donatee)
-    return TemplateResponse("donations.html", request, donations=donations)
-
-
-@router.get('/sitemap.xml')
+@app.get('/sitemap.xml')
 async def sitemap(request: Request, db_session=Depends(get_db_session)):
-    base_url = settings.youtube.oauth.redirect_base_url
+    base_url = settings.base_url
     urlset = ET.Element('urlset', xmlns="http://www.sitemaps.org/schemas/sitemap/0.9")
 
     for youtube_channel in await db_session.query_youtube_channels():
@@ -164,14 +88,13 @@ async def sitemap(request: Request, db_session=Depends(get_db_session)):
     return Response(content=ET.tostring(urlset, xml_declaration=True, encoding='UTF-8'), media_type="application/xml")
 
 
-@router.get('/d/{channel_id}')
+@app.get('/d/{channel_id}')
 async def donate_redirect(request: Request, channel_id: str, db=Depends(get_db_session)):
     youtube_channel: YoutubeChannel = await query_or_fetch_youtube_channel(channel_id=channel_id, db=db)
-    origin = settings.redirect_base_url or f'{request.url.scheme}://{request.url.netloc}'
-    return RedirectResponse(f'{origin}/donate/{youtube_channel.id}', status_code=302)
+    return RedirectResponse(f'{settings.base_url}/donate/{youtube_channel.id}', status_code=302)
 
 
-@router.get('/.well-known/lnurlp/{username}')
+@app.get('/.well-known/lnurlp/{username}')
 async def lightning_address(request: Request, username: str):
     return dict(
         callback=request.app.url_path_for('payment_callback').make_absolute_url(settings.lnd.lnurl_base_url),
@@ -184,3 +107,14 @@ async def lightning_address(request: Request, username: str):
         commentAllowed=255,
         tag="payRequest",
     )
+
+
+templates = TemplateLookup(
+    directories=['donate4fun/templates'],
+    strict_undefined=True,
+    imports=['from donate4fun.mako import query'],
+)
+
+
+def TemplateResponse(name, *args, **kwargs) -> HTMLResponse:
+    return HTMLResponse(templates.get_template(name).render(*args, settings=settings, **kwargs))

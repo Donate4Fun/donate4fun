@@ -34,7 +34,7 @@
       <Editable bind:message={message} />
       <CopyButton bind:content={message} />
       <Button link={youtube_channel_url(youtube_channel.channel_id)} target=_blank>Edit your YouTube channel...</Button>
-      <Button class="grey" on:click={() => navigate(-1)}>Close</Button>
+      <Button class="grey" on:click={() => navigate(-1)}>Back</Button>
     </div>
   </Section>
 {/await}
