@@ -2,7 +2,7 @@ from uuid import UUID
 
 import pytest
 from donate4fun.models import DonateRequest, TwitterAccount, TwitterAccountOwned, Donator
-from donate4fun.twitter import query_or_fetch_twitter_author
+from donate4fun.twitter import query_or_fetch_twitter_account
 from tests.test_util import verify_response, mark_vcr
 
 
@@ -58,5 +58,5 @@ async def test_link_twitter_account(db_session):
 
 @mark_vcr
 @pytest.mark.parametrize('params', [dict(handle='donate4_fun'), dict(user_id=12345)])
-async def test_query_or_fetch_twitter_author(db_session, params):
-    await query_or_fetch_twitter_author(db=db_session, **params)
+async def test_query_or_fetch_twitter_account(db_session, params):
+    await query_or_fetch_twitter_account(db=db_session, **params)
