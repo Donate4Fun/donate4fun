@@ -22,8 +22,6 @@ html: |
       <meta property="og:url" content="http://localhost:3000/twitter/00000000-0000-0000-0000-000000000001">
       <meta property="og:title" content="Donate4.Fun">
       <meta property="og:description" content="Donate to creators with Bitcoin Lightning">
-      <!-- meta property="og:image:width" content="1600">
-      <meta property="og:image:height" content="836" -->
 
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:site" content="@donate4_fun" />

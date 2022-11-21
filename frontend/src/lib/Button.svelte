@@ -47,10 +47,9 @@
     spin = true;
     try {
       await dispatch("click", ev);
-    } catch (err) {
-      console.log("error in button on:click dispatcher", err);
+    } finally {
+      spin = false;
     }
-    spin = false;
   }
 </script>
 

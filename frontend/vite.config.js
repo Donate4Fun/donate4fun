@@ -46,6 +46,7 @@ export default defineConfig({
       },
       '/api/': httpProxy,
       '/d/': httpProxy,
+      '/tw/': httpProxy,
       '/js/script.js': httpProxy,
       '/youtube/': httpProxy,
       '/twitter/': httpProxy,

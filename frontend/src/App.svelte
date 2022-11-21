@@ -1,9 +1,12 @@
 <script>
-  import { onMount } from "svelte";
-  import { Router, Link, Route } from "svelte-navigator";
+  import { onMount, onDestroy } from "svelte";
+  import { Router, Link, Route, globalHistory } from "svelte-navigator";
+
   import Page from "$lib/Page.svelte";
   import title from "$lib/title.js";
   import { analytics } from "$lib/analytics.js";
+  import { notify } from "$lib/notifications.js";
+  import { ApiError, errorToText } from "$lib/api.js";
   import Main from "./routes/Main.svelte";
   import DonatorPage from "./routes/DonatorPage.svelte";
   import DonatePage from "./routes/DonatePage.svelte";
@@ -30,13 +33,35 @@
 
   window.history.pushState = new Proxy(window.history.pushState, {
     apply (target, thisArg, argumentsList) {
+      console.log("apply", target);
       Reflect.apply(target, thisArg, argumentsList);
       scrollTo(0,0);
-      analytics.page();
     }
   });
 
   onMount(analytics.page);
+
+  function onNavigate(event) {
+    console.log("onNavigate", event);
+    analytics.page();
+  }
+  const unlisten = globalHistory.listen(onNavigate);
+	onDestroy(unlisten);
+
+  window.onerror = (event, source, lineno, colno, error) => {
+    console.log("onError", event, source, lineno, colno, error);
+    if (event.reason instanceof ApiError)
+      notify("Server Error", errorToText(event.reason.response), "error");
+    else
+      notify("Unhandled error", event.reason, "error");
+  };
+  window.addEventListener("unhandledrejection", (event) => {
+    console.log("onUnhandledRejection", event);
+    if (event.reason instanceof ApiError)
+      notify("Server Error", errorToText(event.reason.response), "error");
+    else
+      notify("Unhandled error", event.reason, "error");
+  });
 </script>
 
 <svelte:head>

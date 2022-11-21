@@ -7,7 +7,7 @@ import { analytics } from "$lib/analytics.js";
 
 export const apiOrigin = writable(window.location.origin);
 
-class ApiError extends Error {
+export class ApiError extends Error {
   constructor(response) {
     super(response.data.error);
     this.response = response;
@@ -15,7 +15,14 @@ class ApiError extends Error {
   }
 }
 
-class ApiClientError extends Error {
+export class ApiClientError extends Error {
+}
+
+export function errorToText(response) {
+  let message = response.data;
+  if (typeof message !== "string")
+    message = message.message || message.error || message.detail[0]?.msg || JSON.stringify(message);
+  return `${response.statusText}: ${message}`;
 }
 
 function handle_response(response) {
@@ -24,10 +31,6 @@ function handle_response(response) {
     return response.data;
   } else {
     console.error(`Server error in ${response.request?.responseURL}`, response);
-    let message = response.data;
-    if (typeof message !== "string")
-      message = message.message || message.error || message.detail[0]?.msg || JSON.stringify(message);
-    notify("Server Error", message, "error");
     throw new ApiError(response);
   }
 }
@@ -37,7 +40,6 @@ function handle_error(error) {
     return handle_response(error.response);
   } else {
     console.error('HTTP error', error);
-    notify("HTTP Error", error, "error");
     throw new ApiClientError(error);
   }
 }
@@ -89,15 +91,11 @@ export async function get(path) {
   }
 }
 
-globalThis.onError = function(message, source, lineno, colno, error) {
-  console.log("onerror");
-  notify("Error", message, "error");
-}
-
 export const api = {
   get,
   post,
   subscribe,
+  errorToText,
 };
 
 export default api;

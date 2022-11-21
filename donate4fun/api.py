@@ -31,6 +31,15 @@ from .pubsub import pubsub
 from . import api_twitter, api_youtube
 
 
+logger = logging.getLogger(__name__)
+router = app = FastAPI()
+router.route_class = RollbarLoggingRoute
+app.include_router(api_twitter.router)
+app.include_router(api_youtube.router)
+app.include_router(api_youtube.legacy_router)
+
+
+@app.exception_handler(HTTPStatusError)
 def http_status_error_handler(request, exc):
     logger.debug(f"{request.url}: Upstream error", exc_info=exc)
     status_code = exc.response.status_code
@@ -38,10 +47,12 @@ def http_status_error_handler(request, exc):
     return JSONResponse(status_code=500, content={"message": f"Upstream server returned {status_code}: {body}"})
 
 
+@app.exception_handler(NoResultFound)
 def no_result_found_handler(request, exc):
     return JSONResponse(status_code=404, content=dict(message="Item not found"))
 
 
+@app.exception_handler(ValidationError)
 def validation_error_handler(request, exc):
     return JSONResponse(
         status_code=400,
@@ -53,6 +64,7 @@ def validation_error_handler(request, exc):
     )
 
 
+@app.exception_handler(PydanticValidationError)
 def pydantic_validation_error_handler(request, exc):
     logger.debug(f"{request.url}: Validation error", exc_info=exc)
     return JSONResponse(
@@ -63,22 +75,6 @@ def pydantic_validation_error_handler(request, exc):
             error=exc.errors()[0]['msg'],
         ),
     )
-
-
-logger = logging.getLogger(__name__)
-router = app = FastAPI(
-    exception_handlers={
-        HTTPStatusError: http_status_error_handler,
-        NoResultFound: no_result_found_handler,
-        ValidationError: validation_error_handler,
-        PydanticValidationError: pydantic_validation_error_handler,
-    },
-)
-
-router.route_class = RollbarLoggingRoute
-app.include_router(api_twitter.router)
-app.include_router(api_youtube.router)
-app.include_router(api_youtube.legacy_router)
 
 
 def make_memo(donation: Donation) -> str:
