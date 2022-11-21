@@ -9,14 +9,34 @@ from mako.lookup import TemplateLookup
 from aiogoogle import Aiogoogle
 from fastapi import Request, Response, FastAPI, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.exceptions import RequestValidationError
+from sqlalchemy.orm.exc import NoResultFound
 
 from .api_utils import get_db_session
-from .models import YoutubeChannel
+from .models import YoutubeChannel, TwitterAccount
 from .youtube import fetch_user_channel, ChannelInfo, query_or_fetch_youtube_channel
+from .twitter import query_or_fetch_twitter_account
 from .settings import settings
 
 
 app = FastAPI()
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    return await exception_handler(request, exc, 422)
+
+
+@app.exception_handler(NoResultFound)
+async def not_found_exception_handler(request, exc):
+    # FIXME: this handler doesn't work because api handlers from this module do not
+    # check DB for object exitense
+    return await exception_handler(request, exc, 404)
+
+
+async def exception_handler(request, exc, status_code):
+    manifest = await fetch_manifest() if settings.release else None
+    return TemplateResponse('error.html', request=request, exception=exc, manifest=manifest, status_code=status_code)
 
 
 async def fetch_manifest() -> dict[str, Any]:
@@ -94,6 +114,12 @@ async def donate_redirect(request: Request, channel_id: str, db=Depends(get_db_s
     return RedirectResponse(f'{settings.base_url}/donate/{youtube_channel.id}', status_code=302)
 
 
+@app.get('/tw/{handle}')
+async def twitter_account_redirect(request: Request, handle: str, db=Depends(get_db_session)):
+    account: TwitterAccount = await query_or_fetch_twitter_account(handle=handle, db=db)
+    return RedirectResponse(f'{settings.base_url}/twitter/{account.id}', status_code=302)
+
+
 @app.get('/.well-known/lnurlp/{username}')
 async def lightning_address(request: Request, username: str):
     return dict(
@@ -116,5 +142,5 @@ templates = TemplateLookup(
 )
 
 
-def TemplateResponse(name, *args, **kwargs) -> HTMLResponse:
-    return HTMLResponse(templates.get_template(name).render(*args, settings=settings, **kwargs))
+def TemplateResponse(name, *args, status_code=200, **kwargs) -> HTMLResponse:
+    return HTMLResponse(templates.get_template(name).render(*args, settings=settings, **kwargs), status_code=status_code)

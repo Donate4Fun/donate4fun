@@ -59,7 +59,7 @@ async def create_app(settings: Settings):
     app.mount('/api/v1', api.app)
     async with create_screenshoter_app() as screenshoter_app:
         app.mount('/preview', screenshoter_app)
-        app.mount('/', web.app)
+        app.mount('/', web.app)  # Should be mounted last
         yield app
 
 

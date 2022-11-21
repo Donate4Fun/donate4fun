@@ -1,6 +1,7 @@
 <script>
   import { useResolve } from "svelte-navigator";
 
+  import NotFoundPage from "../routes/NotFoundPage.svelte";
   import Loader from "$lib/Loader.svelte";
   import Amount from "$lib/Amount.svelte";
   import Button from "$lib/Button.svelte";
@@ -63,6 +64,8 @@
       </div>
       <DonationsTable donations={donations} />
     </div>
+  {:catch error}
+    <NotFoundPage {error} />
   {/await}
 </div>
 

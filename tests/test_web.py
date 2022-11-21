@@ -49,3 +49,14 @@ async def test_twitter_share_image(client, twitter_account, app, settings):
     async with app_serve(app, settings):
         response = await client.get(f'/preview/twitter/{twitter_account.id}')
         verify_response(response, 'twitter-share-image', 200)
+
+
+async def test_twitter_account_redirect(client, freeze_uuids):
+    response = await client.get('/tw/donate4_fun')
+    check_response(response, 302)
+    assert response.headers['location'].split('/')[-1] == str(UUID(int=1))
+
+
+async def test_422(client):
+    response = await client.get('/twitter/unexistent')
+    verify_response(response, 'twitter-422', 422)
