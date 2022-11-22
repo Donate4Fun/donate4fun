@@ -4,6 +4,8 @@
 **/node_modules/
 **/__pycache__/
 **/tags
+**/dist/
+tests/
 docker/
 .direnv/
 secrets/
