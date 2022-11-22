@@ -2,10 +2,15 @@ import logging
 from contextvars import ContextVar
 from contextlib import asynccontextmanager
 from uuid import UUID
+from typing import Any
+from hashlib import md5
+from io import BytesIO
 
 import anyio
 import pytest
 import yaml
+import ascii_magic
+from PIL import Image
 from vcr.filters import replace_query_parameters
 
 from donate4fun.models import Donator
@@ -32,7 +37,7 @@ yaml.add_representer(str, str_presenter)
 yaml.representer.SafeRepresenter.add_representer(str, str_presenter)  # to use with safe_dump
 
 
-def verify_fixture(data: bytes, name: str):
+def verify_fixture(data: dict[str, Any], name: str):
     filename = f'tests/autofixtures/{name}.yaml'
     try:
         with open(filename) as f:
@@ -73,7 +78,11 @@ def verify_response(response, name, status_code=None):
     elif content_type.startswith('text/html'):
         data = dict(status_code=response.status_code, html=response.text)
     elif content_type == 'image/png':
-        data = dict(status_code=response.status_code, data=response.content)
+        # Compare only digest to make fixtures smaller and avoid nasty pytest bug
+        # https://github.com/pytest-dev/pytest/issues/8998
+        image = Image.open(BytesIO(response.content))
+        ascii_image = ascii_magic.from_image(image, width_ratio=1, mode=ascii_magic.Modes.ASCII)
+        data = dict(status_code=response.status_code, md5=md5(response.content).digest(), image=ascii_image)
     else:
         raise ValueError(f"Not implemented for {content_type}")
     verify_fixture(data, name)

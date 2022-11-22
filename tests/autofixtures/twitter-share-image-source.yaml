@@ -1,0 +1,83 @@
+html: |
+  <!doctype html>
+  <html>
+  <head>
+    <link rel="stylesheet" href="//localhost:3000/static/global.css">
+    <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      font-family: 'Montserrat';
+    }
+    body {
+      width: 600px;
+      height: 315px;
+      background-image: linear-gradient(to right, #F9F03E 0%, #9DEDA2 100%);
+      padding: 4px;
+    }
+    .container {
+      height: 100%;
+      background: url("//localhost:3000/static/share-background-bolt.svg") no-repeat -2px 4px, linear-gradient(119.1deg, rgba(97, 0, 255, 0.04) 18.3%, rgba(0, 163, 255, 0.04) 32.8%, rgba(255, 153, 0, 0.04) 64.24%), linear-gradient(0deg, #F7F9FF, #F7F9FF), #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      padding: 32px 32px 112px 86px;
+    }
+    .header {
+      display: flex;
+      justify-content: end;
+    }
+    .logo {
+      height: 30px;
+    }
+    .main {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding-top: 56px;
+    }
+    .profile-image {
+      width: 108px;
+      height: 108px;
+      border-radius: 50%;
+      border: 4px solid #FFFFFF;
+      box-shadow: 4px 4px 20px rgba(34, 60, 103, 0.15), 10px 15px 25px rgba(209, 217, 230, 0.4);
+    }
+    .content {
+      display: flex;
+      flex-direction: column;
+    }
+    .text {
+      color: #414141;
+      font-style: normal;
+      font-weight: 900;
+      font-size: 32px;
+      line-height: 39px;
+    }
+    .handle {
+      font-weight: 900;
+      font-size: 32px;
+      line-height: 39px;
+      background: linear-gradient(90deg, #FF9634 -5.04%, #DC24A9 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-fill-color: transparent;
+    }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <img class="logo" src="//localhost:3000/static/logo.png">
+      </div>
+      <div class="main">
+        <img class="profile-image" src="https://github.githubassets.com/images/modules/open_graph/github-mark.png">
+        <div class="content">
+          <div class="text">Donate me</div>
+          <div class="handle">@handle</div>
+        </div>
+      </div>
+    </div>
+  </body>
+  </html>
+status_code: 200

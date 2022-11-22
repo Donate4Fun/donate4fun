@@ -8,6 +8,9 @@
   import YoutubeChannel from "$lib/YoutubeChannel.svelte";
   import Editable from "$lib/Editable.svelte";
   import ChannelLogo from "$lib/ChannelLogo.svelte";
+  import Donator from "$lib/Donator.svelte";
+  import TwitterAccount from "$lib/TwitterAccount.svelte";
+  import TwitterShare from "$lib/TwitterShare.svelte";
   import { me } from "$lib/session.js";
   import { copy, youtube_video_url, youtube_channel_url } from "$lib/utils.js";
 
@@ -33,28 +36,41 @@
 {#await $me}
   <Loading/>
 {:then me}
-  <ChannelLogo url={donation.youtube_channel.thumbnail_url} size=72px />
-  <div class="header">
-    <p>Great! You've sent <Amount amount={donation.amount}/> to</p>
-    <YoutubeChannel channel={donation.youtube_channel}/>
-  </div>
-  {#if me.donator.id === donation.donator_id}
-    <Infobox>Copy and share the message with the link or just tell {donation.youtube_channel.title} to receive the donation here at «Donate4Fun»</Infobox>
-    <div>
-      {#if donation.youtube_video}
-        Now leave a comment on <a href="{youtube_video_url(donation.youtube_video.video_id)}" target=_blank>his video</a> to make him know of donation:
-      {:else}
-        Now leave a comment on his video to make him know of donation:
+  {#if donation.paid_at}
+    {#if donation.youtube_channel}
+      <ChannelLogo url={donation.youtube_channel.thumbnail_url} size=72px />
+      <div class="header">
+        <p>Great! You've sent <Amount amount={donation.amount}/> to</p>
+        <YoutubeChannel channel={donation.youtube_channel}/>
+      </div>
+      {#if me.donator.id === donation.donator_id}
+        <Infobox>Copy and share the message with the link or just tell {donation.youtube_channel.title} to receive the donation here at «Donate4Fun»</Infobox>
+        <div>
+          {#if donation.youtube_video}
+            Now leave a comment on <a href="{youtube_video_url(donation.youtube_video.video_id)}" target=_blank>his video</a> to make him know of donation:
+          {:else}
+            Now leave a comment on his video to make him know of donation:
+          {/if}
+        </div>
+        <ol>
+          <li>Press "Copy and Share" - comment will be copied to clipboard and YouTube video tab will open</li>
+          <li>Scroll to comments section and focus "Add a comment..." field</li>
+          <li>Paste a comment from clipboard and post it</li>
+        </ol>
+        <Editable class=message message={message} />
+        <Button on:click={copyAndShare} class="copy-button">Copy and Share</Button>
+        <Button on:click={() => dispatch("close")} class="grey">Back</Button>
       {/if}
-    </div>
-    <ol>
-      <li>Press "Copy and Share" - comment will be copied to clipboard and YouTube video tab will open</li>
-      <li>Scroll to comments section and focus "Add a comment..." field</li>
-      <li>Paste a comment from clipboard and post it</li>
-    </ol>
-    <Editable class=message message={message} />
-    <Button on:click={copyAndShare} class="copy-button">Copy and Share</Button>
-    <Button on:click={() => dispatch("close")} class="grey">Back</Button>
+    {:else if donation.twitter_account}
+      <Donator user={donation.donator} />
+      <div class="twitter-donation">
+        donated <Amount amount={donation.amount} /> to
+      </div>
+      <TwitterAccount account={donation.twitter_account} />
+      <TwitterShare text="Hey @{donation.twitter_account.handle}, I've sent you a donation" />
+    {/if}
+  {:else}
+    Unpaid donation
   {/if}
 {/await}
 </main>
@@ -74,6 +90,10 @@ main {
 
   font-weight: 900;
   font-size: 24px;
+}
+.twitter-donation {
+  display: flex;
+  gap: 8px;
 }
 main > :global(button) {
   width: 402px;

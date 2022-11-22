@@ -98,7 +98,7 @@ class DonationDb(Base):
     __tablename__ = 'donation'
     __table_args__ = (
         CheckConstraint(
-            num_nonnulls('receiver_id', 'youtube_channel_id', 'twitter_author_id') + '=1',
+            num_nonnulls('receiver_id', 'youtube_channel_id', 'twitter_account_id') + '=1',
             name='has_a_single_target',
         ),
     )
@@ -124,8 +124,8 @@ class DonationDb(Base):
     youtube_video_id = Column(Uuid(as_uuid=True), ForeignKey(YoutubeVideoDb.id))
     youtube_video = relationship(YoutubeVideoDb, lazy='joined')
 
-    twitter_author_id = Column(Uuid(as_uuid=True), ForeignKey(TwitterAuthorDb.id))
-    twitter_author = relationship(TwitterAuthorDb, lazy='joined')
+    twitter_account_id = Column(Uuid(as_uuid=True), ForeignKey(TwitterAuthorDb.id))
+    twitter_account = relationship(TwitterAuthorDb, lazy='joined')
 
     twitter_tweet_id = Column(Uuid(as_uuid=True), ForeignKey(TwitterTweetDb.id))
     twitter_tweet = relationship(TwitterTweetDb, lazy='joined')

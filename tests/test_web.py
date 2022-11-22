@@ -1,3 +1,4 @@
+import socket
 from uuid import UUID
 import pytest
 
@@ -39,10 +40,26 @@ async def test_twitter_page(client, twitter_account):
     verify_response(response, 'twitter-page', 200)
 
 
+def find_unused_port() -> int:
+    with socket.socket() as sock:
+        sock.bind(('localhost', 0))
+        return sock.getsockname()[1]
+
+
 @as_task
 async def app_serve(app, settings):
+    port = find_unused_port()
+    settings.hypercorn['bind'] = f'localhost:{port}'
     hyper_config = Config.from_mapping(settings.hypercorn)
     await hypercorn_serve(app, hyper_config)
+
+
+async def test_twitter_share_image_page(client):
+    profile_image = 'https://github.githubassets.com/images/modules/open_graph/github-mark.png'
+    response = await client.get(
+        '/preview/twitter-account-sharing.html', params=dict(handle='handle', profile_image=profile_image),
+    )
+    verify_response(response, 'twitter-share-image-source', 200)
 
 
 async def test_twitter_share_image(client, twitter_account, app, settings):
@@ -60,3 +77,8 @@ async def test_twitter_account_redirect(client, freeze_uuids):
 async def test_422(client):
     response = await client.get('/twitter/unexistent')
     verify_response(response, 'twitter-422', 422)
+
+
+async def test_404(client):
+    response = await client.get(f'/donation/{UUID(int=0)}')
+    verify_response(response, 'twitter-404', 404)

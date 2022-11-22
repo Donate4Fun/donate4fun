@@ -10,6 +10,7 @@
   import ChannelLogo from "$lib/ChannelLogo.svelte";
   import DonationsTable from "$lib/DonationsTable.svelte";
   import PaymentWidget from "$lib/PaymentWidget.svelte";
+  import TwitterShare from "$lib/TwitterShare.svelte";
   import { api } from "$lib/api.js";
   import title from "$lib/title.js";
 
@@ -20,12 +21,6 @@
   let shareUrl;
 
   $: baseUrl = `twitter/account/${account_id}`;
-  $: {
-    shareUrl = new URL('https://twitter.com/intent/tweet');
-    shareUrl.searchParams.append('text', 'Donate me');
-    shareUrl.searchParams.append('url', location.href);
-    shareUrl.searchParams.append('via', 'donate4_fun');
-  }
 
   const resolve = useResolve();
 
@@ -50,10 +45,7 @@
           Donate to <TwitterAccount showHandle={false} imagePlacement=after --image-size=44px account={account} />
         </h1>
         <PaymentWidget target={{twitter_account_id: account.id}} on:paid={load} />
-        <Button class="white" link={shareUrl} target="_blank">
-          <img alt=youtube src="/static/twitter.svg" width=20>
-          Share
-        </Button>
+        <TwitterShare text="Donate me" />
       </div>
     </Section>
 

@@ -11,41 +11,43 @@
   import api from "$lib/api.js";
   import {notify} from "$lib/notifications.js";
   import {me} from "$lib/session.js";
+  import NotFoundPage from "../routes/NotFoundPage.svelte";
 
   export let donation_id;
   export let navigate;
 
   let donation;
   let payment_request;
-  let target;
+  let targetName;
 
   async function load() {
-    await $me.loaded;
     const state_donation = window.history.state;
     if (state_donation && state_donation.id === donation_id) {
       donation = state_donation;
     } else {
       const response = await api.get(`donation/${donation_id}`);
       ({ donation, payment_request } = response);
-      if (donation.youtube_channel)
-        target = donation.youtube_channel.title;
-      else if (donation.receiver)
-        target = donation.receiver.name;
-      else
-        target = "<Unexpected donation target>";
     }
+    if (donation.youtube_channel)
+      targetName = donation.youtube_channel.title;
+    if (donation.twitter_account)
+      targetName = donation.twitter_account.name;
+    else if (donation.receiver)
+      targetName = donation.receiver.name;
+    else
+      targetName = "<Unexpected donation target>";
 
-    title.set(`Donate ${donation.amount} sats to ${target}`);
+    title.set(`${donation.amount} sats donated to ${targetName}`);
   }
 
   function paid(event) {
-    console.log("paid", event.detail);
     donation = event.detail;
     if (donation.paid_at && donation.receiver) {
-      navigate(`/donator/${donation.receiver.id}`);
       notify("Success", `You've paid ${donation.amount} sats`, "success");
     }
+    title.set(`${donation.amount} sats donated to ${targetName}`);
   }
+
 </script>
 
 <Section>
@@ -83,6 +85,8 @@
         {/if}
         <Invoice donation={donation} paymentRequest={payment_request} on:cancel={() => navigate(-1)} on:paid={paid} />
       {/if}
+    {:catch error}
+      <NotFoundPage {error} />
     {/await}
   </div>
 </Section>
