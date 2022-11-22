@@ -1,4 +1,5 @@
 <script>
+  import { link } from "svelte-navigator";
   import Donator from "$lib/Donator.svelte";
   import Datetime from "$lib/Datetime.svelte";
   import Amount from "$lib/Amount.svelte";
@@ -14,7 +15,9 @@
   <div class="body">
     {#each donations as donation}
       <Donator user={donation.donator} ellipsis />
-      <Datetime dt={donation.paid_at} />
+      <a use:link href="/donation/{donation.id}">
+        <Datetime dt={donation.paid_at} />
+      </a>
       <Amount amount={donation.amount} />
     {/each}
   </div>

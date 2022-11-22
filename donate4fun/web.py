@@ -13,11 +13,11 @@ from fastapi.exceptions import RequestValidationError
 from sqlalchemy.orm.exc import NoResultFound
 
 from .api_utils import get_db_session
-from .models import YoutubeChannel, TwitterAccount
+from .models import YoutubeChannel, TwitterAccount, Donation
 from .youtube import fetch_user_channel, ChannelInfo, query_or_fetch_youtube_channel
 from .twitter import query_or_fetch_twitter_account
 from .settings import settings
-
+from .db import db
 
 app = FastAPI()
 
@@ -45,19 +45,37 @@ async def fetch_manifest() -> dict[str, Any]:
         return resp.json()
 
 
-@app.get("/")
-@app.get("/youtube/{youtube_channel_id}")
-@app.get("/twitter/{twitter_account_id}")
-async def index(request: Request, youtube_channel_id: UUID | None = None, twitter_account_id: UUID | None = None):
-    if twitter_account_id is not None:
-        og_image_path = f'/preview/twitter/{twitter_account_id}'
-    elif youtube_channel_id is not None:
-        og_image_path = f'/preview/youtube/{youtube_channel_id}'
+def target_name(donation: Donation) -> str:
+    if receiver := donation.receiver:
+        return receiver.name
+    elif channel := donation.youtube_channel:
+        return channel.title
+    elif account := donation.twitter_account:
+        return account.name
     else:
+        raise ValueError("donation has no target")
+
+
+@app.get("/")
+@app.get("/youtube/{object_id}")
+@app.get("/twitter/{object_id}")
+@app.get("/donation/{object_id}")
+async def index(request: Request, object_id: UUID | None = None):
+    if object_id is not None:
+        object_type = request.url.path.split('/')[1]
+        og_image_path = f'/preview/{object_type}/{object_id}'
+    else:
+        object_type = None
         og_image_path = '/static/sharing.png'
     manifest = await fetch_manifest() if settings.release else None
+    if object_type == 'donation':
+        async with db.session() as db_session:
+            donation: Donation = await db_session.query_donation(id=object_id)
+        description = f"{donation.amount} sats was donated to {target_name(donation)}"
+    else:
+        description = "Donate to creators with Bitcoin Lightning"
     return TemplateResponse(
-        "index.html", request=request, og_image_path=og_image_path, manifest=manifest,
+        "index.html", request=request, og_image_path=og_image_path, manifest=manifest, description=description,
     )
 
 

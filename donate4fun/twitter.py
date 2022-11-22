@@ -195,15 +195,16 @@ async def fetch_conversations(client):
         client, 'dm_events',
         params={'dm_event.fields': 'sender_id,created_at,dm_conversation_id', 'max_results': 100},
     )
+    logger.trace("Fetched direct messages %s", events)
+    self_id = settings.twitter.self_id
 
     def keyfunc(event):
         return event['dm_conversation_id']
     for dm_conversation_id, conversation_events in groupby(sorted(events, key=keyfunc), keyfunc):
-        peer_id, me_id = map(int, dm_conversation_id.split('-'))
         sorted_events = sorted(conversation_events, key=lambda event: event['created_at'])
         last_message = sorted_events[-1]
         created_at = datetime.fromisoformat(last_message['created_at'][:-1])  # Remove trailing Z
-        if int(last_message['sender_id']) == me_id and created_at < datetime.utcnow() - timedelta(minutes=2):
+        if int(last_message['sender_id']) == self_id and created_at < datetime.utcnow() - timedelta(minutes=2):
             # Ignore chats where last message is ours and old
             continue
         yield dm_conversation_id

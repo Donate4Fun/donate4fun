@@ -70,6 +70,13 @@ spec:
             name: {{ $fullName }}
             port:
               name: http-frontend
+      - path: /proxy
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ $fullName }}
+            port:
+              name: http-frontend
       - path: /
         pathType: Prefix
         backend:

@@ -40,4 +40,4 @@ async def twitter_account_transfer(account_id: UUID, db=Depends(get_db_session),
 
 @router.get("/account/{account_id}/donations/by-donatee", response_model=list[Donation])
 async def donatee_donations(account_id: UUID, db=Depends(get_db_session)):
-    return await db.query_donations((DonationDb.twitter_author_id == account_id) & DonationDb.paid_at.isnot(None))
+    return await db.query_donations((DonationDb.twitter_account_id == account_id) & DonationDb.paid_at.isnot(None))

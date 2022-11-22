@@ -46,7 +46,7 @@ class DonationsDbMixin:
                 receiver_id=donation.receiver and donation.receiver.id,
                 youtube_channel_id=donation.youtube_channel and donation.youtube_channel.id,
                 youtube_video_id=donation.youtube_video and donation.youtube_video.id,
-                twitter_author_id=donation.twitter_account and donation.twitter_account.id,
+                twitter_account_id=donation.twitter_account and donation.twitter_account.id,
                 twitter_tweet_id=donation.twitter_tweet and donation.twitter_tweet.id,
             )
         )
@@ -88,7 +88,7 @@ class DonationsDbMixin:
                 DonationDb.donator_id,
                 DonationDb.youtube_channel_id,
                 DonationDb.youtube_video_id,
-                DonationDb.twitter_author_id,
+                DonationDb.twitter_account_id,
                 DonationDb.receiver_id,
                 DonationDb.r_hash,
             )
@@ -119,14 +119,14 @@ class DonationsDbMixin:
                 notification = YoutubeNotification(id=row.youtube_video_id, vid=vid, status='OK', total_donated=total_donated)
                 await self.notify(f'youtube-video:{row.youtube_video_id}', notification)
                 await self.notify(f'youtube-video-by-vid:{vid}', notification)
-        elif row.twitter_author_id:
+        elif row.twitter_account_id:
             await self.execute(
                 update(TwitterAuthorDb)
                 .values(
                     balance=TwitterAuthorDb.balance + amount,
                     total_donated=TwitterAuthorDb.total_donated + amount,
                 )
-                .where(TwitterAuthorDb.id == row.twitter_author_id)
+                .where(TwitterAuthorDb.id == row.twitter_account_id)
             )
         elif row.receiver_id:
             await self.execute(

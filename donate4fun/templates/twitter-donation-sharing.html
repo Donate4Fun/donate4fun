@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+<head>
+  <link rel="stylesheet" href="${static('global.css')}">
+  <link rel="stylesheet" href="${static('defaults.css')}">
+  <style>
+  * {
+    font-family: 'Montserrat';
+  }
+  body {
+    width: 600px;
+    height: 315px;
+    background-image: linear-gradient(to right, #F9F03E 0%, #9DEDA2 100%);
+    padding: 0;
+  }
+  .container {
+    height: 100%;
+    background:
+      url("${static('share-background-bolt.svg')}") no-repeat -7px -36px, linear-gradient(119.1deg, rgba(97, 0, 255, 0.04) 18.3%, rgba(0, 163, 255, 0.04) 32.8%, rgba(255, 153, 0, 0.04) 64.24%), linear-gradient(0deg, #F7F9FF, #F7F9FF), #FFFFFF;
+    display: flex;
+    flex-direction: column;
+  }
+  .header {
+    display: flex;
+  }
+  .logo {
+    height: 24px;
+  }
+  .main {
+    padding-top: 32px;
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    grid-template-rows: 65px 39px 15px 59px 39px 15px;
+    gap: 0px 12px;
+    grid-template-areas:
+      ". header"
+      "donator_avatar donator_name"
+      ". donator_handle"
+      ". amount"
+      "donatee_avatar donatee_name"
+      ". donatee_handle";
+    height: 232px;
+  }
+  .header { grid-area: header; }
+  .donator.avatar { grid-area: donator_avatar; }
+  .donator.name { grid-area: donator_name; }
+  .donator.handle { grid-area: donator_handle; }
+  .amount { grid-area: amount; }
+  .donatee.avatar { grid-area: donatee_avatar; }
+  .donatee.name { grid-area: donatee_name; }
+  .donatee.handle { grid-area: donatee_handle; }
+  img.avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    box-shadow: 4px 4px 20px rgba(34, 60, 103, 0.15), 10px 15px 25px rgba(209, 217, 230, 0.4);
+    justify-self: end;
+    align-self: center;
+  }
+  .name {
+    align-self: center;
+    white-space: nowrap;
+    color: #414141;
+    font-weight: 900;
+    font-size: 32px;
+    line-height: 39px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .handle {
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 15px;
+  }
+  .blue {
+    color: #2E6CFF;
+  }
+  .red {
+    background: linear-gradient(90deg, #FF9634 -5.04%, #DC24A9 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+  }
+  .amount {
+    font-family: 'Inter var experimental';
+    font-weight: 400;
+    font-size: 32px;
+    line-height: 39px;
+    align-self: center;
+  }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="main">
+      <div class="header"><img class="logo" src="${static('logo.png')}"></div>
+      % if q.donator_twitter_account:
+        <img class="donator avatar" src="${q.donator_twitter_account.profile_image_url}">
+        <div class="donator name blue">${q.donator_twitter_account.name}</div>
+        <div class="donator handle blue">@${q.donator_twitter_account.handle}</div>
+      % else:
+        <img class="donator avatar" src="${q.donator.avatar_url}">
+        <div class="donator name blue">${q.donator.name}</div>
+      % endif
+      <div class="amount blue">sent <b>${q.amount} sats</b> to</div>
+      <img class="donatee avatar" src="${q.twitter_account.profile_image_url}">
+      <div class="donatee name red">${q.twitter_account.name}</div>
+      <div class="donatee handle red">@${q.twitter_account.handle}</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -50,6 +50,7 @@ export default defineConfig({
       '/js/script.js': httpProxy,
       '/youtube/': httpProxy,
       '/twitter/': httpProxy,
+      '/donation/': httpProxy,
       '/preview/': httpProxy,
       '^/$': httpProxy,
     },
