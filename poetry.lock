@@ -615,7 +615,7 @@ socks = ["socksio (>=1.0.0,<2.0.0)"]
 
 [[package]]
 name = "hypercorn"
-version = "0.13.2+dev"
+version = "0.14.3+dev"
 description = "A ASGI Server based on Hyper libraries and inspired by Gunicorn"
 category = "main"
 optional = false
@@ -630,15 +630,16 @@ toml = "*"
 wsproto = ">=0.14.0"
 
 [package.extras]
+docs = ["pydata_sphinx_theme"]
 h3 = ["aioquic (>=0.9.0,<1.0)"]
 trio = ["trio (>=0.11.0)"]
 uvloop = ["uvloop"]
 
 [package.source]
 type = "git"
-url = "https://gitlab.com/nikicat/hypercorn"
-reference = "main"
-resolved_reference = "32ee2a2d1d9e6c6e16e8c3669fbd0d6d0cb34309"
+url = "https://github.com/nikicat/hypercorn"
+reference = "HEAD"
+resolved_reference = "a3b779da8e83774008742b32ca6d5ba8b1e807cd"
 
 [[package]]
 name = "hyperframe"
