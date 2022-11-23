@@ -1,5 +1,5 @@
 <script>
-  import Loading from "$lib/Loading.svelte";
+  import Loader from "$lib/Loader.svelte";
   import Userpic from "$lib/Userpic.svelte";
   import Section from "$lib/Section.svelte";
   import YoutubeVideo from "$lib/YoutubeVideo.svelte";
@@ -42,9 +42,11 @@
   }
 </script>
 
-<Section>
-  <div class="main">
-    {#await load(donator_id, $me) then me}
+{#await load(donator_id, $me)}
+  <Loader />
+{:then me}
+  <Section>
+    <div class="main">
       <Userpic user={donator} class="userpic" --width=88px/>
       {#if itsMe}
         <div style="height: 21px;"></div>
@@ -112,9 +114,9 @@
           </div>
         {/each}
       </div>
-    {/await}
-  </div>
-</Section>
+    </div>
+  </Section>
+{/await}
 
 <style>
 .main {
