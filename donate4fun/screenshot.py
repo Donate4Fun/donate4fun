@@ -131,7 +131,6 @@ async def donation_image(donation_id: UUID, screenshoter=Depends(get_screenshote
         png_image: bytes = await screenshoter.take_screenshot(
             'twitter-donation-sharing.html',
             json=TwitterDonationShareInfo(
-                donator_twitter_account=None,
                 **donation.dict(),
             ).json(),
         )

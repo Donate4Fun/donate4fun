@@ -27,7 +27,7 @@
 .container {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--gap, 0.4em);
 }
 .avatar {
   width: var(--image-size, 32px);

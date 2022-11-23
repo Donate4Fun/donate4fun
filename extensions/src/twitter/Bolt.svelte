@@ -7,6 +7,7 @@
   import HoldButton from "$lib/HoldButton.svelte";
   import { cLog, cInfo } from "$lib/log.js";
   import { worker, donate, getStatic, waitElement, pageScript, selectByPattern } from "$extlib/common.js";
+  import { getCurrentAccountHandle } from "./twitter.js";
 
   export let tweetUrl;
   let donating = false;
@@ -20,7 +21,7 @@
     donating = true;
     amount = event.detail.amount || await worker.getConfig('amount');
     try {
-      const donation = await donate(amount, tweetUrl);
+      const donation = await donate(amount, tweetUrl, getCurrentAccountHandle());
       donating = false;
       onPaid(donation);
     } catch (err) {
@@ -42,18 +43,20 @@
       confetti = false;
       cLog("amount", donation.amount);
       if (await worker.getConfig("enableComment") && !hasReply) {
-        await postReply(donation.amount);
+        await postReply(donation);
       }
     });
   }
 
-  async function postReply(amount) {
+  async function postReply(donation) {
+    const apiHost = await worker.getConfig("apiHost");
     const replyButton = elem.parentElement.parentElement.querySelector('[data-testid="reply"]');
     replyButton.click();
     await waitElement('[contenteditable="true"]');
-    cLog("posting comment", amount);
+    cLog("posting comment", donation);
     let comment = await worker.getConfig("twitterDefaultReply");
-    comment = comment.replace('%amount%', amount);
+    comment = comment.replace('%amount%', donation.amount);
+    comment = comment.replace('%link%', `${apiHost}/donation/${donation.id}`);
     await pageScript.emulateKeypresses(":focus", comment);
     const textElement = document.activeElement.querySelector('[data-text="true"]');
     if (textElement === null)

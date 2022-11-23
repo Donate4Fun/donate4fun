@@ -59,14 +59,15 @@
         </div>
         <div style="height: 56px;"></div>
         <LinkedItems let:item={channel} basePath="youtube" transferPath="channel">
-          <ChannelLogo url={channel.thumbnail_url} size=40px />
-          <div class="channel-name">
-            <YoutubeChannel linkto="withdraw" channel={channel} />
+          <div class="linked-item">
+            <YoutubeChannel linkto="withdraw" channel={channel} logo --gap=16px />
           </div>
         </LinkedItems>
         <div style="height: 40px;"></div>
         <LinkedItems let:item={account} basePath="twitter" transferPath="account">
-          <TwitterAccount account={account} />
+          <div class="linked-item">
+            <TwitterAccount account={account} --gap=16px />
+          </div>
         </LinkedItems>
       {:else}
         <p>{donator.name}</p>
@@ -81,19 +82,21 @@
           <div>Status</div>
         </div>
         {#each donations as donation}
-          {#if donation.paid_at}
-            <Datetime dt={donation.paid_at}/>
-          {:else}
-            <Datetime dt={donation.created_at}/>
-          {/if}
+          <a use:link href="/donation/{donation.id}">
+            {#if donation.paid_at}
+              <Datetime dt={donation.paid_at}/>
+            {:else}
+              <Datetime dt={donation.created_at}/>
+            {/if}
+          </a>
           {#if donation.youtube_video}
             <YoutubeVideo video={donation.youtube_video} />
           {:else if donation.youtube_channel}
-            <YoutubeChannel channel={donation.youtube_channel} class="ellipsis" linkto=withdraw logo />
+            <YoutubeChannel channel={donation.youtube_channel} class="ellipsis" linkto=withdraw logo --gap=16px />
           {:else if donation.twitter_account}
-            <TwitterAccount account={donation.twitter_account} class="ellipsis" />
+            <TwitterAccount account={donation.twitter_account} class="ellipsis" --image-size=24px --gap=16px />
           {:else}
-            <Donator user={donation.receiver} ellipsis --gap=5px />
+            <Donator user={donation.receiver} ellipsis --gap=16px />
           {/if}
           <Amount amount={toText(donation.amount)}/>
           <div>
@@ -119,7 +122,7 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 36px 24px 123px;
+  padding: 36px 34px 123px;
 }
 .balance-actions {
   width: 300px;
@@ -127,7 +130,7 @@
   flex-direction: column;
   gap: 8px;
 }
-.channel-name {
+.linked-item {
   width: 100%;
 }
 .transactions {
@@ -146,5 +149,6 @@
   grid-template-columns: 109px 199px 83px 45px;
   column-gap: 20px;
   row-gap: 26px;
+  align-items: center;
 }
 </style>
