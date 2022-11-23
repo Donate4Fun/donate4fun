@@ -48,6 +48,7 @@ class DonationsDbMixin:
                 youtube_video_id=donation.youtube_video and donation.youtube_video.id,
                 twitter_account_id=donation.twitter_account and donation.twitter_account.id,
                 twitter_tweet_id=donation.twitter_tweet and donation.twitter_tweet.id,
+                donator_twitter_account_id=donation.donator_twitter_account and donation.donator_twitter_account.id,
             )
         )
         return donation

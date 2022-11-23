@@ -125,10 +125,13 @@ class DonationDb(Base):
     youtube_video = relationship(YoutubeVideoDb, lazy='joined')
 
     twitter_account_id = Column(Uuid(as_uuid=True), ForeignKey(TwitterAuthorDb.id))
-    twitter_account = relationship(TwitterAuthorDb, lazy='joined')
+    twitter_account = relationship(TwitterAuthorDb, lazy='joined', foreign_keys=[twitter_account_id])
 
     twitter_tweet_id = Column(Uuid(as_uuid=True), ForeignKey(TwitterTweetDb.id))
     twitter_tweet = relationship(TwitterTweetDb, lazy='joined')
+
+    donator_twitter_account_id = Column(Uuid(as_uuid=True), ForeignKey(TwitterAuthorDb.id))
+    donator_twitter_account = relationship(TwitterAuthorDb, lazy='joined', foreign_keys=[donator_twitter_account_id])
 
 
 class YoutubeChannelLink(Base):

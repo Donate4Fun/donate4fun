@@ -9,6 +9,7 @@ json:
       lnauth_pubkey: null
       name: Admiring Serene Khorana
     donator_id: 00000000-0000-0000-0000-000000000000
+    donator_twitter_account: null
     id: 00000000-0000-0000-0000-000000000001
     message: null
     paid_at: null

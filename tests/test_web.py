@@ -5,7 +5,7 @@ import pytest
 from hypercorn.asyncio import serve as hypercorn_serve
 from hypercorn.config import Config
 
-from donate4fun.models import YoutubeChannel
+from donate4fun.models import YoutubeChannel, DonateRequest
 from donate4fun.core import as_task
 
 from tests.test_util import verify_response, check_response
@@ -82,3 +82,19 @@ async def test_422(client):
 async def test_404(client):
     response = await client.get(f'/donation/{UUID(int=0)}')
     verify_response(response, 'twitter-404', 404)
+
+
+async def test_twitter_donation_image(client, twitter_account, app, settings, rich_donator):
+    donate_response = await client.post(
+        "/api/v1/donate",
+        json=DonateRequest(
+            amount=100,
+            target='https://twitter.com/donate4_fun/status/1583074363787444225',
+            donator_twitter_handle='nbryskin',
+        ).dict(),
+    )
+    check_response(donate_response, 200)
+
+    async with app_serve(app, settings):
+        response = await client.get(f'/preview/donation/{donate_response.json()["donation"]["id"]}')
+        verify_response(response, 'twitter-donation-share-image', 200)

@@ -2,6 +2,7 @@ import Bolt from "./Bolt.svelte";
 import { cLog, cError } from "$lib/log.js";
 import { registerHandlers, injectPageScript, worker } from "$extlib/common.js";
 import { apiOrigin } from "$lib/api.js";
+import { getCurrentAccountHandle } from "./twitter.js";
 
 const buttonClass = "donate4fun";
 let observer;
@@ -12,6 +13,7 @@ async function init() {
   registerHandlers({
     getTweetInfo,
     isTweetPage,
+    getCurrentAccountHandle,
     popupPath: () => "/twitter",
   });
   const apiHost = await worker.getConfig("apiHost");

@@ -25,7 +25,11 @@ async def test_donate_tweet(
 ):
     donate_response = await client.post(
         "/api/v1/donate",
-        json=DonateRequest(amount=100, target='https://twitter.com/donate4_fun/status/1583074363787444225').dict(),
+        json=DonateRequest(
+            amount=100,
+            target='https://twitter.com/donate4_fun/status/1583074363787444225',
+            donator_twitter_handle='donate4_fun',
+        ).dict(),
     )
     verify_response(donate_response, 'donate_twitter_tweet', 200)
 
