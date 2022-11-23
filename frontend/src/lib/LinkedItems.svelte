@@ -81,11 +81,6 @@ li {
   background: linear-gradient(90deg, rgba(157, 237, 162, 0.15) 0%, rgba(157, 237, 162, 0) 100%);
   border-radius: 8px;
 }
-li.add {
-  justify-content: center;
-  background: none;
-  height: 48px;
-}
 .withdraw-button {
   height: 44px;
   justify-self: end;
