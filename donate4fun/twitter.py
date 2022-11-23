@@ -287,8 +287,8 @@ class Conversation:
         async with self.db.session() as db_session:
             author: TwitterAccount = await query_or_fetch_twitter_account(db_session, user_id=self.peer_id)
             await db_session.link_twitter_account(twitter_author=author, donator=Donator(id=donator_id))
-        claim_url = furl(settings.base_url) / 'twitter' / str(author.id)
-        await self.send_text(f"Your account is successefully linked. Go to {claim_url} to claim your donations.")
+        profile_url = furl(settings.base_url) / 'donator' / donator_id
+        await self.send_text(f"Your account is successefully linked. Go to {profile_url} to claim your donations.")
 
     async def answer_withdraw(self):
         async with self.db.session() as db_session:
