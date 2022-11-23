@@ -1,5 +1,4 @@
 ideas:
-- twitter donations
 - notifications about donations
 - fiat conversion
 
@@ -46,6 +45,7 @@ marketing:
 - /r/lightningnetwork post
 
 fixed:
+- twitter donations
 - stacker.news post
 - restyle youtube bolt animation and popup animation (think of new round YouTube style)
 - add more wallets to landing step 2
