@@ -34,7 +34,7 @@
     <h1>Prove that you own a Twitter channel</h1>
     <summary>
       {#await loadProveMessage() then proveMessage}
-        <span><a href="https://twitter.com/messages/24704165-1572908920485576704?recipient_id=1572908920485576704&text={proveMessage}" target=_blank>Send a magic direct message</a> to our account and wait for a reply.</span>
+        <span><a href="https://twitter.com/messages/compose?recipient_id=1572908920485576704&text={proveMessage}" target=_blank>Send a magic direct message</a> to our account and wait for a reply.</span>
       {/await}
     </summary>
     <div>
