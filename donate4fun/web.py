@@ -56,11 +56,11 @@ def target_name(donation: Donation) -> str:
         raise ValueError("donation has no target")
 
 
-@app.get("/")
+@app.get("/{full_path:path}")
 @app.get("/youtube/{object_id}")
 @app.get("/twitter/{object_id}")
 @app.get("/donation/{object_id}")
-async def index(request: Request, object_id: UUID | None = None):
+async def index(request: Request, object_id: UUID | None = None, full_path: str | None = None):
     if object_id is not None:
         object_type = request.url.path.split('/')[1]
         og_image_path = f'/preview/{object_type}/{object_id}'
