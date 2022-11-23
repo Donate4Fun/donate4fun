@@ -28,6 +28,7 @@ from .settings import settings
 from .api_utils import get_donator, load_donator, get_db_session, task_group
 from .lnd import PayInvoiceError, LnurlWithdrawResponse, lnd
 from .pubsub import pubsub
+from .twitter import query_or_fetch_twitter_account
 from . import api_twitter, api_youtube
 
 
@@ -114,6 +115,10 @@ async def donate(
         await apply_target(donation, request.target, db_session)
     else:
         raise ValidationError("donation should have a target, channel_id or receiver_id")
+    if request.donator_twitter_handle:
+        donation.donator_twitter_account = await query_or_fetch_twitter_account(
+            db=db_session, handle=request.donator_twitter_handle,
+        )
     donator = await load_donator(db_session, donator.id)
     # If donator has enough money (and not fulfilling his own balance) - try to pay donation instantly
     use_balance = request.receiver_id != donator.id and donator.balance >= request.amount

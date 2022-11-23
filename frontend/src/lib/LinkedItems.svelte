@@ -1,7 +1,10 @@
 <script>
+  import { link } from "svelte-navigator";
+
   import Button from "$lib/Button.svelte";
   import Amount from "$lib/Amount.svelte";
   import api from "$lib/api.js";
+  import { capitalize } from "$lib/utils.js";
 
   export let items;
   export let basePath;
@@ -19,7 +22,8 @@
 
 <div class="container">
   <div class="header">
-    <h2>Linked <b>Twitter</b> accounts:</h2>
+    <h2>Linked <b>{capitalize(basePath)}</b> accounts:</h2>
+    <a use:link href="/{basePath}/prove">Add</a>
   </div>
   {#await load() then}
     <ul>
@@ -32,9 +36,6 @@
         </div>
       </li>
       {/each}
-      <li class="add">
-        <Button --width=170px class="white" link="/{basePath}/prove">Add more</Button>
-      </li>
     </ul>
   {/await}
 </div>
@@ -51,8 +52,16 @@
   justify-content: space-between;
   align-items: center;
 }
-h2 {
+.header > h2 {
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 24px;
   font-size: 20px;
+}
+.header > a {
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 19px;
 }
 ul {
   display: flex;
@@ -67,6 +76,7 @@ li {
   justify-content: space-between;
   gap: 17px;
   padding: 16px;
+  padding-right: 0;
   height: 72px;
   background: linear-gradient(90deg, rgba(157, 237, 162, 0.15) 0%, rgba(157, 237, 162, 0) 100%);
   border-radius: 8px;

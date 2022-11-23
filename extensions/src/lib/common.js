@@ -218,11 +218,12 @@ async function apiPost(path, data) {
   return await worker.fetch("post", path, data);
 }
 
-async function donate(amount, target) {
+async function donate(amount, target, donator_twitter_handle=null) {
   // Make a donation
   const response = await apiPost('donate', {
-    amount: amount,
-    target: target,
+    amount,
+    target,
+    donator_twitter_handle,
   });
   const donation = response.donation;
   if (donation.paid_at) {

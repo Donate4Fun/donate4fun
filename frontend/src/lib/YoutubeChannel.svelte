@@ -26,7 +26,7 @@
 span {
   display: flex;
   align-items: center;
-  gap: 0.4em;
+  gap: var(--gap, 0.4em);
 }
 img {
   width: 2em;

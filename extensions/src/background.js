@@ -77,7 +77,7 @@ const Options = {
     options: {
       twitterDefaultReply: {
         type: "text",
-        default: "Absolutely! Take a %amount% sats tip @donate4_fun",
+        default: "Absolutely! Here is a %amount% sats tip via @donate4_fun %link%",
         description: "Default Twitter reply",
       },
     },

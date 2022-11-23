@@ -9,6 +9,14 @@ json:
       lnauth_pubkey: null
       name: Admiring Serene Khorana
     donator_id: 00000000-0000-0000-0000-000000000000
+    donator_twitter_account:
+      balance: 0
+      handle: donate4_fun
+      id: 00000000-0000-0000-0000-000000000001
+      name: Donate4.Fun
+      profile_image_url: https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_normal.png
+      total_donated: 0
+      user_id: 1572908920485576704
     id: 00000000-0000-0000-0000-000000000001
     message: null
     paid_at: null

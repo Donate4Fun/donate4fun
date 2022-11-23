@@ -32,20 +32,8 @@ class BaseModel(PydanticBaseModel):
         return cls(**jwt.decode(token, settings.jwt_secret, algorithms=["HS256"]))
 
 
-class DonationRequest(BaseModel):
-    r_hash: RequestHash
-    donator: str
-    donatee: str
-    trigger: str | None
-    message: str | None
-
-
 class WithdrawalToken(BaseModel):
     withdrawal_id: UUID
-
-
-class LoginToken(BaseModel):
-    donator_id: UUID
 
 
 class DonateRequest(BaseModel):
@@ -54,6 +42,7 @@ class DonateRequest(BaseModel):
     channel_id: UUID | None
     twitter_account_id: UUID | None
     target: HttpUrl | None
+    donator_twitter_handle: str | None
     message: str | None
 
 
@@ -163,6 +152,7 @@ class Donation(BaseModel):
     youtube_video: YoutubeVideo | None
     twitter_account: TwitterAccount | None
     twitter_tweet: TwitterTweet | None
+    donator_twitter_account: TwitterAccount | None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     message: str | None = None
     paid_at: datetime | None = None
