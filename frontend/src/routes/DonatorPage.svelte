@@ -92,7 +92,7 @@
             {/if}
           </a>
           {#if donation.youtube_video}
-            <YoutubeVideo video={donation.youtube_video} />
+            <YoutubeVideo video={donation.youtube_video} --gap=16px />
           {:else if donation.youtube_channel}
             <YoutubeChannel channel={donation.youtube_channel} class="ellipsis" linkto=withdraw logo --gap=16px />
           {:else if donation.twitter_account}

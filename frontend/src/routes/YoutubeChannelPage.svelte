@@ -1,5 +1,5 @@
 <script>
-  import { useResolve } from "svelte-navigator";
+  import { useResolve, link } from "svelte-navigator";
 
   import Loader from "$lib/Loader.svelte";
   import Amount from "$lib/Amount.svelte";
@@ -15,7 +15,6 @@
   export let channel_id;
 
   let channel;
-  let donations;
   $: baseUrl = `youtube/channel/${channel_id}`;
 
   const resolve = useResolve();
@@ -23,7 +22,10 @@
   async function load() {
     channel = await api.get(baseUrl);
     $title = `Donate to ${channel.title} YouTube channel`
-    donations = await api.get(`${baseUrl}/donations/by-donatee`);
+  }
+
+  async function loadDonations() {
+    return await api.get(`${baseUrl}/donations/by-donatee`);
   }
 </script>
 
@@ -35,22 +37,21 @@
       {#if channel.banner_url}
         <div class="banner" style="background-image: url({channel.banner_url})"></div>
       {/if}
-      <div class="youtube-channel">
+      <div class="content">
         <h1>
           <img alt=youtube src="/static/youtube.svg" width=20>
           Donate to <YoutubeChannel channel={channel} />
           <ChannelLogo url={channel.thumbnail_url} size=44px />
         </h1>
         <PaymentWidget target={{channel_id: channel.id}} on:paid={load} />
+        <a use:link href={resolve("owner")}>This is my channel</a>
       </div>
     </Section>
 
     <div class="details">
-      <div class="controls">
-        <Button class="grey" link={resolve("owner")}>This is my channel</Button>
-        <Button class="grey" link={resolve("link")}>Want more donations?</Button>
-      </div>
-      <DonationsTable donations={donations} />
+      {#await loadDonations() then donations}
+        <DonationsTable donations={donations} />
+      {/await}
     </div>
   {/await}
 </div>
@@ -61,8 +62,8 @@
   flex-direction: column;
   gap: 32px;
 }
-.youtube-channel {
-  padding: 36px 70px 74px;
+.content {
+  padding: 40px 70px;
   display: flex;
   flex-direction: column;
   gap: 32px;
@@ -79,6 +80,11 @@
   border-top-left-radius: inherit;
   border-top-right-radius: inherit;
 }
+.content a {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
+}
 h1 {
   display: flex;
   gap: 8px;
@@ -94,10 +100,5 @@ h1 {
   align-items: center;
   gap: 16px;
   width: 640px;
-}
-.controls {
-  display: flex;
-  gap: 20px;
-  align-items: center;
 }
 </style>
