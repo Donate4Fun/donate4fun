@@ -1,4 +1,5 @@
 import { readable, writable, get } from 'svelte/store';
+import cLog from "$lib/log.js";
 
 export const webOrigin = writable(globalThis.location.origin);
 export const isExtension = !globalThis.location.origin.startsWith('http');
