@@ -72,10 +72,10 @@
       autoplay={true}
       loop={false}
       width={30}
+      height={30}
       background=transparent
       controls={null}
       controlsLayout={[]}
-      height={null}
       bind:this={lottiePlayer}
     />
   {:else if donating}
@@ -99,8 +99,9 @@
 
 <style>
 .container {
-  height: 100%;
   display: flex;
+  align-self: center;
+  margin: -10px 0;
   align-items: center;
   color: rgb(83, 100, 113);
   cursor: pointer;
