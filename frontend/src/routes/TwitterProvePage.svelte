@@ -40,7 +40,7 @@
     <div>
       {#await loadLinkedTwitterAccounts() then twitter_accounts}
         {#if twitter_accounts.length}
-          <h2>Linked channels</h2>
+          <h2>Linked accounts</h2>
           {#each twitter_accounts as twitter_account}
             <TwitterAccount account={twitter_account} />
           {/each}
