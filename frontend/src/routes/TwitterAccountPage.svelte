@@ -1,5 +1,5 @@
 <script>
-  import { useResolve } from "svelte-navigator";
+  import { useResolve, link } from "svelte-navigator";
 
   import NotFoundPage from "../routes/NotFoundPage.svelte";
   import Loader from "$lib/Loader.svelte";
@@ -39,21 +39,20 @@
       {#if account.banner_url}
         <div class="banner" style="background-image: url({account.banner_url})"></div>
       {/if}
-      <div class="youtube-channel">
+      <div class="content">
         <h1>
-          <img alt=youtube src="/static/twitter.svg" width=20>
+          <img alt=twitter src="/static/twitter.svg" width=20>
           Donate to <TwitterAccount showHandle={false} imagePlacement=after --image-size=44px account={account} />
         </h1>
-        <PaymentWidget target={{twitter_account_id: account.id}} on:paid={load} />
-        <TwitterShare text="Donate me" />
+        <div class="buttons">
+          <PaymentWidget target={{twitter_account_id: account.id}} on:paid={load} />
+          <TwitterShare text="Donate me" />
+          <a use:link href={resolve('owner')}>This is my account</a>
+        </div>
       </div>
     </Section>
 
     <div class="details">
-      <div class="controls">
-        <Button class="grey" link={resolve("owner")}>This is my account</Button>
-        <Button class="grey" link={resolve("link")}>Want more donations?</Button>
-      </div>
       <DonationsTable donations={donations} />
     </div>
   {:catch error}
@@ -67,8 +66,8 @@
   flex-direction: column;
   gap: 32px;
 }
-.youtube-channel {
-  padding: 36px 70px 74px;
+.content {
+  padding: 40px 70px;
   display: flex;
   flex-direction: column;
   gap: 32px;
@@ -94,6 +93,11 @@ h1 {
   line-height: 22px;
   font-weight: 400;
 }
+.content a {
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 20px;
+}
 .details {
   display: flex;
   flex-direction: column;
@@ -101,9 +105,11 @@ h1 {
   gap: 16px;
   width: 640px;
 }
-.controls {
+.buttons {
   display: flex;
+  flex-direction: column;
   gap: 20px;
   align-items: center;
+  width: 300px;
 }
 </style>

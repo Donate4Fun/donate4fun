@@ -13,6 +13,15 @@
 </script>
 
 <Button class="white" link={shareUrl} target="_blank">
-  <img alt=youtube src="/static/twitter.svg" width=20>
-  Share
+  <div class="main">
+    <img alt=youtube src="/static/twitter.svg" width=20>
+    <span>Share</span>
+  </div>
 </Button>
+
+<style>
+.main {
+  display: flex;
+  gap: 8px;
+}
+</style>

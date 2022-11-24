@@ -1,29 +1,33 @@
 <script>
-  import { link, useResolve } from "svelte-navigator";
+  import { useResolve, navigate, link } from "svelte-navigator";
 
+  import NotFoundPage from "../routes/NotFoundPage.svelte";
   import Loader from "$lib/Loader.svelte";
   import Amount from "$lib/Amount.svelte";
   import FiatAmount from "$lib/FiatAmount.svelte";
   import Button from "$lib/Button.svelte";
-  import YoutubeChannel from "$lib/YoutubeChannel.svelte";
+  import TwitterAccount from "$lib/TwitterAccount.svelte";
   import Section from "$lib/Section.svelte";
   import ChannelLogo from "$lib/ChannelLogo.svelte";
   import DonationsTable from "$lib/DonationsTable.svelte";
+  import TwitterShare from "$lib/TwitterShare.svelte";
   import { api } from "$lib/api.js";
-  import { me } from "$lib/session.js";
   import title from "$lib/title.js";
+  import { me } from "$lib/session.js";
 
-  export let channel_id;
+  export let account_id;
 
-  let channel;
-  let donations;
-  $: baseUrl = `youtube/channel/${channel_id}`;
+  let account;
+  let shareUrl;
+
+  $: baseUrl = `twitter/account/${account_id}`;
 
   const resolve = useResolve();
 
   async function load() {
-    channel = await api.get(baseUrl);
-    $title = `Manage ${channel.title} YouTube channel`
+    account = await api.get(baseUrl);
+    if (!account.is_my)
+      navigate('/twitter/prove');
   }
 
   async function claim() {
@@ -41,31 +45,28 @@
     <Loader />
   {:then}
     <Section>
+      {#if account.banner_url}
+        <div class="banner" style="background-image: url({account.banner_url})"></div>
+      {/if}
       <div class="content">
         <h1>
-          <img alt=youtube src="/static/youtube.svg" width=20>
-          <YoutubeChannel channel={channel} />
-          <ChannelLogo url={channel.thumbnail_url} size=44px />
+          <img alt=twitter src="/static/twitter.svg" width=20>
+          Donations to <TwitterAccount showHandle={false} imagePlacement=after --image-size=44px account={account} />
         </h1>
-        <div class="controls">
-          <div class="available">Available to claim:</div>
-          <div class="amounts">
-            <Amount amount={channel.balance} />
-            <FiatAmount amount={channel.balance} />
-          </div>
-          <div class="buttons">
-            {#await $me then me}
-              {#if me.connected}
-                <Button disabled={channel.balance === 0} on:click={claim} --border-width=0>Collect</Button>
-              {:else}
-                <Button link='/login' --border-width=0>Login to collect</Button>
-              {/if}
-            {/await}
-          </div>
-          <div class="links">
-            <a use:link href={resolve("../link")}>Want more donations?</a>
-            <a use:link href={resolve("..")}>Public page</a>
-          </div>
+        <div class="amounts">
+          <Amount amount={account.balance} />
+          <FiatAmount amount={account.balance} />
+        </div>
+        <div class="buttons">
+          {#await $me then me}
+            {#if me.connected}
+              <Button disabled={account.balance === 0} on:click={claim} --border-width=0>Collect</Button>
+            {:else}
+              <Button link='/login' --border-width=0>Login</Button>
+            {/if}
+          {/await}
+          <TwitterShare text="Donate me" />
+          <a use:link href={resolve("..")}>Public page</a>
         </div>
       </div>
     </Section>
@@ -75,6 +76,8 @@
         <DonationsTable donations={donations} />
       {/await}
     </div>
+  {:catch error}
+    <NotFoundPage {error} />
   {/await}
 </div>
 
@@ -93,10 +96,14 @@
   width: 640px;
   box-sizing: border-box;
 }
-.content a {
-  font-weight: 600;
-  font-size: 14px;
-  line-height: 20px;
+.banner {
+  width: 100%;
+  height: 102px;
+  background-repeat: no-repeat;
+  background-size: 100%;
+  background-position: center;
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
 }
 h1 {
   display: flex;
@@ -113,23 +120,17 @@ h1 {
   gap: 10px;
   align-items: center;
 }
-.controls {
-  display: flex;
-  gap: 32px;
-  flex-direction: column;
-  align-items: center;
-}
 .buttons {
   width: 180px;
   display: flex;
   flex-direction: column;
+  gap: 32px;
   align-items: center;
-  gap: 40px;
 }
-.links {
-  display: flex;
-  justify-content: space-between;
-  width: 300px;
+.content a {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
 }
 .details {
   display: flex;

@@ -19,6 +19,7 @@
   import YoutubeProvePage from "./routes/YoutubeProvePage.svelte";
   import TwitterProvePage from "./routes/TwitterProvePage.svelte";
   import TwitterAccountPage from "./routes/TwitterAccountPage.svelte";
+  import TwitterAccountOwnerPage from "./routes/TwitterAccountOwnerPage.svelte";
   import LoginPage from "./routes/LoginPage.svelte";
   import Test from "./routes/Test.svelte";
   import Landing from "./routes/Landing.svelte";
@@ -79,6 +80,7 @@
     <Route path="twitter/*">
       <Route path="prove" component={TwitterProvePage} />
       <Route path=":account_id" component="{TwitterAccountPage}"/>
+      <Route path=":account_id/owner" component="{TwitterAccountOwnerPage}"/>
     </Route>
     <Route path="me/withdraw" component="{WithdrawPage}" />
     <Route path="donation/:donation_id" component="{DonationPage}" />
