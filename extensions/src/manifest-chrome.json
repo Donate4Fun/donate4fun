@@ -87,8 +87,7 @@
       "static/defaults.css",
       "static/lottie-arrow.json",
       "static/youtube.svg",
-      "static/loader.svg",
-      "static/bolt-mono.svg"
+      "static/loader.svg"
     ],
     "matches": [
       "https://*.youtube.com/*"
@@ -108,7 +107,7 @@
       "webln.js.map",
       "twitter/contentscripts.js.map",
       "static/global.css",
-      "static/bolt-mono.svg"
+      "static/lottie-bolt.json"
     ],
     "matches": [
       "https://*.twitter.com/*"

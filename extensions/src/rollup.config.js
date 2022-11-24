@@ -169,7 +169,6 @@ export default [
           staticFile("twitter.svg"),
           staticFile("checkbox.svg"),
           staticFile("loader.svg"),
-          staticFile("bolt-mono.svg"),
           { src: "background.html", dest: "../firefox" },
           manifestFile("manifest-firefox.json", "../firefox/manifest.json", patchFirefoxManifest),
           manifestFile("manifest-chrome.json", "../chrome/manifest.json", patchChromeManifest),
