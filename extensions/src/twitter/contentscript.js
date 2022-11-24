@@ -67,6 +67,7 @@ async function patchTweet(tweet) {
     existingButton.remove();
   const boltButton = document.createElement('div');
   boltButton.className = buttonClass;
+  boltButton.style.display = 'contents';
   buttons.insertBefore(boltButton, likeButton.parentElement.nextSibling);
   const anchor = tweet.querySelector('a[href*="/status/"]');
   let tweetUrl;
