@@ -45,6 +45,12 @@ async def create_app(settings: Settings):
         )
     api.app.add_middleware(
         CORSMiddleware,
+        allow_origins=[
+            # YouTube connects directly from content script, so add it's origins
+            "https://youtube.com",
+            "https://www.youtube.com",
+            "https://m.youtube.com",
+        ],
         allow_methods=["*"],
         allow_headers=["*"],
         allow_credentials=True,
