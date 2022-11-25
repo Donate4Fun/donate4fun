@@ -2,6 +2,7 @@ import socket
 from uuid import UUID
 import pytest
 
+import psutil
 from hypercorn.asyncio import serve as hypercorn_serve
 from hypercorn.config import Config
 
@@ -60,6 +61,16 @@ async def test_twitter_share_image_page(client):
         '/preview/twitter-account-sharing.html', params=dict(handle='handle', profile_image=profile_image),
     )
     verify_response(response, 'twitter-share-image-source', 200)
+
+
+async def test_screenshot_browser_crash(client, twitter_account, app, settings):
+    async with app_serve(app, settings):
+        check_response(await client.get(f'/preview/twitter/{twitter_account.id}'))
+        for child in psutil.Process().children(recursive=True):
+            if child.name() == 'name':
+                child.kill()
+                break
+        check_response(await client.get(f'/preview/twitter/{twitter_account.id}'))
 
 
 async def test_twitter_share_image(client, twitter_account, app, settings):
