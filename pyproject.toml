@@ -56,6 +56,7 @@ pytest-lazy-fixture = "^0.6.3"
 [tool.poetry.group.dev.dependencies]
 pytest-asyncio = {git = "https://github.com/nikicat/pytest-asyncio"}
 ascii-magic = "^1.6"
+psutil = "^5.9.4"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

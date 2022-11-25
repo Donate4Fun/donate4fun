@@ -9,7 +9,7 @@ from types import SimpleNamespace
 from contextlib import asynccontextmanager
 from urllib.parse import urlencode, parse_qs
 
-from playwright.async_api import async_playwright, ConsoleMessage
+from playwright.async_api import async_playwright, ConsoleMessage, Error as PlaywrightError
 from fastapi import FastAPI, Request, Depends, APIRouter
 from fastapi.responses import Response
 
@@ -27,12 +27,22 @@ class ScreenshotError(Exception):
 
 
 class Screenshoter:
-    def __init__(self, browser):
-        self.browser = browser
+    def __init__(self, playwright):
+        self.playwright = playwright
+        self.browser = None
+
+    async def get_browser(self):
+        if self.browser is None or not self.browser.is_connected():
+            if self.browser:
+                await self.browser.close()
+            self.browser = await self.playwright.chromium.launch()
+            logger.info("Started Chromium")
+        return self.browser
 
     async def take_screenshot(self, path: str, **params) -> bytes:
         start = time.time()
-        page = await self.browser.new_page(device_scale_factor=2)
+        browser = await self.get_browser()
+        page = await browser.new_page(device_scale_factor=2)
         try:
             api_port: str = settings.hypercorn['bind'].split(':')[-1]
             page.on("request", lambda request: logger.trace("request %s %s", request.method, request.url))
@@ -49,6 +59,10 @@ class Screenshoter:
             if error_messages:
                 raise ScreenshotError(f"Browser console has error messages: {error_messages}")
             return result
+        except PlaywrightError:
+            logger.exception("Error in PlayWright")
+            await browser.close()
+            raise
         finally:
             await page.close()
             logger.trace("Screenshot of %s took %fs", path, time.time() - start)
@@ -60,13 +74,9 @@ async def get_screenshoter(request: Request):
 
 @asynccontextmanager
 async def run_screenshoter():
-    async with async_playwright() as p:
-        browser = await p.chromium.launch()
+    async with async_playwright() as pw:
         logger.info("Started Chromium screenshoter")
-        try:
-            yield Screenshoter(browser)
-        finally:
-            await browser.close()
+        yield Screenshoter(pw)
 
 
 @register_command

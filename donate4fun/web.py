@@ -56,7 +56,6 @@ def target_name(donation: Donation) -> str:
         raise ValueError("donation has no target")
 
 
-@app.get("/{full_path:path}")
 @app.get("/youtube/{object_id}")
 @app.get("/twitter/{object_id}")
 @app.get("/donation/{object_id}")
@@ -162,3 +161,14 @@ templates = TemplateLookup(
 
 def TemplateResponse(name, *args, status_code=200, **kwargs) -> HTMLResponse:
     return HTMLResponse(templates.get_template(name).render(*args, settings=settings, **kwargs), status_code=status_code)
+
+
+# This route should be last declared
+@app.get("/{full_path:path}")
+async def default_index(request: Request, full_path: str):
+    og_image_path = '/static/sharing.png'
+    manifest = await fetch_manifest() if settings.release else None
+    description = "Donate to creators with Bitcoin Lightning"
+    return TemplateResponse(
+        "index.html", request=request, og_image_path=og_image_path, manifest=manifest, description=description,
+    )
