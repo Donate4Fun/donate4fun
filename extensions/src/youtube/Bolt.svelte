@@ -230,10 +230,10 @@
   display: none;
   margin: 8px;
   padding: 8px;
-  border-radius: 2px;
+  border-radius: 4px;
 }
 .full .tooltip {
-  top: calc(100% + 4px); /* try to mimic youtube popups */
+  top: calc(100% + 8px); /* try to mimic youtube popups */
 }
 .shorts .tooltip {
   right: calc(72px); /* try to mimic youtube popups */
