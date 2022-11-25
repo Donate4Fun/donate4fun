@@ -2,7 +2,7 @@ FROM python:3.10.8
 
 #RUN apk --update --no-cache add alpine-sdk libffi-dev rust cargo openssl-dev
 ENV DEBIAN_FRONTEND=noninteractive
-#RUN apt update && apt install -y libffi-dev openssl-dev && rm -rf /var/lib/apt/lists/*
+RUN apt update && apt install -y fonts-ancient-scripts && rm -rf /var/lib/apt/lists/*
 RUN pip install --upgrade pip && pip install poetry
 
 WORKDIR /app
