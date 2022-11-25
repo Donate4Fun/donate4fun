@@ -8,6 +8,8 @@ backend:
     bugsnag:
       enabled: false
       release_stage: staging
+    twitter:
+      enable_bot: false
     rollbar:
       environment: staging
     youtube:
