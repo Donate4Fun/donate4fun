@@ -37,7 +37,7 @@
         <span><a href="https://twitter.com/messages/compose?recipient_id=1572908920485576704&text={proveMessage}" target=_blank>Send a magic direct message</a> to our account and wait for a reply.</span>
       {/await}
     </summary>
-    <div>
+    <div class="linked-accounts">
       {#await loadLinkedTwitterAccounts() then twitter_accounts}
         {#if twitter_accounts.length}
           <h2>Linked accounts</h2>
@@ -55,6 +55,7 @@
 main {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 32px;
   padding: 36px 85px 40px 85px;
   width: 640px;
@@ -64,6 +65,13 @@ main {
 h1 {
   text-align: center;
   margin: 0;
+}
+summary {
+  text-align: center;
+  width: 300px;
+}
+.linked-accounts {
+  align-self: start;
 }
 h2 {
   font-weight: 600;

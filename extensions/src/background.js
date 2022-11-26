@@ -75,6 +75,11 @@ const Options = {
     type: "section",
     name: "Twitter options",
     options: {
+      enableReply: {
+        type: "checkbox",
+        default: true,
+        description: "Open reply automatically",
+      },
       twitterDefaultReply: {
         type: "text",
         default: "Absolutely! Here is a %amount% sats tip via @donate4_fun %link%",

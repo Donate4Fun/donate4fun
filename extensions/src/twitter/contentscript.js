@@ -76,7 +76,7 @@ async function patchTweet(tweet) {
   else if (isTweetPage())
     tweetUrl = getTweetUrl();
   else {
-    cError("Tweet has no url nor this is tweet page", tweet);
+    cLog("Tweet has no url nor this is tweet page", tweet);
     return;
   }
   cLog("patching tweet", tweet, tweetUrl);
