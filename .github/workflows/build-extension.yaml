@@ -99,6 +99,22 @@ jobs:
                 {
                   "title": "## Website",
                   "labels": ["web"]
+                },
+                {
+                  "title": "## YouTube",
+                  "labels": ["youtube"]
+                },
+                {
+                  "title": "## Twitter",
+                  "labels": ["twitter"]
+                },
+                {
+                  "title": "## Deployment",
+                  "labels": ["deploy"]
+                },
+                {
+                  "title": "## CI/CD",
+                  "labels": ["ci"]
                 }
               ],
               "template": "#{{CHANGELOG}}\n\n<details>\n<summary>Uncategorized</summary>\n\n#{{UNCATEGORIZED}}\n</details>",
