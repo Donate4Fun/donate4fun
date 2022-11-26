@@ -460,4 +460,4 @@ async def run_twitter_bot(db: Database):
                 if conversation.is_stale:
                     logger.debug("Removing conversation %s", conversation_id)
                     del conversations[conversation_id]
-            await asyncio.sleep(10)
+            await asyncio.sleep(settings.twitter.dm_check_interval.total_seconds())
