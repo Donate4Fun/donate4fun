@@ -54,7 +54,7 @@ def validate_twitter_url(parsed) -> TwitterDonatee:
     parts = parsed.path.split('/')
     if len(parts) == 2:
         return TwitterDonatee(author_handle=parts[1])
-    elif len(parts) == 4 and parts[2] == 'status':
+    elif len(parts) >= 4 and parts[2] == 'status':
         return TwitterDonatee(tweet_id=int(parts[3]), author_handle=parts[1])
     else:
         raise UnsupportedTwitterUrl
