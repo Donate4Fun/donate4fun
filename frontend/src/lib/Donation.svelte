@@ -1,5 +1,7 @@
 <script>
   import { createEventDispatcher } from 'svelte';
+  import { link } from "svelte-navigator";
+
   import Button from "$lib/Button.svelte";
   import Section from "$lib/Section.svelte";
   import Infobox from "$lib/Infobox.svelte";
@@ -62,12 +64,17 @@
         <Button on:click={() => dispatch("close")} class="grey">Back</Button>
       {/if}
     {:else if donation.twitter_account}
-      <Donator user={donation.donator} />
+      {#if donation.donator_twitter_account}
+        <TwitterAccount account={donation.donator_twitter_account} />
+      {:else}
+        <Donator user={donation.donator} />
+      {/if}
       <div class="twitter-donation">
         donated <Amount amount={donation.amount} /> to
       </div>
       <TwitterAccount account={donation.twitter_account} />
       <TwitterShare text="Hey @{donation.twitter_account.handle}, I've sent you a donation" />
+      <a use:link href="/twitter/{donation.twitter_account.id}/owner">Claim</a>
     {/if}
   {:else}
     Unpaid donation
