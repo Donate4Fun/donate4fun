@@ -1,11 +1,12 @@
 import Bolt from "./Bolt.svelte";
 import { cLog, cError } from "$lib/log.js";
-import { registerHandlers, injectPageScript, worker } from "$extlib/common.js";
+import { registerHandlers, injectPageScript, worker, donate } from "$extlib/common.js";
 import { apiOrigin } from "$lib/api.js";
 import { getCurrentAccountHandle } from "./twitter.js";
 
 const buttonClass = "donate4fun";
 let observer;
+let pageBolt;
 
 async function init() {
   cLog("loading");
@@ -14,6 +15,13 @@ async function init() {
     getTweetInfo,
     isTweetPage,
     getCurrentAccountHandle,
+    donate,
+    onPaid: (donation) => {
+      if (isTweetPage() && pageBolt)
+        pageBolt.onPaid(donation);
+      else
+        cError("Current page is not a Tweet page");
+    },
     popupPath: () => "/twitter",
   });
   const apiHost = await worker.getConfig("apiHost");
@@ -24,7 +32,7 @@ async function init() {
 }
 
 function getTweetUrl() {
-  return document.querySelector('meta[property="og:url"]')?.content;
+  return window.location.href;
 }
 
 function isTweetPage() {
@@ -86,6 +94,10 @@ async function patchTweet(tweet) {
       tweetUrl,
     },
   });
+  if (isTweetPage() && tweetUrl === getTweetUrl()) {
+    cLog("Updating current pageBolt to", bolt);
+    pageBolt = bolt;
+  }
 }
 
 function observe() {
