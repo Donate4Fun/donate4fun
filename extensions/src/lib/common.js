@@ -167,7 +167,11 @@ function registerHandlers(handlers) {
     const handler = handlers[request.command];
     if (!handler) {
       cError(`Unexpected command ${request.command}`);
-      return false;
+      return {
+        status: "error",
+        error: "unexpected-command",
+        message: `Unexpected command ${request.command}`,
+      };
     } else {
       cLog("Received request", request);
       return handleMessage(handler, request.args);

@@ -26,7 +26,7 @@
 
   async function donate(amount) {
     try {
-      const donatorHandle = await contentScript.getCurrentTwitterHandle();
+      const donatorHandle = await contentScript.getCurrentAccountHandle();
       const donation = await contentScript.donate(amount, tweetUrl, donatorHandle);
       contentScript.onPaid(donation);
     } catch (err) {
