@@ -126,7 +126,7 @@ button.selected {
 button.dimmed {
   box-shadow: 10px 15px 25px rgba(209, 217, 230, 0.4);
   background: linear-gradient(90deg, rgba(249, 240, 62, 0.4) 0%, rgba(157, 237, 162, 0.4) 100%), #FFFFFF;
-  border: 1px solid rgba(26, 41, 82, 0.05);
+  border: var(--border-width-secondary) solid rgba(26, 41, 82, 0.05);
 }
 /* background */
 button.white > div,button.blue > div {
