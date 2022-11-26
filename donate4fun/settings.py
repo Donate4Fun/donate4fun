@@ -39,6 +39,7 @@ class TwitterSettings(BaseModel):
     greeting: str
     enable_bot: bool
     self_id: int
+    dm_check_interval: timedelta
     oauth: TwitterOAuth
 
 
