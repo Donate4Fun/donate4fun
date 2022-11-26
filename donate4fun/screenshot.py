@@ -35,7 +35,7 @@ class Screenshoter:
         if self.browser is None or not self.browser.is_connected():
             if self.browser:
                 await self.browser.close()
-            self.browser = await self.playwright.chromium.launch()
+            self.browser = await self.playwright.chromium.launch(args=['--disable-gpu'])
             logger.info("Started Chromium")
         return self.browser
 
