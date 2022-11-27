@@ -20,7 +20,6 @@
   let loading = false;
   let showSuccess = false;
 
-  const min_withdraw = 100;
   const dispatch = createEventDispatcher();
   const resolve = useResolve();
   let ws;
