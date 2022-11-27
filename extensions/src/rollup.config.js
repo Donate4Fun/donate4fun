@@ -58,6 +58,14 @@ function makeConfig(name, options) {
         compilerOptions: {
           dev: dev,
         },
+        onwarn: (warning, handler) => {
+          // e.g. don't warn on <marquee> elements, cos they're cool
+          if (["a11y-click-events-have-key-events", "security-anchor-rel-noreferrer"].includes(warning.code)) return;
+          console.log("onwarn", warning.code);
+
+          // let Rollup handle all other warnings normally
+          handler(warning);
+        },
       }),
       // we'll extract any component CSS out into
       // a separate file - better for performance
