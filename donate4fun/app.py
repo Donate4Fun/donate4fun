@@ -1,5 +1,4 @@
 import logging
-import sys
 import os
 from contextlib import asynccontextmanager, AsyncExitStack
 
@@ -93,11 +92,11 @@ class AuthMiddleware(AuthlibMiddleware):
             self.security_flags = self.security_flags.replace('httponly; ', '')
 
 
-async def main():
-    command = sys.argv[1] if len(sys.argv) > 1 else 'serve'
+async def main(args):
+    command = args[1] if len(args) > 1 else 'serve'
     addLoggingLevel('TRACE', 5, 'trace')
     with load_settings(), db.assign(Database(settings.db)):
-        result = await commands[command](*sys.argv[2:])
+        result = await commands[command](*args[2:])
         if result is not None:
             print(result)
 

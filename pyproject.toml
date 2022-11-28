@@ -58,6 +58,7 @@ pytest-lazy-fixture = "^0.6.3"
 pytest-asyncio = {git = "https://github.com/nikicat/pytest-asyncio"}
 ascii-magic = "^1.6"
 psutil = "^5.9.4"
+watchfiles = "^0.18.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
