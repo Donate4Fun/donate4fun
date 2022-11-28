@@ -35,7 +35,7 @@ backend:
       greeting: "Hey! I'm a Donate4Fun Twitter bot. I'll check if you have any tips or donations."
       enable_bot: true
       dm_check_interval: PT20S
-      self_id: 1572908920485576704
+      self_id: "1572908920485576704"
     lnd:
       url: http://lnd-prod.lnd-prod
       lnurl_base_url: https://donate4.fun
