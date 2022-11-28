@@ -12,6 +12,7 @@ from urllib.parse import urlencode, parse_qs
 from playwright.async_api import async_playwright, ConsoleMessage, Error as PlaywrightError
 from fastapi import FastAPI, Request, Depends, APIRouter
 from fastapi.responses import Response
+from async_lru import alru_cache
 
 from .core import register_command
 from .settings import settings
@@ -30,6 +31,7 @@ class Screenshoter:
     def __init__(self, playwright):
         self.playwright = playwright
         self.browser = None
+        self.lock = asyncio.Lock()
 
     async def get_browser(self):
         if self.browser is None or not self.browser.is_connected():
@@ -40,6 +42,11 @@ class Screenshoter:
         return self.browser
 
     async def take_screenshot(self, path: str, **params) -> bytes:
+        async with self.lock:
+            return await self.take_screenshot_impl(path, **params)
+
+    @alru_cache(maxsize=3)  # Twitter bot likes to make a lot of parallel requests for the same image if we respnod a bit slow
+    async def take_screenshot_impl(self, path: str, **params) -> bytes:
         start = time.time()
         browser = await self.get_browser()
         page = await browser.new_page(device_scale_factor=2)
