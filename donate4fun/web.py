@@ -56,6 +56,10 @@ def target_name(donation: Donation) -> str:
         raise ValueError("donation has no target")
 
 
+def default_sharing_image():
+    return '/static/sharing.png?v=2'
+
+
 @app.get("/youtube/{object_id}")
 @app.get("/twitter/{object_id}")
 @app.get("/donation/{object_id}")
@@ -65,7 +69,7 @@ async def index(request: Request, object_id: UUID | None = None, full_path: str 
         og_image_path = f'/preview/{object_type}/{object_id}'
     else:
         object_type = None
-        og_image_path = '/static/sharing.png'
+        og_image_path = default_sharing_image()
     manifest = await fetch_manifest() if settings.release else None
     if object_type == 'donation':
         async with db.session() as db_session:
@@ -166,7 +170,7 @@ def TemplateResponse(name, *args, status_code=200, **kwargs) -> HTMLResponse:
 # This route should be last declared
 @app.get("/{full_path:path}")
 async def default_index(request: Request, full_path: str):
-    og_image_path = '/static/sharing.png'
+    og_image_path = default_sharing_image()
     manifest = await fetch_manifest() if settings.release else None
     description = "Donate to creators with Bitcoin Lightning"
     return TemplateResponse(

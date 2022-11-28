@@ -81,11 +81,9 @@
       <div class="main-upper-left">
         <div class="main-upper-left-upper">
           <h1>
-            One click instant donations for YouTubers.
-            <span class="gradient extra-light">No extra fees.</span>
-            <span class="gradient dark">
-              Powered by Bitcoin ⚡️ Lightning.
-            </span>
+            Supercharge your <span class="gradient new">YouTube</span> and <span class="gradient new">Twitter</span>
+            with <span class="gradient new">Bitcoin Lightning.
+            Send one-click tips to creators.</span>
           </h1>
           <div class="annotation">
             🔥Support creators with Bitcoin Lightning. Easy donations and withdrawals. No registration or KYC.
@@ -272,21 +270,20 @@ h1, h2 {
 .gradient {
   -webkit-text-fill-color: transparent;
   text-fill-color: transparent;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
 }
 .extra-light {
   background: linear-gradient(90deg, #FF9634 10%, #FF4D00 90%);
-  background-clip: text;
-  -webkit-background-clip: text;
 }
 .light {
   background: linear-gradient(89.59deg, #FF9634 27.11%, #DC24A9 92.47%);
-  background-clip: text;
-  -webkit-background-clip: text;
 }
 .dark {
   background: linear-gradient(90deg, #FF4B4B 0%, #DC24A9 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
+}
+.new {
+  background: linear-gradient(90deg, #FF9634 0%, #FF4B4B 60.94%, #DC24A9 100%), #414141;
 }
 .main-upper {
   display: flex;

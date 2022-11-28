@@ -17,7 +17,7 @@ html: |
       <meta name="theme-color" content="#F7F9FF">
       <meta name="description" content="Donate to creators with Bitcoin Lightning">
 
-      <meta property="og:image" content="http://localhost:3000/static/sharing.png">
+      <meta property="og:image" content="http://localhost:3000/static/sharing.png?v=2">
       <meta property="og:type" content="website">
       <meta property="og:url" content="http://localhost:3000/">
       <meta property="og:title" content="Donate4.Fun">
