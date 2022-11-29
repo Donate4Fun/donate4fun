@@ -48,11 +48,18 @@ def find_unused_port() -> int:
 
 
 @as_task
-async def app_serve(app, settings):
-    port = find_unused_port()
+async def app_serve(app, settings, port):
     settings.hypercorn['bind'] = f'localhost:{port}'
     hyper_config = Config.from_mapping(settings.hypercorn)
     await hypercorn_serve(app, hyper_config)
+
+
+@pytest.fixture
+async def webapp(app, settings):
+    port = find_unused_port()
+    settings.frontend_port = port
+    async with app_serve(app, settings, port):
+        yield
 
 
 async def test_twitter_share_image_page(client):
@@ -63,20 +70,18 @@ async def test_twitter_share_image_page(client):
     verify_response(response, 'twitter-share-image-source', 200)
 
 
-async def test_screenshot_browser_crash(client, twitter_account, app, settings):
-    async with app_serve(app, settings):
-        check_response(await client.get(f'/preview/twitter/{twitter_account.id}'))
-        for child in psutil.Process().children(recursive=True):
-            if child.name() == 'name':
-                child.kill()
-                break
-        check_response(await client.get(f'/preview/twitter/{twitter_account.id}'))
+async def test_screenshot_browser_crash(client, twitter_account, webapp):
+    check_response(await client.get(f'/preview/twitter/{twitter_account.id}'))
+    for child in psutil.Process().children(recursive=True):
+        if child.name() == 'name':
+            child.kill()
+            break
+    check_response(await client.get(f'/preview/twitter/{twitter_account.id}'))
 
 
-async def test_twitter_share_image(client, twitter_account, app, settings):
-    async with app_serve(app, settings):
-        response = await client.get(f'/preview/twitter/{twitter_account.id}')
-        verify_response(response, 'twitter-share-image', 200)
+async def test_twitter_share_image(client, twitter_account, webapp):
+    response = await client.get(f'/preview/twitter/{twitter_account.id}')
+    verify_response(response, 'twitter-share-image', 200)
 
 
 async def test_twitter_account_redirect(client, freeze_uuids):
@@ -95,7 +100,7 @@ async def test_404(client):
     verify_response(response, 'twitter-404', 404)
 
 
-async def test_twitter_donation_image(client, twitter_account, app, settings, rich_donator):
+async def test_twitter_donation_image(client, twitter_account, webapp, rich_donator):
     donate_response = await client.post(
         "/api/v1/donate",
         json=DonateRequest(
@@ -106,6 +111,5 @@ async def test_twitter_donation_image(client, twitter_account, app, settings, ri
     )
     check_response(donate_response, 200)
 
-    async with app_serve(app, settings):
-        response = await client.get(f'/preview/donation/{donate_response.json()["donation"]["id"]}')
-        verify_response(response, 'twitter-donation-share-image', 200)
+    response = await client.get(f'/preview/donation/{donate_response.json()["donation"]["id"]}')
+    verify_response(response, 'twitter-donation-share-image', 200)
