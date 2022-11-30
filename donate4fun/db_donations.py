@@ -5,21 +5,35 @@ from datetime import datetime
 from sqlalchemy import select, desc, update, func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm.exc import NoResultFound  # noqa
+from sqlalchemy.sql import functions
 
-from .models import Donation, Notification, YoutubeNotification
-from .types import RequestHash, NotEnoughBalance
-from .db_models import DonatorDb, DonationDb, YoutubeChannelDb, YoutubeVideoDb, TwitterAuthorDb
+from .models import Donation, YoutubeNotification, Donator
+from .types import RequestHash, NotEnoughBalance, ValidationError, InvalidDbState
+from .db_models import DonatorDb, DonationDb, YoutubeChannelDb, YoutubeVideoDb, TwitterAuthorDb, TransferDb
 
 logger = logging.getLogger(__name__)
 
 
+class UnableToCancelDonation(ValidationError):
+    pass
+
+
+def claimable_donation_filter():
+    return (
+        DonationDb.claimed_at.is_(None)
+        & DonationDb.paid_at.is_not(None)
+        & DonationDb.cancelled_at.is_(None)
+    )
+
+
 class DonationsDbMixin:
-    async def query_donations(self, where, limit=20):
+    async def query_donations(self, where, limit=20, offset=0):
         result = await self.execute(
             select(DonationDb)
             .where(where)
             .order_by(desc(func.coalesce(DonationDb.paid_at, DonationDb.created_at)))
             .limit(limit)
+            .offset(offset)
         )
         return [Donation.from_orm(obj) for obj in result.unique().scalars()]
 
@@ -60,21 +74,22 @@ class DonationsDbMixin:
             .where(DonationDb.id == donation_id)
         )
 
-    async def cancel_donation(self, donation_id: UUID) -> RequestHash:
-        """
-        I'm not sure that this method is needed.
-        """
+    async def cancel_donation(self, donation_id: UUID):
         resp = await self.execute(
             update(DonationDb)
             .values(
                 cancelled_at=datetime.utcnow(),
             )
             .where(
-                DonationDb.id == donation_id,
+                claimable_donation_filter() &
+                (DonationDb.id == donation_id)
             )
-            .returning(DonationDb.r_hash)
+            .returning(*DonationDb.__table__.columns)
         )
-        return resp.scalar()
+        donation: DonationDb = resp.fetchone()
+        if donation is None:
+            raise UnableToCancelDonation("Donation could not be claimed")
+        await self.update_balance_for_donation(donation, -donation.amount)
 
     async def donation_paid(self, donation_id: UUID, amount: int, paid_at: datetime):
         resp = await self.execute(
@@ -84,31 +99,29 @@ class DonationsDbMixin:
                 amount=amount,
                 paid_at=paid_at,
             )
-            .returning(
-                DonationDb.id,
-                DonationDb.donator_id,
-                DonationDb.youtube_channel_id,
-                DonationDb.youtube_video_id,
-                DonationDb.twitter_account_id,
-                DonationDb.receiver_id,
-                DonationDb.r_hash,
-            )
+            .returning(*DonationDb.__table__.columns)
         )
-        row = resp.fetchone()
-        if row is None:
+        donation: DonationDb = resp.fetchone()
+        if donation is None:
             # Row could be already updated in another replica
             logger.debug(f"Donation {donation_id} was already handled, skipping")
             return
+        await self.update_balance_for_donation(donation, donation.amount)
 
+    async def update_balance_for_donation(self, donation: DonationDb, amount: int):
+        row = donation  # FIXME
         if row.youtube_channel_id:
-            await self.execute(
+            resp = await self.execute(
                 update(YoutubeChannelDb)
                 .values(
                     balance=YoutubeChannelDb.balance + amount,
                     total_donated=YoutubeChannelDb.total_donated + amount,
                 )
                 .where(YoutubeChannelDb.id == row.youtube_channel_id)
+                .returning(YoutubeChannelDb.balance)
             )
+            if resp.fetchone().balance < 0:
+                raise NotEnoughBalance(f"YouTube channel {row.youtube_channel_id} hasn't enough money")
             if row.youtube_video_id:
                 video_update_resp = await self.execute(
                     update(YoutubeVideoDb)
@@ -121,30 +134,72 @@ class DonationsDbMixin:
                 await self.notify(f'youtube-video:{row.youtube_video_id}', notification)
                 await self.notify(f'youtube-video-by-vid:{vid}', notification)
         elif row.twitter_account_id:
-            await self.execute(
+            resp = await self.execute(
                 update(TwitterAuthorDb)
                 .values(
                     balance=TwitterAuthorDb.balance + amount,
                     total_donated=TwitterAuthorDb.total_donated + amount,
                 )
                 .where(TwitterAuthorDb.id == row.twitter_account_id)
+                .returning(TwitterAuthorDb.balance)
             )
+            if resp.fetchone().balance < 0:
+                raise NotEnoughBalance(f"Twitter account {row.twitter_account_id} hasn't enough money")
         elif row.receiver_id:
-            await self.execute(
+            resp = await self.execute(
                 update(DonatorDb)
                 .values(balance=DonatorDb.balance + amount)
                 .where(DonatorDb.id == row.receiver_id)
+                .returning(DonatorDb.balance)
             )
-            await self.notify(f'donator:{row.receiver_id}', Notification(id=row.receiver_id, status='OK'))
+            if resp.fetchone().balance < 0:
+                raise NotEnoughBalance(f"Donator {row.receiver_id} hasn't enough money")
+            await self.object_changed('donator', row.receiver_id)
         else:
             raise ValueError(f"Donation has no target: {row.donation_id}")
         if row.r_hash is None:
             # donation without invoice, use donator balance
             resp = await self.execute(
                 update(DonatorDb)
-                .where((DonatorDb.id == row.donator_id) & (DonatorDb.balance >= amount))
+                .where((DonatorDb.id == row.donator_id))
                 .values(balance=DonatorDb.balance - amount)
+                .returning(DonatorDb.balance)
             )
-            if resp.rowcount != 1:
+            if resp.fetchone().balance < 0:
                 raise NotEnoughBalance(f"Donator {row.donator_id} hasn't enough money")
-        await self.notify(f'donation:{row.donation_id}', Notification(id=row.donation_id, status='OK'))
+        await self.object_changed('donation', row.donation_id)
+
+    async def start_transfer(self, donator: Donator, amount: int, donations_filter, **transfer_fields):
+        subquery = (
+            select(DonationDb)
+            .where(claimable_donation_filter() & donations_filter)
+            .with_for_update()
+            .subquery()
+        )
+        result = await self.execute(
+            select(functions.sum(subquery.c.amount).label('amount'))
+        )
+        if result.fetchone().amount != amount:
+            raise InvalidDbState
+        await self.execute(
+            insert(TransferDb)
+            .values(
+                amount=amount,
+                donator_id=donator.id,
+                created_at=functions.now(),
+                **transfer_fields,
+            )
+        )
+
+    async def finish_transfer(self, donator: Donator, amount: int, donations_filter):
+        await self.execute(
+            update(DonationDb)
+            .values(claimed_at=functions.now())
+            .where(claimable_donation_filter() & donations_filter)
+        )
+        await self.execute(
+            update(DonatorDb)
+            .values(balance=DonatorDb.balance + amount)
+            .where(DonatorDb.id == donator.id)
+        )
+        await self.object_changed('donator', donator.id)

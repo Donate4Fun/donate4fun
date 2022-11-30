@@ -1,4 +1,6 @@
 - amount: 20
+  cancelled_at: null
+  claimed_at: null
   created_at: !!python/object/apply:freezegun.api.FakeDatetime
   - !!binary |
     B+YCAhYWFgAAAA==
@@ -21,7 +23,7 @@
     B+YCAhYWFgAAAA==
   r_hash: !!python/object/new:donate4fun.types.RequestHash
     args:
-    - b"|G\x0b\xf0\x1e\x7f\xf3)'\x07\xe6w6\x83\x0f\xe2<\x08\xb9\x05*\x00\x95\xa2\xefx\xb4\xd5\x9c3b\xae"
+    - b'\xd7\xd5\x87\xba1\xe2\xf8\x9c\xf5\x95)\xc3\xa2\xdee\xc3p\x11\xa2G|\xfe8|\x16\x96-\x0b\x98\xf3=\xa6'
     state:
       data: !!binary |
         aGFzaA==
