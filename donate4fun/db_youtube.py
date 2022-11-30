@@ -1,12 +1,11 @@
 from uuid import UUID
-from datetime import datetime
 
 from sqlalchemy import select, func, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm.exc import NoResultFound  # noqa
 
 from .models import Donator, YoutubeChannel, YoutubeVideo, YoutubeChannelOwned
-from .db_models import YoutubeChannelDb, YoutubeVideoDb, YoutubeChannelLink, TransferDb, DonatorDb
+from .db_models import YoutubeChannelDb, YoutubeVideoDb, YoutubeChannelLink, DonationDb
 
 
 class YoutubeDbMixin:
@@ -140,24 +139,17 @@ class YoutubeDbMixin:
             .where(YoutubeChannelDb.id == youtube_channel.id)
         )
         amount: int = result.scalar()
-        await self.execute(
-            insert(TransferDb)
-            .values(
-                amount=amount,
-                donator_id=donator.id,
-                youtube_channel_id=youtube_channel.id,
-                created_at=datetime.utcnow(),
-            )
+        donations_filter = DonationDb.youtube_channel_id == youtube_channel.id
+        await self.start_transfer(
+            donator=donator,
+            amount=amount,
+            donations_filter=donations_filter,
+            youtube_channel_id=youtube_channel.id,
         )
         await self.execute(
             update(YoutubeChannelDb)
             .values(balance=YoutubeChannelDb.balance - amount)
             .where(YoutubeChannelDb.id == youtube_channel.id)
         )
-        await self.execute(
-            update(DonatorDb)
-            .values(balance=DonatorDb.balance + amount)
-            .where(DonatorDb.id == donator.id)
-        )
-        await self.object_changed('donator', donator.id)
+        await self.finish_transfer(amount=amount, donator=donator, donations_filter=donations_filter)
         return amount

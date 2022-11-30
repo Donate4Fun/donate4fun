@@ -46,7 +46,7 @@ class TwitterSettings(BaseModel):
 class DbSettings(BaseModel):
     url: str
     echo: bool = False
-    isolation_level: str = 'READ COMMITTED'
+    isolation_level: str = 'REPEATABLE READ'
     connect_args: dict[str, Any] = {}
     pool_size: int = 10
     max_overflow: int = 20

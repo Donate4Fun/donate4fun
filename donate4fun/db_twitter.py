@@ -1,13 +1,11 @@
-from uuid import UUID
 from typing import Any
-from datetime import datetime
+from uuid import UUID
 
 from sqlalchemy import select, func, update
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.orm.exc import NoResultFound  # noqa
 
 from .models import TwitterAccount, TwitterTweet, Donator, TwitterAccountOwned
-from .db_models import TwitterAuthorDb, TwitterTweetDb, OAuthTokenDb, TwitterAuthorLink, DonatorDb, TransferDb
+from .db_models import TwitterAuthorDb, TwitterTweetDb, OAuthTokenDb, TwitterAuthorLink, DonationDb
 
 
 class TwitterDbMixin:
@@ -94,26 +92,19 @@ class TwitterDbMixin:
             .where(TwitterAuthorDb.id == twitter_account.id)
         )
         amount: int = result.scalar()
-        await self.execute(
-            insert(TransferDb)
-            .values(
-                amount=amount,
-                donator_id=donator.id,
-                twitter_author_id=twitter_account.id,
-                created_at=datetime.utcnow(),
-            )
+        donations_filter = DonationDb.twitter_account_id == twitter_account.id
+        await self.start_transfer(
+            donator=donator,
+            amount=amount,
+            donations_filter=donations_filter,
+            twitter_author_id=twitter_account.id,
         )
         await self.execute(
             update(TwitterAuthorDb)
             .values(balance=TwitterAuthorDb.balance - amount)
             .where(TwitterAuthorDb.id == twitter_account.id)
         )
-        await self.execute(
-            update(DonatorDb)
-            .values(balance=DonatorDb.balance + amount)
-            .where(DonatorDb.id == donator.id)
-        )
-        await self.object_changed('donator', donator.id)
+        await self.finish_transfer(amount=amount, donator=donator, donations_filter=donations_filter)
         return amount
 
 

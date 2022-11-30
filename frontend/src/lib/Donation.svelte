@@ -1,6 +1,6 @@
 <script>
-  import { createEventDispatcher } from 'svelte';
-  import { link } from "svelte-navigator";
+  import { onMount, onDestroy } from 'svelte';
+  import { link, useNavigate } from "svelte-navigator";
 
   import Button from "$lib/Button.svelte";
   import Section from "$lib/Section.svelte";
@@ -11,15 +11,13 @@
   import Editable from "$lib/Editable.svelte";
   import ChannelLogo from "$lib/ChannelLogo.svelte";
   import Donator from "$lib/Donator.svelte";
-  import TwitterAccount from "$lib/TwitterAccount.svelte";
-  import TwitterShare from "$lib/TwitterShare.svelte";
+  import TwitterDonation from "$lib/TwitterDonation.svelte";
   import { me } from "$lib/session.js";
   import { copy, youtube_video_url, youtube_channel_url } from "$lib/utils.js";
-
-  const dispatch = createEventDispatcher();
+  import api from "$lib/api.js";
 
   export let donation;
-
+  let navigate = useNavigate();
   let message = `Hi! I like your video! I’ve donated you ${donation.amount} sats. You can take it on "donate 4 fun"`;
 
   function copyAndShare() {
@@ -32,54 +30,86 @@
     }
     window.open(url, '_blank').focus();
   }
+
+  async function cancel() {
+    await api.post(`/donation/${donation.id}/cancel`);
+  }
+
+  let ws;
+  onDestroy(async () => {
+    await ws?.close();
+  });
+
+  async function subscribe() {
+    ws = api.subscribe(`donation:${donation.id}`, { autoReconnect: false });
+    ws.on("notification", async (notification) => {
+      await ws.close();
+      ws = null;
+      donation = (await api.get(`donation/${donation.id}`)).donation;
+    });
+    await ws.ready();
+  }
+
+  onMount(subscribe);
 </script>
 
 <main>
-{#await $me}
-  <Loading/>
-{:then me}
   {#if donation.paid_at}
-    {#if donation.youtube_channel}
-      <ChannelLogo url={donation.youtube_channel.thumbnail_url} size=72px />
-      <div class="header">
-        <p>Great! You've sent <Amount amount={donation.amount}/> to</p>
-        <YoutubeChannel channel={donation.youtube_channel}/>
-      </div>
-      {#if me.donator.id === donation.donator_id}
-        <Infobox>Copy and share the message with the link or just tell {donation.youtube_channel.title} to receive the donation here at «Donate4Fun»</Infobox>
-        <div>
-          {#if donation.youtube_video}
-            Now leave a comment on <a href="{youtube_video_url(donation.youtube_video.video_id)}" target=_blank>his video</a> to make him know of donation:
-          {:else}
-            Now leave a comment on his video to make him know of donation:
-          {/if}
+    <div class:cancelled={donation.cancelled_at !== null}>
+      {#if donation.youtube_channel}
+        <ChannelLogo url={donation.youtube_channel.thumbnail_url} size=72px />
+        <div class="header">
+          <p>Great! You've sent <Amount amount={donation.amount}/> to</p>
+          <YoutubeChannel channel={donation.youtube_channel}/>
         </div>
-        <ol>
-          <li>Press "Copy and Share" - comment will be copied to clipboard and YouTube video tab will open</li>
-          <li>Scroll to comments section and focus "Add a comment..." field</li>
-          <li>Paste a comment from clipboard and post it</li>
-        </ol>
-        <Editable class=message message={message} />
-        <Button on:click={copyAndShare} class="copy-button">Copy and Share</Button>
-        <Button on:click={() => dispatch("close")} class="grey">Back</Button>
+        {#await $me then me}
+          {#if me.donator.id === donation.donator_id}
+            <Infobox>Copy and share the message with the link or just tell {donation.youtube_channel.title} to receive the donation here at «Donate4Fun»</Infobox>
+            <div>
+              {#if donation.youtube_video}
+                Now leave a comment on <a href="{youtube_video_url(donation.youtube_video.video_id)}" target=_blank>his video</a> to make him know of donation:
+              {:else}
+                Now leave a comment on his video to make him know of donation:
+              {/if}
+            </div>
+            <ol>
+              <li>Press "Copy and Share" - comment will be copied to clipboard and YouTube video tab will open</li>
+              <li>Scroll to comments section and focus "Add a comment..." field</li>
+              <li>Paste a comment from clipboard and post it</li>
+            </ol>
+            <Editable class=message message={message} />
+            <Button on:click={copyAndShare} class="copy-button">Copy and Share</Button>
+            <Button on:click={() => navigate(-1)} class="grey">Back</Button>
+          {/if}
+        {/await}
+      {:else if donation.twitter_account}
+        <TwitterDonation {donation} />
       {/if}
-    {:else if donation.twitter_account}
-      {#if donation.donator_twitter_account}
-        <TwitterAccount account={donation.donator_twitter_account} />
-      {:else}
-        <Donator user={donation.donator} />
-      {/if}
-      <div class="twitter-donation">
-        donated <Amount amount={donation.amount} /> to
+    </div>
+    {#if donation.cancelled_at}
+      <div class="status-message">
+        Donation cancelled
       </div>
-      <TwitterAccount account={donation.twitter_account} />
-      <TwitterShare text="Hey @{donation.twitter_account.handle}, I've sent you a donation" />
-      <a use:link href="/twitter/{donation.twitter_account.id}/owner">Claim</a>
+    {:else if donation.claimed_at}
+      <div class="status-message">
+        Donation claimed
+      </div>
+    {:else}
+      {#await $me then me}
+        {#if donation.donator.id === me.donator.id}
+          <Button
+            --background-image="linear-gradient(white,white)"
+            --border-width=0
+            --text-color="#FF4B4B"
+            --shadow="none"
+            on:click={cancel}
+          >Cancel donation</Button>
+        {/if}
+      {/await}
     {/if}
   {:else}
     Unpaid donation
   {/if}
-{/await}
 </main>
 
 <style>
@@ -88,7 +118,11 @@ main {
   flex-direction: column;
   align-items: center;
   gap: 32px;
-  padding: 44px 84px 40px 84px;
+  padding: 58px;
+  width: 640px;
+}
+.cancelled {
+  opacity: 0.5;
 }
 .header {
   display: flex;
@@ -98,12 +132,9 @@ main {
   font-weight: 900;
   font-size: 24px;
 }
-.twitter-donation {
-  display: flex;
-  gap: 8px;
-}
-main > :global(button) {
-  width: 402px;
-  height: 44px;
+.status-message {
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 19px;
 }
 </style>

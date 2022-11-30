@@ -251,7 +251,7 @@ async def registered_donator(db):
     sk = ecdsa.SigningKey.generate(entropy=ecdsa.util.PRNG(b'seed'), curve=ecdsa.SECP256k1)
     pubkey = sk.verifying_key.to_string().hex()
     async with db.session() as db_session:
-        donator_id = UUID(int=1)  # Should differ from doantor_id fixture
+        donator_id = UUID(int=1)  # Should differ from donator_id fixture
         await db_session.login_donator(donator_id, key=pubkey)
         return await db_session.query_donator(donator_id)
 

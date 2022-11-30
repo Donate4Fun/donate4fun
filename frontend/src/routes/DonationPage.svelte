@@ -57,7 +57,7 @@
     {:then}
       {#if donation.paid_at}
         {#if !donation.receiver}
-          <Donation donation={donation} on:close={() => navigate(-1)} />
+          <Donation donation={donation} />
         {:else}
           <div class="flex-column">
             {#await $me then me}

@@ -72,6 +72,9 @@
   display: contents;
   --border-width-secondary: var(--border-width, 2px);
   --border-width-primary: var(--border-width, 4px);
+  ---text-color: var(--text-color, var(--link-color));
+  ---border-color: var(--border-color, var(--link-color));
+  ---shadow: var(--shadow, 0px 10px 40px rgba(46, 108, 255, 0.2), 10px 15px 20px rgba(209, 217, 230, 0.15));
 }
 .inner {
   display: flex;
@@ -82,15 +85,15 @@ button {
   background-image: var(--background-image, linear-gradient(90deg, #F9F03E 0%, #9DEDA2 100%));
   font-weight: var(--font-weight, 700);
   font-size: var(--font-size, inherit);
-  color: var(--link-color);
+  color: var(---text-color);
   padding: var(--padding, 12px 25px);
   cursor: pointer;
   height: var(--height, auto);
   width: var(--width, 100%);
   transition: all 0.2s ease;
-  box-shadow: 0px 10px 40px rgba(46, 108, 255, 0.2), 10px 15px 20px rgba(209, 217, 230, 0.15);
+  box-shadow: var(---shadow);
 
-  border: var(--border-width-primary) solid var(--link-color);
+  border: var(--border-width-primary) solid var(---border-color);
   border-radius: 100px;
   letter-spacing: 0.02em;
 }

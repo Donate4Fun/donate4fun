@@ -156,6 +156,8 @@ class Donation(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     message: str | None = None
     paid_at: datetime | None = None
+    cancelled_at: datetime | None = None
+    claimed_at: datetime | None = None
 
     @root_validator(pre=True)
     def default_donator(cls, values: dict[str, Any]):
