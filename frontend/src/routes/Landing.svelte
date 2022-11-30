@@ -283,7 +283,7 @@ h1, h2 {
   background: linear-gradient(90deg, #FF4B4B 0%, #DC24A9 100%);
 }
 .new {
-  background: linear-gradient(90deg, #FF9634 0%, #FF4B4B 60.94%, #DC24A9 100%), #414141;
+  background: linear-gradient(90deg, #FF9634 0%, #FF4B4B 60.94%, #DC24A9 100%);
 }
 .main-upper {
   display: flex;

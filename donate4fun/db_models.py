@@ -114,6 +114,7 @@ class DonationDb(Base):
     )
     paid_at = Column(TIMESTAMP)
     cancelled_at = Column(TIMESTAMP)
+    claimed_at = Column(TIMESTAMP)
 
     receiver_id = Column(Uuid(as_uuid=True), ForeignKey(DonatorDb.id))
     receiver = relationship(DonatorDb, lazy='joined', foreign_keys=[receiver_id])

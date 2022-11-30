@@ -156,8 +156,9 @@ async def cancel_donation(donation_id: UUID, db=Depends(get_db_session)):
     """
     It only works for HODL invoices
     """
-    r_hash: RequestHash = await db.cancel_donation(donation_id)
-    await lnd.cancel_invoice(r_hash)
+    r_hash: RequestHash | None = await db.cancel_donation(donation_id)
+    if r_hash is not None:
+        await lnd.cancel_invoice(r_hash)
 
 
 @router.get("/donations/latest", response_model=list[Donation])
@@ -169,8 +170,14 @@ async def latest_donations(db=Depends(get_db_session)):
 
 
 @router.get("/donations/by-donator/{donator_id}", response_model=list[Donation])
-async def donator_donations(donator_id: UUID, db=Depends(get_db_session)):
-    return await db.query_donations((DonationDb.donator_id == donator_id) & DonationDb.paid_at.isnot(None))
+async def donator_donations(donator_id: UUID, db=Depends(get_db_session), offset: int = 0):
+    return await db.query_donations(
+        DonationDb.paid_at.isnot(None) & (
+            (DonationDb.donator_id == donator_id)
+            | (DonationDb.receiver_id == donator_id)
+        ),
+        offset=offset,
+    )
 
 
 class StatusResponse(BaseModel):

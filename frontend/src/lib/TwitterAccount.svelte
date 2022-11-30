@@ -14,7 +14,7 @@
   {#if imagePlacement === 'before'}
     <img class="avatar" alt=avatar src={imageUrl} />
   {/if}
-  <span class="name">{account.name}</span>
+  <span class="name ellipsis">{account.name}</span>
   {#if showHandle}
     <span class="handle">@{account.handle}</span>
   {/if}

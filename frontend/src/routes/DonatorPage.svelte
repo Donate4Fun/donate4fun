@@ -1,13 +1,13 @@
 <script>
+  import { link } from "svelte-navigator";
+
   import Loader from "$lib/Loader.svelte";
   import Userpic from "$lib/Userpic.svelte";
   import Section from "$lib/Section.svelte";
-  import YoutubeVideo from "$lib/YoutubeVideo.svelte";
   import Donator from "$lib/Donator.svelte";
   import Amount from "$lib/Amount.svelte";
   import FiatAmount from "$lib/FiatAmount.svelte";
   import Button from "$lib/Button.svelte";
-  import Datetime from "$lib/Datetime.svelte";
   import Separator from "$lib/Separator.svelte";
   import MeNamePubkey from "$lib/MeNamePubkey.svelte";
   import MeBalance from "$lib/MeBalance.svelte";
@@ -16,16 +16,14 @@
   import TwitterAccount from "$lib/TwitterAccount.svelte";
   import YoutubeChannel from "$lib/YoutubeChannel.svelte";
   import ChannelLogo from "$lib/ChannelLogo.svelte";
+  import TransactionHistory from "$lib/TransactionHistory.svelte";
   import { me, reloadMe } from "$lib/session.js";
   import api from "$lib/api.js";
-  import { link } from "svelte-navigator";
-  import { toText } from "$lib/utils.js";
   import title from "$lib/title.js";
 
   export let donator_id;
   let itsMe;
   let donator;
-  let donations;
 
   async function load(donator_id, me_) {
     const me = await me_;
@@ -37,7 +35,6 @@
       donator = await api.get(`donator/${donator_id}`);
     }
     title.set(`Donator profile for ${donator.name}`);
-    donations = await api.get(`donations/by-donator/${donator_id}`);
     return me;
   }
 </script>
@@ -76,44 +73,7 @@
         <Button link="/fulfill/{donator_id}">Donate</Button>
       {/if}
       <div class=transactions><Separator>History</Separator></div>
-      <div class="table">
-        <div class="head">
-          <div>Date</div>
-          <div>Donatee</div>
-          <div>Amount</div>
-          <div>Status</div>
-        </div>
-        {#each donations as donation}
-          <a use:link href="/donation/{donation.id}">
-            {#if donation.paid_at}
-              <Datetime dt={donation.paid_at}/>
-            {:else}
-              <Datetime dt={donation.created_at}/>
-            {/if}
-          </a>
-          {#if donation.youtube_video}
-            <YoutubeVideo video={donation.youtube_video} --gap=16px />
-          {:else if donation.youtube_channel}
-            <YoutubeChannel channel={donation.youtube_channel} class="ellipsis" linkto=withdraw logo --gap=16px />
-          {:else if donation.twitter_account}
-            <TwitterAccount account={donation.twitter_account} class="ellipsis" --image-size=24px --gap=16px />
-          {:else}
-            <Donator user={donation.receiver} ellipsis --gap=16px />
-          {/if}
-          <Amount amount={toText(donation.amount)}/>
-          <div>
-            {#if donation.paid_at}
-              {#if donation.donator.id === donation.receiver?.id}
-                Received
-              {:else}
-                Paid
-              {/if}
-            {:else}
-              Unpaid
-            {/if}
-          </div>
-        {/each}
-      </div>
+      <TransactionHistory {donator_id} />
     </div>
   </Section>
 {/await}
@@ -124,7 +84,8 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 36px 34px 123px;
+  padding: 36px 34px;
+  width: 640px;
 }
 .balance-actions {
   width: 300px;
@@ -139,18 +100,5 @@
   margin-top: 56px;
   margin-bottom: 32px;
   width: 100%;
-}
-.table .head {
-  color: rgba(0, 0, 0, 0.6);
-  text-align: left;
-  display: contents;
-}
-.table {
-  font-size: 12px;
-  display: grid;
-  grid-template-columns: 109px 199px 83px 45px;
-  column-gap: 20px;
-  row-gap: 26px;
-  align-items: center;
 }
 </style>

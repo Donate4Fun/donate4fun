@@ -63,9 +63,13 @@ class UnsupportedTarget(ValidationError):
     pass
 
 
-class NotEnoughBalance(Exception):
+class NotEnoughBalance(ValidationError):
     pass
 
 
 class NotFound(Exception):
+    pass
+
+
+class InvalidDbState(Exception):
     pass
