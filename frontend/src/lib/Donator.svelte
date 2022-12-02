@@ -16,5 +16,6 @@ a {
   display: flex;
   align-items: center;
   gap: var(--gap, 1em);
+  min-width: 0;
 }
 </style>

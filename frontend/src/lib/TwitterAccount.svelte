@@ -28,6 +28,7 @@
   display: flex;
   align-items: center;
   gap: var(--gap, 0.4em);
+  min-width: 0;
 }
 .avatar {
   width: var(--image-size, 32px);

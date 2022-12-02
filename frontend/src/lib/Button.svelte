@@ -9,6 +9,7 @@
   export let selected = false;
   export let dimmed = false;
   export let disabled = false;
+  export let primary = true;
 
   function createEventDispatcher() {
     const component = get_current_component();
@@ -54,7 +55,7 @@
 </script>
 
 <div class="root">
-  <button {...$$restProps} on:click={click} disabled={disabled || spin} class:selected class:dimmed>
+  <button {...$$restProps} on:click={click} disabled={disabled || spin} class:selected class:dimmed class:secondary={!primary}>
     <div class="inner">
       {#if spin}
         <div class="loader">
@@ -102,7 +103,7 @@ button div {
   height: 100%;
   width: 100%;
 }
-button.white,button.light,button.blue,button.grey {
+button.white,button.light,button.blue,button.grey,button.secondary {
   border: 0;
   box-shadow: none;
 }
@@ -118,7 +119,7 @@ button.blue {
 button.grey {
   background: #E9E9E9;
 }
-button.white > div,button.light > div, button.blue > div {
+button.white > div,button.light > div, button.blue > div, button.secondary > div {
   border-radius: inherit;
   padding: var(--padding, 10px 23px);  /* parent padding - 2px (pseudo-border) */
 }

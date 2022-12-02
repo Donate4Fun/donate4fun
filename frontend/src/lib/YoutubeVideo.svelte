@@ -13,7 +13,7 @@ div {
   display: flex;
   align-items: center;
   gap: var(--gap, 0.4em);
-  width: 100%;
+  min-width: 0;
 }
 img {
   width: 2em;
