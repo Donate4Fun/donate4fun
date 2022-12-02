@@ -1,5 +1,8 @@
-import anyio
 import asyncio
+from contextvars import ContextVar
+
+import anyio
+import pytest
 
 
 async def test_anyio():
@@ -21,3 +24,17 @@ async def async_gen():
         tg.start_soon(asyncio.sleep, 100)
         for i in range(100):
             yield i
+
+
+blah = ContextVar("blah")
+
+
+@pytest.fixture
+async def my_context_var():
+    blah.set("hello")
+    assert blah.get() == "hello"
+    yield blah
+
+
+async def test_blah(my_context_var):
+    assert my_context_var.get() == "hello"
