@@ -10,7 +10,7 @@
   $: imageUrl = account.profile_image_url.replace('_normal', '_x96');
 </script>
 
-<a use:link href={pageLink} class="container">
+<a use:link target={externalLink ? "_blank" : ""} href={pageLink} class="container">
   {#if imagePlacement === 'before'}
     <img class="avatar" alt=avatar src={imageUrl} />
   {/if}
