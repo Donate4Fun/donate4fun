@@ -42,7 +42,7 @@
       <div class="content">
         <h1>
           <img alt=twitter src="/static/twitter.svg" width=20>
-          Donate to <TwitterAccount showHandle={false} imagePlacement=after --image-size=44px account={account} />
+          Donate to <TwitterAccount externalLink={true} showHandle={false} imagePlacement=after --image-size=44px account={account} />
         </h1>
         <div class="buttons">
           <PaymentWidget target={{twitter_account_id: account.id}} on:paid={load} />
