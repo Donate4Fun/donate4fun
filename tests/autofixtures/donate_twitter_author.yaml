@@ -24,7 +24,7 @@ json:
       name: Donate4.Fun
       profile_image_url: https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_normal.png
       total_donated: 0
-      user_id: 1572908920485576704
+      user_id: '1572908920485576704'
     twitter_tweet: null
     youtube_channel: null
     youtube_video: null
