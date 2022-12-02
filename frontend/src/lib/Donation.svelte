@@ -32,7 +32,7 @@
   }
 
   async function cancel() {
-    await api.post(`/donation/${donation.id}/cancel`);
+    await api.post(`donation/${donation.id}/cancel`);
   }
 
   let ws;
@@ -55,7 +55,7 @@
 
 <main>
   {#if donation.paid_at}
-    <div class:cancelled={donation.cancelled_at !== null}>
+    <div class="cancelled-container" class:cancelled={donation.cancelled_at !== null}>
       {#if donation.youtube_channel}
         <ChannelLogo url={donation.youtube_channel.thumbnail_url} size=72px />
         <div class="header">
@@ -120,6 +120,9 @@ main {
   gap: 32px;
   padding: 58px;
   width: 640px;
+}
+.cancelled-container {
+  width: 100%;
 }
 .cancelled {
   opacity: 0.5;
