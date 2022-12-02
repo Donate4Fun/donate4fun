@@ -1,6 +1,8 @@
 <script>
   import { link } from "svelte-navigator";
+
   import TwitterShare from "$lib/TwitterShare.svelte";
+  import EmbeddedTweet from "$lib/EmbeddedTweet.svelte";
 
   export let donation;
 </script>
@@ -33,6 +35,9 @@
   {#if donation.cancelled_at === null && donation.claimed_at === null}
     <TwitterShare text="Hey @{donation.twitter_account.handle}, I've sent you a donation" />
     <a use:link href="/twitter/{donation.twitter_account.id}/owner">Claim</a>
+  {/if}
+  {#if donation.twitter_tweet !== null}
+    <EmbeddedTweet id={donation.twitter_tweet.tweet_id} />
   {/if}
 </div>
 
