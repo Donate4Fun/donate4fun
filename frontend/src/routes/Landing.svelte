@@ -114,7 +114,6 @@
   <section id="video">
     <h1 class="gradient light">How it works</h1>
     <video autoplay muted loop playsinline width=796px>
-      <!-- source src="/static/sample2.webm" type="video/webm" / -->
       <source src="/static/sample2.mp4" type="video/mp4" />
     </video>
   </section>
@@ -272,9 +271,6 @@ h1, h2 {
   text-fill-color: transparent;
   background-clip: text !important;
   -webkit-background-clip: text !important;
-}
-.extra-light {
-  background: linear-gradient(90deg, #FF9634 10%, #FF4D00 90%);
 }
 .light {
   background: linear-gradient(89.59deg, #FF9634 27.11%, #DC24A9 92.47%);
