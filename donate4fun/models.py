@@ -20,6 +20,7 @@ class BaseModel(PydanticBaseModel):
         json_encoders = {
             RequestHash: lambda r: r.to_json(),
             int: lambda x: x if abs(x) < 2 ** 31 else str(x),
+            datetime: lambda d: f'{d.isoformat()}+00:00',
         }
 
     def to_json_dict(self):
