@@ -2,6 +2,8 @@
   import {onDestroy} from "svelte";
   import Lnurl from "$lib/Lnurl.svelte";
   import Button from "$lib/Button.svelte";
+  import WhiteButton from "$lib/WhiteButton.svelte";
+  import GrayButton from "$lib/GrayButton.svelte";
   import QRCode from "$lib/QRCode.svelte";
   import Section from "$lib/Section.svelte";
   import Loading from "$lib/Loading.svelte";
@@ -71,16 +73,15 @@
         <div class="buttons">
           <Button on:click={() => connect(lnurl)}>Connect using Wallet</Button>
           <Lnurl lnurl="{lnurl}" class="lnurl" />
-          <Button class="white" on:click={resetMe}>Reset account</Button>
+          <WhiteButton on:click={resetMe}>Reset account</WhiteButton>
           {#if me.donator.lnauth_pubkey}
-            <Button
-              class="white"
+            <WhiteButton
               on:click={disconnect}
               disabled={me.donator.balance > 0}
               title={me.donator.balance > 0 ? "You can't disconnect wallet if you have funds" : ""}
-            >Disconnect wallet</Button>
+            >Disconnect wallet</WhiteButton>
           {/if}
-          <Button class="grey" on:click={() => navigate(-1)}>Cancel</Button>
+          <GrayButton on:click={() => navigate(-1)}>Cancel</GrayButton>
           <NeedHelp />
         </div>
       {:catch err}

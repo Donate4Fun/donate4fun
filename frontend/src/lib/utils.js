@@ -1,4 +1,5 @@
 import { readable, writable, get } from 'svelte/store';
+import { custom_event, get_current_component } from 'svelte/internal'
 import cLog from "$lib/log.js";
 
 export const webOrigin = writable(globalThis.location.origin);
@@ -70,7 +71,6 @@ function makeStore(func) {
 export const extensionPresent = makeStore(isExtensionPresent);
 export const weblnPresent = makeStore(isWeblnPresent);
 
-
 export function toText(amount) {
   return amount >= 1000 ? `${amount / 1000} K` : amount;
 }
@@ -90,4 +90,36 @@ export function capitalize(s) {
   if (typeof s !== 'string')
     return '';
   return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+// This dispatcher returns promise
+function createAwaitableDispatcher() {
+  const component = get_current_component();
+
+  return (type, detail) => {
+    const callbacks = component.$$.callbacks[type];
+
+    if (callbacks) {
+      // TODO are there situations where events could be dispatched
+      // in a server (non-DOM) environment?
+      const arr = [];
+      const hasCallbacks = !!callbacks.length;
+      const event = custom_event(type, detail);
+      callbacks.slice().forEach(fn => {
+        const res = fn.call(component, event);
+        if (res instanceof Promise) {
+          arr.push(res);
+        }
+      });
+      return Promise.all(arr).then(() => hasCallbacks);
+    }
+    return new Promise((resolve) => resolve(false));
+  };
+}
+
+export function clickDispatcher() {
+  const dispatch = createAwaitableDispatcher();
+  return async function click(ev) {
+    return await dispatch("click", ev);
+  };
 }

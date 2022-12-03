@@ -71,19 +71,21 @@
           </div>
         {/if}
       {:else}
-        {#if donation.youtube_channel}
-          <h1>Donate <Amount amount={donation.amount} /> to</h1>
-          <YoutubeChannel channel={donation.youtube_channel} />
-        {:else if donation.receiver}
-          {#await $me then me}
-            {#if donation.receiver.id === me.donator.id}
-              <h1>Fulfill <Amount amount={donation.amount} /> to your wallet</h1>
-            {:else}
-              <h1>Donate <Amount amount={donation.amount} /> to <Donator user={donation.receiver} /></h1>
-            {/if}
-          {/await}
-        {/if}
-        <Invoice donation={donation} paymentRequest={payment_request} on:cancel={() => navigate(-1)} on:paid={paid} />
+        <div class="padding">
+          {#if donation.youtube_channel}
+            <h1>Donate <Amount amount={donation.amount} /> to</h1>
+            <YoutubeChannel channel={donation.youtube_channel} />
+          {:else if donation.receiver}
+            {#await $me then me}
+              {#if donation.receiver.id === me.donator.id}
+                <h1>Fulfill <Amount amount={donation.amount} /> to your wallet</h1>
+              {:else}
+                <h1>Donate <Amount amount={donation.amount} /> to <Donator user={donation.receiver} /></h1>
+              {/if}
+            {/await}
+          {/if}
+          <Invoice donation={donation} paymentRequest={payment_request} on:cancel={() => navigate(-1)} on:paid={paid} />
+        </div>
       {/if}
     {:catch error}
       <NotFoundPage {error} />
@@ -97,5 +99,12 @@
   flex-direction: column;
   align-items: center;
   width: 640px;
+}
+.padding {
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: center;
 }
 </style>

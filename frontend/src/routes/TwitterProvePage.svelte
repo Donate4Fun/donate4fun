@@ -2,6 +2,7 @@
   import Section from "$lib/Section.svelte";
   import Editable from "$lib/Editable.svelte";
   import CopyButton from "$lib/CopyButton.svelte";
+  import GrayButton from "$lib/GrayButton.svelte";
   import Button from "$lib/Button.svelte";
   import TwitterAccount from "$lib/TwitterAccount.svelte";
   import { me, reloadMe } from "$lib/session.js";
@@ -47,7 +48,7 @@
         {/if}
       {/await}
     </div>
-    <Button class="grey" on:click={() => navigate(-1)}>Back</Button>
+    <GrayButton on:click={() => navigate(-1)}>Back</GrayButton>
   </main>
 </Section>
 

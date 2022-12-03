@@ -9,7 +9,7 @@
   import TwitterAccount from "$lib/TwitterAccount.svelte";
   import YoutubeChannel from "$lib/YoutubeChannel.svelte";
   import Donator from "$lib/Donator.svelte";
-  import Button from "$lib/Button.svelte";
+  import BaseButton from "$lib/BaseButton.svelte";
   import api from "$lib/api.js";
   import { toText } from "$lib/utils.js";
 
@@ -19,7 +19,6 @@
   async function load() {
     const newDonations = await api.get(`donations/by-donator/${donator_id}?offset=${donations.length}`);
     donations = [...donations, ...newDonations];
-    console.log("donations", donations);
   }
 </script>
 
@@ -79,13 +78,12 @@
     {/await}
   </div>
   {#if donations.length}
-    <Button
+    <BaseButton
       --width=136px
       --border-color="rgba(46, 108, 255, 0.15)"
       --background-image="linear-gradient(white, white)"
-      primary={false}
       on:click={load}
-    >Show more</Button>
+    >Show more</BaseButton>
   {/if}
 </div>
 

@@ -1,15 +1,17 @@
 <script>
-  import {me} from "$lib/session.js";
+  import { me } from "$lib/session.js";
   import Button from "$lib/Button.svelte";
-  import {resolve} from "$lib/utils.js";
+  import WhiteButton from "$lib/WhiteButton.svelte";
+  import GrayButton from "$lib/GrayButton.svelte";
+  import { resolve } from "$lib/utils.js";
 
   export let target = null;
 </script>
 
 {#await $me}
-  <Button class="grey">...</Button>
+  <GrayButton disabled>...</GrayButton>
 {:then me}
-  <Button class="white" link={resolve('/login')} target={target} --padding="0" --height="40px" --width="160px" --border-width="1px">
+  <WhiteButton link={resolve('/login')} target={target} --height="40px" --width="160px" --border-width="2px">
     {#if me.connected}
       <div class="inner">
         <p class="connected">Wallet connected <img src="/static/checkbox.svg" alt="checkbox"></p>
@@ -18,7 +20,7 @@
     {:else}
       Connect Wallet
     {/if}
-  </Button>
+  </WhiteButton>
 {:catch err}
   <p>Catch {err}</p>
 {/await}
