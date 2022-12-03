@@ -6,6 +6,7 @@
   import Amount from "$lib/Amount.svelte";
   import Error from "$lib/Error.svelte";
   import Button from "$lib/Button.svelte";
+  import GrayButton from "$lib/GrayButton.svelte";
   import Lnurl from "$lib/Lnurl.svelte";
   import Section from "$lib/Section.svelte";
   import QRCode from "$lib/QRCode.svelte";
@@ -55,14 +56,14 @@
         <img src="/static/success.png" class="success" alt="success">
         <div class="donations-claimed">Donations claimed</div>
         <div class="buttons success">
-          <Button class="grey" on:click={() => navigate(-1)}>Close</Button>
+          <GrayButton on:click={() => navigate(-1)}>Close</GrayButton>
         </div>
       {:else}
           <a class="qrcode" href="lightning:{lnurl}"><QRCode value={lnurl} /></a>
           <div class="buttons">
             <a href="lightning:{lnurl}" class="open-in-wallet"><Button>Open in wallet</Button></a>
             <Lnurl lnurl={lnurl} class="lnurl" />
-            <Button class="grey" on:click={() => navigate(-1)}>Cancel</Button>
+            <GrayButton on:click={() => navigate(-1)}>Cancel</GrayButton>
           </div>
           <div class="suggestion">
             Don’t have a wallet? Download wallet and claim your donations with a Wallet Like
@@ -79,7 +80,7 @@
 
 <style>
 .withdraw {
-  padding: 20px 120px 74px 120px;
+  padding: 40px 120px 74px 120px;
   display: flex;
   flex-direction: column;
   align-items: center;

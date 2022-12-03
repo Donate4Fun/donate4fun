@@ -1,5 +1,5 @@
 <script>
-  import Button from "$lib/Button.svelte";
+  import ServiceLinkButton from "$lib/ServiceLinkButton.svelte";
   import NumberedItem from "$lib/NumberedItem.svelte";
   import PopupSection from "$extlib/PopupSection.svelte";
   import cLog from "$lib/log.js";
@@ -18,11 +18,19 @@
         </span>
       </NumberedItem>
       <div class="services-line">
-        <Button class="blue" on:click={close} link="https://youtube.com" target="_blank"><img alt=youtube src="/static/youtube.svg" class="service-icon"><span class="service-name">YouTube</span></Button>
-        <Button class="blue" on:click={close} link="https://twitter.com" target="_blank"><img alt=twitter src="/static/twitter.svg" class="service-icon"><span class="service-name">Twitter</span></Button>
+        <ServiceLinkButton on:click={close} link="https://youtube.com">
+          <img alt=youtube src="/static/youtube.svg" class="service-icon">
+          <span class="service-name">YouTube</span>
+        </ServiceLinkButton>
+        <ServiceLinkButton on:click={close} link="https://twitter.com">
+          <img alt=twitter src="/static/twitter.svg" class="service-icon">
+          <span class="service-name">Twitter</span>
+        </ServiceLinkButton>
       </div>
       <div class="services-line">
-        <Button class="blue" on:click={close} link="https://github.com/orgs/Donate4Fun/projects/1/views/1?filterQuery=label%3Aproviders+" target="_blank"><span class="service-name">More soon</span></Button>
+        <ServiceLinkButton on:click={close} link="https://github.com/orgs/Donate4Fun/projects/1/views/1?filterQuery=label%3Aproviders+">
+          <span class="service-name">More soon</span>
+        </ServiceLinkButton>
       </div>
     </div>
     <NumberedItem number=2>

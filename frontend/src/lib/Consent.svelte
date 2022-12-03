@@ -1,5 +1,6 @@
 <script>
   import Button from "$lib/Button.svelte";
+  import GrayButton from "$lib/GrayButton.svelte";
   import { trackingEnabled, acceptTracking, declineTracking } from "$lib/analytics.js";
 </script>
 
@@ -7,7 +8,7 @@
 <div class="root">
   <span class="text">Help us improve the service by allowing analytics cookie</span>
   <Button --width=125px --font-size=12px on:click={acceptTracking}>Accept</Button>
-  <Button class="grey" --width=73px --font-size=12px on:click={declineTracking}>Decline</Button>
+  <GrayButton --width=73px --font-size=12px on:click={declineTracking}>Decline</GrayButton>
 </div>
 {/if}
 

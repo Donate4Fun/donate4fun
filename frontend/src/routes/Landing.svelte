@@ -3,7 +3,8 @@
   import { useResolve, useLocation, useNavigate, link } from "svelte-navigator";
 
   import LandingYoutuber from "$lib/LandingYoutuber.svelte";
-  import Button from "$lib/Button.svelte";
+  import WhiteButton from "$lib/WhiteButton.svelte";
+  import LandingButton from "$lib/LandingButton.svelte";
   import Section from "$lib/Section.svelte";
   import LandingSection from "$lib/LandingSection.svelte";
   import LandingSteps from "$lib/LandingSteps.svelte";
@@ -90,12 +91,12 @@
           </div>
         </div>
         <div class="desktop-only" on:click={showExtensionPopup}>
-          <Button --width=300px>Get Extension</Button>
+          <LandingButton --width=300px>Get Extension</LandingButton>
         </div>
         <form on:submit|preventDefault={submitEmail} class="mobile-only flex-column gap-18 text-align-center">
           Currently we support only desktop browsers.
           <Input bind:value={email} placeholder="Add your email" />
-          <Button type=submit>
+          <LandingButton type=submit>
             {#if emailAdded === null}
               Notify me when app is ready
             {:else if emailAdded === true}
@@ -103,7 +104,7 @@
             {:else if emailAdded === false}
               Already subscribed!
             {/if}
-          </Button>
+          </LandingButton>
         </form>
       </div>
       <div class="main-upper-right">
@@ -136,7 +137,7 @@
   <section id="claim">
     <img src="/static/coin.png" alt="bitcoin" width=88 height=88>
     <h1 class="gradient light">Want to get your donations?</h1>
-    <Button class="white" --width=300px link={resolve("/prove/youtube")}>Claim here</Button>
+    <WhiteButton --width=300px link={resolve("/prove/youtube")}>Claim here</WhiteButton>
   </section>
   <div class="flex-row gap-20 justify-center flex-wrap">
     <Section>
