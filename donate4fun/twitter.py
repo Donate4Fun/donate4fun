@@ -260,27 +260,29 @@ class Conversation:
 
     @catch_exceptions
     async def chat_loop(self):
-        while True:
-            history = await self.fetch_messages()
-            if not history:
-                break
-            # Twitter API always returns messages in descending order by created_at
-            last_message = history[0]
-            logger.trace("last message %s", last_message)
-            if last_message.is_me and last_message.created_at < datetime.utcnow() - timedelta(minutes=2):
-                break
-            elif not last_message.is_me:
-                logger.info(f"answering to {last_message}")
-                for message in history:
-                    if message.is_me:
-                        continue
-                    if match := get_prove_text_regexp().match(last_message.text):
-                        await self.link_twitter_account(match.group('donator_id'))
-                        break
-                else:
-                    await self.answer_withdraw()
-            await asyncio.sleep(5)
-        self.is_stale = True
+        try:
+            while True:
+                history = await self.fetch_messages()
+                if not history:
+                    break
+                # Twitter API always returns messages in descending order by created_at
+                last_message = history[0]
+                logger.trace("last message %s", last_message)
+                if last_message.is_me and last_message.created_at < datetime.utcnow() - timedelta(minutes=2):
+                    break
+                elif not last_message.is_me:
+                    logger.info(f"answering to {last_message}")
+                    for message in history:
+                        if message.is_me:
+                            continue
+                        if match := get_prove_text_regexp().match(last_message.text):
+                            await self.link_twitter_account(match.group('donator_id'))
+                            break
+                    else:
+                        await self.answer_withdraw()
+                await asyncio.sleep(5)
+        finally:
+            self.is_stale = True
 
     async def link_twitter_account(self, donator_id: str):
         logger.info(f"Linking Twitter account {self.peer_id} to {donator_id}")
