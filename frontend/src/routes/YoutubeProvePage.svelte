@@ -1,10 +1,12 @@
 <script>
   import Section from "$lib/Section.svelte";
   import Editable from "$lib/Editable.svelte";
-  import CopyButton from "$lib/CopyButton.svelte";
   import YoutubeChannel from "$lib/YoutubeChannel.svelte";
   import ChannelLogo from "$lib/ChannelLogo.svelte";
   import Button from "$lib/Button.svelte";
+  import CopyButton from "$lib/CopyButton.svelte";
+  import GrayButton from "$lib/GrayButton.svelte";
+  import WhiteButton from "$lib/WhiteButton.svelte";
   import Infobox from "$lib/Infobox.svelte";
   import Separator from "$lib/Separator.svelte";
   import { me, reloadMe } from "$lib/session.js";
@@ -64,14 +66,14 @@
           <div class=index></div>
           <div class=press>
             <span>Press</span>
-            <Button on:click={check} class=white --width=195px>
+            <WhiteButton on:click={check} --width=195px>
               Check
-            </Button>
+            </WhiteButton>
           </div>
         </summary>
       </li>
     </ol>
-    <Button class="grey" on:click={() => navigate(-1)}>Back</Button>
+    <GrayButton on:click={() => navigate(-1)}>Back</GrayButton>
   </main>
 </Section>
 

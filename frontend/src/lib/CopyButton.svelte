@@ -1,5 +1,5 @@
 <script>
-  import Button from "$lib/Button.svelte";
+  import WhiteButton from "$lib/WhiteButton.svelte";
   import { copy } from "$lib/utils.js";
 
   export let content;
@@ -12,10 +12,10 @@
   }
 </script>
 
-<Button class="white" on:click={doCopy}>
+<WhiteButton on:click={doCopy} {...$$restProps} --padding="12px 20px">
   {#if copied}
-  Copied
+    Copied
   {:else}
-  Copy
+    Copy
   {/if}
-</Button>
+</WhiteButton>

@@ -1,5 +1,5 @@
 <script>
-  import Button from "$lib/Button.svelte";
+  import WhiteButton from "$lib/WhiteButton.svelte";
 
   export let text;
   let shareUrl;
@@ -12,12 +12,12 @@
   }
 </script>
 
-<Button class="white" link={shareUrl} target="_blank">
+<WhiteButton link={shareUrl} target="_blank">
   <div class="main">
     <img alt=youtube src="/static/twitter.svg" width=20>
     <span>Share</span>
   </div>
-</Button>
+</WhiteButton>
 
 <style>
 .main {

@@ -1,6 +1,7 @@
 <script>
   import {createEventDispatcher, onMount, onDestroy} from 'svelte';
   import Button from "$lib/Button.svelte";
+  import GrayButton from "$lib/GrayButton.svelte";
   import QRCode from "$lib/QRCode.svelte";
   import Loading from "$lib/Loading.svelte";
   import Lnurl from "$lib/Lnurl.svelte";
@@ -61,7 +62,7 @@
         <div class="buttons">
           <Button link="lightning:{paymentRequest}" --width=100%>Open in Wallet</Button>
           <Lnurl lnurl={paymentRequest} --width=100% />
-          <Button on:click={() => dispatch("cancel")} class="grey" --width=100%>Back</Button>
+          <GrayButton on:click={() => dispatch("cancel")} --width=100%>Back</GrayButton>
           <div class="need-help"><NeedHelp /></div>
         </div>
       {/if}

@@ -2,6 +2,7 @@
   import { get } from "svelte/store";
   import Section from "$lib/Section.svelte";
   import Button from "$lib/Button.svelte";
+  import GrayButton from "$lib/GrayButton.svelte";
   import CopyButton from "$lib/CopyButton.svelte";
   import Editable from "$lib/Editable.svelte";
   import Loading from "$lib/Loading.svelte";
@@ -34,7 +35,7 @@
       <Editable bind:message={message} />
       <CopyButton bind:content={message} />
       <Button link={youtube_channel_url(youtube_channel.channel_id)} target=_blank>Edit your YouTube channel...</Button>
-      <Button class="grey" on:click={() => navigate(-1)}>Back</Button>
+      <GrayButton on:click={() => navigate(-1)}>Back</GrayButton>
     </div>
   </Section>
 {/await}

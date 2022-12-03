@@ -1,7 +1,7 @@
 <script>
   import Amount from "$lib/Amount.svelte";
   import FiatAmount from "$lib/FiatAmount.svelte";
-  import Button from "$lib/Button.svelte";
+  import WhiteButton from "$lib/WhiteButton.svelte";
   import {me} from "$lib/session.js";
   import {resolve, isExtension} from "$lib/utils.js";
 
@@ -17,20 +17,18 @@
       style="grid-row: fiat; line-height: 16px;"
       class="font-12 font-weight-400 text-align-center" amount={me.donator.balance} />
     <div class="buttons">
-      <Button
+      <WhiteButton
         target={isExtension ? "_blank" : null}
         link={resolve("/fulfill/me")}
-        class=white
         --width=125px
-      >Fulfill</Button>
-      <Button
+      >Fulfill</WhiteButton>
+      <WhiteButton
         title="Minimum amount to withdraw is {withdrawMin} sats"
         disabled={me.donator.balance <= withdrawMin}
         target={isExtension ? "_blank" : null}
         link={resolve("/me/withdraw")}
-        class="white"
         --width=125px
-      >Withdraw</Button>
+      >Withdraw</WhiteButton>
     </div>
   {/await}
 </main>

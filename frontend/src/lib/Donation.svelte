@@ -3,6 +3,8 @@
   import { link, useNavigate } from "svelte-navigator";
 
   import Button from "$lib/Button.svelte";
+  import GrayButton from "$lib/GrayButton.svelte";
+  import BaseButton from "$lib/BaseButton.svelte";
   import Section from "$lib/Section.svelte";
   import Infobox from "$lib/Infobox.svelte";
   import Loading from "$lib/Loading.svelte";
@@ -78,8 +80,8 @@
               <li>Paste a comment from clipboard and post it</li>
             </ol>
             <Editable class=message message={message} />
-            <Button on:click={copyAndShare} class="copy-button">Copy and Share</Button>
-            <Button on:click={() => navigate(-1)} class="grey">Back</Button>
+            <Button on:click={copyAndShare}>Copy and Share</Button>
+            <GrayButton on:click={() => navigate(-1)}>Back</GrayButton>
           {/if}
         {/await}
       {:else if donation.twitter_account}
@@ -97,13 +99,14 @@
     {:else}
       {#await $me then me}
         {#if donation.donator.id === me.donator.id}
-          <Button
-            --background-image="linear-gradient(white,white)"
-            --border-width=0
+          <BaseButton
+            --background-color="white"
+            --border-width="2px"
+            --border-color="#EDEDED"
             --text-color="#FF4B4B"
             --shadow="none"
             on:click={cancel}
-          >Cancel donation</Button>
+          >Cancel donation</BaseButton>
         {/if}
       {/await}
     {/if}
