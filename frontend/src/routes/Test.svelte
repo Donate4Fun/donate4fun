@@ -18,6 +18,8 @@
 
 <Spinner />
 <Loader />
+<Loader --size=4em />
+<Loader --size=8em />
 <div>
   <Button on:click={() => {notify(`default title ${i}`, 'default message', 'info', 15000); i++;}}>notify</Button>
   <Button on:click={() => {return new Promise((resolve_) => {resolve = resolve_;})}}>Start Loader</Button>
