@@ -10,14 +10,17 @@
   import YoutubeChannel from "$lib/YoutubeChannel.svelte";
   import Donator from "$lib/Donator.svelte";
   import BaseButton from "$lib/BaseButton.svelte";
+  import Loader from "$lib/Loader.svelte";
   import api from "$lib/api.js";
   import { toText } from "$lib/utils.js";
 
   export let donator_id;
   let donations = [];
+  let showMore = false;
 
   async function load() {
     const newDonations = await api.get(`donations/by-donator/${donator_id}?offset=${donations.length}`);
+    showMore = newDonations.length !== 0;
     donations = [...donations, ...newDonations];
   }
 </script>
@@ -30,7 +33,9 @@
       <div>Amount</div>
       <div>Status</div>
     </div>
-    {#await load() then}
+    {#await load()}
+      <Loader --size=4em />
+    {:then}
       {#each donations as donation}
         <a use:link href="/donation/{donation.id}">
           {#if donation.paid_at}
@@ -77,7 +82,7 @@
       {/each}
     {/await}
   </div>
-  {#if donations.length}
+  {#if showMore}
     <BaseButton
       --width=136px
       --border-color="rgba(46, 108, 255, 0.15)"
