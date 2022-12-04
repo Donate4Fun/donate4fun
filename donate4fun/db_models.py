@@ -172,6 +172,7 @@ class WithdrawalDb(Base):
         DonatorDb, lazy='joined', foreign_keys=[donator_id], primaryjoin=lambda: WithdrawalDb.donator_id == DonatorDb.id,
     )
 
+    # These are deprecated fields and should not be used anymore
     youtube_channel_id = Column(Uuid(as_uuid=True), ForeignKey(YoutubeChannelDb.id))
     youtube_channel = relationship(YoutubeChannelDb, lazy='joined')
 
