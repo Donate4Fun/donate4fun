@@ -255,7 +255,7 @@ class Conversation:
         self.db = db
         self.is_stale = False
         self.conversation_id: str = conversation_id
-        self.peer_id = int(conversation_id.split('-', 1)[0])
+        self.peer_id = int(conversation_id.replace(str(settings.twitter.self_id), '').replace('-', ''))
 
     async def fetch_messages(self):
         events = await api_get(
