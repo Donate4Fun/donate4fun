@@ -296,7 +296,7 @@ class Conversation:
         async with self.db.session() as db_session:
             await self.send_text(settings.twitter.greeting)
             try:
-                author: TwitterAccount = await db_session.query_twitter_author(user_id=self.peer_id)
+                author: TwitterAccount = await db_session.query_twitter_account(user_id=self.peer_id)
             except NoResultFound:
                 await self.reply_no_donations()
             else:
@@ -309,8 +309,18 @@ class Conversation:
                         f"You have {author.balance} sats, but minimum withdraw amount is {settings.min_withdraw} sats."
                     )
                 else:
-                    await self.send_text(f"You have {author.balance} sats! I'll generate a withdraw qr-code in a moment.")
-                    lnurl: str = await create_withdrawal(db_session, twitter_author_id=author.id)
+                    prove_url = f'{settings.base_url}/twitter/prove'
+                    await self.send_text(
+                        f"You have {author.balance} sats! Go to {prove_url}, connect your Twitter account"
+                        " and then you will be able to claim and withdraw your funds."
+                    )
+                    return
+                    # FIXME: this is old code withdraw directly using Twitter. It's not used anymore
+                    # because withdrawals are only possible from a Donator account
+                    # But if we generate ephemeral Donator account for this and transfer funds there
+                    # then user will not be able to withdraw other way, which could be a bad situation
+                    # Good solution is to allow users to login to a different donator account when linking social account
+                    lnurl: str = await create_withdrawal(db_session, twitter_account=author)
                     qrcode: bytes = make_qr_code(lnurl)
                     media_id: int = await upload_media(self.oauth1_client, qrcode, 'image/png')
                     await self.send_text(
@@ -320,8 +330,11 @@ class Conversation:
                     )
 
 
-async def create_withdrawal(db_session, **kwargs):
-    withdrawal_id: UUID = await db_session.create_withdrawal()
+async def create_withdrawal(db_session, twitter_account):
+    # Generate new donator like a new site visitor
+    donator = Donator()
+    await db_session.link_twitter_account(twitter_author=twitter_account, donator=donator)
+    withdrawal_id: UUID = await db_session.create_withdrawal(donator)
     token = WithdrawalToken(withdrawal_id=withdrawal_id)
     url = urljoin(settings.lnd.lnurl_base_url, '/lnurl/withdraw')
     withdraw_url = URL(url).include_query_params(token=token.to_jwt())
