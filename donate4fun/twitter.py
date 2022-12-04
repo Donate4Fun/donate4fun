@@ -2,6 +2,7 @@ import asyncio
 import logging
 import time
 import secrets
+import json
 import io
 import os
 import re
@@ -50,6 +51,10 @@ class UnsupportedTwitterUrl(ValidationError):
     pass
 
 
+class InvalidResponse(Exception):
+    pass
+
+
 def validate_twitter_url(parsed) -> TwitterDonatee:
     parts = parsed.path.split('/')
     if len(parts) == 2:
@@ -75,13 +80,18 @@ async def fetch_and_save_twitter_account(handle: str):
         await query_or_fetch_twitter_account(db_session, handle=handle)
 
 
-async def api_request(method, client, api_path, **kwargs) -> dict[str, Any]:
+async def api_request_raw(method, client, api_path, **kwargs) -> httpx.Response:
     response = await client.request(
         method=method,
         url=urljoin('https://api.twitter.com/2/', api_path),
         **kwargs
     )
     response.raise_for_status()
+    return response
+
+
+async def api_request(method, client, api_path, **kwargs) -> dict[str, Any]:
+    response = await api_request_raw(method, client, api_path, **kwargs)
     if response.status_code == 204:
         return
     elif response.headers['content-type'].split(';', 1)[0] == 'application/json':
@@ -93,6 +103,25 @@ async def api_request(method, client, api_path, **kwargs) -> dict[str, Any]:
 
 api_get = partial(api_request, 'GET')
 api_post = partial(api_request, 'POST')
+
+
+async def api_get_pages(client, api_path: str, limit: int, params: dict[str, Any], **kwargs):
+    results = []
+    params_ = params.copy()
+    while True:
+        response = await api_request_raw('GET', client, api_path, params=params_, **kwargs)
+        if response.status_code == 204:
+            break
+        elif response.headers['content-type'].split(';', 1)[0] == 'application/json':
+            data = response.json()
+            results.extend(data.get('data', []))
+            if len(results) < limit:
+                params_['pagination_token'] = data['meta']['next_token']
+            else:
+                break
+        else:
+            raise InvalidResponse
+    return results
 
 
 async def save_token(db: Database, token: dict[str, Any], refresh_token: str):
@@ -191,10 +220,11 @@ class DirectMessage:
 
 async def fetch_conversations(client):
     logger.trace("fetching new twitter direct messages")
-    events = await api_get(
-        client, 'dm_events',
-        params={'dm_event.fields': 'sender_id,created_at,dm_conversation_id', 'max_results': 100},
-    )
+    params = {
+        'dm_event.fields': 'sender_id,created_at,dm_conversation_id',
+        'max_results': 100,
+    }
+    events: list[dict[str, Any]] = await api_get_pages(client, 'dm_events', limit=100, params=params)
     logger.trace("Fetched direct messages %s", events)
     self_id = settings.twitter.self_id
 
@@ -440,6 +470,13 @@ async def test_upload_media():
         except httpx.HTTPStatusError as exc:
             auth_header = exc.request.headers['authorization']
             logger.exception("Failed to upload image:\n%s\n%s\n%s", auth_header, exc.request.headers, exc.response.json())
+
+
+@register_command
+async def fetch_twitter_conversations(token: str):
+    oauth2_ctx = make_oauth2_client(token=json.loads(token))
+    async with oauth2_ctx as oauth2_client:
+        print([conversation_id async for conversation_id in fetch_conversations(oauth2_client)])
 
 
 @as_task
