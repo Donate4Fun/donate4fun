@@ -1,16 +1,18 @@
 <script>
-  import {onDestroy} from "svelte";
+  import { onDestroy } from "svelte";
+
   import Lnurl from "$lib/Lnurl.svelte";
   import Button from "$lib/Button.svelte";
   import WhiteButton from "$lib/WhiteButton.svelte";
   import GrayButton from "$lib/GrayButton.svelte";
   import QRCode from "$lib/QRCode.svelte";
   import Section from "$lib/Section.svelte";
+  import Loader from "$lib/Loader.svelte";
   import Loading from "$lib/Loading.svelte";
   import NeedHelp from "$lib/NeedHelp.svelte";
   import api from "$lib/api.js";
   import { me, resetMe, reloadMe } from "$lib/session.js";
-  import {notify} from "$lib/notifications.js";
+  import { notify } from "$lib/notifications.js";
   import cLog from "$lib/log.js";
 
   export let navigate;
@@ -57,7 +59,7 @@
 </script>
 
 {#await $me}
-  <Loading />
+  <Loader --size=8em />
 {:then me}
   <Section>
     <div class="main">
@@ -68,7 +70,9 @@
           Connect a Bitcoin Lightning wallet
         {/if}
       </h1>
-      {#await load() then lnurl}
+      {#await load()}
+        <Loader --size=8em />
+      {:then lnurl}
         <a href="lightning:{lnurl}" class="qrcode"><QRCode value={lnurl} /></a>
         <div class="buttons">
           <Button on:click={() => connect(lnurl)}>Connect using Wallet</Button>
