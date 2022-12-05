@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager, AsyncExitStack
 import anyio
 import bugsnag
 import rollbar
+import google.cloud.logging
 from bugsnag.asgi import BugsnagMiddleware
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -124,6 +125,9 @@ async def serve():
     pubsub_ = PubSubBroker()
     lnd_ = LndClient(settings.lnd)
     async with create_app(settings) as app_, anyio.create_task_group() as tg:
+        if settings.google_cloud_logging.enabled:
+            client = google.cloud.logging.Client()
+            client.setup_logging()
         if settings.bugsnag.enabled:
             bugsnag.configure(**settings.bugsnag.dict(), project_root=os.path.dirname(__file__))
         with app.assign(app_), lnd.assign(lnd_), pubsub.assign(pubsub_), task_group.assign(tg):

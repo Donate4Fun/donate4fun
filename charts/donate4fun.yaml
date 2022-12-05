@@ -18,6 +18,8 @@ backend:
       release_stage: production
     rollbar:
       environment: production
+    google_cloud_logging:
+      enabled: true
     db:
       echo: false
       max_overflow: 30
