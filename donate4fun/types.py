@@ -73,3 +73,7 @@ class NotFound(Exception):
 
 class InvalidDbState(Exception):
     pass
+
+
+class EntityTooOld(Exception):
+    pass
