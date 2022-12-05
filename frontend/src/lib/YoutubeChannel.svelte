@@ -5,6 +5,7 @@
   export let channel;
   export let linkto = 'external';
   export let logo = false;
+  export let target = '';
 </script>
 
 <span {...$$restProps}>
@@ -14,9 +15,9 @@
   {#if linkto === 'external'}
     <a href={youtube_channel_url(channel.channel_id)} target="_blank">{channel.title}</a>
   {:else if linkto === 'withdraw'}
-    <a href="/youtube/{channel.id}" use:link>{channel.title}</a>
+    <a href="/youtube/{channel.id}" target={target} use:link>{channel.title}</a>
   {:else if linkto === 'donate'}
-    <a href="/donate/{channel.id}" use:link>{channel.title}</a>
+    <a href="/donate/{channel.id}" target={target} use:link>{channel.title}</a>
   {:else}
     Invalid linkto:
   {/if}

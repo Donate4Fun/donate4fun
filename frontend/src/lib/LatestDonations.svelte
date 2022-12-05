@@ -37,7 +37,7 @@
           </div>
           <div class=vcenter><Datetime dt={donation.paid_at} /></div>
           <div class=vcenter><Amount amount={donation.amount} /></div>
-          <Donator user={donation.donator} class="ellipsis" />
+          <Donator user={donation.donator} ellipsis />
         {/each}
       </div>
       <div class=fadeout></div>

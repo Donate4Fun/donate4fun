@@ -32,7 +32,7 @@
         <slot {item} />
         <Amount amount={item.balance} />
         <div class="withdraw-button">
-          <Button disabled={item.balance === 0} on:click={() => collect(item)} --border-width=0>Collect</Button>
+          <Button disabled={item.balance === 0} on:click={() => collect(item)} --border-width=0>Claim</Button>
         </div>
       </li>
       {/each}
@@ -74,15 +74,16 @@ li {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 17px;
   padding: 16px;
   padding-right: 0;
-  height: 72px;
   background: linear-gradient(90deg, rgba(157, 237, 162, 0.15) 0%, rgba(157, 237, 162, 0) 100%);
   border-radius: 8px;
 }
 .withdraw-button {
   height: 44px;
   justify-self: end;
+  flex-grow: 1;
 }
 </style>

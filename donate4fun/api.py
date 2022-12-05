@@ -15,17 +15,20 @@ from rollbar.contrib.fastapi.routing import RollbarLoggingRoute
 from starlette.datastructures import URL
 from httpx import HTTPStatusError
 from pydantic import ValidationError as PydanticValidationError
+from sqlalchemy import select
+from sqlalchemy.orm.exc import NoResultFound
 
 from .models import (
     Donation, Donator, Invoice, DonateResponse, DonateRequest, YoutubeChannel,
     WithdrawalToken, BaseModel, Notification, Credentials, SubscribeEmailRequest,
+    DonatorStats,
 )
 from .types import ValidationError, RequestHash, PaymentRequest
 from .donatees import apply_target
 from .db_models import DonationDb, WithdrawalDb
-from .db import NoResultFound
+from .db_donations import sent_donations_subquery, received_donations_subquery
 from .settings import settings
-from .api_utils import get_donator, load_donator, get_db_session, task_group
+from .api_utils import get_donator, load_donator, get_db_session, task_group, only_me
 from .lnd import PayInvoiceError, LnurlWithdrawResponse, lnd
 from .pubsub import pubsub
 from .twitter import query_or_fetch_twitter_account
@@ -170,7 +173,7 @@ async def latest_donations(db=Depends(get_db_session)):
 
 
 @router.get("/donations/by-donator/{donator_id}", response_model=list[Donation])
-async def donator_donations(donator_id: UUID, db=Depends(get_db_session), offset: int = 0):
+async def donator_donations(donator_id: UUID, db=Depends(get_db_session), me=Depends(only_me), offset: int = 0):
     return await db.query_donations(
         DonationDb.paid_at.isnot(None) & (
             (DonationDb.donator_id == donator_id)
@@ -178,6 +181,16 @@ async def donator_donations(donator_id: UUID, db=Depends(get_db_session), offset
         ),
         offset=offset,
     )
+
+
+@router.get("/donations/by-donator/{donator_id}/sent", response_model=list[Donation])
+async def donator_donations_sent(donator_id: UUID, db=Depends(get_db_session), me=Depends(only_me), offset: int = 0):
+    return await db.query_donations(DonationDb.id.in_(select(sent_donations_subquery(donator_id).c.id)), offset=offset)
+
+
+@router.get("/donations/by-donator/{donator_id}/received", response_model=list[Donation])
+async def donator_donations_received(donator_id: UUID, db=Depends(get_db_session), me=Depends(only_me), offset: int = 0):
+    return await db.query_donations(DonationDb.id.in_(select(received_donations_subquery(donator_id).c.id)), offset=offset)
 
 
 class StatusResponse(BaseModel):
@@ -199,13 +212,13 @@ class MeResponse(BaseModel):
 
 
 @router.get("/donator/me", response_model=MeResponse)
-async def me(request: Request, db=Depends(get_db_session), donator: Donator = Depends(get_donator)):
-    donator = await load_donator(db, donator.id)
-    linked_youtube_channels: list[YoutubeChannel] = await db.query_donator_youtube_channels(donator.id)
+async def me(request: Request, db=Depends(get_db_session), me: Donator = Depends(get_donator)):
+    me = await load_donator(db, me.id)
+    linked_youtube_channels: list[YoutubeChannel] = await db.query_donator_youtube_channels(me.id)
     # FIXME: balance is saved in cookie to notify extension about balance change, but it should be done via VAPID
-    request.session['balance'] = donator.balance
-    request.session['lnauth_pubkey'] = donator.lnauth_pubkey
-    return MeResponse(donator=donator, youtube_channels=linked_youtube_channels)
+    request.session['balance'] = me.balance
+    request.session['lnauth_pubkey'] = me.lnauth_pubkey
+    return MeResponse(donator=me, youtube_channels=linked_youtube_channels)
 
 
 @router.get("/donator/{donator_id}", response_model=Donator)
@@ -214,6 +227,11 @@ async def donator(request: Request, donator_id: UUID, db=Depends(get_db_session)
     if donator.id != me.id:
         donator.balance = 0  # Do not show balance to others
     return donator
+
+
+@router.get("/donator/{donator_id}/stats", response_model=DonatorStats)
+async def donator_stats(request: Request, donator_id: UUID, db=Depends(get_db_session), me=Depends(only_me)):
+    return await db.query_donator_stats(donator_id)
 
 
 @router.get('/lnurl/withdraw', response_model=LnurlWithdrawResponse)
