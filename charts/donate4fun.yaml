@@ -38,6 +38,7 @@ backend:
       enable_bot: true
       dm_check_interval: PT20S
       self_id: "1572908920485576704"
+      refresh_timeout: P1D
     lnd:
       url: http://lnd-prod.lnd-prod
       lnurl_base_url: https://donate4.fun

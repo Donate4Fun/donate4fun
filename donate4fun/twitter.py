@@ -27,7 +27,7 @@ from furl import furl
 
 from .db import DbSession, NoResultFound, Database, db
 from .models import Donation, TwitterAccount, TwitterTweet, WithdrawalToken, Donator
-from .types import ValidationError
+from .types import ValidationError, EntityTooOld
 from .settings import settings
 from .core import as_task, register_command, catch_exceptions
 
@@ -68,7 +68,9 @@ def validate_twitter_url(parsed) -> TwitterDonatee:
 async def query_or_fetch_twitter_account(db: DbSession, **params) -> TwitterAccount:
     try:
         account: TwitterAccount = await db.query_twitter_account(**params)
-    except NoResultFound:
+        if account.last_fetched_at is None or account.last_fetched_at < datetime.utcnow() - settings.twitter.refresh_timeout:
+            raise EntityTooOld
+    except (NoResultFound, EntityTooOld):
         account: TwitterAccount = await fetch_twitter_author(**params)
         await db.save_twitter_account(account)
     return account
@@ -77,7 +79,8 @@ async def query_or_fetch_twitter_account(db: DbSession, **params) -> TwitterAcco
 @register_command
 async def fetch_and_save_twitter_account(handle: str):
     async with db.session() as db_session:
-        await query_or_fetch_twitter_account(db_session, handle=handle)
+        account: TwitterAccount = await fetch_twitter_author(handle=handle)
+        await db_session.save_twitter_account(account)
 
 
 async def api_request_raw(method, client, api_path, **kwargs) -> httpx.Response:

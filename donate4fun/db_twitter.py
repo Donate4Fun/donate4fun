@@ -33,6 +33,7 @@ class TwitterDbMixin:
                 set_={
                     TwitterAuthorDb.name: author.name,
                     TwitterAuthorDb.profile_image_url: author.profile_image_url,
+                    TwitterAuthorDb.last_fetched_at: author.last_fetched_at,
                 },
                 where=(
                     (func.coalesce(TwitterAuthorDb.name, '') != author.name)
