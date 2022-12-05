@@ -12,7 +12,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from glom import glom
 
 from .settings import settings
-from .types import UnsupportedTarget, Url, ValidationError
+from .types import UnsupportedTarget, Url, ValidationError, EntityTooOld
 from .db import DbSession, Database
 from .models import YoutubeVideo, YoutubeChannel, Donation
 from .core import register_command
@@ -150,18 +150,14 @@ async def fetch_youtube_video(aiogoogle, youtube, video_id: str, db: DbSession) 
     )
 
 
-class ChannelIsTooOld(Exception):
-    pass
-
-
 async def query_or_fetch_youtube_channel(channel_id: str, db: DbSession) -> YoutubeChannel:
     try:
         channel: YoutubeChannel = await db.find_youtube_channel(channel_id=channel_id)
         if channel.last_fetched_at is None or channel.last_fetched_at < datetime.utcnow() - settings.youtube.refresh_timeout:
             logger.debug("youtube channel %s is too old, refreshing", channel)
-            raise ChannelIsTooOld
+            raise EntityTooOld
         return channel
-    except (NoResultFound, ChannelIsTooOld):
+    except (NoResultFound, EntityTooOld):
         channel: YoutubeChannel = await fetch_youtube_channel(channel_id)
         await db.save_youtube_channel(channel)
         return channel

@@ -101,6 +101,7 @@ class TwitterAccount(IdModel):
     total_donated: int = 0
     name: str | None
     profile_image_url: Url | None
+    last_fetched_at: datetime | None
 
     class Config:
         orm_mode = True

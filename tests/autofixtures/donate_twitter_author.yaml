@@ -21,6 +21,7 @@ json:
       balance: 0
       handle: donate4_fun
       id: 00000000-0000-0000-0000-000000000001
+      last_fetched_at: '2022-02-02T22:22:22+00:00'
       name: Donate4.Fun
       profile_image_url: https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_normal.png
       total_donated: 0

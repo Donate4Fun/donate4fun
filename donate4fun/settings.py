@@ -40,6 +40,7 @@ class TwitterSettings(BaseModel):
     enable_bot: bool
     self_id: int
     dm_check_interval: timedelta
+    refresh_timeout: timedelta
     oauth: TwitterOAuth
 
 
