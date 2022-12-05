@@ -108,6 +108,10 @@ class RollbarSettings(BaseModel):
     code_version: str
 
 
+class GoogleCloudLoggingSettings(BaseModel):
+    enabled: bool
+
+
 def yaml_config_source(settings: BaseSettings) -> dict[str, Any]:
     return yaml.safe_load(open(os.getenv('DONATE4FUN_CONFIG', 'config.yaml')))
 
@@ -121,6 +125,7 @@ class Settings(BaseSettings):
     fastapi: FastApiSettings
     bugsnag: BugsnagSettings
     rollbar: RollbarSettings | None
+    google_cloud_logging: GoogleCloudLoggingSettings
     hypercorn: dict[str, Any]
     jwt_secret: str
     min_withdraw: int  # Limit in sats for claiming
