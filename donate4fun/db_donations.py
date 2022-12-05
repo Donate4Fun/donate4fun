@@ -2,14 +2,16 @@ import logging
 from uuid import UUID
 from datetime import datetime
 
-from sqlalchemy import select, desc, update, func
+from sqlalchemy import select, desc, update, func, case, true
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.orm.exc import NoResultFound  # noqa
 from sqlalchemy.sql import functions
 
-from .models import Donation, YoutubeNotification, Donator
+from .models import Donation, YoutubeNotification, Donator, DonatorStats
 from .types import RequestHash, NotEnoughBalance, ValidationError, InvalidDbState
-from .db_models import DonatorDb, DonationDb, YoutubeChannelDb, YoutubeVideoDb, TwitterAuthorDb, TransferDb
+from .db_models import (
+    DonatorDb, DonationDb, YoutubeChannelDb, YoutubeVideoDb, TwitterAuthorDb, TransferDb,
+    YoutubeChannelLink, TwitterAuthorLink,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +29,7 @@ def claimable_donation_filter():
 
 
 class DonationsDbMixin:
-    async def query_donations(self, where, limit=20, offset=0):
+    async def query_donations(self, where, limit: int = 20, offset: int = 0):
         result = await self.execute(
             select(DonationDb)
             .where(where)
@@ -203,3 +205,66 @@ class DonationsDbMixin:
             .where(DonatorDb.id == donator.id)
         )
         await self.object_changed('donator', donator.id)
+
+    async def query_donator_stats(self, donator_id: UUID):
+        received_sq = received_donations_subquery(donator_id)
+        received_stats_sq = select(
+            func.coalesce(func.sum(received_sq.c.amount), 0).label('total_received')
+        ).where(
+            received_sq.c.receiver_id.is_(None)
+            | (received_sq.c.receiver_id != received_sq.c.donator_id)
+        ).subquery()
+
+        sent_sq = sent_donations_subquery(donator_id)
+        sent_stats_sq = select(
+            func.coalesce(func.sum(sent_sq.c.amount), 0).label('total_donated'),
+            func.coalesce(func.sum(case(
+                (sent_sq.c.claimed_at.is_(None), 0),
+                else_=sent_sq.c.amount,
+            )), 0).label('total_claimed'),
+        ).where(
+            sent_sq.c.receiver_id.is_(None)
+            | (sent_sq.c.receiver_id != sent_sq.c.donator_id)
+        ).subquery()
+
+        result = await self.execute(
+            select(received_stats_sq.c.total_received, sent_stats_sq.c.total_claimed, sent_stats_sq.c.total_donated)
+            .join(sent_stats_sq, true())
+        )
+        return DonatorStats.from_orm(result.fetchone())
+
+
+def sent_donations_subquery(donator_id: UUID):
+    return select(
+        DonationDb
+    ).where(
+        DonationDb.paid_at.isnot(None)
+        & DonationDb.cancelled_at.is_(None)
+        & (DonationDb.donator_id == donator_id)
+        & (
+            DonationDb.receiver_id.is_(None) |
+            (DonationDb.donator_id != DonationDb.receiver_id)
+        )
+    ).subquery()
+
+
+def received_donations_subquery(donator_id: UUID):
+    return select(
+        DonationDb
+    ).outerjoin(
+        DonationDb.youtube_channel
+    ).outerjoin(
+        YoutubeChannelDb.links
+    ).outerjoin(
+        DonationDb.twitter_account
+    ).outerjoin(
+        TwitterAuthorDb.links
+    ).where(
+        DonationDb.paid_at.isnot(None)
+        & DonationDb.cancelled_at.is_(None)
+        & (
+            (YoutubeChannelLink.donator_id == donator_id)
+            | (TwitterAuthorLink.donator_id == donator_id)
+            | (DonationDb.receiver_id == donator_id)
+        )
+    ).subquery()

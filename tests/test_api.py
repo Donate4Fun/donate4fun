@@ -35,6 +35,30 @@ async def test_donator_donations(client, paid_donation_fixture, freeze_request_h
     verify_response(response, 'donator-donations', 200)
 
 
+@freeze_time
+async def test_donator_donations_sent(client, paid_donation_fixture, freeze_request_hash_json, db):
+    response = await client.get(f"/api/v1/donations/by-donator/{paid_donation_fixture.donator.id}/sent")
+    verify_response(response, 'donator-donations-sent', 200)
+
+
+@freeze_time
+async def test_donator_donations_received(client, paid_donation_fixture, freeze_request_hash_json, db):
+    async with db.session() as db_session:
+        await db_session.link_youtube_channel(paid_donation_fixture.youtube_channel, paid_donation_fixture.donator)
+    response = await client.get(f"/api/v1/donations/by-donator/{paid_donation_fixture.donator.id}/received")
+    verify_response(response, 'donator-donations-received', 200)
+
+
+@freeze_time
+async def test_donator_stats(client, paid_donation_fixture, freeze_request_hash_json, db):
+    async with db.session() as db_session:
+        await db_session.save_donator(paid_donation_fixture.donator)
+        await db_session.link_youtube_channel(paid_donation_fixture.youtube_channel, paid_donation_fixture.donator)
+
+    response = await client.get(f"/api/v1/donator/{paid_donation_fixture.donator.id}/stats")
+    verify_response(response, 'donator-stats', 200)
+
+
 async def test_create_donation_unsupported_target(client):
     response = await client.post("/api/v1/donate", json=DonateRequest(amount=100, target='https://asdzxc.com').dict())
     verify_response(response, 'create-donation-unsupported_target', 400)

@@ -208,3 +208,12 @@ class SubscribeEmailRequest(BaseModel):
 
 class TransferResponse(BaseModel):
     amount: int
+
+
+class DonatorStats(BaseModel):
+    total_donated: int
+    total_claimed: int
+    total_received: int
+
+    class Config:
+        orm_mode = True
