@@ -53,6 +53,7 @@ class YoutubeDbMixin:
                     YoutubeChannelDb.title: youtube_channel.title,
                     YoutubeChannelDb.thumbnail_url: youtube_channel.thumbnail_url,
                     YoutubeChannelDb.banner_url: youtube_channel.banner_url,
+                    YoutubeChannelDb.last_fetched_at: youtube_channel.last_fetched_at,
                 },
                 where=(
                     (func.coalesce(YoutubeChannelDb.title, '') != youtube_channel.title)
