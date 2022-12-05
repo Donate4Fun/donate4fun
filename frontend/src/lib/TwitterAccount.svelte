@@ -5,12 +5,13 @@
   export let externalLink = false;
   export let showHandle = false;
   export let imagePlacement = 'before';
+  export let target = "";
 
   $: pageLink = externalLink ? `https://twitter.com/${account.handle}` : `/twitter/${account.id}`;
   $: imageUrl = account.profile_image_url.replace('_normal', '_x96');
 </script>
 
-<a use:link target={externalLink ? "_blank" : ""} href={pageLink} class="container">
+<a use:link target={externalLink ? "_blank" : target} href={pageLink} class="container">
   {#if imagePlacement === 'before'}
     <img class="avatar" alt=avatar src={imageUrl} />
   {/if}

@@ -1,11 +1,21 @@
 <script>
+  import { link } from "svelte-navigator";
   import { youtube_video_url } from "$lib/utils.js";
+
   export let video;
+  export let linkto = 'external';
+  export let target = '';
 </script>
 
 <div>
   <img src={video.youtube_channel.thumbnail_url} alt="youtube video logo">
-  <span><a target=_blank href={youtube_video_url(video.video_id)}>{video.title}</a></span>
+  <span>
+    {#if linkto === 'external'}
+      <a target=_blank href={youtube_video_url(video.video_id)}>{video.title}</a>
+    {:else if linkto === 'channel'}
+      <a target={target} href="/youtube/{video.youtube_channel.id}" use:link>{video.title}</a>
+    {/if}
+  </span>
 </div>
 
 <style>
@@ -21,6 +31,7 @@ img {
 }
 span {
   text-overflow: ellipsis;
+  min-width: 0;
   overflow: hidden;
   display: block;
   white-space: nowrap;

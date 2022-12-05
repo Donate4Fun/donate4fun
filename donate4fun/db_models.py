@@ -21,6 +21,8 @@ class YoutubeChannelDb(Base):
     total_donated = Column(BigInteger, nullable=False, server_default=text('0'))
     last_fetched_at = Column(TIMESTAMP)
 
+    links = relationship('YoutubeChannelLink', viewonly=True)
+
 
 class YoutubeVideoDb(Base):
     __tablename__ = 'youtube_video'
@@ -61,6 +63,8 @@ class TwitterAuthorDb(Base):
     balance = Column(BigInteger, nullable=False, server_default=text('0'))
     total_donated = Column(BigInteger, nullable=False, server_default=text('0'))
     last_fetched_at = Column(TIMESTAMP)
+
+    links = relationship('TwitterAuthorLink', viewonly=True)
 
 
 class DonatorDb(Base):

@@ -1,6 +1,6 @@
 from uuid import uuid4, UUID
 
-from fastapi import Request
+from fastapi import Request, Depends, HTTPException
 from sqlalchemy.orm.exc import NoResultFound  # noqa - imported from other modules
 
 from .models import Donator, Credentials
@@ -20,6 +20,12 @@ def get_donator(request: Request):
         creds.donator = donator.id
     request.session.update(**creds.to_json_dict())
     return donator
+
+
+def only_me(request: Request, donator_id: UUID, me=Depends(get_donator)):
+    if donator_id != me.id:
+        raise HTTPException(status_code=403, detail="This API available only to the owner")
+    return me
 
 
 async def load_donator(db: DbSession, donator_id: UUID) -> Donator:
