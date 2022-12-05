@@ -2,7 +2,7 @@
 
 Donate4.Fun
 ==
-This is repository for Donate4.Fun webservice and browser extension.
+This is repository for [Donate4.Fun](https://donate4.fun) webservice and browser extension.
 Directory structure:
  - `/donate4fun/` - backend (API)
  - `/tests/` - tests for backend
