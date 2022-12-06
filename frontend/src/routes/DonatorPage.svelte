@@ -156,6 +156,9 @@
   overflow-x: scroll;
   width: 100%;
 }
+.linked::-webkit-scrollbar, .history::-webkit-scrollbar {
+  display: none;  /* hide scroll for Safari and Chrome */
+}
 .linked-item {
   flex-grow: 100;
 }
