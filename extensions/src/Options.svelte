@@ -11,11 +11,22 @@
     for (const [key, option] of Object.entries(options))
       if (option.type === 'section' || option.type === 'extendable')
         for (const [subKey, subOption] of Object.entries(option.options))
-          values[subKey] = subOption.value;
+          values[subKey] = getOptionValue(subOption);
       else
-        values[key] = option.value;
+        values[key] = getOptionValue(option);
     cLog("saving options", values);
     await worker.saveOptions(values);
+  }
+
+  function getOptionValue(option) {
+    if (option.type === 'text')
+      return option.value.toString();
+    else if (option.type === 'number')
+      return parseInt(option.value);
+    else if (option.type === 'checkbox')
+      return !!option.value;
+    else
+      throw new Error(`Unsupported option type ${option.type}`);
   }
 
   async function load() {
