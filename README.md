@@ -1,4 +1,9 @@
 ![Build Extension](https://github.com/Donate4Fun/donate4fun/actions/workflows/build-extension.yaml/badge.svg)
+[![Telegram Chat](https://img.shields.io/static/v1?label=chat&message=Telegram&color=blue&logo=telegram)](https://t.me/donate4fun)
+[![Twitter Follow](https://img.shields.io/twitter/follow/donate4_fun?style=social)](https://twitter.com/donate4_fun)
+[![Website](https://img.shields.io/website/https/donate4.fun%2Fapi%2Fv1%2Fstatus)](https://donate4.fun)
+[![Firefox Add-on](https://img.shields.io/amo/rating/donate4fun?color=green&label=Firefox%20Addon)](https://addons.mozilla.org/en-US/firefox/addon/donate4fun/)
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/rating/acckcppgcafhbdledejfiiaomafpjmgc?color=green&label=Chrome%20Extension)](https://chrome.google.com/webstore/detail/donate4fun/acckcppgcafhbdledejfiiaomafpjmgc)
 
 Donate4.Fun
 ==
