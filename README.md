@@ -8,6 +8,8 @@
 [![Latest Chrome Extension](https://img.shields.io/github/workflow/status/donate4fun/donate4fun/Browser%20Extension?label=Dev%20Chrome%20Extension&logo=google-chrome)](https://nightly.link/Donate4Fun/donate4fun/workflows/build-extension.yaml/master/chrome.zip.zip)
 [![Latest Firefox Add-on](https://img.shields.io/github/workflow/status/donate4fun/donate4fun/Browser%20Extension?label=Dev%20Firefox%20Add-on&logo=firefox)](https://nightly.link/Donate4Fun/donate4fun/workflows/build-extension.yaml/master/firefox.xpi.zip)
 
+![Visitors](https://visitor-badge.glitch.me/badge?page_id=donate4fun.donate4fun)
+
 Donate4.Fun
 ==
 This is repository for [Donate4.Fun](https://donate4.fun) webservice and browser extension.
