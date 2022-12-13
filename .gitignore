@@ -1,6 +1,7 @@
 /docker/bitcoind-data/
 /docker/lnd-alice/
 /docker/lnd-bob/
+/docker/lnd-carol/
 /docker/rtl-backup/
 /docker/rtl-config/logs/
 /docker/tor-data/
