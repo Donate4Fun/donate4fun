@@ -81,7 +81,7 @@
         <MeBalance />
       {:else}
         <p>Do you want faster payments and zero fees?</p>
-        <Button link={resolve("/fulfill/me")} class="white" target=_blank>
+        <Button link={resolve("/fulfill/me")} target=_blank>
           Add money
         </Button>
       {/if}

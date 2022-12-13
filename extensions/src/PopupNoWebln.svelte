@@ -54,9 +54,6 @@
         --height=72px
         target=_blank
         link="{$webOrigin}/fulfill/{me.donator.id}?amount={amount - (me.donator.balance || 0) + 1000}"
-        style="
-          grid-row: fulfill;
-        "
       >Fulfill your balance</WhiteButton>
     {:catch err}
       <p>Failed to load session {err}</p>
