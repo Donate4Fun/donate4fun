@@ -25,3 +25,10 @@ backend:
           level: TRACE
         donate4fun.twitter:
           level: INFO
+  resources:
+    limits:
+      cpu: 250m
+      memory: 712Mi
+    requests:
+      cpu: 250m
+      memory: 712Mi
