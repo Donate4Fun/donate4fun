@@ -2,36 +2,17 @@
   import { onMount, onDestroy } from 'svelte';
   import { link, useNavigate } from "svelte-navigator";
 
-  import Button from "$lib/Button.svelte";
-  import GrayButton from "$lib/GrayButton.svelte";
   import BaseButton from "$lib/BaseButton.svelte";
   import Section from "$lib/Section.svelte";
-  import Infobox from "$lib/Infobox.svelte";
   import Loading from "$lib/Loading.svelte";
-  import Amount from "$lib/Amount.svelte";
-  import YoutubeChannel from "$lib/YoutubeChannel.svelte";
-  import Editable from "$lib/Editable.svelte";
-  import ChannelLogo from "$lib/ChannelLogo.svelte";
   import Donator from "$lib/Donator.svelte";
   import TwitterDonation from "$lib/TwitterDonation.svelte";
+  import YoutubeDonation from "$lib/YoutubeDonation.svelte";
   import { me } from "$lib/session.js";
-  import { copy, youtube_video_url, youtube_channel_url } from "$lib/utils.js";
   import api from "$lib/api.js";
 
   export let donation;
   let navigate = useNavigate();
-  let message = `Hi! I like your video! I’ve donated you ${donation.amount} sats. You can take it on "donate 4 fun"`;
-
-  function copyAndShare() {
-    copy(message);
-    let url;
-    if (donation.youtube_video !== null) {
-      url = youtube_video_url(donation.youtube_video.video_id);
-    } else {
-      url = youtube_channel_url(donation.youtube_channel.channel_id);
-    }
-    window.open(url, '_blank').focus();
-  }
 
   async function cancel() {
     await api.post(`donation/${donation.id}/cancel`);
@@ -55,35 +36,11 @@
   onMount(subscribe);
 </script>
 
-<main>
+<div class="container">
   {#if donation.paid_at}
     <div class="cancelled-container" class:cancelled={donation.cancelled_at !== null}>
       {#if donation.youtube_channel}
-        <ChannelLogo url={donation.youtube_channel.thumbnail_url} size=72px />
-        <div class="header">
-          <p>Great! You've sent <Amount amount={donation.amount}/> to</p>
-          <YoutubeChannel channel={donation.youtube_channel}/>
-        </div>
-        {#await $me then me}
-          {#if me.donator.id === donation.donator_id}
-            <Infobox>Copy and share the message with the link or just tell {donation.youtube_channel.title} to receive the donation here at «Donate4Fun»</Infobox>
-            <div>
-              {#if donation.youtube_video}
-                Now leave a comment on <a href="{youtube_video_url(donation.youtube_video.video_id)}" target=_blank>his video</a> to make him know of donation:
-              {:else}
-                Now leave a comment on his video to make him know of donation:
-              {/if}
-            </div>
-            <ol>
-              <li>Press "Copy and Share" - comment will be copied to clipboard and YouTube video tab will open</li>
-              <li>Scroll to comments section and focus "Add a comment..." field</li>
-              <li>Paste a comment from clipboard and post it</li>
-            </ol>
-            <Editable class=message message={message} />
-            <Button on:click={copyAndShare}>Copy and Share</Button>
-            <GrayButton on:click={() => navigate(-1)}>Back</GrayButton>
-          {/if}
-        {/await}
+        <YoutubeDonation {donation} />
       {:else if donation.twitter_account}
         <TwitterDonation {donation} />
       {/if}
@@ -113,10 +70,10 @@
   {:else}
     Unpaid donation
   {/if}
-</main>
+</div>
 
 <style>
-main {
+.container {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -129,14 +86,6 @@ main {
 }
 .cancelled {
   opacity: 0.5;
-}
-.header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  font-weight: 900;
-  font-size: 24px;
 }
 .status-message {
   font-weight: 700;
