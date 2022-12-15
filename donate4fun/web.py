@@ -29,14 +29,19 @@ async def validation_exception_handler(request, exc):
 
 @app.exception_handler(NoResultFound)
 async def not_found_exception_handler(request, exc):
-    # FIXME: this handler doesn't work because api handlers from this module do not
-    # check DB for object exitense
     return await exception_handler(request, exc, 404)
 
 
 async def exception_handler(request, exc, status_code):
-    manifest = await fetch_manifest() if settings.release else None
-    return TemplateResponse('error.html', request=request, exception=exc, manifest=manifest, status_code=status_code)
+    if request.headers['accept'].startswith('application/json'):
+        return JSONResponse(dict(
+            status="ERROR",
+            exception_type=type(exc).__name__,
+            message=str(exc),
+        ), status_code=status_code)
+    else:
+        manifest = await fetch_manifest() if settings.release else None
+        return TemplateResponse('error.html', request=request, exception=exc, manifest=manifest, status_code=status_code)
 
 
 async def fetch_manifest() -> dict[str, Any]:
@@ -141,7 +146,7 @@ async def twitter_account_redirect(request: Request, handle: str, db=Depends(get
     return RedirectResponse(f'{settings.base_url}/twitter/{account.id}', status_code=302)
 
 
-@app.get('/.well-known/lnurlp/{username}')
+@app.get('/.well-known/lnurlp/{username}', response_class=JSONResponse)
 async def lightning_address(request: Request, username: str, db_session=Depends(get_db_session)):
     receiver: Donator = await db_session.query_donator(lightning_address=f'{username}@{request.headers["host"]}')
     return dict(

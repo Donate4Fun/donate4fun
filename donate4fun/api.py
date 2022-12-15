@@ -51,7 +51,7 @@ app.include_router(api_youtube.legacy_router)
 def http_status_error_handler(request, exc):
     logger.debug(f"{request.url}: Upstream error", exc_info=exc)
     status_code = exc.response.status_code
-    if 'application/json' in exc.response.headers['content-type']:
+    if 'application/json' in exc.response.headers.get('content-type', ''):
         body = exc.response.json()
     else:
         body = exc.response.text
