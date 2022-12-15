@@ -6,6 +6,7 @@ import pytest
 from donate4fun.api import DonateRequest, DonateResponse
 from donate4fun.lnd import monitor_invoices, LndClient, lnd
 from donate4fun.models import Donation, YoutubeChannel, Donator, YoutubeChannelOwned
+from donate4fun.types import PaymentRequest
 from donate4fun.youtube import query_or_fetch_youtube_video
 
 from tests.test_util import verify_response, check_response, freeze_time, check_notification, login_to, mark_vcr
@@ -54,7 +55,7 @@ async def test_cancel_donation(client, app, db, freeze_uuids, rich_donator, sett
     donation = Donation(**donate_response.json()['donation'])
     assert donation.paid_at != None  # noqa
     async with db.session() as db_session:
-        me: Donator = await db_session.query_donator(rich_donator.id)
+        me: Donator = await db_session.query_donator(id=rich_donator.id)
         assert me.balance == rich_donator.balance - amount
         youtube_channel: YoutubeChannel = await db_session.query_youtube_channel(donation.youtube_channel.id)
         assert youtube_channel.balance == amount
@@ -64,7 +65,7 @@ async def test_cancel_donation(client, app, db, freeze_uuids, rich_donator, sett
     async with db.session() as db_session:
         donation_after_cancel: Donation = await db_session.query_donation(id=donation.id)
         assert donation_after_cancel.cancelled_at != None  # noqa
-        donator: Donator = await db_session.query_donator(rich_donator.id)
+        donator: Donator = await db_session.query_donator(id=rich_donator.id)
         assert donator.balance == rich_donator.balance
         youtube_channel: YoutubeChannel = await db_session.query_youtube_channel(donation.youtube_channel.id)
         assert youtube_channel.balance == 0
@@ -88,7 +89,7 @@ async def test_cancel_donation_fail(client, app, db, freeze_uuids, rich_donator,
     async with db.session() as db_session:
         donation_after_cancel: Donation = await db_session.query_donation(id=donation.id)
         assert donation_after_cancel.cancelled_at == None  # noqa
-        new_rich_donator: Donator = await db_session.query_donator(rich_donator.id)
+        new_rich_donator: Donator = await db_session.query_donator(id=rich_donator.id)
         assert new_rich_donator.balance == rich_donator.balance - amount
         youtube_channel: YoutubeChannel = await db_session.query_youtube_channel(donation.youtube_channel.id)
         assert youtube_channel.balance == 0
@@ -105,7 +106,7 @@ async def test_donate_full(
     check_response(donate_response, 200)
     donation_id = donate_response.json()['donation']['id']
     assert donation_id == str(UUID(int=1))
-    payment_request = donate_response.json()['payment_request']
+    payment_request = PaymentRequest(donate_response.json()['payment_request'])
     check_donation_notification = check_notification(client, 'donation', donation_id)
     check_video_notification = check_notification(client, 'youtube-video-by-vid', video_id)
     async with monitor_invoices(lnd, db), check_donation_notification, check_video_notification:
@@ -131,7 +132,7 @@ async def test_transfer_from_youtube(client, db, paid_donation_fixture, register
     async with db.session() as db_session:
         channel = await db_session.query_youtube_channel(youtube_channel_id=channel_id, owner_id=registered_donator.id)
         assert channel.balance == 0
-        donator = await db_session.query_donator(donator_id=registered_donator.id)
+        donator = await db_session.query_donator(id=registered_donator.id)
         assert donator.balance == amount
         donation = await db_session.query_donation(id=paid_donation_fixture.id)
         assert donation.claimed_at != None  # noqa

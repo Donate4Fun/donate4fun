@@ -6,6 +6,7 @@ from sqlalchemy.orm.exc import NoResultFound  # noqa
 
 from .models import Donator, YoutubeChannel, YoutubeVideo, YoutubeChannelOwned
 from .db_models import YoutubeChannelDb, YoutubeVideoDb, YoutubeChannelLink, DonationDb
+from .db_utils import insert_on_conflict_update
 
 
 class YoutubeDbMixin:
@@ -45,23 +46,7 @@ class YoutubeDbMixin:
 
     async def save_youtube_channel(self, youtube_channel: YoutubeChannel):
         resp = await self.execute(
-            insert(YoutubeChannelDb)
-            .values(youtube_channel.dict())
-            .on_conflict_do_update(
-                index_elements=[YoutubeChannelDb.channel_id],
-                set_={
-                    YoutubeChannelDb.title: youtube_channel.title,
-                    YoutubeChannelDb.thumbnail_url: youtube_channel.thumbnail_url,
-                    YoutubeChannelDb.banner_url: youtube_channel.banner_url,
-                    YoutubeChannelDb.last_fetched_at: youtube_channel.last_fetched_at,
-                },
-                where=(
-                    (func.coalesce(YoutubeChannelDb.title, '') != youtube_channel.title)
-                    | (func.coalesce(YoutubeChannelDb.thumbnail_url, '') != youtube_channel.thumbnail_url)
-                    | (func.coalesce(YoutubeChannelDb.banner_url, '') != youtube_channel.banner_url)
-                ),
-            )
-            .returning(YoutubeChannelDb.id)
+            insert_on_conflict_update(YoutubeChannelDb, youtube_channel, YoutubeChannelDb.channel_id)
         )
         id_: UUID = resp.scalar()
         if id_ is None:

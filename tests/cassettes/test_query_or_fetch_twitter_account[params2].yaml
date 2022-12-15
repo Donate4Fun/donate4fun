@@ -15,12 +15,9 @@ interactions:
       user-agent:
       - python-httpx/0.23.1
     method: GET
-    uri: https://api.twitter.com/2/users/by/username/donate4_fun?user.fields=id%2Cname%2Cprofile_image_url%2Cdescription
+    uri: https://api.twitter.com/2/users/by/username/twiteis?user.fields=id%2Cname%2Cprofile_image_url%2Cdescription
   response:
-    content: "{\"data\":{\"id\":\"1572908920485576704\",\"description\":\"Donations
-      with #Bitcoin #LightningNetwork on Twitter and Youtube. \\nDM to claim your
-      donation.\\nCreated by @Novaklim1 and @nbryskin.\",\"username\":\"donate4_fun\",\"profile_image_url\":\"https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_normal.png\",\"name\":\"Donate4.Fun
-      \u26A1\"}}"
+    content: "{\"data\":{\"description\":\"\u26A1\uFE0F leo@getalby.com\",\"profile_image_url\":\"https://pbs.twimg.com/profile_images/1261863462591959040/3KXJQfH__normal.jpg\",\"username\":\"twiteis\",\"name\":\"Leo\",\"id\":\"180438388\"}}"
     headers:
       api-version:
       - '2.55'
@@ -31,24 +28,24 @@ interactions:
       content-encoding:
       - gzip
       content-length:
-      - '287'
+      - '196'
       content-type:
       - application/json; charset=utf-8
       date:
-      - Tue, 06 Dec 2022 19:34:02 UTC
+      - Tue, 06 Dec 2022 19:34:04 UTC
       perf:
       - '7626143928'
       server:
       - tsa_o
       set-cookie:
-      - guest_id=v1%3A167035524231124655; Max-Age=34214400; Expires=Sat, 06 Jan 2024
-        19:34:02 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      - guest_id=v1%3A167035524461451068; Max-Age=34214400; Expires=Sat, 06 Jan 2024
+        19:34:04 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
       strict-transport-security:
       - max-age=631138519
       x-access-level:
       - read
       x-connection-hash:
-      - e07c1f3c973e2ee7036598bedc636f24122c42c9aef4790a2f6df3927b62aebd
+      - b145d094ba8a303dd8fee7ea1ce7e169bef00a665c10a5480b21e40412b53af6
       x-content-type-options:
       - nosniff
       x-frame-options:
@@ -56,13 +53,13 @@ interactions:
       x-rate-limit-limit:
       - '300'
       x-rate-limit-remaining:
-      - '299'
+      - '298'
       x-rate-limit-reset:
       - '1670356142'
       x-response-time:
-      - '199'
+      - '140'
       x-transaction-id:
-      - d6d0b47135c84f30
+      - 758ae3c0b07ccb9f
       x-xss-protection:
       - '0'
     http_version: HTTP/1.1

@@ -30,6 +30,7 @@ from .models import Donation, TwitterAccount, TwitterTweet, WithdrawalToken, Don
 from .types import ValidationError, EntityTooOld
 from .settings import settings
 from .core import as_task, register_command, catch_exceptions
+from .api_utils import scrape_lightning_address
 
 logger = logging.getLogger(__name__)
 
@@ -40,11 +41,13 @@ class TwitterDonatee:
     tweet_id: str | None = None
 
     async def fetch(self, donation: Donation, db: DbSession):
-        if self.tweet_id:
+        if self.tweet_id is not None:
             tweet = TwitterTweet(tweet_id=self.tweet_id)
+            # FIXME: we should possibly save link to the tweet author
             await db.get_or_create_tweet(tweet)
             donation.twitter_tweet = tweet
         donation.twitter_account = await query_or_fetch_twitter_account(db=db, handle=self.author_handle)
+        donation.lightning_address = donation.twitter_account.lightning_address
 
 
 class UnsupportedTwitterUrl(ValidationError):
@@ -204,12 +207,13 @@ async def fetch_twitter_author(handle: str | None = None, user_id: int | None = 
             path = f'users/{user_id}'
         else:
             raise ValueError("One of handle or user_id should be provided")
-        data = await api_get(client, path, params={'user.fields': 'id,name,profile_image_url'})
+        data = await api_get(client, path, params={'user.fields': 'id,name,profile_image_url,description'})
         return TwitterAccount(
             user_id=int(data['id']),
             handle=data['username'],
             name=data['name'],
             profile_image_url=data['profile_image_url'],
+            lightning_address=scrape_lightning_address(data['description']),
             last_fetched_at=datetime.utcnow(),
         )
 

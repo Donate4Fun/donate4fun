@@ -23,7 +23,7 @@
         --width=125px
       >Fulfill</WhiteButton>
       <WhiteButton
-        title="Minimum amount to withdraw is {withdrawMin} sats"
+        title="Minimum withdrawal amount is {withdrawMin} sats"
         disabled={me.donator.balance <= withdrawMin}
         target={isExtension ? "_blank" : null}
         link={resolve("/me/withdraw")}

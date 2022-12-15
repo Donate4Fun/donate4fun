@@ -16,6 +16,7 @@ from donate4fun.lnd import monitor_invoices, LndClient, Invoice, lnd
 from donate4fun.models import Donation, Donator, SubscribeEmailRequest
 from donate4fun.db import Notification
 from donate4fun.db_models import DonatorDb
+from donate4fun.types import PaymentRequest
 
 from tests.test_util import verify_fixture, verify_response, check_response, freeze_time, check_notification, login_to
 from tests.fixtures import Settings
@@ -82,7 +83,7 @@ async def test_fulfill(
     check_response(donate_response, 200)
     donation_id = donate_response.json()['donation']['id']
     assert donation_id == str(UUID(int=1))
-    payment_request = donate_response.json()['payment_request']
+    payment_request = PaymentRequest(donate_response.json()['payment_request'])
     check_donation_notification = check_notification(client, 'donation', donation_id)
     check_donator_notification = check_notification(client, 'donator', registered_donator.id)
     async with monitor_invoices(lnd, db), check_donation_notification, check_donator_notification:
@@ -174,8 +175,8 @@ async def test_disconnect_wallet(client, settings: Settings, registered_donator:
 
 
 @pytest.mark.parametrize('balance, amount_diff, balance_diff, status, message, is_ok', [
-    (20, -1, 0, 'OK', None, True), (20, 0, 0, 'OK', None, True),
-    (20, 1, 0, 'OK', None, False), (20, 0, -1, 'OK', None, False),
+    (200, -3, 0, 'OK', None, True), (200, 0, 0, 'OK', None, True),
+    (200, 3, 0, 'OK', None, False), (200, 0, -3, 'OK', None, False),
     (10**8, 0, 0, 'ERROR', 'FAILURE_REASON_INSUFFICIENT_BALANCE', False),
 ])
 async def test_withdraw(
@@ -187,6 +188,7 @@ async def test_withdraw(
     amount_diff is a difference between balance and invoice amount
     balance_diff is a difference between balance after initiaing withdrawal and before commiting invoice to emulate double-spend
     """
+    expected_fee = 1
     donator = registered_donator
     login_to(client, settings, donator)
     async with db.session() as db_session:
@@ -199,15 +201,15 @@ async def test_withdraw(
     resp = await client.get('/api/v1/me/withdraw')
     check_response(resp, 200)
     response = WithdrawResponse(**resp.json())
-    assert response.amount == balance
+    assert response.amount == balance - settings.fee_limit
     decoded_url = _lnurl_decode(response.lnurl)
     lnurl_response = await client.get(decoded_url)
     lnurl_data = LnurlWithdrawResponse(**lnurl_response.json())
     assert lnurl_data.min_sats == settings.min_withdraw
-    assert lnurl_data.max_sats == balance
+    assert lnurl_data.max_sats == balance - settings.fee_limit
     invoice: Invoice = await payer_lnd.create_invoice(
         memo=lnurl_data.default_description,
-        value=balance + amount_diff,
+        value=lnurl_data.max_sats + amount_diff,
     )
     if balance_diff:
         # Test double-spend
@@ -235,8 +237,11 @@ async def test_withdraw(
         print("wait for task complete")
     # Check final balance
     async with db.session() as db_session:
-        donator: Donator = await db_session.query_donator(donator_id=donator.id)
-        assert donator.balance == -amount_diff if is_ok else balance
+        donator: Donator = await db_session.query_donator(id=donator.id)
+        if is_ok:
+            assert donator.balance == settings.fee_limit - expected_fee - amount_diff
+        else:
+            assert donator.balance == balance + balance_diff
 
 
 async def wait_for_payment(lnd_client, r_hash, *, task_status: TaskStatus):

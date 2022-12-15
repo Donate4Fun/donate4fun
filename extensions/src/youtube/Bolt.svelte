@@ -39,17 +39,11 @@
   async function doDonate(event) {
     donating = true;
     amount = event.detail.amount || await worker.getConfig("amount");
-    let donation_;
     try {
-      donation_ = await donate(amount, window.location.href);
+      await donate(amount, window.location.href);
     } catch (err) {
       donating = false;
-      cInfo("Payment failed", err);
-      const rejected = err.message === 'User rejected';
-      worker.createPopup(`nowebln/${amount}/${rejected}`);
-      return;
     }
-    onPaid(donation_);
   }
 
   export async function onPaid(donation_) {

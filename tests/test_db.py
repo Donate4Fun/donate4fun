@@ -17,7 +17,7 @@ pytestmark = pytest.mark.anyio
 async def test_query_donator(db_session, paid_donation_fixture):
     await db_session.save_donator(paid_donation_fixture.donator)
     await db_session.save_donator(paid_donation_fixture.donator)
-    donator: Donator = await db_session.query_donator(paid_donation_fixture.donator.id)
+    donator: Donator = await db_session.query_donator(id=paid_donation_fixture.donator.id)
     verify_fixture(donator, 'query-donator')
 
 

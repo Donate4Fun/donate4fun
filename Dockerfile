@@ -7,7 +7,7 @@ RUN pip install --upgrade pip && pip install poetry
 
 WORKDIR /app
 COPY pyproject.toml poetry.lock /app/
-RUN poetry install
+RUN poetry install --no-root
 RUN poetry run playwright install chromium
 RUN poetry run playwright install-deps
 COPY donate4fun /app/donate4fun

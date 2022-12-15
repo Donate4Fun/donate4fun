@@ -1,6 +1,6 @@
 import browser from "webextension-polyfill";
-import { cLog, cError } from "$lib/log.js";
-import { subscribe } from "$lib/api.js";
+import { cLog, cError, cInfo } from "$lib/log.js";
+import { subscribe, post } from "$lib/api.js";
 
 async function callBackground(request) {
   cLog("sending to service worker", request);
@@ -160,7 +160,10 @@ async function handleMessage(handler, args) {
   }
 }
 
-function registerHandlers(handlers) {
+let handlers;
+
+function registerHandlers(handlers_) {
+  handlers = handlers_;
   browser.runtime.onMessage.addListener((request, sender) => {
     if (request.type !== 'donate4fun-request')
       return false;
@@ -224,32 +227,39 @@ async function apiPost(path, data) {
 
 async function donate(amount, target, donator_twitter_handle=null) {
   // Make a donation
-  const response = await apiPost('donate', {
-    amount,
-    target,
-    donator_twitter_handle,
-  });
-  const donation = response.donation;
-  if (donation.paid_at) {
-    return donation;
-  } else {
-    return await new Promise(async (resolve, reject) => {
-      // If donation is not paid using balance then try to use WebLN
-      const ws = subscribe(`donation:${donation.id}`, { autoReconnect: false });
-      ws.on("notification", async () => {
-        await ws.close();
-        resolve(donation);
-      });
-      await ws.ready(3000);
-      const paymentRequest = response.payment_request;
-      // Show payment dialog (or pay silently if budget allows)
-      try {
-        await pageScript.sendPayment(paymentRequest);
-      } catch (err) {
-        await ws.close();
-        reject(err);
-      }
+  try {
+    const response = await apiPost('donate', {
+      amount,
+      target,
+      donator_twitter_handle,
     });
+    let donation = response.donation;
+    if (donation.paid_at === null) {
+      donation = await new Promise(async (resolve, reject) => {
+        // If donation is not paid using balance then try to use WebLN
+        const ws = subscribe(`donation:${donation.id}`, { autoReconnect: false });
+        ws.on("notification", async () => {
+          await ws.close();
+          resolve(donation);
+        });
+        await ws.ready(3000);
+        const paymentRequest = response.payment_request;
+        // Show payment dialog (or pay silently if budget allows)
+        try {
+          const preimage = await pageScript.sendPayment(paymentRequest);
+          await post(`donation/${donation.id}/paid`, preimage);
+        } catch (err) {
+          await ws.close();
+          reject(err);
+        }
+      });
+    }
+    handlers.onPaid(donation);
+  } catch (err) {
+    cInfo("Payment failed", err);
+    const rejected = err.message === 'User rejected';
+    worker.createPopup(`nowebln/${amount}/${rejected}`);
+    throw err;
   }
 }
 

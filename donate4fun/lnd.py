@@ -12,7 +12,7 @@ import anyio
 import httpx
 from anyio import TASK_STATUS_IGNORED
 from anyio.abc import TaskStatus
-from lnpayencode import lndecode, LnAddr
+from lnpayencode import LnAddr
 from lnurl.helpers import _lnurl_decode
 from lnurl.models import LnurlResponseModel
 from lnurl.types import MilliSatoshi
@@ -20,7 +20,7 @@ from pydantic import Field, AnyUrl
 
 from .settings import LndSettings, settings
 from .types import RequestHash, PaymentRequest
-from .models import Invoice
+from .models import Invoice, Donator, PayInvoiceResult
 from .core import as_task, register_command, ContextualObject
 
 logger = logging.getLogger(__name__)
@@ -78,7 +78,7 @@ class LndClient:
 
     @asynccontextmanager
     async def request(self, api: str, method: str, **kwargs):
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(verify=self.settings.tls_cert or True) as client:
             url = f'{self.settings.url}{api}'
             logger.trace(f"{method} {url}")
             if self.invoice_macaroon:
@@ -88,7 +88,7 @@ class LndClient:
                 url=url,
                 **kwargs,
             ) as resp:
-                logger.trace(f"{method} {url} {resp.status_code}")
+                logger.debug(f"{method} {url} {resp.status_code}")
                 if not resp.is_success:
                     await resp.aread()
                 resp.raise_for_status()
@@ -113,18 +113,17 @@ class LndClient:
             while result := await queue.get():
                 yield result
 
-    async def create_invoice(self, memo: str, value: int) -> Invoice:
+    async def create_invoice(self, **kwargs) -> Invoice:
         resp = await self.query(
             'POST',
             '/v1/invoices',
             data=dict(
-                memo=memo,
-                value=value,
+                **kwargs,
                 expiry=self.settings.invoice_expiry,
                 private=self.settings.private,
             ),
         )
-        return Invoice(value=value, **resp)
+        return Invoice(**resp)
 
     async def lookup_invoice(self, r_hash: RequestHash) -> Invoice | None:
         try:
@@ -142,9 +141,9 @@ class LndClient:
         """
         await self.query("POST", "/v2/invoices/cancel", data=dict(payment_hash=r_hash.as_hex))
 
-    async def pay_invoice(self, payment_request: PaymentRequest):
+    async def pay_invoice(self, payment_request: PaymentRequest) -> PayInvoiceResult:
         try:
-            decoded: LnAddr = lndecode(payment_request)
+            decoded: LnAddr = payment_request.decode()
             logger.debug(f"Sending payment to {decoded}")
             results = await self.query(
                 "POST",
@@ -159,9 +158,10 @@ class LndClient:
         except httpx.HTTPStatusError as exc:
             raise PayInvoiceError(exc.response.json()['error']['message']) from exc
         else:
-            last_result = results[-1]
-            if last_result['result']['status'] != 'SUCCEEDED':
-                raise PayInvoiceError(last_result['result']['failure_reason'])
+            last_result = PayInvoiceResult(**results[-1]['result'])
+            if last_result.status != 'SUCCEEDED':
+                raise PayInvoiceError(last_result.failure_reason)
+            return last_result
 
     async def query_state(self) -> State:
         resp = await self.query('GET', '/v1/state')
@@ -221,3 +221,10 @@ async def pay_withdraw_request(lnurl: str):
             value=lnurl_data.max_sats,
         )
         await client.get(lnurl_data.callback, params=dict(k1=lnurl_data.k1, pr=invoice.payment_request))
+
+
+def lightning_payment_metadata(receiver: Donator):
+    return json.dumps([
+        ("text/identifier", str(receiver.id)),
+        ("text/plain", f"Sats for {receiver.name}"),
+    ])

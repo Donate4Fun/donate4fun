@@ -13,11 +13,12 @@ interactions:
       host:
       - api.twitter.com
       user-agent:
-      - python-httpx/0.23.0
+      - python-httpx/0.23.1
     method: GET
-    uri: https://api.twitter.com/2/users/12345?user.fields=id%2Cname%2Cprofile_image_url
+    uri: https://api.twitter.com/2/users/12345?user.fields=id%2Cname%2Cprofile_image_url%2Cdescription
   response:
-    content: '{"data":{"name":"ID 12345","username":"harperreed","id":"12345","profile_image_url":"https://pbs.twimg.com/profile_images/58849851/harper_4_normal.jpg"}}'
+    content: '{"data":{"username":"harperreed","name":"ID 12345","description":"ID
+      12345","id":"12345","profile_image_url":"https://pbs.twimg.com/profile_images/58849851/harper_4_normal.jpg"}}'
     headers:
       api-version:
       - '2.55'
@@ -28,24 +29,24 @@ interactions:
       content-encoding:
       - gzip
       content-length:
-      - '143'
+      - '154'
       content-type:
       - application/json; charset=utf-8
       date:
-      - Mon, 21 Nov 2022 18:07:12 UTC
+      - Tue, 06 Dec 2022 19:34:03 UTC
       perf:
       - '7626143928'
       server:
       - tsa_o
       set-cookie:
-      - guest_id=v1%3A166905403210205181; Max-Age=34214400; Expires=Fri, 22 Dec 2023
-        18:07:12 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      - guest_id=v1%3A167035524349468967; Max-Age=34214400; Expires=Sat, 06 Jan 2024
+        19:34:03 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
       strict-transport-security:
       - max-age=631138519
       x-access-level:
       - read
       x-connection-hash:
-      - d24832660650556aafecebedc4a2b213b91c0e634f4cc842156679ae0cdede38
+      - bdf209ba5035167172ab60161e07dd169d561557188552dd500cfb2783ba8773
       x-content-type-options:
       - nosniff
       x-frame-options:
@@ -55,11 +56,11 @@ interactions:
       x-rate-limit-remaining:
       - '299'
       x-rate-limit-reset:
-      - '1669054932'
+      - '1670356143'
       x-response-time:
-      - '128'
+      - '124'
       x-transaction-id:
-      - 5ee120c2799cdb23
+      - a466151c0a1b22c5
       x-xss-protection:
       - '0'
     http_version: HTTP/1.1

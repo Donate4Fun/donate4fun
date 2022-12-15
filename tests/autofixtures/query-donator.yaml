@@ -5,12 +5,14 @@ __dict__:
   id: !!python/object/apply:asyncpg.pgproto.pgproto.UUID
   - !!binary |
     AAAAAAAAAAAAAAAAAAAAAA==
+  lightning_address: null
   lnauth_pubkey: null
   name: Admiring Serene Khorana
 __fields_set__: !!set
   avatar_url: null
   balance: null
   id: null
+  lightning_address: null
   lnauth_pubkey: null
   name: null
 __private_attribute_values__: {}

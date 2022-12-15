@@ -1,15 +1,12 @@
-import socket
 from uuid import UUID
 import pytest
 
 import psutil
-from hypercorn.asyncio import serve as hypercorn_serve
-from hypercorn.config import Config
 
 from donate4fun.models import YoutubeChannel, DonateRequest
-from donate4fun.core import as_task
 
 from tests.test_util import verify_response, check_response
+from tests.fixtures import find_unused_port, app_serve
 
 
 @pytest.mark.freeze_time('2022-02-02T22:22:22')
@@ -41,24 +38,11 @@ async def test_twitter_page(client, twitter_account):
     verify_response(response, 'twitter-page', 200)
 
 
-def find_unused_port() -> int:
-    with socket.socket() as sock:
-        sock.bind(('localhost', 0))
-        return sock.getsockname()[1]
-
-
-@as_task
-async def app_serve(app, settings, port):
-    settings.hypercorn['bind'] = f'localhost:{port}'
-    hyper_config = Config.from_mapping(settings.hypercorn)
-    await hypercorn_serve(app, hyper_config)
-
-
 @pytest.fixture
 async def webapp(app, settings):
     port = find_unused_port()
     settings.frontend_port = port
-    async with app_serve(app, settings, port):
+    async with app_serve(app, port):
         yield
 
 

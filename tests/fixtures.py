@@ -3,7 +3,11 @@ import uuid
 import contextvars
 import functools
 import logging
+import socket
 import time
+import traceback
+from contextlib import asynccontextmanager
+from pathlib import Path
 from datetime import datetime
 from base64 import urlsafe_b64encode
 from itertools import count
@@ -15,18 +19,22 @@ import ecdsa
 from authlib.jose import jwt
 from asgi_testclient import TestClient
 from sqlalchemy import update
+from hypercorn.asyncio import serve as hypercorn_serve
+from hypercorn.config import Config
 
-from donate4fun.app import create_app, addLoggingLevel
+from donate4fun.core import as_task
+from donate4fun.app import create_app
 from donate4fun.api_utils import task_group
 from donate4fun.models import Invoice, Donation
 from donate4fun.lnd import LndClient, lnd as lnd_var
-from donate4fun.settings import load_settings, Settings, DbSettings, LndSettings
+from donate4fun.settings import load_settings, Settings, DbSettings
 from donate4fun.db import DbSession, Database, db as db_var
 from donate4fun.db_models import DonatorDb
 from donate4fun.models import (
     RequestHash, PaymentRequest, YoutubeChannel, Donator, BaseModel, YoutubeVideo, TwitterAccount, TwitterTweet,
 )
 from donate4fun.pubsub import PubSubBroker, pubsub as pubsub_var
+from donate4fun.dev_helpers import get_carol_lnd, get_alice_lnd
 
 
 logger = logging.getLogger(__name__)
@@ -71,28 +79,37 @@ class Task311(asyncio.tasks._PyTask):
 
 
 def task_factory(loop, coro, context=None):
+    stack = traceback.extract_stack()
+    for frame in stack[-2::-1]:
+        package_name = Path(frame.filename).parts[-2]
+        if package_name != 'asyncio':
+            if package_name == 'pytest_asyncio':
+                # This function was called from pytest_asyncio, use shared context
+                break
+            else:
+                # This function was called from somewhere else, create context copy
+                context = None
+            break
     return Task311(coro, loop=loop, context=context)
 
 
 @pytest.fixture(scope="session")
 def event_loop():
-    """Create an instance of the default event loop for entire session."""
+    """
+    This fixture is used by pytest-asyncio to run test's setup/run/teardown.
+    It's needed to share contextvars between these stages.
+    This breaks context isolation for tasks, so we need to check calling context there
+    """
     loop = asyncio.get_event_loop_policy().new_event_loop()
     context = contextvars.copy_context()
     loop.set_task_factory(functools.partial(task_factory, context=context))
-    yield loop
-    loop.close()
+    asyncio.set_event_loop(loop)
+    return loop
 
 
 @pytest.fixture
 async def settings():
-    try:
-        addLoggingLevel('TRACE', 5, 'trace')
-    except AttributeError:
-        pass
     with load_settings() as settings:
-        settings.lnd.url = 'http://localhost:10001'
-        settings.lnd.macaroon_by_network = None
         settings.fastapi.debug = False  # We need to disable Debug Toolbar to avoid zero-division error (because of freezegun)
         settings.rollbar = None
         settings.bugsnag.enabled = False
@@ -101,8 +118,13 @@ async def settings():
 
 @pytest.fixture
 async def db(settings: Settings):
+    async with create_db("donate4fun-test") as db:
+        yield db
+
+
+@asynccontextmanager
+async def create_db(db_name: str):
     base_db = Database(DbSettings(url='postgresql+asyncpg://tester@localhost/postgres', isolation_level='AUTOCOMMIT'))
-    db_name = "donate4fun-test"
     await base_db.create_database(db_name)
     try:
         db = Database(DbSettings(url=f'postgresql+asyncpg://tester@localhost/{db_name}'))
@@ -137,12 +159,6 @@ async def run(command):
     assert process.returncode == 0
 
 
-@pytest.fixture(scope="session")
-async def lnd_server(event_loop):
-    await run('docker-compose up -d')
-    yield
-
-
 @pytest.fixture
 async def pubsub(db):
     pubsub = PubSubBroker()
@@ -151,9 +167,10 @@ async def pubsub(db):
 
 
 @pytest.fixture
-async def app(db, settings, lnd_server, pubsub):
+async def app(db, settings, pubsub):
     async with create_app(settings) as app, anyio.create_task_group() as tg:
-        with db_var.assign(db), lnd_var.assign(LndClient(settings.lnd)), pubsub_var.assign(pubsub), task_group.assign(tg):
+        lnd = get_alice_lnd()
+        with db_var.assign(db), lnd_var.assign(lnd), pubsub_var.assign(pubsub), task_group.assign(tg):
             yield app
 
 
@@ -248,12 +265,15 @@ def client(app, client_session):
 
 @pytest.fixture
 async def registered_donator(db):
-    sk = ecdsa.SigningKey.generate(entropy=ecdsa.util.PRNG(b'seed'), curve=ecdsa.SECP256k1)
+    return await make_registered_donator(db, UUID(int=1))  # UUID should differ from donator_id fixture
+
+
+async def make_registered_donator(db, donator_id: UUID):
+    sk = ecdsa.SigningKey.generate(entropy=ecdsa.util.PRNG(donator_id.bytes), curve=ecdsa.SECP256k1)
     pubkey = sk.verifying_key.to_string().hex()
     async with db.session() as db_session:
-        donator_id = UUID(int=1)  # Should differ from donator_id fixture
         await db_session.login_donator(donator_id, key=pubkey)
-        return await db_session.query_donator(donator_id)
+        return await db_session.query_donator(id=donator_id)
 
 
 @pytest.fixture
@@ -264,12 +284,12 @@ async def rich_donator(db, registered_donator):
             .values(balance=100)
             .where(DonatorDb.id == registered_donator.id)
         )
-        return await db_session.query_donator(registered_donator.id)
+        return await db_session.query_donator(id=registered_donator.id)
 
 
 @pytest.fixture
 async def payer_lnd():
-    return LndClient(LndSettings(url='http://localhost:10002', lnurl_base_url='http://test'))
+    return get_carol_lnd()
 
 
 @pytest.fixture
@@ -283,3 +303,16 @@ async def twitter_account(app, db, freeze_uuids):
         )
         await db_session.save_twitter_account(account)
         return account
+
+
+def find_unused_port() -> int:
+    with socket.socket() as sock:
+        sock.bind(('localhost', 0))
+        return sock.getsockname()[1]
+
+
+@as_task
+async def app_serve(app, port):
+    hyper_config = Config()
+    hyper_config.bind = f'localhost:{port}'
+    await hypercorn_serve(app, hyper_config)

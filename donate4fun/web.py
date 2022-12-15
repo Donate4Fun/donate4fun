@@ -1,4 +1,3 @@
-import json
 import datetime
 from uuid import UUID
 from typing import Any
@@ -13,11 +12,12 @@ from fastapi.exceptions import RequestValidationError
 from sqlalchemy.orm.exc import NoResultFound
 
 from .api_utils import get_db_session
-from .models import YoutubeChannel, TwitterAccount, Donation
+from .models import YoutubeChannel, TwitterAccount, Donation, Donator
 from .youtube import fetch_user_channel, ChannelInfo, query_or_fetch_youtube_channel
 from .twitter import query_or_fetch_twitter_account
 from .settings import settings
 from .db import db
+from .lnd import lightning_payment_metadata
 
 app = FastAPI()
 
@@ -142,15 +142,14 @@ async def twitter_account_redirect(request: Request, handle: str, db=Depends(get
 
 
 @app.get('/.well-known/lnurlp/{username}')
-async def lightning_address(request: Request, username: str):
+async def lightning_address(request: Request, username: str, db_session=Depends(get_db_session)):
+    receiver: Donator = await db_session.query_donator(lightning_address=f'{username}@{request.headers["host"]}')
     return dict(
-        callback=request.app.url_path_for('payment_callback').make_absolute_url(settings.lnd.lnurl_base_url),
-        maxSendable=1000000,
-        minSendable=100,
-        metadata=json.dumps([
-            ("text/identifier", f'{username}@{request.host}'),
-            ("text/plain", f"Sats for {username}"),
-        ]),
+        status='OK',
+        callback=f'{settings.base_url}/api/v1/lnurl/{receiver.id}/payment-callback',
+        maxSendable=settings.lnurlp.max_sendable_sats * 1000,
+        minSendable=settings.lnurlp.min_sendable_sats * 1000,
+        metadata=lightning_payment_metadata(receiver),
         commentAllowed=255,
         tag="payRequest",
     )

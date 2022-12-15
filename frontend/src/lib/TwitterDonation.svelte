@@ -29,7 +29,12 @@
         <img alt="avatar" class="avatar" src={donation.twitter_account.profile_image_url}>
         <div class="name">{donation.twitter_account.name}</div>
       </div>
-      <div class="handle">@{donation.twitter_account.handle}</div>
+      <div class="handle">
+        <span>@{donation.twitter_account.handle}</span>
+        {#if donation.lightning_address}
+          <span class="lightning-address">via ⚡{donation.lightning_address}</span>
+        {/if}
+      </div>
     </a>
   </div>
   {#if donation.cancelled_at === null && donation.claimed_at === null}
@@ -84,10 +89,16 @@ img.avatar {
   text-overflow: ellipsis;
 }
 .handle {
+  display: flex;
+  gap: 8px;
+
   font-weight: 500;
   font-size: 12px;
   line-height: 15px;
   padding-left: 44px;
+}
+.lightning-address {
+  color: var(--color);
 }
 .amount {
   padding-left: 44px;

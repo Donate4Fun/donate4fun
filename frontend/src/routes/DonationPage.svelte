@@ -1,4 +1,6 @@
 <script>
+  import { get } from "svelte/store";
+
   import Donation from "$lib/Donation.svelte";
   import Donator from "$lib/Donator.svelte";
   import Loading from "$lib/Loading.svelte";
@@ -40,10 +42,15 @@
     title.set(`${donation.amount} sats donated to ${targetName}`);
   }
 
-  function paid(event) {
+  async function paid(event) {
     donation = event.detail;
     if (donation.paid_at && donation.receiver) {
-      notify("Success", `You've paid ${donation.amount} sats`, "success");
+      const me_ = await get(me);
+      if (donation.receiver.id === me_.donator.id) {
+        notify("Success", `You've fulfilled ${donation.amount} sats`, "success");
+        navigate(`/donator/${me_.donator.id}`);
+      } else
+        notify("Success", `You've paid ${donation.amount} sats`, "success");
     }
     title.set(`${donation.amount} sats donated to ${targetName}`);
   }

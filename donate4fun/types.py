@@ -1,8 +1,30 @@
+import re
 from binascii import b2a_hex
 from base64 import urlsafe_b64decode, urlsafe_b64encode
+from typing import Any
+
+from lnpayencode import lndecode, LnAddr
 
 
 Url = str
+
+
+class LightningAddress(str):
+    # https://github.com/lnurl/luds/blob/luds/16.md
+    domain_regexp = r'(((?!\-))(xn\-\-)?[a-z0-9\-_]{0,61}[a-z0-9]{1,1}\.)*(xn\-\-)?([a-z0-9\-]{1,61}|[a-z0-9\-]{1,30})\.[a-z]{2,}'  # noqa
+    # for local development
+    #domain_regexp = r'(((?!\-))(xn\-\-)?[a-z0-9\-_]{0,61}[a-z0-9]{1,1}\.)*(xn\-\-)?([a-z0-9\-]{1,61}|[a-z0-9\-]{1,30})(\.[a-z]{2,})?(:\d{1,5})?'  # noqa
+    regexp = r'^[a-z0-9-_.]+@' + domain_regexp + '$'
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v: Any) -> str:
+        if not re.match(cls.regexp, v):
+            raise ValidationError
+        return str(v)
 
 
 class PaymentRequest(str):
@@ -19,6 +41,9 @@ class PaymentRequest(str):
         else:
             raise ValueError(f"valid payment request should start with one of {cls.prefixes}")
 
+    def decode(self) -> LnAddr:
+        return lndecode(self)
+
 
 class RequestHash(str):
     def __init__(self, data: bytes):
@@ -29,13 +54,16 @@ class RequestHash(str):
         yield cls.validate
 
     @classmethod
-    def validate(cls, b64data: str):
-        if isinstance(b64data, cls):
-            return b64data
-        elif isinstance(b64data, str):
-            return cls(urlsafe_b64decode(b64data))
+    def validate(cls, data: str):
+        if isinstance(data, cls):
+            return data
+        elif isinstance(data, str):
+            if re.match(r'[0-9a-f]{64}', data):
+                return cls(bytes.fromhex(data))
+            else:
+                return cls(urlsafe_b64decode(data))
         else:
-            raise ValueError("Argument should be of type {cls} or str, not {type(b64data)}")
+            raise ValueError("Argument should be of type {cls} or str, not {type(data)}")
 
     @property
     def as_hex(self):
