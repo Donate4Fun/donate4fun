@@ -6,7 +6,7 @@
 
   import Bolt from "$lib/Bolt.svelte";
   import HoldButton from "$lib/HoldButton.svelte";
-  import Button from "$lib/Button.svelte";
+  import AmountButton from "$lib/AmountButton.svelte";
   import { cLog, cInfo } from "$lib/log.js";
   import { worker, donate, getStatic, waitElement, pageScript, selectByPattern } from "$extlib/common.js";
   import { getCurrentAccountHandle } from "./twitter.js";
@@ -78,7 +78,7 @@
       delay: params.delay || 0,
       duration: params.duration || 400,
       easing: params.easing || elasticOut,
-      css: (t, u) => `transform: ${existingTransform} scale(${t}) translateY(calc(${u} * 35px))`
+      css: (t, u) => `transform: ${existingTransform} scale(${t}) translateY(calc(${u} * 34px))`
     };
   }
 </script>
@@ -113,11 +113,10 @@
               on:mouseleave={resumeIncrease}
               on:mouseup={doDonate}
             >
-              <Button
+              <AmountButton
                 --padding="8px"
                 selected={amount_.value === amount}
-                dimmed={amount_.value !== amount}
-              >⚡{amount_.text}</Button>
+              >⚡{amount_.text}</AmountButton>
             </div>
           {/each}
         </div>
@@ -231,9 +230,10 @@
   position: absolute;
   display: flex;
   align-items: center;
-  top: -35px;
+  top: -34px;
   left: -30px;
   display: flex;
   gap: 4px;
+  user-select: none;
 }
 </style>
