@@ -32,7 +32,7 @@
     }
     if (donation.youtube_channel)
       targetName = donation.youtube_channel.title;
-    if (donation.twitter_account)
+    else if (donation.twitter_account)
       targetName = donation.twitter_account.name;
     else if (donation.receiver)
       targetName = donation.receiver.name;

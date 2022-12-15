@@ -16,6 +16,7 @@
   {#await loadTweet()}
     <Loader />
   {:then}
+    <div></div>
   {/await}
 </div>
 
