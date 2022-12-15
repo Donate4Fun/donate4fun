@@ -65,91 +65,21 @@ jobs:
 
       - name: Build Changelog
         id: build_changelog
-        uses: mikepenz/release-changelog-builder-action@v3
         if: startsWith(github.ref, 'refs/tags/')
+        uses: TriPSs/conventional-changelog-action@v3
         with:
-          commitMode: "true"
-          configurationJson: |
-            {
-              "categories": [
-                {
-                  "title": "## Frontend",
-                  "labels": ["frontend"]
-                },
-                {
-                  "title": "## Backend",
-                  "labels": ["backend"]
-                },
-                {
-                  "title": "## Extension",
-                  "labels": ["extension"]
-                },
-                {
-                  "title": "## Deploy",
-                  "labels": ["chart"]
-                },
-                {
-                  "title": "## Refactoring",
-                  "labels": ["refactoring"]
-                },
-                {
-                  "title": "## JS",
-                  "labels": ["js"]
-                },
-                {
-                  "title": "## Website",
-                  "labels": ["web"]
-                },
-                {
-                  "title": "## YouTube",
-                  "labels": ["youtube"]
-                },
-                {
-                  "title": "## Twitter",
-                  "labels": ["twitter"]
-                },
-                {
-                  "title": "## Deployment",
-                  "labels": ["deploy"]
-                },
-                {
-                  "title": "## CI/CD",
-                  "labels": ["ci"]
-                }
-              ],
-              "template": "#{{CHANGELOG}}\n\n<details>\n<summary>Uncategorized</summary>\n\n#{{UNCATEGORIZED}}\n</details>",
-              "empty_template": "- no changes",
-              "pr_template": "- #{{TITLE}} #{{MERGE_SHA}}",
-              "label_extractor": [
-                {
-                  "pattern": "\\[([^\\]]+)\\].*",
-                  "target": "$1",
-                  "flags": "gu"
-                },
-                {
-                  "pattern": "Update .*",
-                  "target": "ignore"
-                },
-                {
-                  "pattern": "Bump .*",
-                  "target": "ignore"
-                }
-              ],
-              "transformers": [
-                {
-                  "pattern": "(\\[[^\\]]+\\])+ (.*)",
-                  "target": "$2"
-                }
-              ]
-            }
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          skip-commit: true
+          skip-version-file: true
+          skip-tag: true
+          output-file: false
+          create-summary: true
+          github-token: ${{ secrets.github_token }}
 
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          body: ${{steps.build_changelog.outputs.changelog}}
+          body: ${{steps.build_changelog.outputs.clean_changelog}}
           files: |
             extensions/chrome.zip
             extensions/firefox.zip
