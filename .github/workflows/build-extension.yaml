@@ -49,19 +49,19 @@ jobs:
         run: pnpm install
 
       - name: Build extensions
-        run: pnpm package-clean
+        run: pnpm build
 
       - name: Archive firefox production zip file
         uses: actions/upload-artifact@v3
         with:
-          name: firefox.xpi
-          path: extensions/firefox.zip
+          name: firefox
+          path: extensions/firefox
 
       - name: Archive chrome production zip file
         uses: actions/upload-artifact@v3
         with:
-          name: chrome.zip
-          path: extensions/chrome.zip
+          name: chrome
+          path: extensions/chrome
 
       - name: Build Changelog
         id: build_changelog
