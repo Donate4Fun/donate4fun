@@ -56,9 +56,11 @@ class DonationsDbMixin:
             .values(
                 id=donation.id,
                 created_at=donation.created_at,
-                donator_id=donation.donator.id,
+                donator_id=donation.donator and donation.donator.id,
                 amount=donation.amount,
+                lightning_address=donation.lightning_address,
                 r_hash=donation.r_hash and donation.r_hash.as_base64,
+                transient_r_hash=donation.transient_r_hash and donation.transient_r_hash.as_base64,
                 receiver_id=donation.receiver and donation.receiver.id,
                 youtube_channel_id=donation.youtube_channel and donation.youtube_channel.id,
                 youtube_video_id=donation.youtube_video and donation.youtube_video.id,
@@ -93,13 +95,14 @@ class DonationsDbMixin:
             raise UnableToCancelDonation("Donation could not be claimed")
         await self.update_balance_for_donation(donation, -donation.amount)
 
-    async def donation_paid(self, donation_id: UUID, amount: int, paid_at: datetime):
+    async def donation_paid(self, donation_id: UUID, amount: int, paid_at: datetime, fee_msat: int = None):
         resp = await self.execute(
             update(DonationDb)
             .where((DonationDb.id == donation_id) & DonationDb.paid_at.is_(None))
             .values(
                 amount=amount,
                 paid_at=paid_at,
+                fee_msat=fee_msat,
             )
             .returning(*DonationDb.__table__.columns)
         )
@@ -111,12 +114,18 @@ class DonationsDbMixin:
         await self.update_balance_for_donation(donation, donation.amount)
 
     async def update_balance_for_donation(self, donation: DonationDb, amount: int):
+        """
+        amount - balance diff in sats, it's positive when donation is completed
+                 and negative when donation is cancelled
+        """
+        # If donation is made to a lightning address then do not change internal account balances
+        balance_amount = amount if donation.lightning_address is None else 0
         row = donation  # FIXME
         if row.youtube_channel_id:
             resp = await self.execute(
                 update(YoutubeChannelDb)
                 .values(
-                    balance=YoutubeChannelDb.balance + amount,
+                    balance=YoutubeChannelDb.balance + balance_amount,
                     total_donated=YoutubeChannelDb.total_donated + amount,
                 )
                 .where(YoutubeChannelDb.id == row.youtube_channel_id)
@@ -139,7 +148,7 @@ class DonationsDbMixin:
             resp = await self.execute(
                 update(TwitterAuthorDb)
                 .values(
-                    balance=TwitterAuthorDb.balance + amount,
+                    balance=TwitterAuthorDb.balance + balance_amount,
                     total_donated=TwitterAuthorDb.total_donated + amount,
                 )
                 .where(TwitterAuthorDb.id == row.twitter_account_id)
@@ -150,7 +159,7 @@ class DonationsDbMixin:
         elif row.receiver_id:
             resp = await self.execute(
                 update(DonatorDb)
-                .values(balance=DonatorDb.balance + amount)
+                .values(balance=DonatorDb.balance + balance_amount)
                 .where(DonatorDb.id == row.receiver_id)
                 .returning(DonatorDb.balance)
             )
@@ -159,8 +168,16 @@ class DonationsDbMixin:
             await self.object_changed('donator', row.receiver_id)
         else:
             raise ValueError(f"Donation has no target: {row.donation_id}")
-        if row.r_hash is None:
-            # donation without invoice, use donator balance
+        if (donation.r_hash is None) == (donation.lightning_address is None):
+            # r_hash   | lightning_address | description                     | action
+            # ==========================================================================================
+            # None     | not None          | from an external wallet to      | do nothing
+            #          |                   |   an external lightning address |
+            # None     | None              | internal donation               | change both balances
+            # not None | None              | from an external wallet to local|
+            #          |                   |   balance                       | increase receiver balance
+            # not None | not None          | from an internal balance to     | decrease donator balance
+            #          |                   |   an external lightning address |
             resp = await self.execute(
                 update(DonatorDb)
                 .where((DonatorDb.id == row.donator_id))
@@ -169,6 +186,7 @@ class DonationsDbMixin:
             )
             if resp.fetchone().balance < 0:
                 raise NotEnoughBalance(f"Donator {row.donator_id} hasn't enough money")
+
         await self.object_changed('donation', row.donation_id)
 
     async def start_transfer(self, donator: Donator, amount: int, donations_filter, **transfer_fields):

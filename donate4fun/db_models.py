@@ -16,6 +16,7 @@ class YoutubeChannelDb(Base):
     title = Column(String)
     thumbnail_url = Column(String)
     banner_url = Column(String)
+    lightning_address = Column(String)
 
     balance = Column(BigInteger, nullable=False, server_default=text('0'))
     total_donated = Column(BigInteger, nullable=False, server_default=text('0'))
@@ -59,6 +60,7 @@ class TwitterAuthorDb(Base):
     handle = Column(String, nullable=False)
     name = Column(String)
     profile_image_url = Column(String)
+    lightning_address = Column(String)
 
     balance = Column(BigInteger, nullable=False, server_default=text('0'))
     total_donated = Column(BigInteger, nullable=False, server_default=text('0'))
@@ -75,6 +77,7 @@ class DonatorDb(Base):
     avatar_url = Column(String)
     lnauth_pubkey = Column(String, unique=True)
     balance = Column(BigInteger, nullable=False, server_default=text('0'))
+    lightning_address = Column(String, unique=True)
 
     linked_youtube_channels = relationship(
         YoutubeChannelDb,
@@ -110,9 +113,15 @@ class DonationDb(Base):
     id = Column(Uuid(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4())
     created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
 
+    # This field is set only if local LND has been used for the donation
+    # For donations from an external wallet to an external lightning address this field is None
+    # Encoding is base64
     r_hash = Column(String, unique=True)
+    # For transient donations (look at models.py for description)
+    transient_r_hash = Column(String, unique=True)
     amount = Column(BigInteger, nullable=False)
-    donator_id = Column(Uuid(as_uuid=True), nullable=False)
+    fee_msat = Column(BigInteger)
+    donator_id = Column(Uuid(as_uuid=True))
     donator = relationship(
         DonatorDb, lazy='joined', foreign_keys=[donator_id], primaryjoin=lambda: DonationDb.donator_id == DonatorDb.id,
     )
@@ -134,6 +143,8 @@ class DonationDb(Base):
 
     twitter_tweet_id = Column(Uuid(as_uuid=True), ForeignKey(TwitterTweetDb.id))
     twitter_tweet = relationship(TwitterTweetDb, lazy='joined')
+
+    lightning_address = Column(String)
 
     donator_twitter_account_id = Column(Uuid(as_uuid=True), ForeignKey(TwitterAuthorDb.id))
     donator_twitter_account = relationship(TwitterAuthorDb, lazy='joined', foreign_keys=[donator_twitter_account_id])
@@ -169,6 +180,7 @@ class WithdrawalDb(Base):
 
     id = Column(Uuid(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4())
     amount = Column(BigInteger)
+    fee_msat = Column(BigInteger)
     created_at = Column(TIMESTAMP, nullable=False)
     paid_at = Column(TIMESTAMP)
     donator_id = Column(Uuid(as_uuid=True), nullable=False)

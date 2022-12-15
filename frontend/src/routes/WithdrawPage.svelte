@@ -59,6 +59,7 @@
           <GrayButton on:click={() => navigate(-1)}>Close</GrayButton>
         </div>
       {:else}
+          <div>Scan with your Lightning Wallet</div>
           <a class="qrcode" href="lightning:{lnurl}"><QRCode value={lnurl} /></a>
           <div class="buttons">
             <a href="lightning:{lnurl}" class="open-in-wallet"><Button>Open in wallet</Button></a>
@@ -82,6 +83,7 @@
 .withdraw {
   padding: 40px 120px 74px 120px;
   display: flex;
+  gap: 8px;
   flex-direction: column;
   align-items: center;
   width: 640px;

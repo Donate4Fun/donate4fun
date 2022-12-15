@@ -68,6 +68,8 @@
     text-overflow: ellipsis;
   }
   .handle {
+    display: flex;
+    gap: 8px;
     font-weight: 500;
     font-size: 12px;
     line-height: 15px;
@@ -77,6 +79,9 @@
   }
   .red {
     color: #FF7410;
+  }
+  .black {
+    color: #414141;
   }
   .amount {
     font-family: 'Inter var experimental';
@@ -99,7 +104,12 @@
       % if q.donator_twitter_account:
         <img class="donator avatar" src="${q.donator_twitter_account.profile_image_url}">
         <div class="donator name blue">${q.donator_twitter_account.name}</div>
-        <div class="donator handle blue">@${q.donator_twitter_account.handle}</div>
+        <div class="donator handle blue">
+          <span>@${q.donator_twitter_account.handle}</span>
+          % if q.lightning_address:
+            <span class="black">via ⚡${q.lightning_address}</span>
+          % endif
+        </div>
       % else:
         <img class="donator avatar" src="${q.donator.avatar_url}">
         <div class="donator name blue">${q.donator.name}</div>

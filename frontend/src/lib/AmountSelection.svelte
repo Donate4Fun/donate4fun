@@ -2,6 +2,7 @@
   import Input from "$lib/Input.svelte";
   import FiatAmount from "$lib/FiatAmount.svelte";
   import Button from "$lib/Button.svelte";
+  import AmountButton from "$lib/AmountButton.svelte";
   import { me } from "$lib/session.js";
   import { toText } from "$lib/utils.js";
 
@@ -11,17 +12,17 @@
   const amounts = [100, 1000, 10000];
   const amountMin = 10;
   const amountMax = 1000000;
+  $: valid = amount >= amountMin && amount <= amountMax;
 </script>
 
 <div class="container">
   <div class="amount-buttons">
   {#each amounts as amount_}
-    <Button
+    <AmountButton
       on:click={() => amount = amount_}
       --padding="8px"
       selected={amount_ === amount}
-      dimmed={amount_ !== amount}
-    >{toText(amount_)} ⚡</Button>
+    >{toText(amount_)} ⚡</AmountButton>
   {/each}
   </div>
   <div class="amount-input">
@@ -32,9 +33,9 @@
   </div>
   {#await $me then me}
     {#if amount <= me.donator.balance}
-      <Button --width=100% on:click={() => donate(amount)} --padding="9px" --border-width="0">Donate</Button>
+      <Button --width=100% on:click={() => donate(amount)} --padding="9px" disabled={!valid}>Donate</Button>
     {:else}
-      <Button --width=100% on:click={() => donate(amount)} --padding="9px" --border-width="0">Donate with WebLN</Button>
+      <Button --width=100% on:click={() => donate(amount)} --padding="9px" disabled={!valid}>Donate with WebLN</Button>
     {/if}
   {/await}
 </div>

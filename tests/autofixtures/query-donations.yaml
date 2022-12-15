@@ -10,24 +10,28 @@
     id: &id001 !!python/object/apply:asyncpg.pgproto.pgproto.UUID
     - !!binary |
       AAAAAAAAAAAAAAAAAAAAAA==
+    lightning_address: null
     lnauth_pubkey: null
     name: Admiring Serene Khorana
   donator_id: *id001
   donator_twitter_account: null
+  fee_msat: null
   id: !!python/object/apply:asyncpg.pgproto.pgproto.UUID
   - !!binary |
     AAAAAAAAAAAAAAAAAAAAAQ==
+  lightning_address: null
   message: null
   paid_at: !!python/object/apply:freezegun.api.FakeDatetime
   - !!binary |
     B+YCAhYWFgAAAA==
   r_hash: !!python/object/new:donate4fun.types.RequestHash
     args:
-    - b'\xd7\xd5\x87\xba1\xe2\xf8\x9c\xf5\x95)\xc3\xa2\xdee\xc3p\x11\xa2G|\xfe8|\x16\x96-\x0b\x98\xf3=\xa6'
+    - b'\x82N\xcd\x0c\x8b9F\x13q#\xb22R\xbc\xb35\x05\xaf\x12\x10[\xf1\xa9\xa1F6,G\xfc\x11\xc99'
     state:
       data: !!binary |
         aGFzaA==
   receiver: null
+  transient_r_hash: null
   twitter_account: null
   twitter_tweet: null
   youtube_channel:
@@ -38,6 +42,7 @@
     - !!binary |
       AAAAAAAAAAAAAAAAAAAAAQ==
     last_fetched_at: null
+    lightning_address: null
     thumbnail_url: 1wdasd
     title: asdzxc
   youtube_video: null

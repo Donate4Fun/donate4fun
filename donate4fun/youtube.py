@@ -16,6 +16,7 @@ from .types import UnsupportedTarget, Url, ValidationError, EntityTooOld
 from .db import DbSession, Database
 from .models import YoutubeVideo, YoutubeChannel, Donation
 from .core import register_command
+from .api_utils import scrape_lightning_address
 
 ChannelId = str
 VideoId = str
@@ -37,6 +38,7 @@ class YoutubeChannelNotFound(ValidationError):
 class ChannelInfo(BaseModel):
     id: ChannelId
     title: str
+    description: str
     thumbnail: Url | None
     banner: Url | None
 
@@ -47,6 +49,7 @@ class ChannelInfo(BaseModel):
             title=data['snippet']['title'],
             thumbnail=glom(data, 'snippet.thumbnails.medium.url', default=None),
             banner=glom(data, 'brandingSettings.image.bannerExternalUrl', default=None),
+            description=glom(data, 'snippet.description', default=''),
         )
 
     @property
@@ -72,6 +75,7 @@ class YoutubeDonatee:
             donation.youtube_channel = donation.youtube_video.youtube_channel
         elif self.channel_id:
             donation.youtube_channel = await query_or_fetch_youtube_channel(channel_id=self.channel_id, db=db)
+        donation.lightning_address = donation.youtube_channel.lightning_address
 
 
 def validate_youtube_url(parsed) -> YoutubeDonatee:
@@ -125,11 +129,13 @@ def get_service_account_creds():
 
 async def query_or_fetch_youtube_video(video_id: str, db: DbSession) -> YoutubeVideo:
     try:
-        return await db.query_youtube_video(video_id=video_id)
+        video: YoutubeVideo = await db.query_youtube_video(video_id=video_id)
+        if should_refresh_channel(video.youtube_channel):
+            video.youtube_channel = await query_or_fetch_youtube_channel(video.youtube_channel.channel_id, db)
     except NoResultFound:
         video: YoutubeVideo = await fetch_youtube_video(video_id, db)
         await db.save_youtube_video(video)
-        return video
+    return video
 
 
 @withyoutube
@@ -150,10 +156,14 @@ async def fetch_youtube_video(aiogoogle, youtube, video_id: str, db: DbSession) 
     )
 
 
+def should_refresh_channel(channel: YoutubeChannel):
+    return channel.last_fetched_at is None or channel.last_fetched_at < datetime.utcnow() - settings.youtube.refresh_timeout
+
+
 async def query_or_fetch_youtube_channel(channel_id: str, db: DbSession) -> YoutubeChannel:
     try:
         channel: YoutubeChannel = await db.find_youtube_channel(channel_id=channel_id)
-        if channel.last_fetched_at is None or channel.last_fetched_at < datetime.utcnow() - settings.youtube.refresh_timeout:
+        if should_refresh_channel(channel):
             logger.debug("youtube channel %s is too old, refreshing", channel)
             raise EntityTooOld
         return channel
@@ -192,6 +202,7 @@ async def fetch_youtube_channel(aiogoogle, youtube, channel_id: str) -> YoutubeC
         thumbnail_url=api_channel.thumbnail,
         last_fetched_at=datetime.utcnow(),
         banner_url=api_channel.banner,
+        lightning_address=scrape_lightning_address(api_channel.description),
     )
 
 

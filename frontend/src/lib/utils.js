@@ -75,15 +75,21 @@ export function toText(amount) {
   return amount >= 1000 ? `${amount / 1000} K` : amount;
 }
 
+let triedToEnableWebln = false;
+
 export async function sendPayment(request) {
   if (!window.webln)
     throw new Error("No webln found");
   if (!webln.enabled) {
+    if (triedToEnableWebln)
+      throw new Error("We already tried to enable WebLN and it failed, next tries will hang forever until page reload");
+    triedToEnableWebln = true;
     // Show connect dialog
     await webln.enable();
   }
   const result = await webln.sendPayment(request);
   cLog("webln.sendPayment result", result);
+  return result;
 }
 
 export function capitalize(s) {

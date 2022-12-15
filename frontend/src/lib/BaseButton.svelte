@@ -6,6 +6,7 @@
   export let disabled = false;
   export let link = null;
   export let target = null;
+  export let title = null;
 
   let spin = false;
 
@@ -53,7 +54,7 @@
   }
 </script>
 
-<button on:click={click} disabled={disabled || spin}>
+<button on:click={click} disabled={disabled || spin} title={title}>
   {#if spin}
     <div class="loader">
       <Loader />

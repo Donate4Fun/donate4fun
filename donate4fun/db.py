@@ -19,6 +19,7 @@ from .db_withdraw import WithdrawalDbMixin
 from .db_models import (
     Base, DonatorDb,  DonationDb, EmailNotificationDb, YoutubeChannelDb,
 )
+from .db_utils import insert_on_conflict_update
 
 logger = logging.getLogger(__name__)
 
@@ -86,24 +87,13 @@ class DbSession(YoutubeDbMixin, TwitterDbMixin, DonationsDbMixin, WithdrawalDbMi
 
     async def save_donator(self, donator: Donator):
         await self.execute(
-            insert(DonatorDb)
-            .values(dict(
-                id=donator.id,
-                name=donator.name,
-                avatar_url=donator.avatar_url,
-                lnauth_pubkey=donator.lnauth_pubkey,
-            ))
-            .on_conflict_do_update(
-                index_elements=[DonatorDb.id],
-                set_={DonatorDb.name: donator.name, DonatorDb.avatar_url: donator.avatar_url},
-                where=(DonatorDb.name != donator.name) | (DonatorDb.avatar_url != donator.avatar_url),
-            )
+            insert_on_conflict_update(DonatorDb, donator, DonatorDb.id)
         )
 
-    async def query_donator(self, donator_id: UUID) -> Donator:
+    async def query_donator(self, **kwargs) -> Donator:
         result = await self.execute(
             select(DonatorDb)
-            .where(DonatorDb.id == donator_id)
+            .filter_by(**kwargs)
         )
         scalar = result.scalars().one()
         return Donator.from_orm(scalar)

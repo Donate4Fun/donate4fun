@@ -27,8 +27,7 @@
   async function donate(amount) {
     try {
       const donatorHandle = await contentScript.getCurrentAccountHandle();
-      const donation = await contentScript.donate(amount, tweetUrl, donatorHandle);
-      contentScript.onPaid(donation);
+      await contentScript.donate(amount, tweetUrl, donatorHandle);
     } catch (err) {
       console.error("Failed to donate", err);
       const rejected = err.message === 'User rejected';

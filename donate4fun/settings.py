@@ -87,6 +87,7 @@ class LndSettings(BaseModel):
     lnurl_base_url: AnyUrl
     macaroon_by_network: str | None = None
     macaroon_by_path: str | None = None
+    tls_cert: str | None = None
     invoice_expiry: int = 3600  # In seconds
     private: bool = True
 
@@ -113,6 +114,11 @@ class GoogleCloudLoggingSettings(BaseModel):
     enabled: bool
 
 
+class LnurlpSettings(BaseModel):
+    min_sendable_sats: int
+    max_sendable_sats: int
+
+
 def yaml_config_source(settings: BaseSettings) -> dict[str, Any]:
     return yaml.safe_load(open(os.getenv('DONATE4FUN_CONFIG', 'config.yaml')))
 
@@ -127,6 +133,7 @@ class Settings(BaseSettings):
     bugsnag: BugsnagSettings
     rollbar: RollbarSettings | None
     google_cloud_logging: GoogleCloudLoggingSettings
+    lnurlp: LnurlpSettings
     hypercorn: dict[str, Any]
     jwt_secret: str
     min_withdraw: int  # Limit in sats for claiming

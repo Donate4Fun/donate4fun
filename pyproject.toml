@@ -3,6 +3,12 @@ name = "donate4.fun"
 version = "0.1.0"
 description = ""
 authors = ["Nikolay Bryskin <nbryskin@gmail.com>"]
+readme = "README.md"
+license = "MIT"
+repository = "https://github.com/donate4fun/donate4fun"
+packages = [
+  { include = "donate4fun" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -69,3 +75,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.flakehell]
 format = "colored"
 max_line_length = 130
+
+[tool.poetry.scripts]
+withdraw = 'donate4fun.scripts:withdraw'
+pay = 'donate4fun.scripts:pay'

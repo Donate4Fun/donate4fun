@@ -1,4 +1,7 @@
 import logging
+import hashlib
+import json
+from base64 import b64encode
 from uuid import UUID
 from functools import partial
 from urllib.parse import urlencode
@@ -6,10 +9,11 @@ from datetime import datetime
 
 import bugsnag
 import ecdsa
+import httpx
 from fastapi import FastAPI, WebSocket, Request, Depends, Query, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from lnurl.core import _url_encode as lnurl_encode
-from lnpayencode import lndecode, LnAddr
+from lnpayencode import LnAddr
 from anyio.abc import TaskStatus
 from rollbar.contrib.fastapi.routing import RollbarLoggingRoute
 from starlette.datastructures import URL
@@ -21,7 +25,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from .models import (
     Donation, Donator, Invoice, DonateResponse, DonateRequest, YoutubeChannel,
     WithdrawalToken, BaseModel, Notification, Credentials, SubscribeEmailRequest,
-    DonatorStats,
+    DonatorStats, DonationPaidRequest, PayInvoiceResult,
 )
 from .types import ValidationError, RequestHash, PaymentRequest
 from .donatees import apply_target
@@ -29,7 +33,7 @@ from .db_models import DonationDb, WithdrawalDb
 from .db_donations import sent_donations_subquery, received_donations_subquery
 from .settings import settings
 from .api_utils import get_donator, load_donator, get_db_session, task_group, only_me
-from .lnd import PayInvoiceError, LnurlWithdrawResponse, lnd
+from .lnd import PayInvoiceError, LnurlWithdrawResponse, lnd, lightning_payment_metadata
 from .pubsub import pubsub
 from .twitter import query_or_fetch_twitter_account
 from . import api_twitter, api_youtube
@@ -47,7 +51,10 @@ app.include_router(api_youtube.legacy_router)
 def http_status_error_handler(request, exc):
     logger.debug(f"{request.url}: Upstream error", exc_info=exc)
     status_code = exc.response.status_code
-    body = exc.response.json()
+    if 'application/json' in exc.response.headers['content-type']:
+        body = exc.response.json()
+    else:
+        body = exc.response.text
     return JSONResponse(status_code=500, content={"message": f"Upstream server returned {status_code}: {body}"})
 
 
@@ -99,7 +106,10 @@ def make_memo(donation: Donation) -> str:
 async def donate(
     web_request: Request, request: DonateRequest, donator: Donator = Depends(get_donator), db_session=Depends(get_db_session),
  ) -> DonateResponse:
-    logger.debug(f"Donator {donator.id} wants to donate {request.amount} to {request.target or request.channel_id}")
+    logger.debug(
+        "Donator %s wants to donate %d to %s",
+        donator.id, request.amount, request.target or request.channel_id or request.lightning_address,
+    )
     donation = Donation(
         amount=request.amount,
         donator=donator,
@@ -124,23 +134,95 @@ async def donate(
         )
     donator = await load_donator(db_session, donator.id)
     # If donator has enough money (and not fulfilling his own balance) - try to pay donation instantly
-    use_balance = request.receiver_id != donator.id and donator.balance >= request.amount
-    if not use_balance:
+    use_balance = request.receiver_id != donator.id and donator.available_balance >= request.amount
+    if donation.lightning_address:
+        pay_req: PaymentRequest = await fetch_lightning_address(donation)
+        r_hash = RequestHash(pay_req.decode().paymenthash)
+        if use_balance:
+            # FIXME: this leads to 'duplicate key value violates unique constraint "donation_rhash_key"'
+            # if we are donating to a local lightning address
+            donation.r_hash = r_hash
+        else:
+            donation.transient_r_hash = r_hash
+    elif not use_balance:
         invoice: Invoice = await lnd.create_invoice(memo=make_memo(donation), value=request.amount)
         donation.r_hash = invoice.r_hash  # This hash is needed to find and complete donation after payment succeeds
+        pay_req = invoice.payment_request
     await db_session.create_donation(donation)
     if use_balance:
-        await db_session.donation_paid(donation_id=donation.id, amount=request.amount, paid_at=datetime.utcnow())
+        if donation.lightning_address:
+            pay_result: PayInvoiceResult = await lnd.pay_invoice(pay_req)
+            amount = pay_result.value_sat + pay_result.fee_sat
+            paid_at = pay_result.creation_date
+            fee_msat = pay_result.fee_msat
+        else:
+            amount = request.amount
+            paid_at = datetime.utcnow()
+            fee_msat = None
+        await db_session.donation_paid(donation_id=donation.id, amount=amount, paid_at=paid_at, fee_msat=fee_msat)
         donation = await db_session.query_donation(id=donation.id)
         # FIXME: balance is saved in cookie to notify extension about balance change, but it should be done via VAPID
-        web_request.session['balance'] = (await db_session.query_donator(donator.id)).balance
+        web_request.session['balance'] = (await db_session.query_donator(id=donator.id)).balance
         return DonateResponse(donation=donation, payment_request=None)
     else:
-        return DonateResponse(donation=donation, payment_request=invoice.payment_request)
+        return DonateResponse(donation=donation, payment_request=pay_req)
+
+
+class LnurlpError(Exception):
+    pass
+
+
+async def fetch_lightning_address(donation: Donation) -> PaymentRequest:
+    name, host = donation.lightning_address.split('@', 1)
+    async with httpx.AsyncClient() as client:
+        response = await client.get(f'https://{host}/.well-known/lnurlp/{name}')
+        response.raise_for_status()
+        metadata = response.json()
+        if metadata['status'] != 'OK':
+            raise LnurlpError(f"Status is not OK: {metadata}")
+        if not metadata['minSendable'] <= donation.amount * 1000 <= metadata['maxSendable']:
+            raise LnurlpError(f"Amount is out of bounds: {donation.amount} {metadata}")
+        if donation.donator_twitter_account:
+            name = '@' + donation.donator_twitter_account.handle
+        else:
+            name = donation.donator.name
+        params = dict(amount=donation.amount * 1000)
+        if payerdata_request := metadata.get('payerData'):
+            payerdata = {}
+            if 'name' in payerdata_request:
+                payerdata['name'] = f'{name} via Donate4.Fun'
+            params['payerdata'] = json.dumps(payerdata)
+        if donation.youtube_video:
+            target = f'https://youtube.com/watch?v={donation.youtube_video.video_id}'
+        elif donation.twitter_tweet:
+            target = f'https://twitter.com/{donation.twitter_account.handle}/status/{donation.twitter_tweet.tweet_id}'
+        elif donation.youtube_chanel:
+            target = f'https://youtube.com/channel/{donation.youtube_chanel.channel_id}'
+        elif donation.twitter_account:
+            target = f'https://twitter.com/{donation.twitter_account.handle}'
+        comment = f'Tip from {name} via Donate4.Fun for {target}'
+        if 'commentAllowed' in metadata:
+            params['comment'] = comment[:metadata['commentAllowed']]
+        response = await client.get(metadata['callback'], params=params)
+        response.raise_for_status()
+        data = response.json()
+        if data['status'] != 'OK':
+            raise LnurlpError(f"Status is not OK: {data}")
+        pay_req = PaymentRequest(data['pr'])
+        invoice: LnAddr = pay_req.decode()
+        expected_hash = dict(invoice.tags)['h']
+        # https://github.com/lnurl/luds/blob/master/18.md#3-committing-payer-to-the-invoice
+        full_metadata = metadata['metadata'] + params.get('payerdata', '')
+        if sha256hash(full_metadata) != expected_hash:
+            raise LnurlpError(f"Metadata hash does not match invoice hash: sha256({full_metadata}) != {expected_hash}")
+        invoice_amount = invoice.amount * 10 ** 8
+        if invoice_amount != donation.amount:
+            raise LnurlpError(f"Amount in invoice does not match requested amount: {invoice_amount} != {donation.amount}")
+        return pay_req
 
 
 @router.get("/donation/{donation_id}", response_model=DonateResponse)
-async def donation(donation_id: UUID, db_session=Depends(get_db_session)):
+async def get_donation(donation_id: UUID, db_session=Depends(get_db_session)):
     donation: Donation = await db_session.query_donation(id=donation_id)
     if donation.paid_at is None:
         invoice: Invoice = await lnd.lookup_invoice(donation.r_hash)
@@ -152,6 +234,21 @@ async def donation(donation_id: UUID, db_session=Depends(get_db_session)):
     else:
         payment_request = None
     return DonateResponse(donation=donation, payment_request=payment_request)
+
+
+@router.post("/donation/{donation_id}/paid", response_model=Donation)
+async def donation_paid(donation_id: UUID, request: DonationPaidRequest, db=Depends(get_db_session)):
+    donation: Donation = await db.query_donation(id=donation_id)
+    if donation.lightning_address is None:
+        # Do nothing for all other cases
+        return
+    digest = RequestHash(hashlib.sha256(bytes.fromhex(request.preimage)).digest())
+    if digest != donation.transient_r_hash:
+        raise ValidationError(f"Preimage hash does not match {digest}")
+    if request.route.total_amt != donation.amount:
+        raise ValidationError(f"Donation amount do not match {request.route.total_amt}")
+    await db.donation_paid(donation.id, donation.amount, paid_at=datetime.utcnow(), fee_msat=request.route.total_fees * 1000)
+    return await db.query_donation(id=donation.id)
 
 
 @router.post("/donation/{donation_id}/cancel")
@@ -238,27 +335,27 @@ async def donator_stats(request: Request, donator_id: UUID, db=Depends(get_db_se
 async def lnurl_withdraw(request: Request, token: str, db=Depends(get_db_session)):
     decoded = WithdrawalToken.from_jwt(token)
     withdrawal: WithdrawalDb = await db.query_withdrawal(decoded.withdrawal_id)
-    donator: Donator = await db.query_donator(withdrawal.donator.id)
+    donator: Donator = await db.query_donator(id=withdrawal.donator.id)
     callback_url = f"{settings.lnd.lnurl_base_url}{URL(request.url_for('withdraw_callback')).path}"
     return LnurlWithdrawResponse(
         callback=callback_url,
         k1=token,
         default_description=f'Donate4.Fun withdrawal for "{donator.name}"',
         min_withdrawable=settings.min_withdraw * 1000,
-        max_withdrawable=donator.balance * 1000,
+        max_withdrawable=donator.available_balance * 1000,
     )
 
 
 @router.get('/lnurl/withdraw-callback', response_class=JSONResponse)
-async def withdraw_callback(request: Request, k1: str, pr: str, db=Depends(get_db_session)):
+async def withdraw_callback(request: Request, k1: str, pr: PaymentRequest, db=Depends(get_db_session)):
     try:
         token = WithdrawalToken.from_jwt(k1)
         withdrawal: WithdrawalDb = await db.query_withdrawal(token.withdrawal_id)
-        donator: Donator = await db.query_donator(withdrawal.donator.id)
-        invoice: LnAddr = lndecode(pr)
+        donator: Donator = await db.query_donator(id=withdrawal.donator.id)
+        invoice: LnAddr = pr.decode()
         invoice_amount_sats = invoice.amount * 10**8
         min_amount = settings.min_withdraw
-        max_amount = donator.balance
+        max_amount = donator.available_balance
         if invoice_amount_sats < min_amount or invoice_amount_sats > max_amount:
             raise ValidationError(
                 f"Invoice amount {invoice_amount_sats} is not in allowed bounds [{min_amount}, {max_amount}]"
@@ -279,9 +376,52 @@ async def withdraw_callback(request: Request, k1: str, pr: str, db=Depends(get_d
         return dict(status="OK")
 
 
-@router.get('/lnurl/payment-callback', response_class=JSONResponse)
-async def payment_callback(request: Request, ):
+class WithdrawWithInvoiceRequest(BaseModel):
+    invoice: PaymentRequest
+
+
+@router.post('/me/withdraw')
+async def withdraw_with_invoice(request: WithdrawWithInvoiceRequest, me=Depends(only_me)):
     pass
+
+
+class PaymentCallbackResponse(BaseModel):
+    status: str
+    pr: PaymentRequest
+
+
+@router.get('/lnurl/{receiver_id}/payment-callback', response_model=PaymentCallbackResponse)
+async def payment_callback(
+    request: Request, receiver_id: UUID, amount: int = Query(...), comment: str = Query(...), db_session=Depends(get_db_session),
+):
+    """
+    This callback is needed for lightning address support. Currently it's used for internal testing only.
+    """
+    receiver: Donator = await db_session.query_donator(id=receiver_id)
+    amount = amount // 1000  # FIXME: handle msats correctly
+    invoice: Invoice = await lnd.create_invoice(
+        memo=comment, value=amount, description_hash=to_base64(sha256hash(lightning_payment_metadata(receiver))),
+    )
+    donation = Donation(
+        amount=amount,
+        donator=None,
+        r_hash=invoice.r_hash,  # This hash is needed to find and complete donation after payment succeeds
+        receiver=Donator(id=receiver_id),
+        # FIXME: save comment
+    )
+    await db_session.create_donation(donation)
+    return PaymentCallbackResponse(
+        status='OK',
+        pr=invoice.payment_request,
+    )
+
+
+def sha256hash(data: str) -> bytes:
+    return hashlib.sha256(data.encode()).digest()
+
+
+def to_base64(data: bytes) -> str:
+    return b64encode(data).decode()
 
 
 async def send_withdrawal(
@@ -290,9 +430,10 @@ async def send_withdrawal(
 ):
     try:
         async with db.session() as db_session:
-            await db_session.withdraw(withdrawal_id=withdrawal_id, amount=amount)
+            await db_session.start_withdraw(withdrawal_id=withdrawal_id, amount=amount, fee_msat=settings.fee_limit * 1000)
             task_status.started()
-            await lnd.pay_invoice(payment_request)
+            result: PayInvoiceResult = await lnd.pay_invoice(payment_request)
+            await db_session.finish_withdraw(withdrawal_id=withdrawal_id, fee_msat=result.fee_msat)
     except PayInvoiceError as exc:
         logger.exception("Failed to send withdrawal payment")
         if settings.bugsnag.enabled:
@@ -407,14 +548,14 @@ async def withdraw(request: Request, db=Depends(get_db_session), me: Donator = D
     me = await load_donator(db, me.id)
     if me.balance < settings.min_withdraw:
         raise ValidationError(f"Minimum amount to withdraw is {settings.min_withdraw}, but available only {me.balance}.")
-    withdrawal_id: UUID = await db.create_withdrawal(donator=me)
+    withdrawal: WithdrawalDb = await db.create_withdrawal(donator=me)
     token = WithdrawalToken(
-        withdrawal_id=withdrawal_id,
+        withdrawal_id=withdrawal.id,
     )
     url = f"{settings.lnd.lnurl_base_url}{URL(request.url_for('lnurl_withdraw')).path}"
     withdraw_url = URL(url).include_query_params(token=token.to_jwt())
     return WithdrawResponse(
         lnurl=lnurl_encode(str(withdraw_url)),
-        amount=me.balance,
-        withdrawal_id=withdrawal_id,
+        amount=withdrawal.amount,
+        withdrawal_id=withdrawal.id,
     )

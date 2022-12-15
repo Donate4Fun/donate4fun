@@ -1,11 +1,12 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select, func, update
+from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from .models import TwitterAccount, TwitterTweet, Donator, TwitterAccountOwned
 from .db_models import TwitterAuthorDb, TwitterTweetDb, OAuthTokenDb, TwitterAuthorLink, DonationDb
+from .db_utils import insert_on_conflict_update
 
 
 class TwitterDbMixin:
@@ -26,22 +27,7 @@ class TwitterDbMixin:
 
     async def save_twitter_account(self, author: TwitterAccount):
         resp = await self.execute(
-            insert(TwitterAuthorDb)
-            .values(author.dict())
-            .on_conflict_do_update(
-                index_elements=[TwitterAuthorDb.user_id],
-                set_={
-                    TwitterAuthorDb.name: author.name,
-                    TwitterAuthorDb.profile_image_url: author.profile_image_url,
-                    TwitterAuthorDb.last_fetched_at: author.last_fetched_at,
-                },
-                where=(
-                    (func.coalesce(TwitterAuthorDb.name, '') != author.name)
-                    | (func.coalesce(TwitterAuthorDb.handle, '') != author.handle)
-                    | (func.coalesce(TwitterAuthorDb.profile_image_url, '') != author.profile_image_url)
-                ),
-            )
-            .returning(TwitterAuthorDb.id)
+            insert_on_conflict_update(TwitterAuthorDb, author, TwitterAuthorDb.user_id)
         )
         id_: UUID = resp.scalar()
         if id_ is None:

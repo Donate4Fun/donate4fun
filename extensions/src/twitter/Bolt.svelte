@@ -25,14 +25,9 @@
     const amount_ = amount || await worker.getConfig('amount');
     amount = 0;
     try {
-      const donation = await donate(amount_, tweetUrl, getCurrentAccountHandle());
-      donating = false;
-      onPaid(donation);
+      await donate(amount_, tweetUrl, getCurrentAccountHandle());
     } catch (err) {
       donating = false;
-      cInfo("Payment failed", err);
-      const rejected = err.message === 'User rejected';
-      worker.createPopup(`nowebln/${amount_}/${rejected}`);
     }
   }
 

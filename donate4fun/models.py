@@ -12,7 +12,7 @@ from multiavatar.multiavatar import multiavatar
 
 from .settings import settings
 from .core import to_datauri
-from .types import Url, RequestHash, PaymentRequest
+from .types import Url, RequestHash, PaymentRequest, LightningAddress
 
 
 class BaseModel(PydanticBaseModel):
@@ -44,22 +44,47 @@ class DonateRequest(BaseModel):
     channel_id: UUID | None
     twitter_account_id: UUID | None
     target: HttpUrl | None
+    lightning_address: LightningAddress | None
     donator_twitter_handle: str | None
     message: str | None
 
 
+class NaiveDatetime(datetime):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v: Any) -> str:
+        return parse_datetime(int(v)).replace(tzinfo=None)
+
+
 class Invoice(BaseModel):
+    """
+    This model is replica of lnd's Invoice message
+    https://github.com/lightningnetwork/lnd/blob/master/lnrpc/lightning.proto#L3314
+    """
     r_hash: RequestHash
     payment_request: PaymentRequest
-    value: int
+    value: int | None
     memo: str | None
-    settle_date: datetime | None
+    settle_date: NaiveDatetime | None
     amt_paid_sat: int | None
     state: str | None
 
-    @validator('settle_date', pre=True)
-    def settle_date_validate(cls, settle_date):
-        return parse_datetime(int(settle_date)).replace(tzinfo=None)
+
+class PayInvoiceResult(BaseModel):
+    creation_date: NaiveDatetime
+    fee: float
+    fee_msat: int
+    fee_sat: float
+    payment_hash: RequestHash
+    payment_preimage: RequestHash
+    status: str
+    failure_reason: str
+    value: float
+    value_msat: int
+    value_sat: float
 
 
 class IdModel(BaseModel):
@@ -72,6 +97,7 @@ class YoutubeChannel(IdModel):
     thumbnail_url: Url | None
     banner_url: Url | None
     balance: int = 0
+    lightning_address: LightningAddress | None
     last_fetched_at: datetime | None
 
     class Config:
@@ -101,6 +127,7 @@ class TwitterAccount(IdModel):
     total_donated: int = 0
     name: str | None
     profile_image_url: Url | None
+    lightning_address: LightningAddress | None
     last_fetched_at: datetime | None
 
     class Config:
@@ -124,6 +151,7 @@ class Donator(BaseModel):
     avatar_url: str | None
     lnauth_pubkey: str | None
     balance: int = Field(default=0)
+    lightning_address: str | None
 
     @validator('name', always=True)
     def generate_name(cls, v, values):
@@ -140,22 +168,38 @@ class Donator(BaseModel):
         else:
             return to_datauri('image/svg+xml', multiavatar(str(values['id']), None, None).encode())
 
+    @property
+    def available_balance(self):
+        return self.balance - settings.fee_limit
+
     class Config:
         orm_mode = True
 
 
 class Donation(BaseModel):
     id: UUID = Field(default_factory=uuid4)
+    # This field contains only r_hash for local LND server, i.e. for incoming and outgoing payment
     r_hash: RequestHash | None
-    donator_id: UUID
-    donator: Donator
-    receiver: Donator | None
+    # This field is for transient payment, e.g. when donation is done from external wallet to an external lightning address
+    transient_r_hash: RequestHash | None
+    # Amount in sats
     amount: int
+    # Fee amount in msats. Only for outgoing and transient payments
+    fee_msat: int | None
+
+    # Sender
+    donator_id: UUID | None
+    donator: Donator | None
+
+    # Receiver
+    receiver: Donator | None
     youtube_channel: YoutubeChannel | None
     youtube_video: YoutubeVideo | None
     twitter_account: TwitterAccount | None
     twitter_tweet: TwitterTweet | None
     donator_twitter_account: TwitterAccount | None
+    lightning_address: LightningAddress | None
+
     created_at: datetime = Field(default_factory=datetime.utcnow)
     message: str | None = None
     paid_at: datetime | None = None
@@ -174,8 +218,6 @@ class Donation(BaseModel):
             new_values['donator_id'] = getattr(donator, 'id', None) or donator['id']
         elif donator_id := values.get('donator_id'):
             new_values['donator'] = Donator(id=donator_id)
-        else:
-            raise ValueError("one of donator_id or donator is required")
         return new_values
 
     class Config:
@@ -218,3 +260,14 @@ class DonatorStats(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class DonationPaidRouteInfo(BaseModel):
+    total_amt: int
+    total_fees: int
+
+
+class DonationPaidRequest(BaseModel):
+    preimage: str
+    paymentHash: str
+    route: DonationPaidRouteInfo

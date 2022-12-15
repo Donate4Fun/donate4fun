@@ -15,7 +15,6 @@
   let channelTitle;
   let channelLogo;
   let contentScript;
-  export let amount = 100;
 
   const navigate = useNavigate();
 
@@ -35,14 +34,12 @@
     channelLogo = await contentScript.getChannelLogo();
   }
 
-  async function donate() {
+  async function donate(amount) {
     try {
       const target = videoId ? youtube_video_url(videoId) : youtube_channel_url(channelId);
-      contentScript.onPaid(await contentScript.donate(amount, target));
+      await contentScript.donate(amount, target);
     } catch (err) {
       console.error("Failed to donate", err);
-      const rejected = err.message === 'User rejected';
-      navigate(`/nowebln/${amount}/${rejected}`);
     }
   }
 </script>

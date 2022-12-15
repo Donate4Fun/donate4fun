@@ -42,6 +42,9 @@ backend:
     lnd:
       url: http://lnd-prod.lnd-prod
       lnurl_base_url: https://donate4.fun
+    lnurlp:
+      min_sendable_sats: 10
+      max_sendable_sats: 5_000_000
     min_withdraw: 10
     fee_limit: 10
     withdraw_timeout: 10
