@@ -1,3 +1,0 @@
-#!/bin/sh
-
-lncli --rpcserver=localhost:20001 --lnddir=./lnd-alice --network regtest "$@"

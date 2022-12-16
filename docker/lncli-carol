@@ -1,5 +1,0 @@
-#!/bin/sh
-
-dir="$(dirname $0)"
-
-lncli --rpcserver=localhost:20003 --lnddir="$dir/lnd-carol" --network regtest --no-macaroons "$@"
