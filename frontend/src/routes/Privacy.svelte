@@ -5,7 +5,7 @@
 <div>
 <Section --padding="20px 40px">
 <h1>Privacy Policy</h1>
-Last updated on May 1, 2020
+Last updated on December 16, 2022
 <section>
 <h1>Definitions</h1>
 
@@ -94,6 +94,10 @@ Upon receipt of your request and due review of its merits:
     you may also revoke your consent to use your Personal Data in the future, in whole or in parts, or request deletion of your Personal Data.
 
 If you have any questions or queries about us, our Privacy Policy or your Personal Data please contact us using our support service at support@donate4.fun
+</section>
+<section>
+<h1>Limited Use</h1>
+Donate4.Fun use and transfer to any other app of information received from Google APIs will adhere to the Google API Services User Data Policy, including the Limited Use requirements.
 </section>
 </Section>
 </div>
