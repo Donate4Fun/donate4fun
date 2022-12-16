@@ -26,8 +26,8 @@ backend:
       connect_arg:
         timeout: 1
     hypercorn:
+      bind: '[::]'
       use_reloader: false
-      bind: '[::]:8080'
       websocket_ping_interval: 10
       access_log_format: '%({X-Forwarded-For}i)s "%(R)s" %(s)s %(L)s %(b)s "%(f)s" "%(a)s"'
       include_server_header: false
@@ -52,6 +52,7 @@ backend:
     cookie_domain: donate4.fun
     latest_donations_count: 50
     frontend_port: 80
+    api_port: 8080
     release: true
     base_url: https://donate4.fun
     fastapi:

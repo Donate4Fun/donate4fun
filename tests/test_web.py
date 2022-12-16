@@ -42,6 +42,7 @@ async def test_twitter_page(client, twitter_account):
 async def webapp(app, settings):
     port = find_unused_port()
     settings.frontend_port = port
+    settings.api_port = port
     async with app_serve(app, port):
         yield
 
