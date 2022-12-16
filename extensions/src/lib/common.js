@@ -225,7 +225,7 @@ async function apiPost(path, data) {
   return await worker.fetch("post", path, data);
 }
 
-async function donate(amount, target, donator_twitter_handle=null) {
+async function donate(amount, target, donator_twitter_handle=null, onPaid=null) {
   // Make a donation
   try {
     const response = await apiPost('donate', {
@@ -254,7 +254,7 @@ async function donate(amount, target, donator_twitter_handle=null) {
         }
       });
     }
-    handlers.onPaid(donation);
+    (onPaid || handlers.onPaid)(donation);
   } catch (err) {
     cInfo("Payment failed", err);
     const rejected = err.message === 'User rejected';
