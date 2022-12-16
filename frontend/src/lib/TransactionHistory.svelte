@@ -78,6 +78,8 @@
               Received
             {:else if donation.claimed_at}
               <span class="claimed">Claimed</span>
+            {:else if donation.lightning_address}
+              <span class="lightning">Via ⚡@</span>
             {:else}
               Pending
             {/if}
