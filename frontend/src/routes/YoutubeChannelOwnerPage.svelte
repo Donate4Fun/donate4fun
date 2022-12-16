@@ -1,5 +1,5 @@
 <script>
-  import { link, useResolve } from "svelte-navigator";
+  import { link, useResolve, navigate } from "svelte-navigator";
 
   import Loader from "$lib/Loader.svelte";
   import Amount from "$lib/Amount.svelte";
@@ -23,6 +23,8 @@
 
   async function load() {
     channel = await api.get(baseUrl);
+    if (!channel.is_my)
+      navigate('/youtube/prove', {replace: true});
     $title = `Manage ${channel.title} YouTube channel`
   }
 
