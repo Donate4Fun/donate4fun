@@ -122,8 +122,10 @@ async def donate(
         donation.receiver = receiver
     elif request.channel_id:
         donation.youtube_channel = await db_session.query_youtube_channel(youtube_channel_id=request.channel_id)
+        donation.lightning_address = donation.youtube_channel.lightning_address
     elif request.twitter_account_id:
         donation.twitter_account = await db_session.query_twitter_account(id=request.twitter_account_id)
+        donation.lightning_address = donation.twitter_account.lightning_address
     elif request.target:
         await apply_target(donation, request.target, db_session)
     else:
@@ -201,7 +203,7 @@ async def fetch_lightning_address(donation: Donation) -> PaymentRequest:
             target = f'https://youtube.com/watch?v={donation.youtube_video.video_id}'
         elif donation.twitter_tweet:
             target = f'https://twitter.com/{donation.twitter_account.handle}/status/{donation.twitter_tweet.tweet_id}'
-        elif donation.youtube_chanel:
+        elif donation.youtube_channel:
             target = f'https://youtube.com/channel/{donation.youtube_chanel.channel_id}'
         elif donation.twitter_account:
             target = f'https://twitter.com/{donation.twitter_account.handle}'
@@ -216,7 +218,7 @@ async def fetch_lightning_address(donation: Donation) -> PaymentRequest:
         pay_req = PaymentRequest(data['pr'])
         invoice: LnAddr = pay_req.decode()
         expected_hash = dict(invoice.tags)['h']
-        # https://github.com/lnurl/luds/blob/master/18.md#3-committing-payer-to-the-invoice
+        # https://github.com/lnurl/luds/blob/luds/18.md#3-committing-payer-to-the-invoice
         full_metadata: str = metadata['metadata'] + params.get('payerdata', '')
         if sha256hash(full_metadata) != expected_hash:
             raise LnurlpError(f"Metadata hash does not match invoice hash: sha256({full_metadata}) != {expected_hash}")
