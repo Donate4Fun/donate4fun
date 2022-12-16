@@ -4,12 +4,16 @@ from .lnd import LndClient
 from .settings import LndSettings
 
 
-def get_polar_macaroon(name: str, network_id: int = 1):
-    return os.path.expanduser(f'~/.polar/networks/{network_id}/volumes/lnd/{name}/data/chain/bitcoin/regtest/admin.macaroon')
+def get_polar_dir():
+    return os.getenv('POLAR_BASE_DIR', 'polar')
 
 
-def get_polar_cert(name: str, network_id: int = 1):
-    return os.path.expanduser(f'~/.polar/networks/{network_id}/volumes/lnd/{name}/tls.cert')
+def get_polar_macaroon(name: str):
+    return os.path.expanduser(f'{get_polar_dir()}/volumes/lnd/{name}/data/chain/bitcoin/regtest/admin.macaroon')
+
+
+def get_polar_cert(name: str):
+    return os.path.expanduser(f'{get_polar_dir()}/volumes/lnd/{name}/tls.cert')
 
 
 def get_carol_lnd():
