@@ -25,7 +25,7 @@
     const amount_ = amount || await worker.getConfig('amount');
     amount = 0;
     try {
-      await donate(amount_, tweetUrl, getCurrentAccountHandle());
+      await donate(amount_, tweetUrl, getCurrentAccountHandle(), onPaid);
     } catch (err) {
       donating = false;
     }
