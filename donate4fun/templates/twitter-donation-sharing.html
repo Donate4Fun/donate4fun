@@ -106,9 +106,6 @@
         <div class="donator name blue">${q.donator_twitter_account.name}</div>
         <div class="donator handle blue">
           <span>@${q.donator_twitter_account.handle}</span>
-          % if q.lightning_address:
-            <span class="black">via ⚡${q.lightning_address}</span>
-          % endif
         </div>
       % else:
         <img class="donator avatar" src="${q.donator.avatar_url}">
@@ -117,7 +114,12 @@
       <div class="amount blue">sent <b>${q.amount} sats</b> to</div>
       <img class="donatee avatar" src="${q.twitter_account.profile_image_url}">
       <div class="donatee name red">${q.twitter_account.name}</div>
-      <div class="donatee handle red">@${q.twitter_account.handle}</div>
+      <div class="donatee handle red">
+        <span>@${q.twitter_account.handle}</span>
+        % if q.lightning_address:
+          <span class="black">via ⚡${q.lightning_address}</span>
+        % endif
+        </div>
     </div>
   </div>
 </body>
