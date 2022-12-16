@@ -76,10 +76,10 @@
               Deposited
             {:else if donation.receiver !== null}
               Received
-            {:else if donation.claimed_at}
-              <span class="claimed">Claimed</span>
             {:else if donation.lightning_address}
-              <span class="lightning">Via ⚡@</span>
+              <span class="success">Via ⚡@</span>
+            {:else if donation.claimed_at}
+              <span class="success">Claimed</span>
             {:else}
               Pending
             {/if}
@@ -139,7 +139,7 @@
 .cancelled {
   color: #FF472E;
 }
-.claimed {
+.success {
   color: #19B400;
 }
 .show-more {
