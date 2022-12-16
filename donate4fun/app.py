@@ -135,6 +135,8 @@ async def serve():
                     await stack.enter_async_context(run_twitter_bot_restarting(db))
                 hyper_config = Config.from_mapping(settings.hypercorn)
                 hyper_config.accesslog = logging.getLogger('hypercorn.acceslog')
+                iface = hyper_config.bind[0].split(':')[0]
+                hyper_config.bind = f'{iface}:{settings.api_port}'
                 if settings.bugsnag.enabled:
                     app_ = BugsnagMiddleware(app_)
                 await hypercorn_serve(app_, hyper_config)

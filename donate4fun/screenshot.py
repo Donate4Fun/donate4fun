@@ -51,7 +51,6 @@ class Screenshoter:
         browser = await self.get_browser()
         page = await browser.new_page(device_scale_factor=2)
         try:
-            api_port: str = settings.hypercorn['bind'].split(':')[-1]
             page.on("request", lambda request: logger.trace("request %s %s", request.method, request.url))
             page.on("response", lambda response: logger.trace("response %s %s", response.status, response.url))
             error_messages = []
@@ -61,7 +60,7 @@ class Screenshoter:
                 if msg.type == 'error':
                     error_messages.append(msg)
             page.on("console", console_msg)
-            await page.goto(f'http://localhost:{api_port}/preview/{path}?{urlencode(params)}')
+            await page.goto(f'http://localhost:{settings.api_port}/preview/{path}?{urlencode(params)}')
             result = await page.locator('body').screenshot()
             if error_messages:
                 raise ScreenshotError(f"Browser console has error messages: {error_messages}")

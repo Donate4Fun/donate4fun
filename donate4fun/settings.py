@@ -143,7 +143,8 @@ class Settings(BaseSettings):
     ownership_message: str
     release: bool
     base_url: AnyUrl
-    frontend_port: int
+    frontend_port: int  # Used by internal browser to generate previews (for static images)
+    api_port: int  # Used by internal browser to generate previews
     cookie_domain: str | None = None
     cookie_secure: bool = True
     cookie_http_only: bool = False
