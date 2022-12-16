@@ -1,4 +1,6 @@
 <script>
+  import { link } from "svelte-navigator";
+
   import ChannelLogo from "$lib/ChannelLogo.svelte";
   import YoutubeChannel from "$lib/YoutubeChannel.svelte";
   import Infobox from "$lib/Infobox.svelte";
@@ -48,7 +50,10 @@
       allowfullscreen
     ></iframe>
   {/if}
-  <Button on:click={() => showSharePopup = true}>Share</Button>
+  {#if donation.cancelled_at === null && donation.claimed_at === null}
+    <Button on:click={() => showSharePopup = true}>Share</Button>
+    <a use:link href="/youtube/{donation.youtube_channel.id}/owner">Claim</a>
+  {/if}
 </div>
 <ModalPopup bind:show={showSharePopup}>
   <Infobox>Copy and share the message with the link or just tell {donation.youtube_channel.title} to receive the donation here at «Donate4Fun»</Infobox>
