@@ -25,7 +25,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from .models import (
     Donation, Donator, Invoice, DonateResponse, DonateRequest, YoutubeChannel,
     WithdrawalToken, BaseModel, Notification, Credentials, SubscribeEmailRequest,
-    DonatorStats, DonationPaidRequest, PayInvoiceResult,
+    DonatorStats, DonationPaidRequest, PayInvoiceResult, Donatee,
 )
 from .types import ValidationError, RequestHash, PaymentRequest
 from .donatees import apply_target
@@ -527,7 +527,7 @@ async def update_session(request: Request, req: UpdateSessionRequest):
     request.session.update(**creds.to_json_dict())
 
 
-@router.get("/donatee/recently-donated", response_model=list[YoutubeChannel])
+@router.get("/donatee/recently-donated", response_model=list[Donatee])
 async def recently_donated_donatees(db=Depends(get_db_session)):
     return await db.query_recently_donated_donatees(limit=20)
 

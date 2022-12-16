@@ -2,7 +2,7 @@
   import { onMount, tick } from "svelte";
   import { useResolve, useLocation, useNavigate, link } from "svelte-navigator";
 
-  import LandingYoutuber from "$lib/LandingYoutuber.svelte";
+  import LandingDonatee from "$lib/LandingDonatee.svelte";
   import WhiteButton from "$lib/WhiteButton.svelte";
   import LandingButton from "$lib/LandingButton.svelte";
   import Section from "$lib/Section.svelte";
@@ -16,7 +16,6 @@
   import { analytics } from "$lib/analytics.js";
   import title from "$lib/title.js";
 
-  let youtubers = [];
   let email;
   let emailAdded = null;
   let extensionPopupShown = false;
@@ -30,7 +29,7 @@
   }
 
   async function loadRecentDonatees() {
-    youtubers = await api.get("donatee/recently-donated");
+    return await api.get("donatee/recently-donated");
   }
 
   async function submitEmail() {
@@ -124,11 +123,11 @@
   </section>
   <section id="donatees">
     <h1 class="gradient dark">Top donated</h1>
-    {#await loadRecentDonatees() then}
+    {#await loadRecentDonatees() then donatees}
       <div class="donatees">
         <div class="flex-row gap-20">
-          {#each youtubers as youtuber}
-            <LandingYoutuber youtuber={youtuber} />
+          {#each donatees as donatee}
+            <LandingDonatee {donatee} />
           {/each}
         </div>
       </div>

@@ -1,20 +1,21 @@
 <script>
   import { link } from "svelte-navigator";
+
   import LandingSection from "$lib/LandingSection.svelte";
   import Amount from "$lib/Amount.svelte";
   import { youtube_channel_url } from "$lib/utils.js";
 
-  export let youtuber;
+  export let donatee;
 </script>
 
 <section>
   <LandingSection>
-    <a href="/youtube/{youtuber.id}" use:link>
-      <img alt="youtuber-logo" src={youtuber.thumbnail_url} width=120 height=120>
-      <p class="title ellipsis">{youtuber.title}</p>
+    <a href="/{donatee.type}/{donatee.id}" use:link>
+      <img alt="logo" src={donatee.thumbnail_url} width=120 height=120>
+      <p class="title ellipsis">{donatee.title}</p>
       <div>
         <p>Got donated</p>
-        <Amount amount={youtuber.balance} />
+        <Amount amount={donatee.total_donated} />
       </div>
     </a>
   </LandingSection>
