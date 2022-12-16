@@ -152,14 +152,18 @@ async def donate(
     if use_balance:
         if donation.lightning_address:
             pay_result: PayInvoiceResult = await lnd.pay_invoice(pay_req)
-            amount = pay_result.value_sat + pay_result.fee_sat
+            amount = pay_result.value_sat
             paid_at = pay_result.creation_date
             fee_msat = pay_result.fee_msat
+            claimed_at = pay_result.creation_date
         else:
             amount = request.amount
             paid_at = datetime.utcnow()
             fee_msat = None
-        await db_session.donation_paid(donation_id=donation.id, amount=amount, paid_at=paid_at, fee_msat=fee_msat)
+            claimed_at = None
+        await db_session.donation_paid(
+            donation_id=donation.id, amount=amount, paid_at=paid_at, fee_msat=fee_msat, claimed_at=claimed_at,
+        )
         donation = await db_session.query_donation(id=donation.id)
         # FIXME: balance is saved in cookie to notify extension about balance change, but it should be done via VAPID
         web_request.session['balance'] = (await db_session.query_donator(id=donator.id)).balance
@@ -213,7 +217,7 @@ async def fetch_lightning_address(donation: Donation) -> PaymentRequest:
         invoice: LnAddr = pay_req.decode()
         expected_hash = dict(invoice.tags)['h']
         # https://github.com/lnurl/luds/blob/master/18.md#3-committing-payer-to-the-invoice
-        full_metadata = metadata['metadata'] + params.get('payerdata', '')
+        full_metadata: str = metadata['metadata'] + params.get('payerdata', '')
         if sha256hash(full_metadata) != expected_hash:
             raise LnurlpError(f"Metadata hash does not match invoice hash: sha256({full_metadata}) != {expected_hash}")
         invoice_amount = invoice.amount * 10 ** 8
@@ -248,7 +252,8 @@ async def donation_paid(donation_id: UUID, request: DonationPaidRequest, db=Depe
         raise ValidationError(f"Preimage hash does not match {digest}")
     if request.route.total_amt != donation.amount:
         raise ValidationError(f"Donation amount do not match {request.route.total_amt}")
-    await db.donation_paid(donation.id, donation.amount, paid_at=datetime.utcnow(), fee_msat=request.route.total_fees * 1000)
+    now = datetime.utcnow()
+    await db.donation_paid(donation.id, donation.amount, paid_at=now, fee_msat=request.route.total_fees * 1000, claimed_at=now)
     return await db.query_donation(id=donation.id)
 
 

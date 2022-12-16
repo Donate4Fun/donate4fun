@@ -119,6 +119,7 @@ async def test_donate_tweet_with_lightning_address(
                 if donation.r_hash is not None:
                     assert donation.paid_at != None  # noqa
                     assert donation.fee_msat == 1000
+                    assert donation.claimed_at == donation.paid_at
                     me_response = await client.get('/api/v1/donator/me')
                     check_response(me_response)
                     assert me_response.json()['donator']['balance'] < rich_donator.balance - amount
@@ -141,6 +142,8 @@ async def test_donate_tweet_with_lightning_address(
                                 ).dict(),
                             )).json())
                             assert returned_donation.fee_msat == 1000
+                            assert returned_donation.paid_at != None  # noqa
+                            assert returned_donation.claimed_at == returned_donation.paid_at
                     except PayInvoiceError as exc:
                         assert exc.args[0] == 'FAILURE_REASON_INSUFFICIENT_BALANCE'
                         failed_to_pay = True

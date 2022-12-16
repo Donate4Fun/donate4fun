@@ -1,4 +1,5 @@
 import logging
+import math
 from uuid import UUID
 from datetime import datetime
 
@@ -95,7 +96,9 @@ class DonationsDbMixin:
             raise UnableToCancelDonation("Donation could not be claimed")
         await self.update_balance_for_donation(donation, -donation.amount)
 
-    async def donation_paid(self, donation_id: UUID, amount: int, paid_at: datetime, fee_msat: int = None):
+    async def donation_paid(
+        self, donation_id: UUID, amount: int, paid_at: datetime, fee_msat: int = None, claimed_at: datetime = None,
+    ):
         resp = await self.execute(
             update(DonationDb)
             .where((DonationDb.id == donation_id) & DonationDb.paid_at.is_(None))
@@ -103,6 +106,7 @@ class DonationsDbMixin:
                 amount=amount,
                 paid_at=paid_at,
                 fee_msat=fee_msat,
+                claimed_at=claimed_at,
             )
             .returning(*DonationDb.__table__.columns)
         )
@@ -118,8 +122,8 @@ class DonationsDbMixin:
         amount - balance diff in sats, it's positive when donation is completed
                  and negative when donation is cancelled
         """
-        # If donation is made to a lightning address then do not change internal account balances
-        balance_amount = amount if donation.lightning_address is None else 0
+        # If donation was made to a lightning address then do not change social accounts' balances (it's already claimed)
+        balance_amount = amount if donation.claimed_at is None else 0
         row = donation  # FIXME
         if row.youtube_channel_id:
             resp = await self.execute(
@@ -181,7 +185,7 @@ class DonationsDbMixin:
             resp = await self.execute(
                 update(DonatorDb)
                 .where((DonatorDb.id == row.donator_id))
-                .values(balance=DonatorDb.balance - amount)
+                .values(balance=DonatorDb.balance - amount - math.ceil((donation.fee_msat or 0) / 1000))
                 .returning(DonatorDb.balance)
             )
             if resp.fetchone().balance < 0:
