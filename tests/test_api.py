@@ -1,7 +1,7 @@
 import json
 from functools import partial
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.parse import urlparse, parse_qs, urlunparse
 
 import pytest
@@ -13,7 +13,7 @@ from sqlalchemy import update
 
 from donate4fun.api import DonateRequest, DonateResponse, WithdrawResponse, LnurlWithdrawResponse
 from donate4fun.lnd import monitor_invoices, LndClient, Invoice, lnd
-from donate4fun.models import Donation, Donator, SubscribeEmailRequest
+from donate4fun.models import Donation, Donator, SubscribeEmailRequest, YoutubeChannel, TwitterAccount
 from donate4fun.db import Notification
 from donate4fun.db_models import DonatorDb
 from donate4fun.types import PaymentRequest
@@ -265,3 +265,46 @@ async def wait_for_withdrawal(
         assert notification.id == withdrawal_id
         assert notification.status == status, notification.message
         assert notification.message == message
+
+
+@freeze_time
+async def test_recent_donatees(client, db, paid_donation_fixture, rich_donator, freeze_request_hash_json):
+    async with db.session() as db_session:
+        youtube_channel = YoutubeChannel(
+            id=UUID(int=2), channel_id='0001', title='0001', thumbnail_url='http://example.com/ytimg',
+        )
+        await db_session.save_youtube_channel(youtube_channel)
+        now = datetime.utcnow()
+        earlier = now - timedelta(days=1, minutes=1)
+        await donate(db_session, rich_donator, 10, UUID(int=2), now, youtube_channel=youtube_channel)
+        await donate(db_session, rich_donator, 20, UUID(int=3), now, youtube_channel=youtube_channel)
+        await donate(db_session, rich_donator, 15, UUID(int=4), earlier, youtube_channel=youtube_channel)
+        twitter_account = TwitterAccount(
+            id=UUID(int=2), user_id=1, handle='handle', name='name', profile_image_url='http://example.com/twimg',
+        )
+        await db_session.save_twitter_account(twitter_account)
+        await donate(db_session, rich_donator, 10, UUID(int=5), now, twitter_account=twitter_account)
+        await donate(db_session, rich_donator, 20, UUID(int=6), now, twitter_account=twitter_account)
+        await donate(db_session, rich_donator, 15, UUID(int=7), earlier, twitter_account=twitter_account)
+
+    response = await client.get("/api/v1/donatee/recently-donated")
+    verify_response(response, 'recently-donated-donatees', 200)
+
+
+async def donate(
+    db_session, donator: Donator, amount: int, donation_id: UUID, paid_at: datetime,
+    youtube_channel: YoutubeChannel = None, twitter_account: TwitterAccount = None,
+):
+    donation: Donation = Donation(
+        id=donation_id,
+        donator=donator,
+        amount=amount,
+        youtube_channel=youtube_channel,
+        twitter_account=twitter_account,
+    )
+    await db_session.create_donation(donation)
+    await db_session.donation_paid(
+        donation_id=donation.id,
+        amount=donation.amount,
+        paid_at=paid_at,
+    )

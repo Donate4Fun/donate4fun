@@ -211,7 +211,7 @@ def freeze_uuids(monkeypatch):
 async def unpaid_donation_fixture(app, db, donator_id, freeze_uuids, settings):
     async with db.session() as db_session:
         youtube_channel = YoutubeChannel(
-            channel_id='q2dsaf', title='asdzxc', thumbnail_url='1wdasd',
+            channel_id='q2dsaf', title='asdzxc', thumbnail_url='http://example.com/thumbnail',
         )
         await db_session.save_youtube_channel(youtube_channel)
         invoice: Invoice = await LndClient(settings.lnd).create_invoice(memo="Donate4.fun to asdzxc", value=100)

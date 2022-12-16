@@ -30,7 +30,7 @@ json:
       id: 00000000-0000-0000-0000-000000000001
       last_fetched_at: null
       lightning_address: null
-      thumbnail_url: 1wdasd
+      thumbnail_url: http://example.com/thumbnail
       title: asdzxc
     youtube_video: null
   payment_request: lnbcsomething

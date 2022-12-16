@@ -6,7 +6,8 @@ from uuid import UUID
 import pytest
 from donate4fun.models import Donation, Donator, YoutubeChannel
 from donate4fun.types import RequestHash
-from donate4fun.db import DonationDb, Notification
+from donate4fun.db_models import DonationDb
+from donate4fun.db import Notification
 
 from tests.test_util import verify_fixture, freeze_time
 
@@ -34,7 +35,7 @@ async def test_query_donations(db_session, paid_donation_fixture, freeze_request
 
 @freeze_time
 async def test_create_donation(db_session):
-    youtube_channel = YoutubeChannel(channel_id='q2dsaf', title='asdzxc', thumbnail_url='1wdasd')
+    youtube_channel = YoutubeChannel(channel_id='q2dsaf', title='asdzxc', thumbnail_url='http://example.com/thumbnail')
     await db_session.save_youtube_channel(youtube_channel)
     donation = Donation(
         donator=Donator(),

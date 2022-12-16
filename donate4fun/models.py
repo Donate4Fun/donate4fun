@@ -5,7 +5,7 @@ from typing import Any
 import json
 
 import jwt
-from pydantic import BaseModel as PydanticBaseModel, validator, HttpUrl, Field, root_validator, EmailStr
+from pydantic import BaseModel as PydanticBaseModel, validator, HttpUrl, Field, root_validator, EmailStr, AnyUrl
 from pydantic.datetime_parse import parse_datetime
 from funkybob import UniqueRandomNameGenerator
 from multiavatar.multiavatar import multiavatar
@@ -271,3 +271,11 @@ class DonationPaidRequest(BaseModel):
     preimage: str
     paymentHash: str
     route: DonationPaidRouteInfo
+
+
+class Donatee(BaseModel):
+    title: str
+    thumbnail_url: AnyUrl
+    total_donated: int
+    type: str
+    id: UUID

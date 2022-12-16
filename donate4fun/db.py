@@ -1,23 +1,23 @@
 import logging
 from uuid import UUID
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from sqlalchemy import select, desc, func, text, literal
+from sqlalchemy import select, desc, func, text, literal, union, literal_column
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.orm import sessionmaker, join
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import NoResultFound  # noqa - imported from other modules
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 
 from .core import ContextualObject
-from .models import Donator, YoutubeChannel, Notification, Credentials
+from .models import Donator, Notification, Credentials, Donatee
 from .settings import DbSettings
 from .db_youtube import YoutubeDbMixin
 from .db_twitter import TwitterDbMixin, OAuthTokenDbMixin
 from .db_donations import DonationsDbMixin
 from .db_withdraw import WithdrawalDbMixin
 from .db_models import (
-    Base, DonatorDb,  DonationDb, EmailNotificationDb, YoutubeChannelDb,
+    Base, DonatorDb, EmailNotificationDb, YoutubeChannelDb, TwitterAuthorDb,
 )
 from .db_utils import insert_on_conflict_update
 
@@ -138,25 +138,27 @@ class DbSession(YoutubeDbMixin, TwitterDbMixin, DonationsDbMixin, WithdrawalDbMi
 
         return Credentials(donator=registered_donator_id, lnauth_pubkey=key)
 
-    async def query_recently_donated_donatees(self, limit=20, limit_days=180) -> list[YoutubeChannel]:
-        resp = await self.execute(
-            select(
-                YoutubeChannelDb.id,
-                func.max(YoutubeChannelDb.channel_id).label('channel_id'),
-                func.max(YoutubeChannelDb.title).label('title'),
-                func.max(YoutubeChannelDb.thumbnail_url).label('thumbnail_url'),
-                func.sum(DonationDb.amount).label('balance'),
-            ).select_from(
-                join(YoutubeChannelDb, DonationDb, DonationDb.youtube_channel)
-            ).where(
-                DonationDb.paid_at > datetime.utcnow() - timedelta(days=limit_days)
-            ).group_by(
-                YoutubeChannelDb.id
-            ).order_by(
-                desc('balance')
-            ).limit(limit)
+    async def query_recently_donated_donatees(self, limit=20, limit_days=180) -> list[Donatee]:
+        youtube_sq = select(
+            YoutubeChannelDb.id,
+            literal_column("'youtube'").label('type'),
+            YoutubeChannelDb.title.label('title'),
+            YoutubeChannelDb.thumbnail_url.label('thumbnail_url'),
+            YoutubeChannelDb.total_donated.label('total_donated'),
         )
-        return [YoutubeChannel.from_orm(item) for item in resp.fetchall()]
+        twitter_sq = select(
+            TwitterAuthorDb.id,
+            literal_column("'twitter'").label('type'),
+            TwitterAuthorDb.name.label('title'),
+            TwitterAuthorDb.profile_image_url.label('thumbnail_url'),
+            TwitterAuthorDb.total_donated.label('total_donated'),
+        )
+        resp = await self.execute(
+            union(youtube_sq, twitter_sq)
+            .order_by(desc('total_donated'))
+            .limit(limit)
+        )
+        return resp.fetchall()
 
     async def save_email(self, email: str) -> UUID | None:
         resp = await self.execute(

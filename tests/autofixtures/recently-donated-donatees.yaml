@@ -1,18 +1,17 @@
 json:
-- balance: 90
-  banner_url: null
-  channel_id: '0001'
-  id: 00000000-0000-0000-0000-000000000002
-  last_fetched_at: null
-  lightning_address: null
-  thumbnail_url: http://0001/img
+- id: 00000000-0000-0000-0000-000000000002
+  thumbnail_url: http://example.com/ytimg
   title: '0001'
-- balance: 20
-  banner_url: null
-  channel_id: q2dsaf
-  id: 00000000-0000-0000-0000-000000000001
-  last_fetched_at: null
-  lightning_address: null
-  thumbnail_url: 1wdasd
+  total_donated: 45
+  type: youtube
+- id: 00000000-0000-0000-0000-000000000002
+  thumbnail_url: http://example.com/twimg
+  title: name
+  total_donated: 45
+  type: twitter
+- id: 00000000-0000-0000-0000-000000000001
+  thumbnail_url: http://example.com/thumbnail
   title: asdzxc
+  total_donated: 20
+  type: youtube
 status_code: 200
