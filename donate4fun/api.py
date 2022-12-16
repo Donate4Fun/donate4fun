@@ -178,7 +178,8 @@ async def fetch_lightning_address(donation: Donation) -> PaymentRequest:
         response = await client.get(f'https://{host}/.well-known/lnurlp/{name}')
         response.raise_for_status()
         metadata = response.json()
-        if metadata['status'] != 'OK':
+        # https://github.com/lnurl/luds/blob/luds/06.md
+        if metadata.get('status', 'OK') != 'OK':
             raise LnurlpError(f"Status is not OK: {metadata}")
         if not metadata['minSendable'] <= donation.amount * 1000 <= metadata['maxSendable']:
             raise LnurlpError(f"Amount is out of bounds: {donation.amount} {metadata}")
@@ -206,7 +207,7 @@ async def fetch_lightning_address(donation: Donation) -> PaymentRequest:
         response = await client.get(metadata['callback'], params=params)
         response.raise_for_status()
         data = response.json()
-        if data['status'] != 'OK':
+        if data.get('status', 'OK') != 'OK':
             raise LnurlpError(f"Status is not OK: {data}")
         pay_req = PaymentRequest(data['pr'])
         invoice: LnAddr = pay_req.decode()
