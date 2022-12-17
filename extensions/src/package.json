@@ -1,6 +1,6 @@
 {
   "name": "browser-extension-donate4fun-firefox",
-  "version": "0.19.2",
+  "version": "0.19.3",
   "description": "Donate4Fun Firefox extension.",
   "homepage": "https://donate4.fun",
   "type": "module",
@@ -17,21 +17,30 @@
     "plugins": [
       "@semantic-release/commit-analyzer",
       "@semantic-release/release-notes-generator",
-      ["@semantic-release/npm", {
-        "npmPublish": false
-      }],
+      [
+        "@semantic-release/npm",
+        {
+          "npmPublish": false
+        }
+      ],
       "@semantic-release/git",
-      ["semantic-release-chrome", {
-        "extensionId": "acckcppgcafhbdledejfiiaomafpjmgc",
-        "asset": "../chrome.zip",
-        "distFolder": "../chrome"
-      }],
-      ["@semantic-release/github", {
-        "assets": [
-          "../chrome.zip",
-          "../firefox.zip"
-        ]
-      }]
+      [
+        "semantic-release-chrome",
+        {
+          "extensionId": "acckcppgcafhbdledejfiiaomafpjmgc",
+          "asset": "../chrome.zip",
+          "distFolder": "../chrome"
+        }
+      ],
+      [
+        "@semantic-release/github",
+        {
+          "assets": [
+            "../chrome.zip",
+            "../firefox.zip"
+          ]
+        }
+      ]
     ]
   },
   "unused": [
