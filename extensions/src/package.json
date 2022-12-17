@@ -8,8 +8,8 @@
     "build": "rollup -c --failAfterWarnings",
     "dev": "rollup -c -w",
     "start": "sirv public",
-    "package-chrome": "rm -f ../chrome.zip && cd ../dist/chrome && zip -r ../chrome.zip .",
-    "package-firefox": "rm -f ../firefox.zip && cd ../dist/firefox && zip -r ../firefox.zip .",
+    "package-chrome": "rm -f ../chrome.zip && cd ../dist/chrome && zip -r ../../chrome.zip .",
+    "package-firefox": "rm -f ../firefox.zip && cd ../dist/firefox && zip -r ../../firefox.zip .",
     "package": "$npm_execpath run package-chrome && $npm_execpath run package-firefox",
     "package-clean": "rm -rf ../dist && $npm_execpath run build && $npm_execpath run package"
   },

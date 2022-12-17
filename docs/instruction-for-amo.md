@@ -6,7 +6,8 @@ To build it manually step by step you need environment with nodejs 16, git, zip,
 (cd frontend && pnpm install)
 cd extensions/src
 pnpm install
-pnpm package-clean
+pnpm build
+pnpm package-firefox
 ```
 
 the output file will be extensions/firefox.zip

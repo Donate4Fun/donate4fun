@@ -76,3 +76,39 @@ Build and deploy the service
 ```
 ./deploy-donate4fun.sh
 ```
+
+Extension build and publish
+==
+
+Build
+===
+To build release version of extension
+```
+cd extension/src
+pnpm install
+pnpm build
+```
+
+Chrome Web Store
+===
+To make a new release and publish extension to Chrome Web Store
+```
+cd extension/src
+npx semantic-release --no-ci
+```
+The following environment variables are needed
+ - `GOOGLE_CLIENT_ID`
+ - `GOOGLE_CLIENT_SECRET`
+ - `GOOGLE_REFRESH_TOKEN`
+Read [this guide](https://github.com/GabrielDuarteM/semantic-release-chrome/blob/master/Authentication.md) on how to obtain them.
+
+Firefox Add On
+===
+To publish add-on to addons.mozilla.org
+```
+./scripts/publish-amo.py
+```
+The following environment variables are needed
+ - `AMO_JWT_ISSUER`
+ - `AMO_JWT_SECRET`
+Read [this doc](https://addons-server.readthedocs.io/en/latest/topics/api/auth.html#access-credentials) on how to obtain them.
