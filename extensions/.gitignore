@@ -3,4 +3,5 @@
 /*.zip
 /chrome/
 /firefox/
+/dist/
 /src/node_modules

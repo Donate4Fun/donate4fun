@@ -9,6 +9,7 @@ import path from "path";
 import fs from "fs";
 
 const dev = process.env.ROLLUP_WATCH;
+const distDir = dev ? "../" : "../dist/";
 
 function serve() {
   let server;
@@ -40,7 +41,7 @@ function makeOutput(browser, options) {
     sourcemap: dev,
     format: "iife",
     name: "app",
-    dir: path.join('..', browser, options?.dir || '.'),
+    dir: path.join(distDir, browser, options?.dir || '.'),
     assetFileNames: "[name][extname]",
     footer: options?.footer,
   }
@@ -94,7 +95,7 @@ function makeConfig(name, options) {
       }),
       copy({
         targets: [
-          { src: `${name}.html`, dest: ["../chrome", "../firefox"] },
+          { src: `${name}.html`, dest: [distDir + "chrome", distDir + "firefox"] },
         ],
       }),
     ],
@@ -107,7 +108,7 @@ function makeConfig(name, options) {
 function staticFile(filename) {
   return {
     src: `static/${filename}`,
-    dest: ["../chrome/static", "../firefox/static"],
+    dest: [distDir + "chrome/static", distDir + "firefox/static"],
   }
 }
 
@@ -178,9 +179,9 @@ export default [
           staticFile("twitter.svg"),
           staticFile("checkbox.svg"),
           staticFile("loader.svg"),
-          { src: "background.html", dest: "../firefox" },
-          manifestFile("manifest-firefox.json", "../firefox/manifest.json", patchFirefoxManifest),
-          manifestFile("manifest-chrome.json", "../chrome/manifest.json", patchChromeManifest),
+          { src: "background.html", dest: distDir + "firefox" },
+          manifestFile("manifest-firefox.json", distDir + "firefox/manifest.json", patchFirefoxManifest),
+          manifestFile("manifest-chrome.json", distDir + "chrome/manifest.json", patchChromeManifest),
         ],
         verbose: true,
       }),
