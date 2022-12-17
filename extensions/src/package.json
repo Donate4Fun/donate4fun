@@ -29,7 +29,7 @@
         {
           "extensionId": "acckcppgcafhbdledejfiiaomafpjmgc",
           "asset": "../chrome.zip",
-          "distFolder": "../chrome"
+          "distFolder": "../dist/chrome"
         }
       ],
       [
