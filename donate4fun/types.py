@@ -11,10 +11,10 @@ Url = str
 
 class LightningAddress(str):
     # https://github.com/lnurl/luds/blob/luds/16.md
-    domain_regexp = r'(((?!\-))(xn\-\-)?[a-z0-9\-_]{0,61}[a-z0-9]{1,1}\.)*(xn\-\-)?([a-z0-9\-]{1,61}|[a-z0-9\-]{1,30})\.[a-z]{2,}'  # noqa
-    # for local development
+    domain_regexp = r'((?!\-)(xn\-\-)?[\w_]{0,61}\w\.)*(xn\-\-)?([\w\-]{1,61}|[\w\-]{1,30})\.[a-zA-Z]{2,}'  # noqa
+    # for local development we need to match "asd@localhost:3000" addresses
     #domain_regexp = r'(((?!\-))(xn\-\-)?[a-z0-9\-_]{0,61}[a-z0-9]{1,1}\.)*(xn\-\-)?([a-z0-9\-]{1,61}|[a-z0-9\-]{1,30})(\.[a-z]{2,})?(:\d{1,5})?'  # noqa
-    regexp = r'^[a-z0-9-_.]+@' + domain_regexp + '$'
+    regexp = r'^[\w\-.]+@' + domain_regexp + '$'
 
     @classmethod
     def __get_validators__(cls):
@@ -25,6 +25,11 @@ class LightningAddress(str):
         if not re.match(cls.regexp, v):
             raise ValidationError
         return str(v)
+
+    @classmethod
+    def parse(cls, text: str) -> 'LightningAddress':
+        if match := re.search(fr'⚡\W*({cls.regexp[1:-1]})', text):
+            return match.group(1)
 
 
 class PaymentRequest(str):

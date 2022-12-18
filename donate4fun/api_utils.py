@@ -1,4 +1,3 @@
-import re
 import unicodedata
 from uuid import uuid4, UUID
 
@@ -46,5 +45,4 @@ async def get_db_session():
 def scrape_lightning_address(text: str):
     # Remove Mark characters
     text = ''.join(char for char in text if unicodedata.category(char)[0] != 'M')
-    if match := re.search(fr'⚡\W*({LightningAddress.regexp[1:-1]})', text):
-        return match.group(1)
+    return LightningAddress.parse(text)

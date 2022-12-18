@@ -5,6 +5,7 @@ import anyio
 import pytest
 
 from donate4fun.core import as_task
+from donate4fun.types import LightningAddress
 
 
 async def test_anyio():
@@ -74,3 +75,8 @@ async def test_context_leak(async_fixture):
         await in_ev.wait()
         assert ctx_var.get() == 2
         out_ev.set()
+
+
+@pytest.mark.parametrize('text', ['⚡ BitFrankie@zbd.gg'])
+async def test_parse_lightning_address(text: str):
+    assert LightningAddress.parse(text) != None  # noqa

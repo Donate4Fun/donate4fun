@@ -13,6 +13,9 @@ logger = logging.getLogger('amo-publisher')
 
 
 def main():
+    """
+    Docs https://addons-server.readthedocs.io/en/latest/topics/api/overview.html
+    """
     prefix = 'https://addons.mozilla.org/api/v5/'
     now = int(time.time())
     token = jwt.encode(dict(
