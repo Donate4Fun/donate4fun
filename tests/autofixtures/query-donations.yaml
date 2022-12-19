@@ -26,7 +26,7 @@
     B+YCAhYWFgAAAA==
   r_hash: !!python/object/new:donate4fun.types.RequestHash
     args:
-    - b'\x08\xaez\x12p\xdc\x80]\xa7\x0b\xc8\x10\xc3\xc33\x86\x10\x1a`_\xd43\xa0\x0c\xda_c\xb7gD\xba.'
+    - b'Z\xd4\x02\xc4b=\xdf\xb7\xa68th\x96\xae\xee\x98\xe9k\xa0.\x0e\x9cIb\x1e\x04\x14S\xdbDO\xfb'
     state:
       data: !!binary |
         aGFzaA==
@@ -38,6 +38,7 @@
     balance: 20
     banner_url: null
     channel_id: q2dsaf
+    handle: null
     id: !!python/object/apply:asyncpg.pgproto.pgproto.UUID
     - !!binary |
       AAAAAAAAAAAAAAAAAAAAAQ==

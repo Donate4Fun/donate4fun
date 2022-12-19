@@ -16,6 +16,7 @@ class YoutubeChannelDb(Base):
     title = Column(String)
     thumbnail_url = Column(String)
     banner_url = Column(String)
+    handle = Column(String)
     lightning_address = Column(String)
 
     balance = Column(BigInteger, nullable=False, server_default=text('0'))

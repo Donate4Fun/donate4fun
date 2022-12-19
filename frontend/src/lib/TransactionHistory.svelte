@@ -1,4 +1,5 @@
 <script>
+  import { get } from "svelte/store";
   import { link } from "svelte-navigator";
   import TwitterBrand from "svelte-awesome-icons/TwitterBrand.svelte";
   import YoutubeBrand from "svelte-awesome-icons/YoutubeBrand.svelte";
@@ -13,6 +14,7 @@
   import Loader from "$lib/Loader.svelte";
   import api from "$lib/api.js";
   import { toText } from "$lib/utils.js";
+  import { me } from "$lib/session.js";
 
   export let donator_id;
   export let direction;
@@ -25,6 +27,11 @@
     showMore = newDonations.length !== 0;
     donations = [...donations, ...newDonations];
   }
+
+  async function firstLoad() {
+    await load();
+    return await get(me);
+  }
 </script>
 
 <div class="container">
@@ -35,9 +42,9 @@
       <div>Amount</div>
       <div>Status</div>
     </div>
-    {#await load()}
+    {#await firstLoad()}
       <Loader --size=4em />
-    {:then}
+    {:then me}
       {#each donations as donation}
         {#if donation.receiver}
           <Datetime dt={donation.paid_at}/>
@@ -74,8 +81,10 @@
               <span class="cancelled">Cancelled</span>
             {:else if donation.donator.id === donation.receiver?.id}
               Deposited
-            {:else if donation.receiver !== null}
+            {:else if donation.receiver?.id === me.donator.id}
               Received
+            {:else if donation.receiver}
+              Sent
             {:else if donation.lightning_address}
               <span class="success">Via ⚡@</span>
             {:else if donation.claimed_at}

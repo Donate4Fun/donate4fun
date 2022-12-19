@@ -26,6 +26,7 @@ json:
     balance: 20
     banner_url: null
     channel_id: q2dsaf
+    handle: null
     id: 00000000-0000-0000-0000-000000000001
     last_fetched_at: null
     lightning_address: null

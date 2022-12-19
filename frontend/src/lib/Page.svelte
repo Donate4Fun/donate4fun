@@ -30,4 +30,10 @@
   flex: 1;
   padding-top: 64px;
 }
+@media (max-width: 640px) {
+  .content {
+    padding-top: 0;
+    width: 100vw;
+  }
+}
 </style>

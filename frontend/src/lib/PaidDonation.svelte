@@ -37,38 +37,34 @@
 </script>
 
 <div class="container">
-  {#if donation.paid_at}
-    <div class="cancelled-container" class:cancelled={donation.cancelled_at !== null}>
-      {#if donation.youtube_channel}
-        <YoutubeDonation {donation} />
-      {:else if donation.twitter_account}
-        <TwitterDonation {donation} />
-      {/if}
-    </div>
-    {#if donation.cancelled_at}
-      <div class="status-message">
-        Donation cancelled
-      </div>
-    {:else if donation.claimed_at}
-      <div class="status-message">
-        Donation claimed
-      </div>
-    {:else}
-      {#await $me then me}
-        {#if donation.donator.id === me.donator.id}
-          <BaseButton
-            --background-color="white"
-            --border-width="2px"
-            --border-color="#EDEDED"
-            --text-color="#FF4B4B"
-            --shadow="none"
-            on:click={cancel}
-          >Cancel donation</BaseButton>
-        {/if}
-      {/await}
+  <div class="cancelled-container" class:cancelled={donation.cancelled_at !== null}>
+    {#if donation.youtube_channel}
+      <YoutubeDonation {donation} />
+    {:else if donation.twitter_account}
+      <TwitterDonation {donation} />
     {/if}
+  </div>
+  {#if donation.cancelled_at}
+    <div class="status-message">
+      Donation cancelled
+    </div>
+  {:else if donation.claimed_at}
+    <div class="status-message">
+      Donation claimed
+    </div>
   {:else}
-    Unpaid donation
+    {#await $me then me}
+      {#if donation.donator.id === me.donator.id}
+        <BaseButton
+          --background-color="white"
+          --border-width="2px"
+          --border-color="#EDEDED"
+          --text-color="#FF4B4B"
+          --shadow="none"
+          on:click={cancel}
+        >Cancel donation</BaseButton>
+      {/if}
+    {/await}
   {/if}
 </div>
 
@@ -79,7 +75,18 @@
   align-items: center;
   gap: 32px;
   padding: 58px;
-  width: 640px;
+}
+@media (max-width: 640px) {
+  .container {
+    padding: 48px 32px;
+    width: 100%;
+  }
+}
+@media (min-width: 641px) {
+  .container {
+    padding: 48px 120px;
+    width: 100%;
+  }
 }
 .cancelled-container {
   width: 100%;

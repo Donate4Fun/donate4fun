@@ -1,6 +1,7 @@
 <script>
   import { link } from "svelte-navigator";
 
+  import WhiteButton from "$lib/WhiteButton.svelte";
   import TwitterShare from "$lib/TwitterShare.svelte";
   import EmbeddedTweet from "$lib/EmbeddedTweet.svelte";
 
@@ -37,10 +38,12 @@
       </div>
     </a>
   </div>
-  {#if donation.cancelled_at === null && donation.claimed_at === null}
-    <TwitterShare text="Hey @{donation.twitter_account.handle}, I've sent you a donation" />
-    <a use:link href="/twitter/{donation.twitter_account.id}/owner">Claim</a>
-  {/if}
+  <div class="buttons">
+    {#if donation.cancelled_at === null && donation.claimed_at === null}
+      <TwitterShare text="Hey @{donation.twitter_account.handle}, I've sent you a donation" />
+      <WhiteButton link="/twitter/{donation.twitter_account.id}/owner">Claim</WhiteButton>
+    {/if}
+  </div>
   {#if donation.twitter_tweet !== null}
     <EmbeddedTweet id={donation.twitter_tweet.tweet_id} />
   {/if}
@@ -52,12 +55,16 @@
   flex-direction: column;
   align-items: center;
   gap: 32px;
+
+  font-weight: 900;
+  font-size: 24px;
 }
 .main {
   display: flex;
   flex-direction: column;
   gap: 16px;
   color: #2E6CFF;
+  width: 100%;
 }
 .twitter-account {
   display: flex;
@@ -69,7 +76,6 @@
 .image-name {
   display: flex;
   gap: 12px;
-  align-items: center;
 }
 img.avatar {
   width: 32px;
@@ -80,7 +86,6 @@ img.avatar {
   box-shadow: 4px 4px 20px rgba(34, 60, 103, 0.15), 10px 15px 25px rgba(209, 217, 230, 0.4);
 }
 .name {
-  white-space: nowrap;
   color: inherit;
   font-weight: 900;
   font-size: 24px;
@@ -110,5 +115,21 @@ img.avatar {
 .amount b {
   color: #19B400;
   font-weight: 800;
+}
+.buttons {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  gap: 16px;
+  width: 100%;
+  height: 40px;
+  --height: 100%;
+  --font-size: 16px;
+}
+@media (max-width: 640px) {
+  .name,.amount {
+    font-size: 20px;
+    line-height: 24px;
+  }
 }
 </style>

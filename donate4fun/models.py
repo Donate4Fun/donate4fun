@@ -96,6 +96,7 @@ class YoutubeChannel(IdModel):
     channel_id: str
     thumbnail_url: Url | None
     banner_url: Url | None
+    handle: str | None
     balance: int = 0
     lightning_address: LightningAddress | None
     last_fetched_at: datetime | None

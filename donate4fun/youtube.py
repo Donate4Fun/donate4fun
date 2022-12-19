@@ -41,6 +41,7 @@ class ChannelInfo(BaseModel):
     description: str
     thumbnail: Url | None
     banner: Url | None
+    handle: str | None
 
     @classmethod
     def from_api(cls, data):
@@ -50,6 +51,7 @@ class ChannelInfo(BaseModel):
             thumbnail=glom(data, 'snippet.thumbnails.medium.url', default=None),
             banner=glom(data, 'brandingSettings.image.bannerExternalUrl', default=None),
             description=glom(data, 'snippet.description', default=''),
+            handle=glom(data, 'snippet.customUrl', default=None),
         )
 
     @property
@@ -109,13 +111,7 @@ async def fetch_channel_by_owner(aiogoogle, youtube, creds: ClientCreds) -> Chan
     items = res.get('items')
     if not items:
         raise YoutubeChannelNotFound
-    channel = items[0]
-    snippet = channel['snippet']
-    return ChannelInfo(
-        id=channel['id'],
-        title=snippet['title'],
-        thumbnail=snippet['thumbnails']['medium']['url'],
-    )
+    return ChannelInfo.from_api(items[0])
 
 
 def get_service_account_creds():
@@ -202,6 +198,7 @@ async def fetch_youtube_channel(aiogoogle, youtube, channel_id: str) -> YoutubeC
         thumbnail_url=api_channel.thumbnail,
         last_fetched_at=datetime.utcnow(),
         banner_url=api_channel.banner,
+        handle=api_channel.handle,
         lightning_address=scrape_lightning_address(api_channel.description),
     )
 

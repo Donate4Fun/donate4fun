@@ -1,12 +1,11 @@
 <script>
   import { get } from "svelte/store";
 
-  import Donation from "$lib/Donation.svelte";
+  import PaidDonation from "$lib/PaidDonation.svelte";
   import Donator from "$lib/Donator.svelte";
   import Loading from "$lib/Loading.svelte";
   import Invoice from "$lib/Invoice.svelte";
   import Section from "$lib/Section.svelte";
-  import Button from "$lib/Button.svelte";
   import Amount from "$lib/Amount.svelte";
   import YoutubeChannel from "$lib/YoutubeChannel.svelte";
   import title from "$lib/title.js";
@@ -63,20 +62,7 @@
       <Loading />
     {:then}
       {#if donation.paid_at}
-        {#if !donation.receiver}
-          <Donation donation={donation} />
-        {:else}
-          <div class="flex-column">
-            {#await $me then me}
-              {#if donation.receiver.id === me.donator.id}
-                You successfuly fulfilled your balance.
-              {:else}
-                You successfuly donated to <Donator user={donation.receiver} />.
-              {/if}
-            {/await}
-            <Button class=white on:click={() => navigate(-2)}>Close</Button>
-          </div>
-        {/if}
+        <PaidDonation donation={donation} />
       {:else}
         <div class="padding">
           {#if donation.youtube_channel}
@@ -106,6 +92,11 @@
   flex-direction: column;
   align-items: center;
   width: 640px;
+}
+@media (max-width: 640px) {
+  .main {
+    width: 100vw;
+  }
 }
 .padding {
   padding: 40px;
