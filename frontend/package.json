@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@fortawesome/free-solid-svg-icons": "^6.2.0",
+    "@metro-fs/analytics-plugin-posthog": "^1.4.0",
     "@sveltejs/vite-plugin-svelte": "^1.0.0-next.49",
     "axios": "^0.27.2",
     "dateformat": "^5.0.3",

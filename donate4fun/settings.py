@@ -119,6 +119,13 @@ class LnurlpSettings(BaseModel):
     max_sendable_sats: int
 
 
+class PostHogSettings(BaseModel):
+    enabled: bool
+    project_api_key: str
+    host: str
+    debug: bool = False
+
+
 def yaml_config_source(settings: BaseSettings) -> dict[str, Any]:
     return yaml.safe_load(open(os.getenv('DONATE4FUN_CONFIG', 'config.yaml')))
 
@@ -134,6 +141,7 @@ class Settings(BaseSettings):
     rollbar: RollbarSettings | None
     google_cloud_logging: GoogleCloudLoggingSettings
     lnurlp: LnurlpSettings
+    posthog: PostHogSettings
     hypercorn: dict[str, Any]
     jwt_secret: str
     min_withdraw: int  # Limit in sats for claiming

@@ -3,6 +3,7 @@ lockfileVersion: 5.4
 specifiers:
   '@donate4fun/google-analytics': github:nikicat/analytics-plugin-google-analytics
   '@fortawesome/free-solid-svg-icons': ^6.2.0
+  '@metro-fs/analytics-plugin-posthog': ^1.4.0
   '@rollup/plugin-alias': ^3.1.9
   '@sveltejs/vite-plugin-svelte': ^1.0.0-next.49
   analytics: ^0.8.1
@@ -30,6 +31,7 @@ specifiers:
 
 dependencies:
   '@fortawesome/free-solid-svg-icons': 6.2.0
+  '@metro-fs/analytics-plugin-posthog': 1.4.0
   '@sveltejs/vite-plugin-svelte': 1.0.9_svelte@3.50.1+vite@2.9.15
   axios: 0.27.2
   dateformat: 5.0.3
@@ -161,6 +163,12 @@ packages:
       '@fortawesome/fontawesome-common-types': 6.2.0
     dev: false
 
+  /@metro-fs/analytics-plugin-posthog/1.4.0:
+    resolution: {integrity: sha512-SqpAiOdV5WGDsnulPtRLfW91dhmGSoI5ctel8gND9Xu00ywq5J5HKkSDSr101UHgK103xGDaiAbPviH42yEFIw==}
+    dependencies:
+      posthog-js: 1.23.0
+    dev: false
+
   /@nodelib/fs.scandir/2.1.5:
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
     engines: {node: '>= 8'}
@@ -227,6 +235,11 @@ packages:
     dependencies:
       estree-walker: 2.0.2
       picomatch: 2.3.1
+    dev: false
+
+  /@sentry/types/6.19.7:
+    resolution: {integrity: sha512-jH84pDYE+hHIbVnab3Hr+ZXr1v8QABfhx39KknxqKWr2l0oEItzepV0URvbEhB446lk/S/59230dlUUIBGsXbg==}
+    engines: {node: '>=6'}
     dev: false
 
   /@sveltejs/vite-plugin-svelte/1.0.9_svelte@3.50.1+vite@2.9.15:
@@ -657,6 +670,10 @@ packages:
       reusify: 1.0.4
     dev: true
 
+  /fflate/0.4.8:
+    resolution: {integrity: sha512-FJqqoDBR00Mdj9ppamLa/Y7vxm+PRmNWA67N846RvsoYVMKB4q3y/de5PA7gUmRMYK/8CMz2GDZQmCRN1wBcWA==}
+    dev: false
+
   /fill-range/7.0.1:
     resolution: {integrity: sha512-qOo9F+dMUmC2Lcb4BbVvnKJxTPjCm+RRpe4gDuGrzkL7mEVl/djYSu2OdQ2Pa302N4oqkSg9ir6jaLWJ2USVpQ==}
     engines: {node: '>=8'}
@@ -899,6 +916,14 @@ packages:
       source-map-js: 1.0.2
     dev: false
 
+  /posthog-js/1.23.0:
+    resolution: {integrity: sha512-tO+RLn/SVKYj/1CVsct4j2KNzM14uNo+G/JrGsfMQkMDOmCLREfuOHCnWFrfMSu7W0l69WYadYRnyNnsgpDRFA==}
+    dependencies:
+      '@sentry/types': 6.19.7
+      fflate: 0.4.8
+      rrweb-snapshot: 1.1.14
+    dev: false
+
   /qrcode/1.5.1:
     resolution: {integrity: sha512-nS8NJ1Z3md8uTjKtP+SGGhfqmTCs5flU/xR623oI0JX+Wepz9R8UrRVCTBTJm3qGw3rH6jJ6MUHjkDx15cxSSg==}
     engines: {node: '>=10.13.0'}
@@ -959,6 +984,10 @@ packages:
     optionalDependencies:
       fsevents: 2.3.2
     dev: true
+
+  /rrweb-snapshot/1.1.14:
+    resolution: {integrity: sha512-eP5pirNjP5+GewQfcOQY4uBiDnpqxNRc65yKPW0eSoU1XamDfc4M8oqpXGMyUyvLyxFDB0q0+DChuxxiU2FXBQ==}
+    dev: false
 
   /run-parallel/1.2.0:
     resolution: {integrity: sha512-5l4VyZR86LZ/lDxZTR6jqL8AFE2S0IFLMP26AbjsLVADxHdhB/c0GUsH+y39UfCi3dzz8OlQuPmnaJOMoDHQBA==}

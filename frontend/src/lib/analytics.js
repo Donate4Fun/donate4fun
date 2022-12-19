@@ -2,6 +2,8 @@ import { get } from "svelte/store";
 import Analytics from 'analytics';
 import googleAnalytics from '@donate4fun/google-analytics/src/browser.js';
 import plausiblePlugin from "analytics-plugin-plausible";
+import postHog from '@metro-fs/analytics-plugin-posthog';
+
 import { writable as writableStorage } from "svelte-local-storage-store";
 import { isInsideExtension } from "$lib/utils.js";
 
@@ -14,6 +16,17 @@ const plugins = import.meta.env.DEV ? [] : [
   plausiblePlugin({
     apiHost: "/proxy/event",
     trackLocalhost: true,
+  }),
+  postHog({
+    token: 'phc_2CphDSfOn61NrqYZnloxHWpwFFjd4mHxUtZwcwrogC0',
+    enabled: true,
+    options: {
+      api_host: 'https://eu.posthog.com',
+      debug: process.env.NODE_ENV === 'dev',
+      persistence: 'memory',
+      disable_cookie: true,
+      disable_session_recording: true,
+    },
   }),
 ];
 

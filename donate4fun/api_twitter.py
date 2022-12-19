@@ -1,6 +1,8 @@
 from uuid import UUID
 
+import posthog
 from fastapi import Depends, APIRouter, HTTPException
+
 from .models import TwitterAccount, TransferResponse, Donator, TwitterAccountOwned, Donation
 from .types import ValidationError
 from .api_utils import get_donator, load_donator, get_db_session
@@ -35,6 +37,7 @@ async def twitter_account_transfer(account_id: UUID, db=Depends(get_db_session),
         raise ValidationError("You should have a connected auth method to claim donations")
     if account.balance != 0:
         amount = await db.transfer_twitter_donations(twitter_account=account, donator=donator)
+    posthog.capture(donator.id, 'transfer', dict(source='twitter', amount=amount))
     return TransferResponse(amount=amount)
 
 

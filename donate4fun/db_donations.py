@@ -40,15 +40,20 @@ class DonationsDbMixin:
         )
         return [Donation.from_orm(obj) for obj in result.unique().scalars()]
 
-    async def query_donation(self, *, r_hash: RequestHash | None = None, id: UUID | None = None) -> Donation:
+    async def lock_donation(self, r_hash: RequestHash):
         result = await self.execute(
             select(DonationDb)
-            .where(
-                (DonationDb.r_hash == r_hash.as_base64) if r_hash else (DonationDb.id == id)
-            )
+            .where(DonationDb.r_hash == r_hash.as_base64)
+            .with_for_update(of=DonationDb)
         )
-        data = result.scalars().one()
-        return Donation.from_orm(data)
+        return Donation.from_orm(result.scalar_one())
+
+    async def query_donation(self, id: UUID) -> Donation:
+        result = await self.execute(
+            select(DonationDb)
+            .where(DonationDb.id == id)
+        )
+        return Donation.from_orm(result.scalar_one())
 
     async def create_donation(self, donation: Donation):
         donation.created_at = datetime.utcnow()
@@ -79,22 +84,25 @@ class DonationsDbMixin:
             .where(DonationDb.id == donation_id)
         )
 
-    async def cancel_donation(self, donation_id: UUID):
+    async def cancel_donation(self, donation_id: UUID) -> Donation:
         resp = await self.execute(
             update(DonationDb)
             .values(
                 cancelled_at=datetime.utcnow(),
             )
             .where(
-                claimable_donation_filter() &
-                (DonationDb.id == donation_id)
+                DonationDb.claimed_at.is_(None)
+                & DonationDb.cancelled_at.is_(None)
+                & (DonationDb.id == donation_id)
             )
             .returning(*DonationDb.__table__.columns)
         )
         donation: DonationDb = resp.fetchone()
         if donation is None:
-            raise UnableToCancelDonation("Donation could not be claimed")
-        await self.update_balance_for_donation(donation, -donation.amount)
+            raise UnableToCancelDonation("Donation could not be cancelled")
+        if donation.paid_at is not None:
+            await self.update_balance_for_donation(donation, -donation.amount)
+        return Donation(**donation)
 
     async def donation_paid(
         self, donation_id: UUID, amount: int, paid_at: datetime, fee_msat: int = None, claimed_at: datetime = None,

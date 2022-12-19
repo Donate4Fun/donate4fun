@@ -1,6 +1,7 @@
 import logging
 from uuid import UUID
 
+import posthog
 from fastapi import Depends, APIRouter, Request, HTTPException
 from fastapi.responses import JSONResponse, RedirectResponse
 from aiogoogle import Aiogoogle
@@ -131,6 +132,7 @@ async def youtube_channel_transfer(channel_id: UUID, db=Depends(get_db_session),
         raise ValidationError("You should have a connected auth method to claim donations")
     if channel.balance != 0:
         amount = await db.transfer_youtube_donations(youtube_channel=channel, donator=donator)
+    posthog.capture(donator.id, 'transfer', dict(amount=amount, source='youtube'))
     return TransferResponse(amount=amount)
 
 

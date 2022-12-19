@@ -10,7 +10,8 @@ from datetime import datetime
 import bugsnag
 import ecdsa
 import httpx
-from fastapi import FastAPI, WebSocket, Request, Depends, Query, WebSocketDisconnect
+import posthog
+from fastapi import FastAPI, WebSocket, Request, Depends, Query, WebSocketDisconnect, HTTPException
 from fastapi.responses import JSONResponse
 from lnurl.core import _url_encode as lnurl_encode
 from lnpayencode import LnAddr
@@ -32,7 +33,7 @@ from .donatees import apply_target
 from .db_models import DonationDb, WithdrawalDb
 from .db_donations import sent_donations_subquery, received_donations_subquery
 from .settings import settings
-from .api_utils import get_donator, load_donator, get_db_session, task_group, only_me
+from .api_utils import get_donator, load_donator, get_db_session, task_group, only_me, track_donation
 from .lnd import PayInvoiceError, LnurlWithdrawResponse, lnd, lightning_payment_metadata
 from .pubsub import pubsub
 from .twitter import query_or_fetch_twitter_account
@@ -169,6 +170,7 @@ async def donate(
         donation = await db_session.query_donation(id=donation.id)
         # FIXME: balance is saved in cookie to notify extension about balance change, but it should be done via VAPID
         web_request.session['balance'] = (await db_session.query_donator(id=donator.id)).balance
+        track_donation(donation)
         return DonateResponse(donation=donation, payment_request=None)
     else:
         return DonateResponse(donation=donation, payment_request=pay_req)
@@ -256,17 +258,22 @@ async def donation_paid(donation_id: UUID, request: DonationPaidRequest, db=Depe
         raise ValidationError(f"Donation amount do not match {request.route.total_amt}")
     now = datetime.utcnow()
     await db.donation_paid(donation.id, donation.amount, paid_at=now, fee_msat=request.route.total_fees * 1000, claimed_at=now)
-    return await db.query_donation(id=donation.id)
+    donation = await db.query_donation(id=donation.id)
+    track_donation(donation)
+    return donation
 
 
 @router.post("/donation/{donation_id}/cancel")
-async def cancel_donation(donation_id: UUID, db=Depends(get_db_session)):
+async def cancel_donation(donation_id: UUID, db=Depends(get_db_session), me=Depends(get_donator)):
     """
     It only works for HODL invoices
     """
-    r_hash: RequestHash | None = await db.cancel_donation(donation_id)
-    if r_hash is not None:
-        await lnd.cancel_invoice(r_hash)
+    donation: Donation = await db.cancel_donation(donation_id)
+    if donation.donator.id != me.id:
+        # Exception will rollback the transaction
+        raise HTTPException(status_code=403, detail="You are not the donator")
+    if donation.r_hash is not None:
+        await lnd.cancel_invoice(donation.r_hash)
 
 
 @router.get("/donations/latest", response_model=list[Donation])
@@ -377,6 +384,7 @@ async def withdraw_callback(request: Request, k1: str, pr: PaymentRequest, db=De
             lnd=lnd,
             db=db.db,
         ))
+        posthog.capture(donator.id, 'withdraw', dict(amount=invoice_amount_sats, withdrawal_id=withdrawal.id))
     except Exception as exc:
         logger.exception("Exception while initiating payment")
         return dict(status="ERROR", reason=f"Error while initiating payment: {exc}")
@@ -489,6 +497,7 @@ async def lnauth_callback(
             status='ok',
             message=credentials.to_jwt(),
         ))
+        posthog.capture(credentials.donator, 'connect-wallet')
     except Exception as exc:
         logger.exception("Error in lnuath callback")
         return dict(status="ERROR", reason=str(exc))
@@ -502,6 +511,7 @@ async def disconnect_wallet(db=Depends(get_db_session), donator=Depends(get_dona
     if donator.balance > 0:
         raise ValidationError("Could not disconnect LN wallet with positive balance")
     await db.login_donator(donator.id, key=None)
+    posthog.capture(donator.id, 'disconnect-wallet')
 
 
 @router.websocket('/subscribe/{topic}')
@@ -532,6 +542,7 @@ class UpdateSessionRequest(BaseModel):
 async def update_session(request: Request, req: UpdateSessionRequest):
     creds = Credentials.from_jwt(req.creds_jwt)
     request.session.update(**creds.to_json_dict())
+    posthog.capture(creds.donator, 'update-session')
 
 
 @router.get("/donatee/recently-donated", response_model=list[Donatee])
@@ -540,8 +551,10 @@ async def recently_donated_donatees(db=Depends(get_db_session)):
 
 
 @router.post("/subscribe-email", response_model=UUID | None)
-async def subscribe_email(request: SubscribeEmailRequest, db=Depends(get_db_session)):
-    return await db.save_email(request.email)
+async def subscribe_email(request: SubscribeEmailRequest, db=Depends(get_db_session), me=Depends(get_donator)):
+    subscription_id: UUID = await db.save_email(request.email)
+    posthog.capture(me.id, 'subscribe-email')
+    return subscription_id
 
 
 class WithdrawResponse(BaseModel):

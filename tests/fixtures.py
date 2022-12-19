@@ -16,6 +16,7 @@ from uuid import UUID
 import anyio
 import pytest
 import ecdsa
+import posthog
 from authlib.jose import jwt
 from asgi_testclient import TestClient
 from sqlalchemy import update
@@ -113,6 +114,7 @@ async def settings():
         settings.fastapi.debug = False  # We need to disable Debug Toolbar to avoid zero-division error (because of freezegun)
         settings.rollbar = None
         settings.bugsnag.enabled = False
+        settings.posthog.enabled = False
         yield settings
 
 
@@ -168,6 +170,7 @@ async def pubsub(db):
 
 @pytest.fixture
 async def app(db, settings, pubsub):
+    posthog.disabled = True
     async with create_app(settings) as app, anyio.create_task_group() as tg:
         lnd = get_alice_lnd()
         with db_var.assign(db), lnd_var.assign(lnd), pubsub_var.assign(pubsub), task_group.assign(tg):

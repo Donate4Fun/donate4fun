@@ -12,6 +12,8 @@ backend:
       enable_bot: false
     rollbar:
       environment: staging
+    posthog:
+      debug: true
     youtube:
       oauth:
         redirect_base_url: https://stage.donate4.fun
@@ -25,6 +27,8 @@ backend:
           level: TRACE
         donate4fun.twitter:
           level: INFO
+        posthog:
+          level: DEBUG
   resources:
     limits:
       cpu: 250m

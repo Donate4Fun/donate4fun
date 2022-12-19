@@ -6,6 +6,7 @@ import anyio
 import bugsnag
 import rollbar
 import google.cloud.logging
+import posthog
 from bugsnag.asgi import BugsnagMiddleware
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -129,6 +130,12 @@ async def serve():
             client.setup_logging()
         if settings.bugsnag.enabled:
             bugsnag.configure(**settings.bugsnag.dict(), project_root=os.path.dirname(__file__))
+        if settings.posthog.enabled:
+            posthog.project_api_key = settings.posthog.project_api_key
+            posthog.host = settings.posthog.host
+            posthog.debug = settings.posthog.debug
+        else:
+            posthog.disable = True
         with app.assign(app_), lnd.assign(lnd_), pubsub.assign(pubsub_), task_group.assign(tg):
             async with pubsub.run(db), monitor_invoices(lnd_, db), AsyncExitStack() as stack:
                 if settings.twitter.enable_bot:

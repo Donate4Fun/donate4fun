@@ -22,6 +22,7 @@ from .settings import LndSettings, settings
 from .types import RequestHash, PaymentRequest
 from .models import Invoice, Donator, PayInvoiceResult
 from .core import as_task, register_command, ContextualObject
+from .api_utils import track_donation
 
 logger = logging.getLogger(__name__)
 
@@ -139,7 +140,7 @@ class LndClient:
         """
         Only HODL invoices
         """
-        await self.query("POST", "/v2/invoices/cancel", data=dict(payment_hash=r_hash.as_hex))
+        await self.query("POST", "/v2/invoices/cancel", data=dict(payment_hash=r_hash.as_base64))
 
     async def pay_invoice(self, payment_request: PaymentRequest) -> PayInvoiceResult:
         try:
@@ -183,6 +184,7 @@ async def monitor_invoices(lnd_client, db):
 
 async def monitor_invoices_step(lnd_client, db, *, task_status: TaskStatus = TASK_STATUS_IGNORED):
     logger.debug("Start monitoring invoices")
+    # FIXME: monitor only invoices created by this web worker to avoid conflicts between workers
     try:
         async for data in lnd_client.subscribe("/v1/invoices/subscribe"):
             logger.debug(f"monitor_invoices {data}")
@@ -195,7 +197,8 @@ async def monitor_invoices_step(lnd_client, db, *, task_status: TaskStatus = TAS
                 logger.debug(f"donation paid {data}")
                 try:
                     async with db.session() as sess:
-                        donation = await sess.query_donation(r_hash=invoice.r_hash)
+                        donation = await sess.lock_donation(r_hash=invoice.r_hash)
+                        track_donation(donation)
                         await sess.donation_paid(
                             donation_id=donation.id,
                             paid_at=invoice.settle_date,

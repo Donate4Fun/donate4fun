@@ -18,6 +18,10 @@ backend:
       release_stage: production
     rollbar:
       environment: production
+    posthog:
+      enabled: true
+      project_api_key: 'phc_2CphDSfOn61NrqYZnloxHWpwFFjd4mHxUtZwcwrogC0'
+      host: 'https://eu.posthog.com'
     google_cloud_logging:
       enabled: true
     db:

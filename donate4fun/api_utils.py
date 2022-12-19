@@ -1,10 +1,11 @@
 import unicodedata
 from uuid import uuid4, UUID
 
+import posthog
 from fastapi import Request, Depends, HTTPException
 from sqlalchemy.orm.exc import NoResultFound  # noqa - imported from other modules
 
-from .models import Donator, Credentials
+from .models import Donator, Credentials, Donation
 from .db import DbSession, db
 from .core import ContextualObject
 from .types import LightningAddress
@@ -46,3 +47,20 @@ def scrape_lightning_address(text: str):
     # Remove Mark characters
     text = ''.join(char for char in text if unicodedata.category(char)[0] != 'M')
     return LightningAddress.parse(text)
+
+
+def track_donation(donation: Donation):
+    if donation.twitter_account:
+        target_type = 'twitter'
+    elif donation.youtube_channel:
+        target_type = 'youtube'
+    elif donation.receiver:
+        target_type = 'donate4fun'
+    else:
+        target_type = 'unknown'
+    if donation.lightning_address:
+        via = 'lightning-address'
+    else:
+        via = 'donate4fun'
+    donator_id = donation.donator and donation.donator.id
+    posthog.capture(donator_id, 'donation-paid', dict(amount=donation.amount, target_type=target_type, via=via))
