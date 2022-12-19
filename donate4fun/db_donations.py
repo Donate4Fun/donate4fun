@@ -113,7 +113,7 @@ class DonationsDbMixin:
         donation: DonationDb = resp.fetchone()
         if donation is None:
             # Row could be already updated in another replica
-            logger.debug(f"Donation {donation_id} was already handled, skipping")
+            logger.warning(f"Donation {donation_id} was already handled, skipping")
             return
         await self.update_balance_for_donation(donation, donation.amount)
 

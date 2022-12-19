@@ -3,7 +3,8 @@ from sqlalchemy.dialects.postgresql import insert
 
 
 def insert_on_conflict_update(table, obj, index_field):
-    fields = [(key, value) for key, value in obj.dict().items() if key not in (index_field.name, 'id')]
+    persistent_fields = (index_field.name, 'id', 'total_donated', 'balance')
+    fields = [(key, value) for key, value in obj.dict().items() if key not in persistent_fields]
     return (
         insert(table)
         .values(obj.dict())
