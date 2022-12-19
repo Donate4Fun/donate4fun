@@ -3,6 +3,7 @@
   import Donator from "$lib/Donator.svelte";
   import Datetime from "$lib/Datetime.svelte";
   import Amount from "$lib/Amount.svelte";
+  import TwitterAccount from "$lib/TwitterAccount.svelte";
 
   export let donations;
 </script>
@@ -14,7 +15,11 @@
   </div>
   <div class="body">
     {#each donations as donation}
-      <Donator user={donation.donator} ellipsis />
+      {#if donation.donator_twitter_account}
+        <TwitterAccount account={donation.donator_twitter_account} --image-size=24px />
+      {:else}
+        <Donator user={donation.donator} ellipsis />
+      {/if}
       <a use:link href="/donation/{donation.id}">
         <Datetime dt={donation.paid_at} />
       </a>
