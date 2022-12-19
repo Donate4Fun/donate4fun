@@ -42,16 +42,18 @@
   }
 
   async function paid(event) {
-    donation = event.detail;
-    if (donation.paid_at && donation.receiver) {
+    const donation_ = event.detail;
+    if (donation_.paid_at && donation_.receiver) {
       const me_ = await get(me);
       if (donation.receiver.id === me_.donator.id) {
-        notify("Success", `You've fulfilled ${donation.amount} sats`, "success");
+        notify("Success", `You've fulfilled ${donation_.amount} sats`, "success");
         navigate(`/donator/${me_.donator.id}`);
       } else
-        notify("Success", `You've paid ${donation.amount} sats`, "success");
+        notify("Success", `You've paid ${donation_.amount} sats`, "success");
+    } else {
+      donation = donation_;
     }
-    title.set(`${donation.amount} sats donated to ${targetName}`);
+    title.set(`${donation_.amount} sats donated to ${targetName}`);
   }
 
 </script>
