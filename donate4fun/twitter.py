@@ -58,9 +58,17 @@ class InvalidResponse(Exception):
     pass
 
 
+def parse_twitter_profile_url(url: str) -> str:
+    """
+    Returns Twitter handle (username) if matches
+    """
+    if match := re.match(r'^https:\/\/twitter.com\/(?!home|messages|notifications|settings)i(?<username>([a-zA-Z0-9_]{4,15})($|\/.*)', url):  # noqa
+        return match.groups('username')
+
+
 def validate_twitter_url(parsed) -> TwitterDonatee:
     parts = parsed.path.split('/')
-    if len(parts) == 2:
+    if len(parts) in (2, 3):
         return TwitterDonatee(author_handle=parts[1])
     elif len(parts) >= 4 and parts[2] == 'status':
         return TwitterDonatee(tweet_id=int(parts[3]), author_handle=parts[1])

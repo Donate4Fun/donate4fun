@@ -177,7 +177,11 @@ function registerHandlers(handlers_) {
       };
     } else {
       cLog("Received request", request);
-      return handleMessage(handler, request.args);
+      const response = handleMessage(handler, request.args);
+      response.then((result) => {
+        cLog(`Response to ${request.command}`, result);
+      });
+      return response;
     }
   });
 }

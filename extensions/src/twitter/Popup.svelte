@@ -8,9 +8,10 @@
   import { worker, connectToPage, browser } from "$extlib/common.js";
   import PopupSection from "$extlib/PopupSection.svelte";
 
-  let tweetUrl;
+  let pageUrl;
   let authorName;
   let authorAvatar;
+  let authorHandle;
   let contentScript;
 
   const navigate = useNavigate();
@@ -20,14 +21,16 @@
     if (!contentScript)
       return;
     if (await contentScript.isTweetPage()) {
-      ({ tweetUrl, authorName, authorAvatar } = await contentScript.getTweetInfo());
+      ({ pageUrl, authorName, authorHandle, authorAvatar } = await contentScript.getTweetInfo());
+    } else if (await contentScript.isAuthorPage()) {
+      ({ pageUrl, authorName, authorHandle, authorAvatar } = await contentScript.getAuthorInfo());
     }
   }
 
   async function donate(amount) {
     try {
       const donatorHandle = await contentScript.getCurrentAccountHandle();
-      await contentScript.donate(amount, tweetUrl, donatorHandle);
+      await contentScript.donate(amount, pageUrl, donatorHandle);
     } catch (err) {
       console.error("Failed to donate", err);
       const rejected = err.message === 'User rejected';
@@ -38,7 +41,7 @@
  
 <PopupSection>
   {#await load() then}
-    {#if !tweetUrl}
+    {#if !pageUrl}
       <div class="empty">
         <NumberedItem number=1>
           <span>Open a tweet or author you want to donate to</span>
@@ -52,8 +55,8 @@
         <div class="filled-header">
           <img src="./static/twitter.svg" height=16 alt="twitter logo">
           <div class="donate-to">
-            Donate to
-            <span class="channel-title ellipsis">{authorName}</span>
+            <span class="author-name ellipsis">{@html authorName}</span>
+            <span class="author-handle">@{authorHandle}</span>
           </div>
           {#if authorAvatar}
             <img width=44 height=44 class="circular" src={authorAvatar} alt="avatar">
@@ -98,12 +101,15 @@
 }
 .donate-to {
   display: flex;
+  flex-direction: column;
   white-space: nowrap;
   min-width: 0;
-  gap: 0.5em;
   font-weight: 400;
 }
-.channel-title {
+.author-name {
   font-weight: 800;
+}
+.author-name :global(img) {
+  width: 1em;
 }
 </style>

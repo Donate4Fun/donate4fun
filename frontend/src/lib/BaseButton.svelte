@@ -86,6 +86,7 @@ button {
   border-radius: 50px;
   background-image: var(--background-image);
   background-color: var(--button-background-color);
+  background-clip: padding-box;
   letter-spacing: 0.02em;
 }
 button:hover:enabled {

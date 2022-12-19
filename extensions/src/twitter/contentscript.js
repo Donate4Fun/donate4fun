@@ -13,11 +13,13 @@ async function init() {
   await injectPageScript("webln.js");
   registerHandlers({
     getTweetInfo,
+    getAuthorInfo,
     isTweetPage,
+    isAuthorPage,
     getCurrentAccountHandle,
     donate,
     onPaid: (donation) => {
-      if (isTweetPage() && pageBolt)
+      if ((isTweetPage() || isAuthorPage()) && pageBolt)
         pageBolt.onPaid(donation);
       else
         cError("Current page is not a Tweet page");
@@ -27,36 +29,84 @@ async function init() {
   const apiHost = await worker.getConfig("apiHost");
   apiOrigin.set(apiHost);
  
+  if (isAuthorPage())
+    patchAuthor();
   patchTweets();
   observer = observe();
 }
 
-function getTweetUrl() {
+function getUrl() {
   return window.location.href;
 }
 
 function isTweetPage() {
-  const tweetUrl = getTweetUrl();
+  const tweetUrl = getUrl();
   // location.href could be wrong if tweet editor is open
   return /^https:\/\/twitter.com\/\w+\/status\/\d+/.test(tweetUrl);
 }
 
+const profileUrlRegexp = /^https:\/\/twitter.com\/(?!home|messages|notifications|settings)(?<username>[a-zA-Z0-9_]{4,15})($|\/.*)/;
+
+function isAuthorPage() {
+  return profileUrlRegexp.test(getUrl());
+}
+
 function getTweetInfo() {
-  const tweetUrl = getTweetUrl();
-  const tweetUrlPath = new URL(tweetUrl).pathname;
+  const pageUrl = getUrl();
+  const tweetUrlPath = new URL(pageUrl).pathname;
   const tweetAnchor = document.querySelector(`article[data-testid="tweet"] a[href="${tweetUrlPath}"]`);
   const allTweets = document.querySelectorAll('article[data-testid="tweet"]');
   const tweetElement = [...allTweets].filter(tweet => tweet.contains(tweetAnchor))[0];
   const avatar = tweetElement?.querySelector('div[data-testid="Tweet-User-Avatar"]');
   const authorUrl = avatar?.querySelector('a')?.href;
   const authorAvatar = avatar?.querySelector('img')?.src;
-  const authorName = tweetElement?.querySelector('div[data-testid="User-Names"] a')?.textContent;
+  const authorName = tweetElement?.querySelector('div[data-testid="User-Names"] a')?.innerHtml;
   return {
-    tweetUrl,
+    pageUrl,
     authorUrl,
     authorAvatar,
     authorName,
   };
+}
+
+function getAuthorInfo() {
+  const pageUrl = getUrl();
+  const authorHandle = pageUrl.match(profileUrlRegexp)?.groups.username;
+  const authorAvatar = document.querySelector(`[data-testid='UserAvatar-Container-${authorHandle}'] a[href='/${authorHandle}/photo'] img`)?.src;
+  const authorName =  document.querySelector("[data-testid='UserName'] span")?.innerHTML;
+  return {
+    pageUrl,
+    authorHandle,
+    authorAvatar,
+    authorName,
+  };
+}
+
+async function patchAuthor() {
+  const userActionsButton = document.querySelector('[data-testid="userActions"]');
+  if (userActionsButton === null) {
+    cError("Can find userActions, unable to patch author");
+    return;
+  }
+  const buttons = userActionsButton.parentElement;
+  const existingButtons = buttons.querySelectorAll(`.${buttonClass}`);
+  for (const existingButton of existingButtons)
+    existingButton.remove();
+  const boltButton = document.createElement('div');
+  boltButton.className = buttonClass;
+  boltButton.style.display = 'contents';
+  buttons.insertBefore(boltButton, userActionsButton);
+  const pageUrl = getUrl();
+  cLog("patching author", pageUrl);
+  const bolt = new Bolt({
+    target: boltButton,
+    props: {
+      pageUrl,
+      isTweet: false,
+    },
+  });
+  cLog("Updating current pageBolt to", bolt);
+  pageBolt = bolt;
 }
 
 async function patchTweets() {
@@ -82,7 +132,7 @@ async function patchTweet(tweet) {
   if (anchor !== null)
     tweetUrl = anchor.href;
   else if (isTweetPage())
-    tweetUrl = getTweetUrl();
+    tweetUrl = getUrl();
   else {
     cLog("Tweet has no url nor this is tweet page", tweet);
     return;
@@ -92,9 +142,10 @@ async function patchTweet(tweet) {
     target: boltButton,
     props: {
       tweetUrl,
+      isTweet: true,
     },
   });
-  if (isTweetPage() && tweetUrl === getTweetUrl()) {
+  if (isTweetPage() && tweetUrl === getUrl()) {
     cLog("Updating current pageBolt to", bolt);
     pageBolt = bolt;
   }
@@ -107,9 +158,10 @@ function observe() {
         for (const addedNode of mutation.addedNodes) {
           if (addedNode.nodeType !== 1) // ELEMENT_NODE
             continue;
-          const tweet = addedNode.querySelector('article');
-          if (tweet)
-            patchTweet(addedNode)
+          if (isAuthorPage() && addedNode.querySelector('[data-testid="userActions"]'))
+            patchAuthor();
+          if (addedNode.querySelectorAll('article').length === 1)
+            patchTweet(addedNode.querySelector('article'));
         }
       }
     } catch (err) {

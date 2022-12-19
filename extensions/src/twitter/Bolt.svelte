@@ -11,7 +11,9 @@
   import { worker, donate, getStatic, waitElement, pageScript, selectByPattern } from "$extlib/common.js";
   import { getCurrentAccountHandle } from "./twitter.js";
 
-  export let tweetUrl;
+  export let pageUrl;
+  export let isTweet;
+
   let donating = false;
   let amount = 0;
   let confetti = false;
@@ -25,7 +27,7 @@
     const amount_ = amount || await worker.getConfig('amount');
     amount = 0;
     try {
-      await donate(amount_, tweetUrl, getCurrentAccountHandle(), onPaid);
+      await donate(amount_, pageUrl, getCurrentAccountHandle(), onPaid);
     } catch (err) {
       donating = false;
     }
@@ -48,7 +50,9 @@
 
   async function postReply(donation) {
     const apiHost = await worker.getConfig("apiHost");
-    const replyButton = elem.parentElement.parentElement.querySelector('[data-testid="reply"]');
+    const replyButton = isTweet
+      ? elem.parentElement.parentElement.querySelector('[data-testid="reply"]')
+      : document.querySelector('[data-testid="SideNav_NewTweet_Button"]');
     replyButton.click();
     await waitElement('[contenteditable="true"]');
     cLog("posting comment", donation);
@@ -59,7 +63,7 @@
     const textElement = document.activeElement.querySelector('[data-text="true"]');
     if (textElement === null)
       return;
-    selectByPattern(textElement, /^.+!/g)
+    selectByPattern(textElement, /^.+!/g);
   }
 
   function fixAmount(amount_) {
@@ -83,7 +87,7 @@
   }
 </script>
 
-<div bind:this={elem} class="container">
+<div bind:this={elem} class="container" class:container-author={!isTweet} class:container-tweet={isTweet}>
   {#if confetti}
     <div class="animating-bolt">
       <LottiePlayer
@@ -140,13 +144,30 @@
   display: flex;
   align-self: center;
   justify-content: center;
-  margin: -10px 0;
   align-items: center;
-  color: rgb(83, 100, 113);
   cursor: pointer;
   font-family: "TwitterChirp";
+}
+.container-tweet {
   min-width: 34px;
   min-height: 39px;
+  color: rgb(83, 100, 113);
+  margin: -10px 0;
+}
+.container-author {
+  margin-right: 8px;
+  margin-bottom: 12px;
+  height: 36px;
+  min-width: 36px;
+  box-sizing: border-box;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 1000px;
+  border-color: rgb(207, 217, 222);
+  color: rgb(15, 20, 25);
+}
+.container-author .select-tooltip {
+  top: -36px;
 }
 .amount {
   font-weight: 700;
@@ -175,19 +196,21 @@
   width: 10px;
 }
 @media (prefers-color-scheme: dark) {
-  .container {
+  .container-tweet {
     color: rgb(113, 118, 123);
+  }
+  .container-author {
+    color: rgb(239, 243, 244);
+    border-color: rgb(83, 100, 113);
   }
   .amount {
     color: rgb(231, 233, 234);
   }
   .tooltip {
-    background-color: rgba(91, 112, 131, 0.8);
-  }
-}
-@media (prefers-color-scheme: light) {
-  .tooltip {
     background-color: rgba(0, 0, 0, 0.6);
+  }
+  .select-tooltip {
+    color: rgb(15, 20, 25);
   }
 }
 .bolt-circle:hover {
@@ -217,6 +240,7 @@
 
   white-space: nowrap;
   opacity: 0;
+  background-color: rgba(91, 112, 131, 0.8);
 }
 .bolt-circle:hover + .tooltip {
   display: block;
@@ -235,5 +259,6 @@
   display: flex;
   gap: 4px;
   user-select: none;
+  z-index: 1;
 }
 </style>
