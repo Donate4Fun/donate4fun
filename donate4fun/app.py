@@ -96,6 +96,9 @@ class AuthMiddleware(AuthlibMiddleware):
 
 async def main(args):
     command = args[1] if len(args) > 1 else 'serve'
+    if '.' in command:
+        module, command = command.split('.')
+        __import__(f'donate4fun.{module}')
     with load_settings(), db.assign(Database(settings.db)):
         result = await commands[command](*args[2:])
         if result is not None:

@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "donate4fun.fullname" . }}
+  labels:
+    {{- include "donate4fun.labels" . | nindent 4 }}
+spec:
+  schedule: "37 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          {{- with .Values.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          labels:
+            {{- include "donate4fun.selectorLabels" . | nindent 12 }}
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: backend
+            image: {{ include "donate4fun.image" .Values.backend }}
+            imagePullPolicy: IfNotPresent
+            command:
+            - poetry
+            - run
+            - python
+            - -m
+            - donate4fun
+            - jobs.refetch_twitter_authors
+            volumeMounts:
+            - name: config
+              mountPath: /app/config.yaml
+              subPath: config.yaml
+            - name: secret
+              mountPath: /secret
+            env:
+            - name: bugsnag__app_version
+              value: {{ .Release.Revision | quote }}
+            - name: rollbar__code_version
+              value: {{ .Release.Revision | quote }}
+            - name: server_name
+              value: {{ .Values.version | quote }}
+          volumes:
+          - name: config
+            configMap:
+              name: {{ template "donate4fun.fullname" . }}
+          - name: secret
+            secret:
+              secretName: {{ template "donate4fun.fullname" . }}

@@ -94,6 +94,13 @@ class TwitterDbMixin:
         await self.finish_transfer(amount=amount, donator=donator, donations_filter=donations_filter)
         return amount
 
+    async def query_twitter_accounts(self, *filters) -> list[TwitterAccount]:
+        result = await self.execute(
+            select(TwitterAuthorDb)
+            .where(*filters)
+        )
+        return [TwitterAccount.from_orm(row) for row in result.scalars()]
+
 
 class OAuthTokenDbMixin:
     async def query_oauth_token(self, name: str) -> dict[str, Any]:
