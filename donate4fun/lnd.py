@@ -35,6 +35,10 @@ class PayInvoiceError(Exception):
     pass
 
 
+class LndIsNotReady(Exception):
+    pass
+
+
 class LnurlWithdrawResponse(LnurlResponseModel):
     """
     Override default lnurl model to allow http:// callback urls
@@ -115,6 +119,7 @@ class LndClient:
                 yield result
 
     async def create_invoice(self, **kwargs) -> Invoice:
+        await self.ensure_ready()
         resp = await self.query(
             'POST',
             '/v1/invoices',
@@ -143,6 +148,7 @@ class LndClient:
         await self.query("POST", "/v2/invoices/cancel", data=dict(payment_hash=r_hash.as_base64))
 
     async def pay_invoice(self, payment_request: PaymentRequest) -> PayInvoiceResult:
+        await self.ensure_ready()
         try:
             decoded: LnAddr = payment_request.decode()
             logger.debug(f"Sending payment to {decoded}")
@@ -168,6 +174,15 @@ class LndClient:
         resp = await self.query('GET', '/v1/state')
         return resp['state']
 
+    async def query_info(self):
+        return await self.query('GET', '/v1/getinfo')
+
+    async def ensure_ready(self):
+        info = await lnd.query_info()
+        is_ready = info['synced_to_chain'] is True and info['synced_to_graph'] is True and info['num_active_channels'] > 0
+        if not is_ready:
+            raise LndIsNotReady(info)
+
 
 lnd = ContextualObject('lnd')
 
@@ -178,7 +193,7 @@ async def monitor_invoices(lnd_client, db):
         try:
             await monitor_invoices_step(lnd_client, db)
         except Exception as exc:
-            logger.error(f"Exception in monitor_invoices task: {exc}")
+            logger.exception(f"Exception in monitor_invoices task: {exc}")
             await asyncio.sleep(5)
 
 
