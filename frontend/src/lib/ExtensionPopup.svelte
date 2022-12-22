@@ -9,7 +9,7 @@
   }
 </script>
 
-<ModalPopup bind:show={show}>
+<ModalPopup bind:show={show} --padding="16px 16px 24px 36px">
   <h1>Choose your browser</h1>
   <div class="addon-list">
     <a on:click={track("click-chrome-extension")} class="addon-item" target=_blank href="https://chrome.google.com/webstore/detail/donate4fun/acckcppgcafhbdledejfiiaomafpjmgc">

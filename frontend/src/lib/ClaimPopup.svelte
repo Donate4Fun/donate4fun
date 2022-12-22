@@ -5,7 +5,7 @@
   export let show;
 </script>
 
-<ModalPopup bind:show={show}>
+<ModalPopup bind:show={show} --padding="16px 16px 24px 36px">
   <div class="container">
     <h1>Where did you receive a donation?</h1>
     <div class="list">
