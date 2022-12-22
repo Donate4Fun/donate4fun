@@ -1,19 +1,31 @@
 from sqlalchemy import or_
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.inspection import inspect
+
+from .models import BaseModel
 
 
-def insert_on_conflict_update(table, obj, index_field):
-    persistent_fields = (index_field.name, 'id', 'total_donated', 'balance')
-    fields = [(key, value) for key, value in obj.dict().items() if key not in persistent_fields]
+def insert_on_conflict_update(table, obj: BaseModel, *index_fields):
+    """
+    Returns INSERT ... ON CONFLICT (*index_fields) DO UPDATE SET ...; query.
+    If index_fields are empty then uses primary key.
+    """
+    # FIXME: move default_persisten_fields to model declaration
+    default_persisten_fields = ['id', 'total_donated', 'balance']
+    persistent_fields = {
+        field.name for field in table.__table__.c
+        if field.name in default_persisten_fields or field in index_fields
+    }
+    values = [(field, getattr(obj, field.name)) for field in table.__table__.c if field.name not in persistent_fields]
     return (
         insert(table)
-        .values(obj.dict())
+        .values({field.name: getattr(obj, field.name) for field in table.__table__.c})
         .on_conflict_do_update(
-            index_elements=[index_field],
-            set_={getattr(table, key): value for key, value in fields},
+            index_elements=index_fields or inspect(table).primary_key,
+            set_={field: value for field, value in values},
             where=or_(*[
-                (getattr(table, key).is_(None) != (value is None))
-                | (getattr(table, key) != value) for key, value in fields
+                (field.is_(None) != (value is None))
+                | (field != value) for field, value in values
             ]),
         )
         .returning(table.id)

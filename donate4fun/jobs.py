@@ -23,3 +23,9 @@ async def refetch_twitter_authors():
         account: TwitterAccount = await fetch_twitter_author(user_id=account.user_id)
         async with db.session() as db_session:
             await db_session.save_twitter_account(account)
+
+
+@register_command
+async def notify(topic: str, object_id: str):
+    async with db.session() as db_session:
+        await db_session.object_changed(topic, object_id)

@@ -39,7 +39,7 @@ dependencies:
   jwt-decode: 3.1.2
   qrcode: 1.5.1
   svelte: 3.50.1
-  svelte-asyncable: github.com/nikicat/svelte-asyncable/3b5e68054dbf6d1fe3568df2d421e4460b7c7072_svelte@3.50.1
+  svelte-asyncable: github.com/nikicat/svelte-asyncable/19130ce7598721da36a0775bd1febfbfbc9850ed_svelte@3.50.1
   svelte-awesome-icons: 0.2.5
   svelte-fa: 3.0.3
   svelte-local-storage-store: 0.3.1_svelte@3.50.1
@@ -1226,9 +1226,9 @@ packages:
       eventemitter3: 4.0.7
     dev: true
 
-  github.com/nikicat/svelte-asyncable/3b5e68054dbf6d1fe3568df2d421e4460b7c7072_svelte@3.50.1:
-    resolution: {tarball: https://codeload.github.com/nikicat/svelte-asyncable/tar.gz/3b5e68054dbf6d1fe3568df2d421e4460b7c7072}
-    id: github.com/nikicat/svelte-asyncable/3b5e68054dbf6d1fe3568df2d421e4460b7c7072
+  github.com/nikicat/svelte-asyncable/19130ce7598721da36a0775bd1febfbfbc9850ed_svelte@3.50.1:
+    resolution: {tarball: https://codeload.github.com/nikicat/svelte-asyncable/tar.gz/19130ce7598721da36a0775bd1febfbfbc9850ed}
+    id: github.com/nikicat/svelte-asyncable/19130ce7598721da36a0775bd1febfbfbc9850ed
     name: svelte-asyncable
     version: 2.1.0
     engines: {node: '>=10.0.0'}

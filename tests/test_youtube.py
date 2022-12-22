@@ -1,12 +1,15 @@
 from uuid import UUID
+from datetime import datetime
 
 import pytest
+import sqlalchemy
 
 from donate4fun.api import DonateRequest, DonateResponse
 from donate4fun.lnd import monitor_invoices, LndClient, lnd
 from donate4fun.models import Donation, YoutubeChannel, Donator, YoutubeChannelOwned
 from donate4fun.types import PaymentRequest
-from donate4fun.youtube import query_or_fetch_youtube_video
+from donate4fun.youtube import query_or_fetch_youtube_video, ChannelInfo
+from donate4fun.api_youtube import GoogleAuthState
 
 from tests.test_util import verify_response, check_response, check_notification, login_to, mark_vcr
 
@@ -22,8 +25,9 @@ async def test_create_donation_unsupported_youtube_url(client):
 @mark_vcr
 @pytest.mark.freeze_time('2022-02-02 22:22:22')
 async def test_donate(
-    client, db_session, freeze_uuids, freeze_request_hash, freeze_payment_request,
+    client, db_session, freeze_uuids, rich_donator, settings,
 ):
+    login_to(client, settings, rich_donator)
     donate_response = await client.post(
         "/api/v1/donate",
         json=DonateRequest(amount=100, target='https://www.youtube.com/c/Alex007SC2').dict(),
@@ -34,8 +38,9 @@ async def test_donate(
 @mark_vcr
 @pytest.mark.freeze_time('2022-02-02 22:22:22')
 async def test_donate_video(
-    client, db_session, freeze_uuids, freeze_request_hash, freeze_payment_request,
+    client, db_session, freeze_uuids, rich_donator, settings,
 ):
+    login_to(client, settings, rich_donator)
     donate_response = await client.post(
         "/api/v1/donate",
         json=DonateRequest(amount=100, target='https://www.youtube.com/watch?v=7qH7WMzqOlU&t=692s').dict(),
@@ -115,13 +120,13 @@ async def test_donate_full(
     assert donation_response.json()['donation']['paid_at'] != None  # noqa
 
 
-async def test_transfer_from_youtube(client, db, paid_donation_fixture, registered_donator, client_session, settings):
+async def test_transfer_from_youtube(client, db, paid_donation_fixture, registered_donator, settings):
     login_to(client, settings, registered_donator)
     channel_id = paid_donation_fixture.youtube_channel.id
     # Update balance to target value
     async with db.session() as db_session:
         await db_session.link_youtube_channel(
-            donator=registered_donator, youtube_channel=paid_donation_fixture.youtube_channel,
+            donator=registered_donator, youtube_channel=paid_donation_fixture.youtube_channel, via_oauth=False,
         )
 
     resp = await client.post(f'/api/v1/youtube/channel/{channel_id}/transfer')
@@ -137,18 +142,19 @@ async def test_transfer_from_youtube(client, db, paid_donation_fixture, register
         assert donation.claimed_at != None  # noqa
 
 
-async def test_transfer_from_youtube_not_linked(client, db, paid_donation_fixture, client_session):
+async def test_transfer_from_youtube_not_linked(client, db, paid_donation_fixture):
     channel_id = paid_donation_fixture.youtube_channel.id
     resp = await client.post(f'/api/v1/youtube/channel/{channel_id}/transfer')
     verify_response(resp, 'transfer-from-youtube-not-linked', 401)
 
 
-async def test_transfer_from_youtube_not_connected(client, db, paid_donation_fixture, client_session):
+async def test_transfer_from_youtube_not_connected(client, db, paid_donation_fixture):
+    donator = Donator(id=UUID(int=0))
     channel_id = paid_donation_fixture.youtube_channel.id
     # Update balance to target value
     async with db.session() as db_session:
         await db_session.link_youtube_channel(
-            donator=Donator(id=client_session.donator), youtube_channel=paid_donation_fixture.youtube_channel,
+            donator=donator, youtube_channel=paid_donation_fixture.youtube_channel, via_oauth=False,
         )
 
     resp = await client.post(f'/api/v1/youtube/channel/{channel_id}/transfer')
@@ -195,34 +201,155 @@ async def test_donate_from_balance(
     assert me_response.json()['donator']['balance'] == rich_donator.balance - amount
 
 
-def login_youtuber(client, client_session, youtube_channel):
-    client_session.youtube_channels = [youtube_channel.id]
-    client.cookies['session'] = client_session.to_jwt()
-
-
 async def test_link_youtube_channel(db_session):
     donator = Donator(id=UUID(int=0))
     reference_channels = []
     for i in range(3):
-        youtube_channel = YoutubeChannel(
+        youtube_channel = YoutubeChannelOwned(
             id=UUID(int=i),
             channel_id=f"UCzxczxc{i}",
             title="channel_title",
             thumbnail_url="https://thumbnail.url/asd",
+            via_oauth=False,
         )
         reference_channels.append(youtube_channel)
         await db_session.save_youtube_channel(youtube_channel)
-        await db_session.link_youtube_channel(youtube_channel, donator)
-    youtube_channels: list[YoutubeChannel] = await db_session.query_donator_youtube_channels(donator.id)
+        await db_session.link_youtube_channel(youtube_channel, donator, via_oauth=False)
+    youtube_channels: list[YoutubeChannelOwned] = await db_session.query_donator_youtube_channels(donator.id)
     assert youtube_channels == reference_channels
     channel: YoutubeChannelOwned = await db_session.query_youtube_channel(
         youtube_channel_id=reference_channels[0].id, owner_id=UUID(int=0)
     )
-    assert channel.is_my
+    assert channel.owner_id == donator.id
     channel: YoutubeChannelOwned = await db_session.query_youtube_channel(
         youtube_channel_id=reference_channels[0].id, owner_id=UUID(int=1)
     )
-    assert not channel.is_my
+    assert not channel.owner_id == donator.id
+
+
+async def test_link_youtube_channel_via_oauth(db_session):
+    donator = Donator(id=UUID(int=0))
+    youtube_channel = YoutubeChannel(
+        id=UUID(int=0),
+        channel_id="UCzxczxc",
+        title="channel_title",
+        thumbnail_url="https://thumbnail.url/asd",
+    )
+    await db_session.save_youtube_channel(youtube_channel)
+    await db_session.link_youtube_channel(youtube_channel, donator, via_oauth=True)
+    donator = await db_session.query_donator(donator.id)
+    assert donator.connected == True  # noqa
+
+    # Test that after relinking without OAuth donator is still connected
+    await db_session.link_youtube_channel(youtube_channel, donator, via_oauth=False)
+    donator = await db_session.query_donator(donator.id)
+    assert donator.connected == True  # noqa
+
+    # Test that multiple donators could not be linked using one channel
+    with pytest.raises(sqlalchemy.exc.IntegrityError):
+        await db_session.link_youtube_channel(youtube_channel, Donator(id=UUID(int=1)), via_oauth=True)
+
+
+async def test_unlink_youtube_channel(db_session):
+    donator = Donator(id=UUID(int=0))
+    youtube_channel = YoutubeChannel(
+        id=UUID(int=0),
+        channel_id="UCzxczxc",
+        title="channel_title",
+        thumbnail_url="https://thumbnail.url/asd",
+    )
+    await db_session.save_youtube_channel(youtube_channel)
+    await db_session.link_youtube_channel(youtube_channel, donator, via_oauth=True)
+    await db_session.unlink_youtube_channel(channel_id=youtube_channel.id, owner_id=donator.id)
+    donator = await db_session.query_donator(donator.id)
+    assert donator.connected == False  # noqa
+
+
+async def test_unlink_youtube_channel_with_balance(db, client, settings, monkeypatch):
+    donator = Donator(id=UUID(int=0), balance=100)
+    async with db.session() as db_session:
+        await db_session.save_donator(donator)
+        youtube_channel = YoutubeChannel(
+            id=UUID(int=0),
+            channel_id="UCzxczxc",
+            title="channel_title",
+            thumbnail_url="https://thumbnail.url/asd",
+            last_fetched_at=datetime.utcnow(),
+        )
+        await db_session.save_youtube_channel(youtube_channel)
+        await db_session.link_youtube_channel(youtube_channel, donator, via_oauth=True)
+        youtube_channel2 = YoutubeChannel(
+            id=UUID(int=1),
+            channel_id="UCzxczxd",
+            title="channel_title",
+            thumbnail_url="https://thumbnail.url/asd",
+        )
+        await db_session.save_youtube_channel(youtube_channel2)
+        await db_session.link_youtube_channel(youtube_channel2, donator, via_oauth=True)
+
+    login_to(client, settings, donator)
+    check_response(await client.post(f'/api/v1/youtube/channel/{youtube_channel.id}/unlink'))
+    check_response(await client.post(f'/api/v1/youtube/channel/{youtube_channel2.id}/unlink'), 400)
+
+    # Test unlink with lnauth_pubkey
+    async with db.session() as db_session:
+        donator.lnauth_pubkey = 'pubkey'
+        await db_session.save_donator(donator)
+    check_response(await client.post(f'/api/v1/youtube/channel/{youtube_channel2.id}/unlink'))
+
+    # Test that lnauth_pubkey is not changed after link
+    async def patched_fetch_user_channel(request, code):
+        return ChannelInfo(id=youtube_channel.channel_id, title='title', description='descr')
+    monkeypatch.setattr('donate4fun.api_youtube.fetch_user_channel', patched_fetch_user_channel)
+    check_response(await client.get(
+        '/api/v1/youtube/auth-redirect',
+        params=dict(state=GoogleAuthState(donator_id=donator.id, last_url='http://a.com').to_jwt(), code=123),
+    ), 307)
+    async with db.session() as db_session:
+        new_donator: Donator = await db_session.query_donator(donator.id)
+    assert new_donator.lnauth_pubkey == donator.lnauth_pubkey
+
+
+@pytest.mark.freeze_time('2022-02-02 22:22:22')
+async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids):
+    info = ChannelInfo(id='UCxxx', title='title', description='descr')
+
+    async def patched_fetch_user_channel(request, code):
+        return info
+    monkeypatch.setattr('donate4fun.api_youtube.fetch_user_channel', patched_fetch_user_channel)
+    async with db.session() as db_session:
+        channel = YoutubeChannel(
+            channel_id=info.id,
+            title=info.title,
+            description=info.description,
+            last_fetched_at=datetime.utcnow(),
+        )
+        await db_session.save_youtube_channel(channel)
+    donator = Donator(id=UUID(int=0))
+    login_to(client, settings, donator)
+    response = await client.get(
+        '/api/v1/youtube/auth-redirect',
+        params=dict(state=GoogleAuthState(donator_id=donator.id, last_url='http://a.com').to_jwt(), code=123),
+    )
+    check_response(response, 307)
+    me = Donator(**check_response(await client.get('/api/v1/me')).json())
+    assert me.id == donator.id
+    assert me.connected == True  # noqa
+
+    # Try to relogin from other account to the first account
+    other_donator = Donator(id=UUID(int=1))
+    login_to(client, settings, other_donator)
+    response = await client.get(
+        '/api/v1/youtube/auth-redirect',
+        params=dict(state=GoogleAuthState(donator_id=other_donator.id, last_url='http://a.com').to_jwt(), code=123),
+    )
+    check_response(response, 307)
+    me = Donator(**check_response(await client.get('/api/v1/me')).json())
+    assert me.id == donator.id
+    assert me.connected == True  # noqa
+
+    # Test channel API
+    verify_response(await client.get(f'/api/v1/youtube/channel/{channel.id}'), 'youtube-channel-owned')
 
 
 @mark_vcr

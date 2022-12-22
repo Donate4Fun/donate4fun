@@ -4,7 +4,6 @@ import contextvars
 import functools
 import logging
 import socket
-import time
 import traceback
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -17,7 +16,6 @@ import anyio
 import pytest
 import ecdsa
 import posthog
-from authlib.jose import jwt
 from asgi_testclient import TestClient
 from sqlalchemy import update
 from hypercorn.asyncio import serve as hypercorn_serve
@@ -32,10 +30,12 @@ from donate4fun.settings import load_settings, Settings, DbSettings
 from donate4fun.db import DbSession, Database, db as db_var
 from donate4fun.db_models import DonatorDb
 from donate4fun.models import (
-    RequestHash, PaymentRequest, YoutubeChannel, Donator, BaseModel, YoutubeVideo, TwitterAccount, TwitterTweet,
+    RequestHash, PaymentRequest, YoutubeChannel, Donator, YoutubeVideo, TwitterAccount, TwitterTweet,
 )
 from donate4fun.pubsub import PubSubBroker, pubsub as pubsub_var
 from donate4fun.dev_helpers import get_carol_lnd, get_alice_lnd
+
+from tests.test_util import login_to
 
 
 logger = logging.getLogger(__name__)
@@ -115,6 +115,7 @@ async def settings():
         settings.rollbar = None
         settings.bugsnag.enabled = False
         settings.posthog.enabled = False
+        settings.twitter.bearer_token = None
         yield settings
 
 
@@ -239,31 +240,11 @@ async def paid_donation_fixture(db, unpaid_donation_fixture) -> Donation:
         return await db_session.query_donation(id=unpaid_donation_fixture.id)
 
 
-class Session(BaseModel):
-    donator: UUID
-    youtube_channels: list[UUID] = []
-    jwt_secret: str
-
-    def to_jwt(self):
-        return jwt.encode(
-            dict(alg='HS256'),
-            dict(
-                donator=str(self.donator),
-                youtube_channels=[str(channel) for channel in self.youtube_channels],
-                exp=int(time.time()) + 10 ** 6,
-            ),
-            self.jwt_secret,
-        ).decode()
-
-
 @pytest.fixture
-def client_session(donator_id, settings):
-    return Session(donator=donator_id, jwt_secret=settings.jwt_secret)
-
-
-@pytest.fixture
-def client(app, client_session):
-    return TestClient(app, cookies=dict(session=client_session.to_jwt()))
+async def client(app, donator_id, settings):
+    client = TestClient(app)
+    login_to(client, settings, Donator(id=donator_id))
+    return client
 
 
 @pytest.fixture
@@ -276,7 +257,7 @@ async def make_registered_donator(db, donator_id: UUID):
     pubkey = sk.verifying_key.to_string().hex()
     async with db.session() as db_session:
         await db_session.login_donator(donator_id, key=pubkey)
-        return await db_session.query_donator(id=donator_id)
+        return await db_session.query_donator(donator_id)
 
 
 @pytest.fixture
@@ -303,6 +284,7 @@ async def twitter_account(app, db, freeze_uuids):
             handle='donate4_fun',
             name='Donate4.Fun ⚡',
             profile_image_url='https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_normal.png',
+            last_fetched_at=datetime.utcnow(),
         )
         await db_session.save_twitter_account(account)
         return account

@@ -17,7 +17,7 @@ task_group = ContextualObject('task_group')
 def get_donator(request: Request):
     creds = Credentials(**request.session)
     if creds.donator is not None:
-        donator = Donator(id=creds.donator)
+        donator = Donator(id=creds.donator, lnauth_pubkey=creds.lnauth_pubkey)
     else:
         donator = Donator(id=uuid4())
         creds.donator = donator.id
@@ -33,7 +33,7 @@ def only_me(request: Request, donator_id: UUID, me=Depends(get_donator)):
 
 async def load_donator(db: DbSession, donator_id: UUID) -> Donator:
     try:
-        return await db.query_donator(id=donator_id)
+        return await db.query_donator(donator_id)
     except NoResultFound:
         return Donator(id=donator_id)
 

@@ -1,4 +1,5 @@
 import logging
+import time
 from contextvars import ContextVar
 from contextlib import asynccontextmanager
 from uuid import UUID
@@ -10,12 +11,13 @@ import anyio
 import pytest
 import yaml
 import ascii_magic
+from authlib.jose import jwt
 from PIL import Image
 from vcr.filters import replace_query_parameters
 
-from donate4fun.models import Donator
+from donate4fun.models import Donator, Credentials
 from donate4fun.db import Notification
-from tests.fixtures import Session, Settings
+from donate4fun.settings import Settings
 
 logger = logging.getLogger(__name__)
 # This file is needed because pytest modifies "assert" only in test_*.py files
@@ -105,7 +107,19 @@ async def check_notification(client, topic: str, id_: UUID):
 
 def login_to(client, settings: Settings, donator: Donator):
     # Relogin to rich donator (with balance > 0)
-    client.cookies = dict(session=Session(donator=donator.id, jwt_secret=settings.jwt_secret).to_jwt())
+    creds = Credentials(
+        donator=donator.id,
+        lnauth_pubkey=donator.lnauth_pubkey,
+    )
+    token: str = jwt.encode(
+        dict(alg='HS256'),
+        dict(
+            exp=int(time.time()) + 10 ** 6,
+            **creds.to_json_dict(),
+        ),
+        settings.jwt_secret,
+    ).decode()
+    client.cookies = dict(session=token)
 
 
 def remove_credentials_and_testclient(request):

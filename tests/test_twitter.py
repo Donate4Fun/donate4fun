@@ -176,11 +176,11 @@ async def test_link_twitter_account(db_session):
     account: TwitterAccountOwned = await db_session.query_twitter_account(
         id=reference_accounts[0].id, owner_id=UUID(int=0)
     )
-    assert account.is_my
+    assert account.owner_id == donator.id
     account: TwitterAccountOwned = await db_session.query_twitter_account(
         id=reference_accounts[0].id, owner_id=UUID(int=1)
     )
-    assert not account.is_my
+    assert not account.owner_id == donator.id
 
 
 @mark_vcr

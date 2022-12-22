@@ -30,6 +30,7 @@
   async function useOAuth() {
     const response = await api.get("youtube/oauth");
     window.location.href = response.url;
+    await sleep(10000); // to disable button blinking
   }
 
   title.set("Link YouTube channel");
@@ -73,6 +74,7 @@
         </summary>
       </li>
     </ol>
+    <WhiteButton on:click={useOAuth}>Use YouTube OAuth</WhiteButton>
     <GrayButton on:click={() => navigate(-1)}>Back</GrayButton>
   </main>
 </Section>

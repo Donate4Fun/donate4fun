@@ -14,8 +14,10 @@
   <WhiteButton link={resolve('/login')} target={target} --height="40px" --width="160px" --border-width="2px">
     {#if me.connected}
       <div class="inner">
-        <p class="connected">Wallet connected <img src="/static/checkbox.svg" alt="checkbox"></p>
-        <p class="pubkey ellipsis">{me.shortkey}</p>
+        <p class="connected">Connected<img src="/static/checkbox.svg" alt="checkbox"></p>
+        {#if me.shortkey}
+          <p class="pubkey ellipsis">{me.shortkey}</p>
+        {/if}
       </div>
     {:else}
       Connect Wallet

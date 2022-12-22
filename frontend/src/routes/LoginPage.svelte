@@ -77,12 +77,10 @@
         <div class="buttons">
           <Button on:click={() => connect(lnurl)}>Connect using Wallet</Button>
           <Lnurl lnurl="{lnurl}" class="lnurl" />
-          <WhiteButton on:click={resetMe}>Reset account</WhiteButton>
+          <WhiteButton on:click={resetMe}>Reset session</WhiteButton>
           {#if me.donator.lnauth_pubkey}
             <WhiteButton
               on:click={disconnect}
-              disabled={me.donator.balance > 0}
-              title={me.donator.balance > 0 ? "You can't disconnect wallet if you have funds" : ""}
             >Disconnect wallet</WhiteButton>
           {/if}
           <GrayButton on:click={() => navigate(-1)}>Cancel</GrayButton>

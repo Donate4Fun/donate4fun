@@ -1,12 +1,14 @@
 <script>
   import { link } from "svelte-navigator";
+  import { asyncable } from 'svelte-asyncable';
 
   import Button from "$lib/Button.svelte";
+  import WhiteButton from "$lib/WhiteButton.svelte";
   import Amount from "$lib/Amount.svelte";
   import api from "$lib/api.js";
   import { capitalize } from "$lib/utils.js";
+  import { me } from "$lib/session.js";
 
-  export let items;
   export let basePath;
   export let transferPath;
 
@@ -15,8 +17,23 @@
     await load();
   }
 
-  async function load() {
-    items = await api.get(`${basePath}/linked`);
+  const linkedStore = asyncable(async (set, me_) => {
+    const me = await me_;
+    const ws = api.subscribe(`donator:${me.donator.id}`, { autoReconnect: false });
+    ws.on("notification", async (notification) => {
+      if (notification.status === 'OK') {
+        set(await api.get(`${basePath}/linked`));
+      }
+    });
+    await ws.ready();
+    set(await api.get(`${basePath}/linked`));
+    return async () => {
+      await ws.close();
+    };
+  }, null, [ me ]);
+
+  async function unlink(item) {
+    await api.post(`${basePath}/${transferPath}/${item.id}/unlink`);
   }
 </script>
 
@@ -25,13 +42,16 @@
     <h2>Linked <b>{capitalize(basePath)}</b> accounts:</h2>
     <a use:link href="/{basePath}/prove">Add</a>
   </div>
-  {#await load() then}
+  {#await $linkedStore then items}
     <ul>
       {#each items as item}
       <li>
         <slot {item} />
         <Amount amount={item.balance} />
         <div class="withdraw-button">
+          {#if item.via_oauth}
+            <WhiteButton on:click={() => unlink(item)} --border-width=0>Unlink</WhiteButton>
+          {/if}
           <Button disabled={item.balance === 0} on:click={() => collect(item)} --border-width=0>Claim</Button>
         </div>
       </li>
@@ -85,5 +105,7 @@ li {
   height: 44px;
   justify-self: end;
   flex-grow: 1;
+  display: flex;
+  gap: 8px;
 }
 </style>

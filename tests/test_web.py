@@ -5,7 +5,7 @@ import psutil
 
 from donate4fun.models import YoutubeChannel, DonateRequest
 
-from tests.test_util import verify_response, check_response
+from tests.test_util import verify_response, check_response, login_to
 from tests.fixtures import find_unused_port, app_serve
 
 
@@ -69,8 +69,8 @@ async def test_twitter_share_image(client, twitter_account, webapp):
     verify_response(response, 'twitter-share-image', 200)
 
 
-async def test_twitter_account_redirect(client, freeze_uuids):
-    response = await client.get('/tw/donate4_fun')
+async def test_twitter_account_redirect(client, twitter_account):
+    response = await client.get(f'/tw/{twitter_account.handle}')
     check_response(response, 302)
     assert response.headers['location'].split('/')[-1] == str(UUID(int=1))
 
@@ -85,13 +85,14 @@ async def test_404(client):
     verify_response(response, 'twitter-404', 404)
 
 
-async def test_twitter_donation_image(client, twitter_account, webapp, rich_donator):
+async def test_twitter_donation_image(client, settings, twitter_account, webapp, rich_donator):
+    login_to(client, settings, rich_donator)
     donate_response = await client.post(
         "/api/v1/donate",
         json=DonateRequest(
             amount=100,
-            target='https://twitter.com/donate4_fun/status/1583074363787444225',
-            donator_twitter_handle='nbryskin',
+            target=f'https://twitter.com/{twitter_account.handle}/status/1583074363787444225',
+            donator_twitter_handle=twitter_account.handle,
         ).dict(),
     )
     check_response(donate_response, 200)

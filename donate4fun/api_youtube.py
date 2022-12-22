@@ -56,7 +56,7 @@ async def ownership_check(donator=Depends(get_donator), db=Depends(get_db_sessio
     channels = []
     for channel_id in channel_ids:
         youtube_channel: YoutubeChannel = await query_or_fetch_youtube_channel(channel_id, db)
-        is_new = await db.link_youtube_channel(youtube_channel, donator)
+        is_new = await db.link_youtube_channel(youtube_channel, donator, via_oauth=False)
         if is_new:
             channels.append(youtube_channel)
     return channels
@@ -73,7 +73,7 @@ async def login_via_google(request: Request, donator=Depends(get_donator)):
     url = aiogoogle.oauth2.authorization_url(
         client_creds=dict(
             scopes=['https://www.googleapis.com/auth/youtube.readonly'],
-            redirect_uri=request.app.url_path_for('auth_google').make_absolute_url(settings.base_url),
+            redirect_uri=f'{settings.base_url}/api/v1/youtube/auth-redirect',
             **settings.youtube.oauth.dict(),
         ),
         state=GoogleAuthState(last_url=request.headers['referer'], donator_id=donator.id).to_jwt(),
@@ -100,35 +100,43 @@ async def auth_google(
         try:
             channel_info: ChannelInfo = await fetch_user_channel(request, code)
         except Exception:
-            logger.exception("Failed to fetch user's chnanel")
+            logger.exception("Failed to fetch user's channel")
             # TODO: add exception info to last_url hash param and show it using toast
             return RedirectResponse(auth_state.last_url)
         else:
-            youtube_channel = YoutubeChannel(
-                channel_id=channel_info.id,
-                title=channel_info.title,
-                thumbnail_url=channel_info.thumbnail,
-            )
-            await db_session.save_youtube_channel(youtube_channel)
-            await db_session.link_youtube_channel(youtube_channel, donator)
-            return RedirectResponse(f'/youtube/{youtube_channel.id}')
+            channel: YoutubeChannel = await query_or_fetch_youtube_channel(channel_info.id, db_session)
+            owned_channel: YoutubeChannelOwned = await db_session.query_youtube_channel(channel.id)
+            if owned_channel.via_oauth:
+                request.session['donator'] = str(owned_channel.owner_id)
+            else:
+                await db_session.link_youtube_channel(channel, donator, via_oauth=True)
+            request.session['connected'] = True
+            return RedirectResponse(f'/youtube/{channel.id}/owner')
     else:
         # Should either receive a code or an error
         raise Exception("Something's probably wrong with your callback")
 
 
-@router.get("/channel/{channel_id}", response_model=YoutubeChannelOwned)
+class YoutubeChannelResponse(YoutubeChannel):
+    is_my: bool
+
+
+@router.get("/channel/{channel_id}", response_model=YoutubeChannelResponse)
 async def youtube_channel(channel_id: UUID, db=Depends(get_db_session), me=Depends(get_donator)):
-    return await db.query_youtube_channel(channel_id, owner_id=me.id)
+    channel: YoutubeChannelOwned = await db.query_youtube_channel(channel_id, owner_id=me.id)
+    return YoutubeChannelResponse(
+        **channel.dict(),
+        is_my=channel.owner_id == me.id,
+    )
 
 
 @router.post('/channel/{channel_id}/transfer', response_model=TransferResponse)
 async def youtube_channel_transfer(channel_id: UUID, db=Depends(get_db_session), donator: Donator = Depends(get_donator)):
     donator = await load_donator(db, donator.id)
     channel: YoutubeChannelOwned = await db.query_youtube_channel(channel_id, donator.id)
-    if not channel.is_my:
+    if channel.owner_id != donator.id:
         raise HTTPException(status_code=401, detail="You should prove that you own YouTube channel")
-    if donator.lnauth_pubkey is None:
+    if not donator.connected:
         raise ValidationError("You should have a connected auth method to claim donations")
     if channel.balance != 0:
         amount = await db.transfer_youtube_donations(youtube_channel=channel, donator=donator)
@@ -136,7 +144,7 @@ async def youtube_channel_transfer(channel_id: UUID, db=Depends(get_db_session),
     return TransferResponse(amount=amount)
 
 
-@router.get("/linked", response_model=list[YoutubeChannel])
+@router.get("/linked", response_model=list[YoutubeChannelOwned])
 async def my_linked_youtube_channels(db=Depends(get_db_session), me=Depends(get_donator)):
     return await db.query_donator_youtube_channels(me.id)
 
@@ -144,3 +152,11 @@ async def my_linked_youtube_channels(db=Depends(get_db_session), me=Depends(get_
 @router.get("/channel/{channel_id}/donations/by-donatee", response_model=list[Donation])
 async def donatee_donations(channel_id: UUID, db=Depends(get_db_session)):
     return await db.query_donations((DonationDb.youtube_channel_id == channel_id) & DonationDb.paid_at.isnot(None))
+
+
+@router.post("/channel/{channel_id}/unlink")
+async def unlink_youtube_channel(channel_id: UUID, db=Depends(get_db_session), me: Donator = Depends(get_donator)):
+    await db.unlink_youtube_channel(channel_id=channel_id, owner_id=me.id)
+    me = await db.query_donator(id=me.id)
+    if not me.connected and me.balance > 0:
+        raise ValidationError("Unable to unlink last auth method having a positive balance")

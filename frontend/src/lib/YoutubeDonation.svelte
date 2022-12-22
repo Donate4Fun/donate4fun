@@ -60,7 +60,7 @@
     </div>
   {/if}
   {#if donation.youtube_video}
-    <div>for the video</div>
+    <div class="for-the-video">for the video</div>
     <iframe
       class="video"
       src="https://www.youtube-nocookie.com/embed/{donation.youtube_video.video_id}"
@@ -174,5 +174,9 @@ img.avatar {
     font-size: 20px;
     line-height: 24px;
   }
+}
+.for-the-video {
+  font-weight: 400;
+  font-size: 16px;
 }
 </style>

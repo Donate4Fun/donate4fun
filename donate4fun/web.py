@@ -5,7 +5,6 @@ from xml.etree import ElementTree as ET
 
 import httpx
 from mako.lookup import TemplateLookup
-from aiogoogle import Aiogoogle
 from fastapi import Request, Response, FastAPI, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.exceptions import RequestValidationError
@@ -13,10 +12,11 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from .api_utils import get_db_session
 from .models import YoutubeChannel, TwitterAccount, Donation, Donator
-from .youtube import fetch_user_channel, ChannelInfo, query_or_fetch_youtube_channel
+from .youtube import query_or_fetch_youtube_channel
 from .twitter import query_or_fetch_twitter_account
 from .settings import settings
 from .db import db
+from .db_models import DonatorDb
 from .lnd import lightning_payment_metadata
 
 app = FastAPI()
@@ -87,37 +87,6 @@ async def index(request: Request, object_id: UUID | None = None, full_path: str 
     )
 
 
-@app.get('/login/google')
-async def login_via_google(request: Request, orig_channel_id: str):
-    aiogoogle = Aiogoogle()
-    uri = aiogoogle.oauth2.authorization_url(
-        client_creds=dict(
-            scopes=['https://www.googleapis.com/auth/youtube.readonly'],
-            redirect_uri=request.url_for('auth_google'),
-            **settings.youtube.oauth.dict(),
-        ),
-    )
-    return RedirectResponse(uri)
-
-
-@app.get('/auth/google', response_class=JSONResponse)
-async def auth_google(
-    request: Request, error: str = None, error_description: str = None, code: str = None, db_session=Depends(get_db_session)
-):
-    if error:
-        return {
-            'error': error,
-            'error_description': error_description
-        }
-    elif code:
-        channel_info: ChannelInfo = await fetch_user_channel(request, code)
-        donations = await db_session.query_donations(donatee=channel_info.url)
-        return dict(channel=channel_info.id, donations=donations)
-    else:
-        # Should either receive a code or an error
-        raise Exception("Something's probably wrong with your callback")
-
-
 @app.get('/sitemap.xml')
 async def sitemap(request: Request, db_session=Depends(get_db_session)):
     base_url = settings.base_url
@@ -148,7 +117,7 @@ async def twitter_account_redirect(request: Request, handle: str, db=Depends(get
 
 @app.get('/.well-known/lnurlp/{username}', response_class=JSONResponse)
 async def lightning_address(request: Request, username: str, db_session=Depends(get_db_session)):
-    receiver: Donator = await db_session.query_donator(lightning_address=f'{username}@{request.headers["host"]}')
+    receiver: Donator = await db_session.find_donator(DonatorDb.lightning_address == f'{username}@{request.headers["host"]}')
     return dict(
         status='OK',
         callback=f'{settings.base_url}/api/v1/lnurl/{receiver.id}/payment-callback',

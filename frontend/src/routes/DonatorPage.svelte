@@ -22,13 +22,12 @@
   import title from "$lib/title.js";
 
   export let donator_id;
-  let itsMe;
-  let donator;
   let activeTab = 'sent';
 
-  async function load(donator_id, me_) {
-    const me = await me_;
-    itsMe = donator_id === me.donator?.id;
+  async function load(me) {
+    console.log("loadddd");
+    const itsMe = donator_id === me.donator?.id;
+    let donator;
     if (itsMe) {
       await reloadMe();
       donator = me.donator;
@@ -36,17 +35,20 @@
       donator = await api.get(`donator/${donator_id}`);
     }
     title.set(`Donator profile for ${donator.name}`);
-    return me;
+    return {itsMe, donator};
   }
 
-  async function loadTotals() {
+  async function loadTotals(donator) {
     return await api.get(`donator/${donator.id}/stats`);
   }
 </script>
 
-{#await load(donator_id, $me)}
+{#await $me}
   <Loader />
 {:then me}
+{#await load(me)}
+  <Loader />
+{:then {itsMe, donator}}
   <Section>
     <div class="main">
       <div class="top-block">
@@ -89,7 +91,7 @@
             <div><button disabled={activeTab === 'received'} on:click={() => activeTab = 'received'}>Received</button></div>
           </div>
           <div class="totals">
-            {#await loadTotals()}
+            {#await loadTotals(donator)}
               <Loader />
             {:then {total_donated, total_claimed, total_received}}
               <div style:display={activeTab === 'sent' ? 'block' : 'none'}>
@@ -116,6 +118,7 @@
       {/if}
     </div>
   </Section>
+{/await}
 {/await}
 
 <style>

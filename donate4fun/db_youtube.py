@@ -1,23 +1,28 @@
 from uuid import UUID
 
-from sqlalchemy import select, func, update
+from sqlalchemy import select, func, update, delete
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm.exc import NoResultFound  # noqa
 
 from .models import Donator, YoutubeChannel, YoutubeVideo, YoutubeChannelOwned
-from .db_models import YoutubeChannelDb, YoutubeVideoDb, YoutubeChannelLink, DonationDb
+from .db_models import YoutubeChannelDb, YoutubeVideoDb, YoutubeChannelLink, DonationDb, DonatorDb
 from .db_utils import insert_on_conflict_update
 
 
 class YoutubeDbMixin:
     async def query_youtube_channel(self, youtube_channel_id: UUID, owner_id: UUID | None = None) -> YoutubeChannelOwned:
-        owner_links = select(YoutubeChannelLink).where(YoutubeChannelLink.donator_id == owner_id).subquery()
+        owner_links = select(YoutubeChannelLink).where(
+            (YoutubeChannelLink.donator_id == owner_id) if owner_id is not None else YoutubeChannelLink.via_oauth
+        ).subquery()
         resp = await self.execute(
-            select(*YoutubeChannelDb.__table__.c, owner_links.c.donator_id.is_not(None).label('is_my'))
-            .join(
+            select(
+                *YoutubeChannelDb.__table__.c,
+                owner_links.c.donator_id.label('owner_id'),
+                func.coalesce(owner_links.c.via_oauth, False).label('via_oauth'),
+            )
+            .outerjoin(
                 owner_links,
                 onclause=YoutubeChannelDb.id == owner_links.c.youtube_channel_id,
-                isouter=True,
             )
             .where(YoutubeChannelDb.id == youtube_channel_id)
         )
@@ -43,6 +48,16 @@ class YoutubeDbMixin:
             .where(YoutubeChannelDb.id == youtube_channel_id)
         )
         return YoutubeChannel.from_orm(result.scalars().one())
+
+    async def unlink_youtube_channel(self, channel_id: UUID, owner_id: UUID):
+        await self.execute(
+            delete(YoutubeChannelLink)
+            .where(
+                (YoutubeChannelLink.youtube_channel_id == channel_id)
+                & (YoutubeChannelLink.donator_id == owner_id)
+            )
+        )
+        await self.object_changed('donator', owner_id)
 
     async def save_youtube_channel(self, youtube_channel: YoutubeChannel):
         resp = await self.execute(
@@ -88,14 +103,32 @@ class YoutubeDbMixin:
             id_ = resp.scalar()
         youtube_video.id = id_
 
-    async def link_youtube_channel(self, youtube_channel: YoutubeChannel, donator: Donator) -> bool:
+    async def link_youtube_channel(self, youtube_channel: YoutubeChannel, donator: Donator, via_oauth: bool) -> bool:
+        """
+        Links YouTube channel to the donator account.
+        Returns True if new link is created, False otherwise
+        """
+        # Do no use save_donator because it overwrites fields like lnauth_pubkey which could be uninitialized in `donator`
+        await self.execute(
+            insert(DonatorDb)
+            .values(**donator.dict(exclude={'connected'}))
+            .on_conflict_do_nothing()
+        )
         result = await self.execute(
             insert(YoutubeChannelLink)
             .values(
                 youtube_channel_id=youtube_channel.id,
                 donator_id=donator.id,
+                via_oauth=via_oauth,
             )
-            .on_conflict_do_nothing()
+            .on_conflict_do_update(
+                index_elements=[YoutubeChannelLink.donator_id, YoutubeChannelLink.youtube_channel_id],
+                set_={YoutubeChannelLink.via_oauth: YoutubeChannelLink.via_oauth | via_oauth},
+                where=(
+                    (YoutubeChannelLink.donator_id == donator.id)
+                    & (YoutubeChannelLink.youtube_channel_id == youtube_channel.id)
+                )
+            )
         )
         return result.rowcount == 1
 
@@ -106,13 +139,14 @@ class YoutubeDbMixin:
         )
         return YoutubeVideo.from_orm(resp.scalars().one())
 
-    async def query_donator_youtube_channels(self, donator_id: UUID) -> list[YoutubeChannel]:
+    async def query_donator_youtube_channels(self, donator_id: UUID) -> list[YoutubeChannelOwned]:
         result = await self.execute(
-            select(YoutubeChannelDb)
+            select(*YoutubeChannelDb.__table__.columns, func.bool_or(YoutubeChannelLink.via_oauth).label('via_oauth'))
             .join(YoutubeChannelLink, YoutubeChannelDb.id == YoutubeChannelLink.youtube_channel_id)
             .where(YoutubeChannelLink.donator_id == donator_id)
+            .group_by(YoutubeChannelDb.id)
         )
-        return [YoutubeChannel.from_orm(obj) for obj in result.unique().scalars()]
+        return [YoutubeChannelOwned(**obj) for obj in result.all()]
 
     async def transfer_youtube_donations(self, youtube_channel: YoutubeChannel, donator: Donator) -> int:
         """

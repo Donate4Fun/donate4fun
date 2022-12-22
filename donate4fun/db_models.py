@@ -1,7 +1,7 @@
-from sqlalchemy import Column, TIMESTAMP, String, BigInteger, ForeignKey, func, text
+from sqlalchemy import Column, TIMESTAMP, String, BigInteger, ForeignKey, func, text, Boolean
 from sqlalchemy.dialects.postgresql import UUID as Uuid, JSONB
 from sqlalchemy.orm import declarative_base, relationship, foreign
-from sqlalchemy.schema import CheckConstraint
+from sqlalchemy.schema import CheckConstraint, Index
 
 Base = declarative_base()
 
@@ -10,7 +10,6 @@ class YoutubeChannelDb(Base):
     __tablename__ = 'youtube_channel'
 
     id = Column(Uuid(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4())
-    created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
 
     channel_id = Column(String, unique=True, nullable=False)
     title = Column(String)
@@ -55,7 +54,6 @@ class TwitterAuthorDb(Base):
     __tablename__ = 'twitter_author'
 
     id = Column(Uuid(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4())
-    created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
 
     user_id = Column(BigInteger, unique=True, nullable=False)
     handle = Column(String, nullable=False)
@@ -157,6 +155,11 @@ class YoutubeChannelLink(Base):
     youtube_channel_id = Column(Uuid(as_uuid=True), ForeignKey(YoutubeChannelDb.id), primary_key=True)
     donator_id = Column(Uuid(as_uuid=True), primary_key=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
+    via_oauth = Column(Boolean, server_default='f')
+
+    __table_args__ = (
+        Index('youtube_only_one_oauth_link', youtube_channel_id, unique=True, postgresql_where=via_oauth),
+    )
 
 
 class TwitterAuthorLink(Base):
@@ -165,6 +168,11 @@ class TwitterAuthorLink(Base):
     twitter_author_id = Column(Uuid(as_uuid=True), ForeignKey(TwitterAuthorDb.id), primary_key=True)
     donator_id = Column(Uuid(as_uuid=True), primary_key=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
+    via_oauth = Column(Boolean, server_default='f')
+
+    __table_args__ = (
+        Index('twitter_only_one_oauth_link', twitter_author_id, unique=True, postgresql_where=via_oauth),
+    )
 
 
 class WithdrawalDb(Base):

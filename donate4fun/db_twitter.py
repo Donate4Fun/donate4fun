@@ -56,14 +56,19 @@ class TwitterDbMixin:
         )
 
     async def query_twitter_account(self, owner_id: UUID | None = None, **filter_by) -> TwitterAccountOwned:
-        owner_links = select(TwitterAuthorLink).where(TwitterAuthorLink.donator_id == owner_id).subquery()
-        accounts = select(TwitterAuthorDb).filter_by(**filter_by).subquery()
+        owner_links = select(TwitterAuthorLink).where(
+            (TwitterAuthorLink.donator_id == owner_id) if owner_id is not None else TwitterAuthorLink.via_oauth
+        ).subquery()
         resp = await self.execute(
-            select(accounts, owner_links.c.donator_id.is_not(None).label('is_my'))
-            .join(
+            select(
+                *TwitterAuthorDb.__table__.c,
+                owner_links.c.donator_id.label('owner_id'),
+                owner_links.c.via_oauth,
+            )
+            .filter_by(**filter_by)
+            .outerjoin(
                 owner_links,
-                onclause=accounts.c.id == owner_links.c.twitter_author_id,
-                isouter=True,
+                onclause=TwitterAuthorDb.id == owner_links.c.twitter_author_id,
             )
         )
         return TwitterAccountOwned.from_orm(resp.one())

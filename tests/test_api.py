@@ -45,7 +45,9 @@ async def test_donator_donations_sent(client, paid_donation_fixture, freeze_requ
 @freeze_time
 async def test_donator_donations_received(client, paid_donation_fixture, freeze_request_hash_json, db):
     async with db.session() as db_session:
-        await db_session.link_youtube_channel(paid_donation_fixture.youtube_channel, paid_donation_fixture.donator)
+        await db_session.link_youtube_channel(
+            paid_donation_fixture.youtube_channel, paid_donation_fixture.donator, via_oauth=False,
+        )
     response = await client.get(f"/api/v1/donations/by-donator/{paid_donation_fixture.donator.id}/received")
     verify_response(response, 'donator-donations-received', 200)
 
@@ -54,7 +56,9 @@ async def test_donator_donations_received(client, paid_donation_fixture, freeze_
 async def test_donator_stats(client, paid_donation_fixture, freeze_request_hash_json, db):
     async with db.session() as db_session:
         await db_session.save_donator(paid_donation_fixture.donator)
-        await db_session.link_youtube_channel(paid_donation_fixture.youtube_channel, paid_donation_fixture.donator)
+        await db_session.link_youtube_channel(
+            paid_donation_fixture.youtube_channel, paid_donation_fixture.donator, via_oauth=False,
+        )
 
     response = await client.get(f"/api/v1/donator/{paid_donation_fixture.donator.id}/stats")
     verify_response(response, 'donator-stats', 200)
@@ -167,11 +171,11 @@ async def test_subscribe_email(client, db):
 
 async def test_disconnect_wallet(client, settings: Settings, registered_donator: Donator, db):
     login_to(client, settings, registered_donator)
-    response = check_response(await client.get("/api/v1/donator/me"))
-    assert response.json()['donator']['lnauth_pubkey'] == registered_donator.lnauth_pubkey
+    response = check_response(await client.get("/api/v1/me"))
+    assert response.json()['lnauth_pubkey'] == registered_donator.lnauth_pubkey
     check_response(await client.post("/api/v1/disconnect-wallet"))
-    me_response = check_response(await client.get("/api/v1/donator/me"))
-    assert me_response.json()['donator']['lnauth_pubkey'] == None  # noqa
+    me_response = check_response(await client.get("/api/v1/me"))
+    assert me_response.json()['lnauth_pubkey'] == None  # noqa
 
 
 @pytest.mark.parametrize('balance, amount_diff, balance_diff, status, message, is_ok', [

@@ -4,6 +4,7 @@ import { notify } from "$lib/notifications.js";
 import { writable, get as store_get } from 'svelte/store';
 import { sleep } from "$lib/utils.js";
 import { analytics } from "$lib/analytics.js";
+import { cLog } from "$lib/log.js";
 
 export const apiOrigin = writable(window.location.origin);
 
@@ -27,7 +28,7 @@ export function errorToText(response) {
 
 function handle_response(response) {
   if (response.status === 200) {
-    console.log(`received response for ${response.request.responseURL}`, response);
+    cLog(`received response for ${response.request.responseURL}`, response);
     return response.data;
   } else {
     console.error(`Server error in ${response.request?.responseURL}`, response);

@@ -24,7 +24,7 @@ from sqlalchemy import select
 from sqlalchemy.orm.exc import NoResultFound
 
 from .models import (
-    Donation, Donator, Invoice, DonateResponse, DonateRequest, YoutubeChannel,
+    Donation, Donator, Invoice, DonateResponse, DonateRequest,
     WithdrawalToken, BaseModel, Notification, Credentials, SubscribeEmailRequest,
     DonatorStats, DonationPaidRequest, PayInvoiceResult, Donatee,
 )
@@ -118,7 +118,7 @@ async def donate(
     if request.receiver_id:
         # Donation to a donator - possibly just an own balance fulfillment
         receiver = await load_donator(db_session, request.receiver_id)
-        if receiver.lnauth_pubkey is None:
+        if not receiver.connected:
             raise ValidationError("Money receiver should have a connected wallet")
         donation.receiver = receiver
     elif request.channel_id:
@@ -137,7 +137,10 @@ async def donate(
         )
     donator = await load_donator(db_session, donator.id)
     # If donator has enough money (and not fulfilling his own balance) - try to pay donation instantly
-    use_balance = request.receiver_id != donator.id and donator.available_balance >= request.amount
+    use_balance = (
+        request.receiver_id != donator.id
+        and (donator.available_balance if donation.lightning_address else donator.balance) >= request.amount
+    )
     if donation.lightning_address:
         pay_req: PaymentRequest = await fetch_lightning_address(donation)
         r_hash = RequestHash(pay_req.decode().paymenthash)
@@ -318,27 +321,44 @@ async def status(db=Depends(get_db_session)):
     )
 
 
-class MeResponse(BaseModel):
-    donator: Donator
-    youtube_channels: list[YoutubeChannel]
-
-
-@router.get("/donator/me", response_model=MeResponse)
-async def me(request: Request, db=Depends(get_db_session), me: Donator = Depends(get_donator)):
+@router.get("/me", response_model=Donator)
+async def new_me(request: Request, db=Depends(get_db_session), me: Donator = Depends(get_donator)):
     me = await load_donator(db, me.id)
-    linked_youtube_channels: list[YoutubeChannel] = await db.query_donator_youtube_channels(me.id)
     # FIXME: balance is saved in cookie to notify extension about balance change, but it should be done via VAPID
     request.session['balance'] = me.balance
     request.session['lnauth_pubkey'] = me.lnauth_pubkey
-    return MeResponse(donator=me, youtube_channels=linked_youtube_channels)
+    request.session['connected'] = me.connected
+    return me
 
 
-@router.get("/donator/{donator_id}", response_model=Donator)
+class MeResponse(BaseModel):
+    donator: Donator
+    youtube_channels: list
+
+
+@router.get("/donator/me", response_model=MeResponse, deprecated=True)
+async def me(request: Request, db=Depends(get_db_session), me: Donator = Depends(get_donator)):
+    """
+    Deprecated, remove when all browser extension instances update
+    """
+    me = await load_donator(db, me.id)
+    # FIXME: balance is saved in cookie to notify extension about balance change, but it should be done via VAPID
+    request.session['balance'] = me.balance
+    request.session['lnauth_pubkey'] = me.lnauth_pubkey
+    return MeResponse(donator=me, youtube_channels=[])
+
+
+class DonatorResponse(BaseModel):
+    id: UUID
+    name: str
+    avatar_url: str
+    lightning_address: str | None
+
+
+@router.get("/donator/{donator_id}", response_model=DonatorResponse)
 async def donator(request: Request, donator_id: UUID, db=Depends(get_db_session), me: Donator = Depends(get_donator)):
     donator = await load_donator(db, donator_id)
-    if donator.id != me.id:
-        donator.balance = 0  # Do not show balance to others
-    return donator
+    return DonatorResponse(**donator.dict())
 
 
 @router.get("/donator/{donator_id}/stats", response_model=DonatorStats)
@@ -508,9 +528,11 @@ async def lnauth_callback(
 @router.post('/disconnect-wallet')
 async def disconnect_wallet(db=Depends(get_db_session), donator=Depends(get_donator)):
     donator = await load_donator(db, donator.id)
-    if donator.balance > 0:
+    donator.lnauth_pubkey = None
+    await db.save_donator(donator)
+    donator = await db.query_donator(donator.id)
+    if donator.balance > 0 and not donator.connected:
         raise ValidationError("Could not disconnect LN wallet with positive balance")
-    await db.login_donator(donator.id, key=None)
     posthog.capture(donator.id, 'disconnect-wallet')
 
 

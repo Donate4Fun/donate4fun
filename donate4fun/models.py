@@ -98,6 +98,7 @@ class YoutubeChannel(IdModel):
     banner_url: Url | None
     handle: str | None
     balance: int = 0
+    total_donated: int = 0
     lightning_address: LightningAddress | None
     last_fetched_at: datetime | None
 
@@ -106,7 +107,8 @@ class YoutubeChannel(IdModel):
 
 
 class YoutubeChannelOwned(YoutubeChannel):
-    is_my: bool | None = None
+    via_oauth: bool
+    owner_id: UUID | None
 
 
 class YoutubeVideo(IdModel):
@@ -136,7 +138,8 @@ class TwitterAccount(IdModel):
 
 
 class TwitterAccountOwned(TwitterAccount):
-    is_my: bool | None = None
+    via_oauth: bool | None
+    owner_id: UUID | None
 
 
 class TwitterTweet(IdModel):
@@ -153,6 +156,7 @@ class Donator(BaseModel):
     lnauth_pubkey: str | None
     balance: int = Field(default=0)
     lightning_address: str | None
+    connected: bool | None
 
     @validator('name', always=True)
     def generate_name(cls, v, values):

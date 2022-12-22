@@ -17,7 +17,7 @@ from .db_twitter import TwitterDbMixin, OAuthTokenDbMixin
 from .db_donations import DonationsDbMixin
 from .db_withdraw import WithdrawalDbMixin
 from .db_models import (
-    Base, DonatorDb, EmailNotificationDb, YoutubeChannelDb, TwitterAuthorDb,
+    Base, DonatorDb, EmailNotificationDb, YoutubeChannelDb, TwitterAuthorDb, YoutubeChannelLink, TwitterAuthorLink,
 )
 from .db_utils import insert_on_conflict_update
 
@@ -85,18 +85,25 @@ class DbSession(YoutubeDbMixin, TwitterDbMixin, DonationsDbMixin, WithdrawalDbMi
     async def object_changed(self, object_class: str, object_id: UUID):
         return await self.notify(f'{object_class}:{object_id}', Notification(id=object_id, status='OK'))
 
-    async def save_donator(self, donator: Donator):
-        await self.execute(
-            insert_on_conflict_update(DonatorDb, donator, DonatorDb.id)
-        )
+    async def query_donator(self, id: UUID) -> Donator:
+        return await self.find_donator(DonatorDb.id == id)
 
-    async def query_donator(self, **kwargs) -> Donator:
+    async def find_donator(self, *where) -> Donator:
         result = await self.execute(
-            select(DonatorDb)
-            .filter_by(**kwargs)
+            select(
+                *DonatorDb.__table__.columns,
+                (
+                    func.coalesce(func.bool_or(YoutubeChannelLink.via_oauth), False)
+                    | func.coalesce(func.bool_or(TwitterAuthorLink.via_oauth), False)
+                    | DonatorDb.lnauth_pubkey.isnot(None)
+                ).label('connected'),
+            )
+            .outerjoin(YoutubeChannelLink, YoutubeChannelLink.donator_id == DonatorDb.id)
+            .outerjoin(TwitterAuthorLink, TwitterAuthorLink.donator_id == DonatorDb.id)
+            .where(*where)
+            .group_by(DonatorDb.id)
         )
-        scalar = result.scalars().one()
-        return Donator.from_orm(scalar)
+        return Donator(**result.one())
 
     async def commit(self):
         return await self.session.commit()
@@ -117,26 +124,18 @@ class DbSession(YoutubeDbMixin, TwitterDbMixin, DonationsDbMixin, WithdrawalDbMi
             registered_donator_id = resp.scalar()
         if registered_donator_id is None:
             # No existing donator with lnauth_pubkey
-            resp = await self.execute(
-                insert(DonatorDb)
-                .values(dict(
-                    id=donator_id,
-                    lnauth_pubkey=key,
-                ))
-                .on_conflict_do_update(
-                    index_elements=[DonatorDb.id],
-                    set_={
-                        DonatorDb.lnauth_pubkey: key,
-                    },
-                    where=(func.coalesce(DonatorDb.lnauth_pubkey, '') != key),
-                )
-                .returning(DonatorDb.id)
-            )
-            registered_donator_id = resp.scalar()
+            registered_donator_id = await self.save_donator(Donator(id=donator_id, lnauth_pubkey=key))
             if registered_donator_id is None:
                 registered_donator_id = donator_id
 
         return Credentials(donator=registered_donator_id, lnauth_pubkey=key)
+
+    async def save_donator(self, donator: Donator) -> UUID:
+        resp = await self.execute(
+            insert_on_conflict_update(DonatorDb, donator)
+        )
+        await self.object_changed('donator', donator.id)
+        return resp.scalar()
 
     async def query_recently_donated_donatees(self, limit=20, limit_days=180) -> list[Donatee]:
         youtube_sq = select(

@@ -16,21 +16,18 @@ let donatorWs;
 let donatorWsId;
 
 async function fetchMe() {
-  const resp = await apiGet("donator/me");
-  console.log("Loaded user", resp);
+  const resp = await apiGet("me");
+  cLog("Loaded user", resp);
   return resp;
 }
 
 function loadFrom(obj, resp) {
-  storage.me = resp;
-  obj.donator = resp.donator;
-  obj.youtube_channels = resp.youtube_channels;
-  const pubkey = resp.donator.lnauth_pubkey;
+  obj.donator = resp;
+  obj.connected = obj.donator.connected; // FIXME: For backward compatibility
+  storage.me = {donator: obj.donator};
+  const pubkey = resp.lnauth_pubkey;
   if (pubkey) {
     obj.shortkey = `@${pubkey.slice(0, 4)}…${pubkey.slice(-4)}`;
-    obj.connected = true;
-  } else {
-    obj.connected = false;
   }
   analytics.identify(obj.donator.id, {
     pubkey: pubkey,
@@ -72,6 +69,7 @@ async function isValid() {
     decoded.donator === me.donator.id
     && decoded.lnauth_pubkey === me.donator.lnauth_pubkey
     && decoded.balance === me.donator.balance
+    && decoded.connected === me.donator.connected
   );
 }
 
@@ -85,17 +83,17 @@ async function onCookieChanged(changeInfo) {
   }
 }
 
-export const me = asyncable(async () => {
+export const me = asyncable(async (set) => {
   cLog("loading me");
   let me_;
   if (await isValid()) {
-    me_ = loadFrom({}, storage.me);
+    me_ = loadFrom({}, storage.me.donator);
   } else {
-    console.log("stored session is invalid or missing, reloading");
+    cLog("stored session is invalid or missing, reloading");
     me_ = loadFrom({}, await fetchMe());
   }
   await subscribeToDonator(me_.donator.id);
-  return me_;
+  set(me_);
 });
 
 async function subscribeToDonator(donatorId) {
