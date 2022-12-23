@@ -1,26 +1,27 @@
+{{- range .Values.cronjobs }}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{ include "donate4fun.fullname" . }}
+  name: {{ include "donate4fun.fullname" $ }}-{{ .name }}
   labels:
-    {{- include "donate4fun.labels" . | nindent 4 }}
+    {{- include "donate4fun.labels" $ | nindent 4 }}
 spec:
-  schedule: "37 * * * *"
+  schedule: {{ .schedule }}
   jobTemplate:
     spec:
       template:
         metadata:
-          {{- with .Values.podAnnotations }}
+          {{- with $.Values.podAnnotations }}
           annotations:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           labels:
-            {{- include "donate4fun.selectorLabels" . | nindent 12 }}
+            {{- include "donate4fun.selectorLabels" $ | nindent 12 }}
         spec:
           restartPolicy: OnFailure
           containers:
           - name: backend
-            image: {{ include "donate4fun.image" .Values.backend }}
+            image: {{ include "donate4fun.image" $.Values.backend }}
             imagePullPolicy: IfNotPresent
             command:
             - poetry
@@ -28,7 +29,7 @@ spec:
             - python
             - -m
             - donate4fun
-            - jobs.refetch_twitter_authors
+            - {{ .func }}
             volumeMounts:
             - name: config
               mountPath: /app/config.yaml
@@ -37,15 +38,16 @@ spec:
               mountPath: /secret
             env:
             - name: bugsnag__app_version
-              value: {{ .Release.Revision | quote }}
+              value: {{ $.Release.Revision | quote }}
             - name: rollbar__code_version
-              value: {{ .Release.Revision | quote }}
+              value: {{ $.Release.Revision | quote }}
             - name: server_name
-              value: {{ .Values.version | quote }}
+              value: {{ $.Values.version | quote }}
           volumes:
           - name: config
             configMap:
-              name: {{ template "donate4fun.fullname" . }}
+              name: {{ template "donate4fun.fullname" $ }}
           - name: secret
             secret:
-              secretName: {{ template "donate4fun.fullname" . }}
+              secretName: {{ template "donate4fun.fullname" $ }}
+{{- end }}

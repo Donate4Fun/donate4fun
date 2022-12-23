@@ -85,3 +85,8 @@ backend:
         level: DEBUG
         propagate: true
         handlers: [stderr]
+
+cronjobs:
+- name: refetch-twitter
+  schedule: "37 * * * *"
+  func: jobs.refetch_twitter_authors
