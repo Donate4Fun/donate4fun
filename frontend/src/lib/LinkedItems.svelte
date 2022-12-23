@@ -14,7 +14,6 @@
 
   async function collect(item) {
     await api.post(`${basePath}/${transferPath}/${item.id}/transfer`);
-    await load();
   }
 
   const linkedStore = asyncable(async (set, me_) => {
