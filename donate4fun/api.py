@@ -209,7 +209,7 @@ async def fetch_lightning_address(donation: Donation) -> PaymentRequest:
         elif donation.twitter_tweet:
             target = f'https://twitter.com/{donation.twitter_account.handle}/status/{donation.twitter_tweet.tweet_id}'
         elif donation.youtube_channel:
-            target = f'https://youtube.com/channel/{donation.youtube_chanel.channel_id}'
+            target = f'https://youtube.com/channel/{donation.youtube_channel.channel_id}'
         elif donation.twitter_account:
             target = f'https://twitter.com/{donation.twitter_account.handle}'
         comment = f'Tip from {name} via Donate4.Fun for {target}'
