@@ -20,7 +20,7 @@
 </script>
 
 <div class="main">
-  {#await me.get() then me}
+  {#await $me then me}
     <header>
       <img src="static/D.svg" width=28px alt=D class=text />
       <div class="name">
@@ -52,7 +52,11 @@
                 </div>
                 <div on:click={() => contentScript.onPaid({amount: 333})}>
                   <Fa icon={faComment} size=2x color={iconColor} />
-                  <span>Show comment popup</span>
+                  <span>Trigger onPaid</span>
+                </div>
+                <div on:click={() => contentScript.showPopup()}>
+                  <Fa icon={faComment} size=2x color={iconColor} />
+                  <span>Trigger hold</span>
                 </div>
               {/await}
               <div on:click={connectToPage}>
@@ -122,6 +126,7 @@ header {
   opacity: 0;
   position: absolute;
   transition: all 0.2s ease;
+  z-index: 1;
 }
 .popupVisible {
   visibility: visible;
