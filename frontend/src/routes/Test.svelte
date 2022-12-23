@@ -7,6 +7,7 @@
   import ServiceLinkButton from "$lib/ServiceLinkButton.svelte";
   import Spinner from "$lib/Spinner.svelte";
   import Loader from "$lib/Loader.svelte";
+  import SocialUserpic from "$lib/SocialUserpic.svelte";
   import { notify } from "$lib/notifications.js";
   import { sleep } from "$lib/utils.js";
   import { get, ApiError } from "$lib/api.js";
@@ -21,6 +22,8 @@
 <Loader --size=4em />
 <Loader --size=8em />
 <div>
+  <SocialUserpic social="twitter" src="https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_x96.png" />
+  <SocialUserpic social="youtube" src="https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_x96.png" />
   <Button on:click={() => {notify(`default title ${i}`, 'default message', 'info', 15000); i++;}}>notify</Button>
   <Button on:click={() => {return new Promise((resolve_) => {resolve = resolve_;})}}>Start Loader</Button>
   <Button on:click={() => {resolve && resolve();}}>Stop Loader</Button>

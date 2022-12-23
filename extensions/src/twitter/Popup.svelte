@@ -5,6 +5,8 @@
   import Button from "$lib/Button.svelte";
   import NumberedItem from "$lib/NumberedItem.svelte";
   import AmountSelection from "$lib/AmountSelection.svelte";
+  import SocialUserpic from "$lib/SocialUserpic.svelte";
+
   import { worker, connectToPage, browser } from "$extlib/common.js";
   import PopupSection from "$extlib/PopupSection.svelte";
 
@@ -53,14 +55,15 @@
     {:else}
       <div class="filled">
         <div class="filled-header">
-          <img src="./static/twitter.svg" height=16 alt="twitter logo">
+          {#if authorAvatar}
+            <SocialUserpic social="twitter" src={authorAvatar} />
+          {:else}
+            <img src="/static/twitter.svg" alt="twitter" width=44 height=44>
+          {/if}
           <div class="donate-to">
             <span class="author-name ellipsis">{@html authorName}</span>
             <span class="author-handle">@{authorHandle}</span>
           </div>
-          {#if authorAvatar}
-            <img width=44 height=44 class="circular" src={authorAvatar} alt="avatar">
-          {/if}
         </div>
         <AmountSelection donate={donate} />
       </div>
@@ -95,7 +98,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   font-size: 16px;
   line-height: 22px;
 }
@@ -108,8 +111,14 @@
 }
 .author-name {
   font-weight: 800;
+  display: flex;
+  gap: 4px;
 }
 .author-name :global(img) {
   width: 1em;
+}
+.author-handle {
+  opacity: 0.9;
+  font-size: 14px;
 }
 </style>
