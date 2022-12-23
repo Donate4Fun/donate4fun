@@ -195,7 +195,7 @@ function isTest() {
   return urlParams.has('test');
 }
 
-async function createPopup(path) {
+export async function createPopup(path) {
   const baseUrl = browser.runtime.getURL('popup.html');
   const window = await browser.windows.create({
     focused: true,
@@ -261,8 +261,7 @@ async function donate(amount, target, donator_twitter_handle=null, onPaid=null) 
     (onPaid || handlers.onPaid)(donation);
   } catch (err) {
     cInfo("Payment failed", err);
-    const rejected = err.message === 'User rejected';
-    worker.createPopup(`nowebln/${amount}/${rejected}`);
+    worker.createPopup(`nowebln/${amount}/${err.message}`);
     throw err;
   }
 }
@@ -309,7 +308,6 @@ export {
   isTest,
   pageScript,
   injectContentScript,
-  createPopup,
   waitElement,
   getStatic,
   donate,

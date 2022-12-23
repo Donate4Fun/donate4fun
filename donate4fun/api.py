@@ -216,7 +216,10 @@ async def fetch_lightning_address(donation: Donation) -> PaymentRequest:
         if 'commentAllowed' in metadata:
             params['comment'] = comment[:metadata['commentAllowed']]
         response = await client.get(metadata['callback'], params=params)
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except Exception as exc:
+            raise LnurlpError(response.content) from exc
         data = response.json()
         if data.get('status', 'OK') != 'OK':
             raise LnurlpError(f"Status is not OK: {data}")

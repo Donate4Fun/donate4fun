@@ -9,8 +9,10 @@
   import cLog from "$lib/log.js";
 
   export let amount;
-  export let rejected;
   export let historySource;
+  export let message = "You don't have enought sats and WebLN-enabled wallet is not available.";
+
+  const rejected = message === 'User rejected';
   const navigate = useNavigate();
 
   function onClose() {
@@ -41,7 +43,10 @@
         --background-image="linear-gradient(105.38deg, rgba(249, 240, 62, 0.2) 1.16%, rgba(157, 237, 162, 0.2) 95.37%)"
       >Fulfill your wallet. How?</WhiteButton>
     {:else}
-      <p class="message">You don't have enought sats and WebLN-enabled wallet is not available. You may either</p>
+      <div class="message">
+        <pre>{message}</pre>
+        <span>You may either</span>
+      </div>
       <WhiteButton
         --height=72px
         target=_blank
@@ -83,6 +88,11 @@ section {
   font-size: 20px;
   line-height: 26px;
   text-align: center;
+}
+.message pre {
+  white-space: pre-wrap;
+  word-wrap: anywhere;
+  font-size: 12px;
 }
 .or {
   font-size: 16px;

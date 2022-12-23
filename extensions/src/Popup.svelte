@@ -70,8 +70,8 @@
           <PopupHeader />
           <PopupTwitter bind:amount={amount} />
         </Route>
-        <Route path="nowebln/:amount/:rejected" let:params>
-          <PopupNoWebln amount={params.amount} rejected={params.rejected} historySource={hashSource}/>
+        <Route path="nowebln/:amount/:message" let:params>
+          <PopupNoWebln amount={params.amount} message={params.message} historySource={hashSource}/>
         </Route>
       </Router>
     {/await}
