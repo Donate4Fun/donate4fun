@@ -29,7 +29,7 @@
   <Section>
     <div class="youtube-link">
       <h1>Hey! Do you want to get more donations?</h1>
-      <div class="call-to-action">Add this link to your Youtube channel and video descriptions.
+      <div class="call-to-action">Add this link to your YouTube channel and video descriptions.
         <a href="https://donate4fun.notion.site/How-to-add-Donate4-Fun-link-to-YouTube-1999f6f4318c4702aff37840b13e7315">How to do this?</a>
       </div>
       <Editable bind:message={message} />

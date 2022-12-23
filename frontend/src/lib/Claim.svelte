@@ -41,7 +41,7 @@
       <LinkedItems items={$me.youtube_channels}>
       </LinkedItems>
     {/await}
-    <div class="link"><Button link={resolve("/prove/youtube")}>Link your Youtube channel</Button></div>
+    <div class="link"><Button link={resolve("/prove/youtube")}>Link your YouTube channel</Button></div>
     <form on:submit|preventDefault={claim}>
       <div class=url><Input type=url placeholder="Paste YouTube URL" bind:value={donatee} bind:error={error} logo=url(/static/youtube.svg) required/></div>
       <Button type=submit class="submit white">

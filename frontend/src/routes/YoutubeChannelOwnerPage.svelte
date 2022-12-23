@@ -45,7 +45,7 @@
     <Section>
       <div class="content">
         <h1>
-          <img alt=youtube src="/static/youtube.svg" width=20>
+          <img alt=youtube src="/static/youtube.svg" height=20>
           <YoutubeChannel channel={channel} />
           <ChannelLogo url={channel.thumbnail_url} size=44px />
         </h1>

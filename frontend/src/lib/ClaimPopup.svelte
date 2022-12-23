@@ -53,6 +53,7 @@ h1 {
   line-height: 22px;
 }
 .item img {
-  width: 32px;
+  min-height: 20px;
+  min-width: 32px;
 }
 </style>

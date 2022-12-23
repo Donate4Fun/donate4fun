@@ -9,6 +9,7 @@
   import WhiteButton from "$lib/WhiteButton.svelte";
   import Infobox from "$lib/Infobox.svelte";
   import Separator from "$lib/Separator.svelte";
+  import YoutubeSigninButton from "$lib/YoutubeSigninButton.svelte";
   import { me, reloadMe } from "$lib/session.js";
   import { sleep } from "$lib/utils.js";
   import api from "$lib/api.js";
@@ -74,8 +75,9 @@
         </summary>
       </li>
     </ol>
-    <WhiteButton on:click={useOAuth}>Use YouTube OAuth</WhiteButton>
-    <GrayButton on:click={() => navigate(-1)}>Back</GrayButton>
+    <Separator>OR</Separator>
+    <YoutubeSigninButton on:click={useOAuth} />
+    <GrayButton on:click={() => navigate(-1)} --width=140px>Back</GrayButton>
   </main>
 </Section>
 
@@ -83,6 +85,7 @@
 main {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 32px;
   padding: 36px 85px 40px 85px;
   width: 640px;
