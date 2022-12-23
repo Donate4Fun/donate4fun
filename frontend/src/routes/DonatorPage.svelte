@@ -24,8 +24,7 @@
   export let donator_id;
   let activeTab = 'sent';
 
-  async function load(me) {
-    console.log("loadddd");
+  async function load(me, donator_id) {
     const itsMe = donator_id === me.donator?.id;
     let donator;
     if (itsMe) {
@@ -46,7 +45,7 @@
 {#await $me}
   <Loader />
 {:then me}
-{#await load(me)}
+{#await load(me, donator_id)}
   <Loader />
 {:then {itsMe, donator}}
   <Section>
