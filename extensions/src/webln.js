@@ -40,10 +40,15 @@ if (!window.donate4funPageScriptLoaded) {
     element.dispatchEvent(new Event('change', {bubbles: true}));
   }
 
+  function getInnerHtml(xpath) {
+    return document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue?.innerHTML;
+  }
+
   const handlers = {
     sendPayment,
     emulateKeypresses,
     ping: () => "pong",
+    getInnerHtml,
   }
 } else {
   cLog("page script already loaded");

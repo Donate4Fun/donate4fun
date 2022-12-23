@@ -1,6 +1,6 @@
 import Bolt from "./Bolt.svelte";
 import { cLog, cError } from "$lib/log.js";
-import { registerHandlers, injectPageScript, worker, donate } from "$extlib/common.js";
+import { registerHandlers, injectPageScript, worker, donate, getXPathForElement, pageScript } from "$extlib/common.js";
 import { apiOrigin } from "$lib/api.js";
 import { getCurrentAccountHandle } from "./twitter.js";
 
@@ -25,6 +25,7 @@ async function init() {
         cError("Current page is not a Tweet page");
     },
     popupPath: () => "/twitter",
+    showPopup: () => pageBolt.showPopup(),
   });
   const apiHost = await worker.getConfig("apiHost");
   apiOrigin.set(apiHost);
@@ -51,7 +52,7 @@ function isAuthorPage() {
   return profileUrlRegexp.test(getUrl());
 }
 
-function getTweetInfo() {
+async function getTweetInfo() {
   const pageUrl = getUrl();
   const tweetUrlPath = new URL(pageUrl).pathname;
   const tweetAnchor = document.querySelector(`article[data-testid="tweet"] a[href="${tweetUrlPath}"]`);
@@ -60,12 +61,15 @@ function getTweetInfo() {
   const avatar = tweetElement?.querySelector('div[data-testid="Tweet-User-Avatar"]');
   const authorUrl = avatar?.querySelector('a')?.href;
   const authorAvatar = avatar?.querySelector('img')?.src;
-  const authorName = tweetElement?.querySelector('div[data-testid="User-Names"] a')?.innerHtml;
+  const authorNameElement = tweetElement?.querySelector('div[data-testid="User-Names"] > div:first-of-type div > span');
+  const authorName = authorNameElement && (await pageScript.getInnerHtml(getXPathForElement(authorNameElement)) || authorNameElement.textContent);
+  const authorHandle = tweetElement?.querySelector('div[data-testid="User-Names"] > div:last-of-type span')?.textContent.slice(1);
   return {
     pageUrl,
     authorUrl,
     authorAvatar,
     authorName,
+    authorHandle,
   };
 }
 
@@ -127,13 +131,15 @@ async function patchTweet(tweet) {
   boltButton.className = buttonClass;
   boltButton.style.display = 'contents';
   buttons.insertBefore(boltButton, likeButton.parentElement.nextSibling);
-  const anchor = tweet.querySelector('a[href*="/status/"]');
+  const links = tweet.querySelectorAll('a[href*="/status/"]');
   let tweetUrl;
-  if (anchor !== null)
-    tweetUrl = anchor.href;
-  else if (isTweetPage())
+  for (const link of links)
+    if (link.href.match(/^https:\/\/twitter.com\/\w+\/status\/\d+$/))
+      tweetUrl = link.href;
+  if (isTweetPage())
     tweetUrl = getUrl();
-  else {
+
+  if (!tweetUrl) {
     cLog("Tweet has no url nor this is tweet page", tweet);
     return;
   }
@@ -141,7 +147,7 @@ async function patchTweet(tweet) {
   const bolt = new Bolt({
     target: boltButton,
     props: {
-      tweetUrl,
+      pageUrl: tweetUrl,
       isTweet: true,
     },
   });
