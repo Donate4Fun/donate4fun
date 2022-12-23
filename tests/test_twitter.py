@@ -187,3 +187,33 @@ async def test_link_twitter_account(db_session):
 @pytest.mark.parametrize('params', [dict(handle='donate4_fun'), dict(user_id=12345), dict(handle='twiteis')])
 async def test_query_or_fetch_twitter_account(db_session, params):
     await query_or_fetch_twitter_account(db=db_session, **params)
+
+
+async def test_transfer_from_twitter(client, db, rich_donator, settings):
+    login_to(client, settings, rich_donator)
+    # Update balance to target value
+    async with db.session() as db_session:
+        account = TwitterAccount(
+            id=UUID(int=0),
+            user_id=0,
+            handle="@donate4_fun",
+            name="Donate4.Fun",
+        )
+        await db_session.save_twitter_account(account)
+        donation = Donation(amount=100, twitter_account=account, donator=rich_donator)
+        await db_session.create_donation(donation)
+        await db_session.donation_paid(donation_id=donation.id, amount=100, paid_at=datetime.now())
+        donation = await db_session.query_donation(id=donation.id)
+        await db_session.link_twitter_account(donator=rich_donator, twitter_author=account)
+
+    resp = await client.post(f'/api/v1/twitter/account/{account.id}/transfer')
+    check_response(resp, 200)
+    amount = resp.json()['amount']
+    assert amount == donation.amount
+    async with db.session() as db_session:
+        account: TwitterAccount = await db_session.query_twitter_account(user_id=account.id, owner_id=rich_donator.id)
+        assert account.balance == 0
+        donator = await db_session.query_donator(id=rich_donator.id)
+        assert donator.balance == amount
+        donation = await db_session.query_donation(id=donation.id)
+        assert donation.claimed_at != None  # noqa

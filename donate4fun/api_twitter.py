@@ -31,7 +31,7 @@ async def twitter_ownership_message(me=Depends(get_donator)):
 async def twitter_account_transfer(account_id: UUID, db=Depends(get_db_session), donator: Donator = Depends(get_donator)):
     donator = await load_donator(db, donator.id)
     account: TwitterAccountOwned = await db.query_twitter_account(id=account_id, owner_id=donator.id)
-    if not account.owner == donator:
+    if not account.owner_id == donator.id:
         raise HTTPException(status_code=401, detail="You should prove that you own Twitter accoutn")
     if not donator.connected:
         raise ValidationError("You should have a connected auth method to claim donations")
