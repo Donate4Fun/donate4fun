@@ -42,13 +42,13 @@
       <div class="image-name">
         <img alt="avatar" class="avatar" src={donation.youtube_channel.thumbnail_url}>
         <div class="name">{donation.youtube_channel.title}</div>
-        {#if donation.lightning_address}
-          <span class="lightning-address">via ⚡{donation.lightning_address}</span>
-        {/if}
       </div>
       {#if donation.youtube_channel.handle}
         <div class="handle">
           <span>{donation.youtube_channel.handle}</span>
+          {#if donation.lightning_address}
+            <span class="lightning-address">via ⚡{donation.lightning_address}</span>
+          {/if}
         </div>
       {/if}
     </a>
