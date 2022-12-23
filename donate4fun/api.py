@@ -186,7 +186,7 @@ class LnurlpError(Exception):
 async def fetch_lightning_address(donation: Donation) -> PaymentRequest:
     name, host = donation.lightning_address.split('@', 1)
     async with httpx.AsyncClient() as client:
-        response = await client.get(f'https://{host}/.well-known/lnurlp/{name}')
+        response = await client.get(f'https://{host}/.well-known/lnurlp/{name}', follow_redirects=True)
         response.raise_for_status()
         metadata = response.json()
         # https://github.com/lnurl/luds/blob/luds/06.md
