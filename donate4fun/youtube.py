@@ -70,6 +70,7 @@ class VideoInfo(BaseModel):
 class YoutubeDonatee:
     channel_id: str | None = None
     video_id: str | None = None
+    handle: str | None = None
 
     async def fetch(self, donation: Donation, db: DbSession):
         if self.video_id:
@@ -77,6 +78,10 @@ class YoutubeDonatee:
             donation.youtube_channel = donation.youtube_video.youtube_channel
         elif self.channel_id:
             donation.youtube_channel = await query_or_fetch_youtube_channel(channel_id=self.channel_id, db=db)
+        elif self.handle:
+            donation.youtube_channel = await query_or_fetch_youtube_channel(handle=self.handle, db=db)
+        else:
+            raise ValidationError("No YouTube donatee info")
         donation.lightning_address = donation.youtube_channel.lightning_address
 
 
@@ -88,7 +93,9 @@ def validate_youtube_url(parsed) -> YoutubeDonatee:
     elif parts[1] == 'shorts':
         return YoutubeDonatee(video_id=parts[2])
     elif parts[1] in ('channel', 'c'):
-        return YoutubeDonatee(channel_id=parts[2])
+        return YoutubeDonatee(handle=parts[2])
+    elif parts[1].startswith('@'):
+        return YoutubeDonatee(handle=parts[1])
     elif parsed.hostname == 'youtu.be':
         raise UnsupportedYoutubeUrl("youtu.be urls are not supported")
     else:
@@ -156,15 +163,17 @@ def should_refresh_channel(channel: YoutubeChannel):
     return channel.last_fetched_at is None or channel.last_fetched_at < datetime.utcnow() - settings.youtube.refresh_timeout
 
 
-async def query_or_fetch_youtube_channel(channel_id: str, db: DbSession) -> YoutubeChannel:
+async def query_or_fetch_youtube_channel(db: DbSession, **params) -> YoutubeChannel:
     try:
-        channel: YoutubeChannel = await db.find_youtube_channel(channel_id=channel_id)
+        channel: YoutubeChannel = await db.find_youtube_channel(**params)
         if should_refresh_channel(channel):
             logger.debug("youtube channel %s is too old, refreshing", channel)
             raise EntityTooOld
         return channel
     except (NoResultFound, EntityTooOld):
-        channel: YoutubeChannel = await fetch_youtube_channel(channel_id)
+        channel: YoutubeChannel = (
+            await fetch_youtube_channel(**params) if 'channel_id' in params else await search_for_youtube_channel(**params)
+        )
         await db.save_youtube_channel(channel)
         return channel
 
@@ -176,21 +185,37 @@ async def fetch_and_save_youtube_channel(channel_id: str):
         await db.save_youtube_channel(channel)
 
 
+@withyoutube
+async def search_for_youtube_channel(aiogoogle, youtube, handle: str) -> YoutubeChannel:
+    """
+    Until Google updates his YouTube API we ought to search by handle and then list for each result until we find the needed one.
+    """
+    req = youtube.search.list(q=handle, type='channel', part='snippet')
+    res = await aiogoogle.as_api_key(req)
+    total_results = res['pageInfo']['totalResults']
+    if total_results == 0:
+        raise YoutubeChannelNotFound(f"Could not find a YouTube channel for {handle}")
+    for item in res['items']:
+        channel: YoutubeChannel = await fetch_youtube_channel(item['id']['channelId'])
+        if channel.handle == handle.lower():
+            return channel
+    else:
+        raise YoutubeChannelNotFound(f"Could not find a YouTube channel for {handle}")
+
+
 @register_command
 @withyoutube
 async def fetch_youtube_channel(aiogoogle, youtube, channel_id: str) -> YoutubeChannel:
-    if not channel_id.startswith('UC'):
-        username = channel_id
-        channel_id = None
-    else:
-        username = None
-    req = youtube.channels.list(id=channel_id, forUsername=username, part='snippet,brandingSettings')
+    req = youtube.channels.list(id=channel_id, part='snippet,brandingSettings')
     res = await aiogoogle.as_api_key(req)
-    if res['pageInfo']['totalResults'] == 0:
-        raise YoutubeChannelNotFound("Invalid YouTube channel")
+    total_results = res['pageInfo']['totalResults']
+    if total_results == 0:
+        raise YoutubeChannelNotFound(f"Could not find a YouTube channel for {channel_id}")
+    if total_results > 1:
+        raise YoutubeChannelNotFound(f"Found multiple YouTube channels for {channel_id}")
     items = res['items']
     if not items:
-        raise YoutubeChannelNotFound
+        raise YoutubeChannelNotFound("Invalid response from YouTube API")
     api_channel = ChannelInfo.from_api(items[0])
     return YoutubeChannel(
         channel_id=api_channel.id,

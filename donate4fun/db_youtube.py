@@ -28,10 +28,10 @@ class YoutubeDbMixin:
         )
         return YoutubeChannelOwned.from_orm(resp.one())
 
-    async def find_youtube_channel(self, channel_id: str) -> YoutubeChannel:
+    async def find_youtube_channel(self, **filter_by) -> YoutubeChannel:
         resp = await self.execute(
             select(YoutubeChannelDb)
-            .where(YoutubeChannelDb.channel_id == channel_id)
+            .filter_by(**filter_by)
         )
         return YoutubeChannel.from_orm(resp.scalars().one())
 

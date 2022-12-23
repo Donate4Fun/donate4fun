@@ -55,7 +55,7 @@ async def ownership_check(donator=Depends(get_donator), db=Depends(get_db_sessio
     )
     channels = []
     for channel_id in channel_ids:
-        youtube_channel: YoutubeChannel = await query_or_fetch_youtube_channel(channel_id, db)
+        youtube_channel: YoutubeChannel = await query_or_fetch_youtube_channel(channel_id=channel_id, db=db)
         is_new = await db.link_youtube_channel(youtube_channel, donator, via_oauth=False)
         if is_new:
             channels.append(youtube_channel)
@@ -104,7 +104,7 @@ async def auth_google(
             # TODO: add exception info to last_url hash param and show it using toast
             return RedirectResponse(auth_state.last_url)
         else:
-            channel: YoutubeChannel = await query_or_fetch_youtube_channel(channel_info.id, db_session)
+            channel: YoutubeChannel = await query_or_fetch_youtube_channel(channel_id=channel_info.id, db=db_session)
             owned_channel: YoutubeChannelOwned = await db_session.query_youtube_channel(channel.id)
             if owned_channel.via_oauth:
                 request.session['donator'] = str(owned_channel.owner_id)

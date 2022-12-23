@@ -65,18 +65,28 @@ function getParent() {
     : document.querySelector("ytd-video-owner-renderer");
 }
 
-function getChannelLogo() {
-  if (isVideoPage())
-    return getParent().querySelector("#avatar > img").src;
-  else if (isChannelPage())
-    return document.querySelector('#channel-container #avatar img').src;
-}
-
-function getChannelTitle() {
-  if (isVideoPage())
-    return getParent().querySelector("#channel-name a").textContent;
-  else if (isChannelPage())
-    return document.querySelector("#channel-container #text.ytd-channel-name").textContent;
+export function getChannelInfo() {
+  let channelTitle;
+  let channelLogo;
+  let channelHandle;
+  if (isVideoPage()) {
+    const channelTitleElement = getParent().querySelector("#channel-name a");
+    channelLogo = getParent().querySelector("#avatar > img").src;
+    if (channelTitleElement) {
+      channelTitle = channelTitleElement.textContent;
+      channelHandle = new URL(channelTitleElement.href).pathname.slice(2);
+    }
+  } else if (isChannelPage()) {
+    const container = document.querySelector("#channel-container");
+    channelTitle = container.querySelector("#text.ytd-channel-name").textContent;
+    channelLogo = container.querySelector('#avatar img').src;
+    channelHandle = container.querySelector('#channel-handle').textContent.slice(1);
+  }
+  return {
+    channelTitle,
+    channelHandle,
+    channelLogo,
+  };
 }
 
 function getChannelId() {
@@ -91,7 +101,7 @@ function getChannelId() {
       return snippetLink.href;
 
     // This tag contains valid ID only when after loading the whole page
-    // After doesn't change afrer navigation, so it could be invalid
+    // It doesn't change afrer navigation, so it could be invalid
     return document.querySelector('meta[itemprop="channelId"]')?.content;
   }
 }
@@ -120,7 +130,7 @@ function isChannelPage() {
   // FIXME: Check for more YouTube's own paths here
   const pathname = location.pathname;
   return pathname !== '/' && (
-    pathname.startsWith('/c/') || pathname.startsWith('/channel/') || pathname.startsWith('/@') || !!getChannelId()
+    pathname.match(/^\/((c|channel)\/|@)\w+$/) || !!getChannelId()
   );
 }
 
@@ -214,8 +224,6 @@ async function postComment(language, amount) {
 
 export {
   isVideoLoaded,
-  getChannelLogo,
-  getChannelTitle,
   getVideoId,
   getChannelId,
   isInViewport,

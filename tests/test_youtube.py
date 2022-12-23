@@ -30,7 +30,7 @@ async def test_donate(
     login_to(client, settings, rich_donator)
     donate_response = await client.post(
         "/api/v1/donate",
-        json=DonateRequest(amount=100, target='https://www.youtube.com/c/Alex007SC2').dict(),
+        json=DonateRequest(amount=100, target='https://www.youtube.com/@Alex007').dict(),
     )
     verify_response(donate_response, 'donate_youtube_channel', 200)
 
@@ -52,10 +52,10 @@ async def test_donate_video(
 async def test_cancel_donation(client, app, db, freeze_uuids, rich_donator, settings):
     login_to(client, settings, rich_donator)
     amount = 10
-    donate_response = await client.post(
+    donate_response = check_response(await client.post(
         "/api/v1/donate",
-        json=DonateRequest(amount=amount, target='https://www.youtube.com/c/Alex007SC2').dict(),
-    )
+        json=DonateRequest(amount=amount, target='https://www.youtube.com/@Alex007').dict(),
+    ))
     donation = Donation(**donate_response.json()['donation'])
     assert donation.paid_at != None  # noqa
     async with db.session() as db_session:
@@ -78,10 +78,10 @@ async def test_cancel_donation(client, app, db, freeze_uuids, rich_donator, sett
 async def test_cancel_donation_fail(client, app, db, freeze_uuids, rich_donator, settings):
     login_to(client, settings, rich_donator)
     amount = 10
-    donate_response = await client.post(
+    donate_response = check_response(await client.post(
         "/api/v1/donate",
-        json=DonateRequest(amount=amount, target='https://www.youtube.com/c/Alex007SC2').dict(),
-    )
+        json=DonateRequest(amount=amount, target='https://www.youtube.com/@Alex007').dict(),
+    ))
     donation = Donation(**donate_response.json()['donation'])
     async with db.session() as db_session:
         other_donator = Donator(id=UUID(int=2))

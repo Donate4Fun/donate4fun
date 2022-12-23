@@ -36,6 +36,10 @@ export function youtube_channel_url(channel_id) {
   return `https://youtube.com/channel/${channel_id}`;
 }
 
+export function youtubeChannelUrlByHandle(channelHandle) {
+  return `http://youtube.com/@${channelHandle}`;
+}
+
 export function youtube_video_url(video_id) {
   return `https://youtube.com/watch?v=${video_id}`;
 }

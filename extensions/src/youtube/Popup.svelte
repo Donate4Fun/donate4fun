@@ -6,15 +6,16 @@
   import Button from "$lib/Button.svelte";
   import NumberedItem from "$lib/NumberedItem.svelte";
   import AmountSelection from "$lib/AmountSelection.svelte";
+  import SocialUserpic from "$lib/SocialUserpic.svelte";
   import { me } from "$lib/session.js";
-  import { youtube_video_url, youtube_channel_url } from "$lib/utils.js";
+  import { youtube_video_url, youtubeChannelUrlByHandle } from "$lib/utils.js";
   import { worker, connectToPage, browser } from "$extlib/common.js";
 
   let videoId;
-  let channelId;
   let channelTitle;
   let channelLogo;
   let contentScript;
+  let channelHandle;
 
   const navigate = useNavigate();
 
@@ -26,17 +27,13 @@
     if (await contentScript.isVideoPage()) {
       videoId = await contentScript.getVideoId();
       cLog("videoid", videoId);
-    } else if (await contentScript.isChannelPage()) {
-      channelId = await contentScript.getChannelId();
-      cLog("channelid", channelId);
     }
-    channelTitle = await contentScript.getChannelTitle();
-    channelLogo = await contentScript.getChannelLogo();
+    ({ channelTitle, channelHandle, channelLogo } = await contentScript.getChannelInfo());
   }
 
   async function donate(amount) {
     try {
-      const target = videoId ? youtube_video_url(videoId) : youtube_channel_url(channelId);
+      const target = videoId ? youtube_video_url(videoId) : youtubeChannelUrlByHandle(channelHandle);
       await contentScript.donate(amount, target);
     } catch (err) {
       console.error("Failed to donate", err);
@@ -46,7 +43,7 @@
  
 <PopupSection>
   {#await load() then}
-    {#if !videoId && !channelId}
+    {#if !videoId && !channelHandle}
       <div class="empty">
         <NumberedItem number=1>
           <span>Open video channel or author you want to donate to</span>
@@ -58,14 +55,15 @@
     {:else}
       <div class="filled">
         <div class="filled-header">
-          <img src="./static/youtube.svg" height=16 alt="youtube logo">
-          <div class="donate-to">
-            Donate to
-            <span class="channel-title ellipsis">{channelTitle}</span>
-          </div>
           {#if channelLogo}
-            <img width=44 height=44 class="circular" src={channelLogo} alt="channel logo">
+            <SocialUserpic social="youtube" src={channelLogo} />
+          {:else}
+            <img src="/static/twitter.svg" alt="twitter" width=44 height=44>
           {/if}
+          <div class="donate-to">
+            <span class="channel-title ellipsis">{channelTitle}</span>
+            <span class="handle">@{channelHandle}</span>
+          </div>
         </div>
         <div class="amount">
           <AmountSelection donate={donate} />
@@ -108,9 +106,9 @@
 }
 .donate-to {
   display: flex;
+  flex-direction: column;
   white-space: nowrap;
   min-width: 0;
-  gap: 0.5em;
   font-weight: 400;
 }
 .channel-title {
@@ -120,5 +118,9 @@
   display: flex;
   flex-direction: column;
   gap: 32px;
+}
+.handle {
+  color: rgb(96, 96, 96);
+  font-size: 14px;
 }
 </style>
