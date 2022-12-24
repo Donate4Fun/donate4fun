@@ -1,5 +1,5 @@
 <button on:click>
-  <img src="/static/youtube.svg">
+  <img alt="youtube" src="/static/youtube.svg">
   <span>Sign in with YouTube</span>
 </button>
 
