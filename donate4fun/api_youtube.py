@@ -77,6 +77,8 @@ async def login_via_google(request: Request, donator=Depends(get_donator)):
             **settings.youtube.oauth.dict(),
         ),
         state=GoogleAuthState(last_url=request.headers['referer'], donator_id=donator.id).to_jwt(),
+        prompt='select_account',
+        include_granted_scopes=True,
     )
     return dict(url=url)
 
