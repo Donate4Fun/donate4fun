@@ -92,6 +92,7 @@ pnpm build
 Chrome Web Store
 ===
 To make a new release and publish extension to Chrome Web Store
+NB: always build with `pnpm build` before publishing
 ```
 cd extension/src
 npx semantic-release --no-ci
