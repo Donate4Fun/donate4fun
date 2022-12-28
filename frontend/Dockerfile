@@ -1,6 +1,9 @@
-FROM node:alpine as build
+FROM node:19 as build
 ARG VERSION
 
+# It's only needed because we install svelte-asyncable from github
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y chromium libxss1 && rm -rf /var/lib/apt/lists/*
 RUN npm install --location=global pnpm
 
 WORKDIR /app

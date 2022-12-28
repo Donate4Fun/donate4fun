@@ -19,6 +19,7 @@
 <WalletPopup bind:show={walletPopupShown} />
 
 <div class="steps">
+  <!-- svelte-ignore a11y-click-events-have-key-events -->
   <div on:click={showExtensionPopup} class="step narrow">
     <LandingStep number=1 done={$extensionPresent} doneText="Already installed">
       <img slot=image alt="D" src="/static/extensions.svg">
@@ -28,6 +29,7 @@
       </div>
     </LandingStep>
   </div>
+  <!-- svelte-ignore a11y-click-events-have-key-events -->
   <div on:click={() => walletPopupShown = true} class="step narrow">
     <LandingStep number=2 done={$weblnPresent} doneText="Already installed">
       <img slot=image src="/static/wallet.svg" alt="wallet">

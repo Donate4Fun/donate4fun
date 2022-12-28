@@ -27,7 +27,14 @@ export default defineConfig({
     },
   },
   plugins: [
-    svelte(),
+    svelte({
+      configFile: false,
+      onwarn(warning, defaultHandler) {
+        if (warning.code === 'security-anchor-rel-noreferrer')
+          return;
+        defaultHandler(warning);
+      },
+    }),
   ],
   optimizeDeps: { exclude: ["svelte-navigator"] },
   resolve: {

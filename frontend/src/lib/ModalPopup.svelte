@@ -5,6 +5,7 @@
 </script>
 
 {#if show}
+  <!-- svelte-ignore a11y-click-events-have-key-events -->
   <div transition:fade="{{ duration: 200 }}" class="overlay" on:click={() => show = false}>
     <div class="popup" on:click|stopPropagation={() => {}}>
       <img class="close" on:click={() => show = false} alt=close src="/static/cross.svg">

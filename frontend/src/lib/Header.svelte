@@ -12,6 +12,7 @@
   let showClaim = false;
 </script>
 
+<!-- svelte-ignore a11y-click-events-have-key-events -->
 <div class="menu-popup" on:click={() => { showMenu = false; }} style:visibility={showMenu ? "visible" : "hidden"}>
   <div class="menu-header">
     <a use:link href="/"><Logo /></a>
@@ -51,6 +52,7 @@
         <p>Catch {err}</p>
       {/await}
     </div>
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
     <div class="menu-button" on:click={() => { showMenu = true; }}><img src="/static/Burger.svg" alt="burger"></div>
   </div>
 </header>

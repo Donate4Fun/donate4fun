@@ -89,8 +89,8 @@
             🔥Support creators with Bitcoin Lightning. Easy donations and withdrawals. No registration or KYC.
           </div>
         </div>
-        <div class="desktop-only" on:click={showExtensionPopup}>
-          <LandingButton --width=300px>Get Extension</LandingButton>
+        <div class="desktop-only">
+          <LandingButton on:click={showExtensionPopup} --width=300px>Get Extension</LandingButton>
         </div>
         <form on:submit|preventDefault={submitEmail} class="mobile-only flex-column gap-18 text-align-center">
           Currently we support only desktop browsers.
