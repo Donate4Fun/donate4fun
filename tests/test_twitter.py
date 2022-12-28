@@ -217,3 +217,14 @@ async def test_transfer_from_twitter(client, db, rich_donator, settings):
         assert donator.balance == amount
         donation = await db_session.query_donation(id=donation.id)
         assert donation.claimed_at != None  # noqa
+
+
+@pytest.mark.parametrize('address', ['sondreb@ln.tips'])
+async def test_donate_to_lightning_address(client, address: str):
+    donate_response = DonateResponse(**check_response(await client.post(
+        "/api/v1/donate",
+        json=DonateRequest(
+            amount=100,
+            lightning_address=address,
+        ).dict(),
+    )).json())

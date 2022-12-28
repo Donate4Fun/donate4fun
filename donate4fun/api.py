@@ -115,7 +115,9 @@ async def donate(
         amount=request.amount,
         donator=donator,
     )
-    if request.receiver_id:
+    if request.lightning_address:
+        donation.lightning_address = request.lightning_address
+    elif request.receiver_id:
         # Donation to a donator - possibly just an own balance fulfillment
         receiver = await load_donator(db_session, request.receiver_id)
         if not receiver.connected:
@@ -194,6 +196,7 @@ async def fetch_lightning_address(donation: Donation) -> PaymentRequest:
             raise LnurlpError(f"Status is not OK: {metadata}")
         if not metadata['minSendable'] <= donation.amount * 1000 <= metadata['maxSendable']:
             raise LnurlpError(f"Amount is out of bounds: {donation.amount} {metadata}")
+        fields = dict(json.loads(metadata['metadata']))
         if donation.donator_twitter_account:
             name = '@' + donation.donator_twitter_account.handle
         else:
@@ -203,7 +206,7 @@ async def fetch_lightning_address(donation: Donation) -> PaymentRequest:
             payerdata = {}
             if 'name' in payerdata_request:
                 payerdata['name'] = f'{name} via Donate4.Fun'
-            params['payerdata'] = json.dumps(payerdata)
+            params['payerdata'] = json.dumps(payerdata, separators=(',', ':'))
         if donation.youtube_video:
             target = f'https://youtube.com/watch?v={donation.youtube_video.video_id}'
         elif donation.twitter_tweet:
@@ -212,6 +215,8 @@ async def fetch_lightning_address(donation: Donation) -> PaymentRequest:
             target = f'https://youtube.com/channel/{donation.youtube_channel.channel_id}'
         elif donation.twitter_account:
             target = f'https://twitter.com/{donation.twitter_account.handle}'
+        elif donation.lightning_address:
+            target = fields.get('text/identifier', donation.lightning_address)
         comment = f'Tip from {name} via Donate4.Fun for {target}'
         if 'commentAllowed' in metadata:
             params['comment'] = comment[:metadata['commentAllowed']]
