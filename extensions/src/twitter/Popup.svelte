@@ -85,6 +85,7 @@
 .filled {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 42px;
   width: 100%;
   height: 100%;

@@ -12,7 +12,6 @@ section {
   border-top-left-radius: var(--border-radius);
   border-top-right-radius: var(--border-radius);
   padding: var(--border-width);
-  height: 100%;
   max-height: 360px;
 }
 section > div {

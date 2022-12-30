@@ -45,7 +45,6 @@
   display: flex;
   flex-direction: column;
   gap: 32px;
-  width: 300px;
 }
 .input {
   font-weight: 400;
