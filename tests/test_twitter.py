@@ -1,8 +1,10 @@
 from datetime import datetime
 from uuid import UUID
+from base64 import urlsafe_b64encode
 
 import httpx
 import pytest
+from furl import furl
 
 from donate4fun.models import (
     DonateRequest, TwitterAccount, TwitterAccountOwned, Donator, TwitterTweet, DonateResponse, DonationPaidRequest,
@@ -12,6 +14,7 @@ from donate4fun.twitter import query_or_fetch_twitter_account
 from donate4fun.lnd import lnd, monitor_invoices, PayInvoiceError
 from donate4fun.types import PaymentRequest, LightningAddress
 from donate4fun.db import db as db_var
+from donate4fun.settings import settings
 from tests.test_util import verify_response, mark_vcr, check_notification, login_to, check_response
 from tests.fixtures import find_unused_port, app_serve, make_registered_donator, create_db
 
@@ -161,17 +164,18 @@ async def test_link_twitter_account(db_session):
     donator = Donator(id=UUID(int=0))
     reference_accounts = []
     for i in range(3):
-        account = TwitterAccount(
+        account = TwitterAccountOwned(
             id=UUID(int=i),
             user_id=i,
             handle="@donate4_fun",
             name="Donate4.Fun",
             profile_image_url="https://thumbnail.url/asd",
+            via_oauth=False,
         )
         reference_accounts.append(account)
         await db_session.save_twitter_account(account)
-        await db_session.link_twitter_account(account, donator)
-    twitter_accounts: list[TwitterAccount] = await db_session.query_donator_twitter_accounts(donator.id)
+        await db_session.link_twitter_account(account, donator, via_oauth=False)
+    twitter_accounts: list[TwitterAccountOwned] = await db_session.query_donator_twitter_accounts(donator.id)
     assert twitter_accounts == reference_accounts
     account: TwitterAccountOwned = await db_session.query_twitter_account(
         id=reference_accounts[0].id, owner_id=UUID(int=0)
@@ -204,7 +208,7 @@ async def test_transfer_from_twitter(client, db, rich_donator, settings):
         await db_session.create_donation(donation)
         await db_session.donation_paid(donation_id=donation.id, amount=100, paid_at=datetime.now())
         donation = await db_session.query_donation(id=donation.id)
-        await db_session.link_twitter_account(donator=rich_donator, twitter_author=account)
+        await db_session.link_twitter_account(donator=rich_donator, twitter_author=account, via_oauth=False)
 
     resp = await client.post(f'/api/v1/twitter/account/{account.id}/transfer')
     check_response(resp, 200)
@@ -219,12 +223,71 @@ async def test_transfer_from_twitter(client, db, rich_donator, settings):
         assert donation.claimed_at != None  # noqa
 
 
+@mark_vcr
 @pytest.mark.parametrize('address', ['sondreb@ln.tips'])
 async def test_donate_to_lightning_address(client, address: str):
-    donate_response = DonateResponse(**check_response(await client.post(
+    DonateResponse(**check_response(await client.post(
         "/api/v1/donate",
         json=DonateRequest(
             amount=100,
             lightning_address=address,
+            target='https://twitter.com/donate4_fun',
         ).dict(),
     )).json())
+
+
+async def follow_oauth_flow(client, code: str):
+    response = check_response(await client.get('/api/v1/twitter/oauth', headers=dict(referer=settings.base_url))).json()
+    auth_url: str = response['url']
+    encrypted_state: str = furl(auth_url).query.params['state']
+    # Change to True to get new code
+    obtain_code = False
+    if obtain_code:
+        code = input(f"Open this url {auth_url}, authorize and paste code here:\n")
+    response = await client.get(
+        '/api/v1/twitter/oauth-redirect',
+        params=dict(state=encrypted_state, code=code),
+    )
+    check_response(response, 307)
+
+
+@mark_vcr
+@pytest.mark.freeze_time('2022-02-02 22:22:22')
+async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids):
+    monkeypatch.setattr('secrets.token_urlsafe', lambda size: urlsafe_b64encode(b'\x00' * size))
+    monkeypatch.setattr('secrets.token_bytes', lambda size: b'\x00' * size)
+
+    async def patched_fetch_twitter_me(client) -> TwitterAccount:
+        return account
+    monkeypatch.setattr('donate4fun.twitter.fetch_twitter_me', patched_fetch_twitter_me)
+    account = TwitterAccount(
+        user_id=123,
+        title='title',
+        handle='handle',
+        description='description',
+        last_fetched_at=datetime.utcnow(),
+    )
+    async with db.session() as db_session:
+        await db_session.save_twitter_account(account)
+
+    donator = Donator(id=UUID(int=0))
+    login_to(client, settings, donator)
+    await follow_oauth_flow(
+        client, code='TFExNmJaZVR4b3NuOGxmTF9IbmVYRkt0ajVPN0RmS3VRdUFmbXFhcVNHNnp3OjE2NzIzNDAxNjUyODM6MTowOmFjOjE',
+    )
+    me = Donator(**check_response(await client.get('/api/v1/me')).json())
+    assert me.id == donator.id
+    assert me.connected == True  # noqa
+
+    # Try to relogin from other account to the first account
+    other_donator = Donator(id=UUID(int=1))
+    login_to(client, settings, other_donator)
+    await follow_oauth_flow(
+        client, code='ZTRnTkV5M014UXF2cmV1QWowSGVfaDZUY1dxSjNxSEZxSWQzRkJwWTFpU05fOjE2NzIzNDAxNzQxNzg6MTowOmFjOjE',
+    )
+    me = Donator(**check_response(await client.get('/api/v1/me')).json())
+    assert me.id == donator.id
+    assert me.connected == True  # noqa
+
+    # Test channel API
+    verify_response(await client.get(f'/api/v1/twitter/account/{account.id}'), 'twitter-account-owned')

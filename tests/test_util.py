@@ -125,6 +125,8 @@ def login_to(client, settings: Settings, donator: Donator):
 def remove_credentials_and_testclient(request):
     if 'grpc-metadata-macaroon' in request.headers:
         del request.headers['grpc-metadata-macaroon']
+    if 'authorization' in request.headers:
+        del request.headers['authorization']
     if request.host == 'youtube.googleapis.com':
         # WORKAROUND: key is a private credential
         replace_query_parameters(request, [('key', None)])

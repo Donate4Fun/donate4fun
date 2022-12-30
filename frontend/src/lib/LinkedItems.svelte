@@ -3,14 +3,16 @@
   import { asyncable } from 'svelte-asyncable';
 
   import Button from "$lib/Button.svelte";
-  import WhiteButton from "$lib/WhiteButton.svelte";
+  import GrayButton from "$lib/GrayButton.svelte";
   import Amount from "$lib/Amount.svelte";
+  import SocialSigninButton from "$lib/SocialSigninButton.svelte";
   import api from "$lib/api.js";
   import { capitalize } from "$lib/utils.js";
   import { me } from "$lib/session.js";
 
   export let basePath;
   export let transferPath;
+  export let name;
 
   async function collect(item) {
     await api.post(`${basePath}/${transferPath}/${item.id}/transfer`);
@@ -38,23 +40,25 @@
 
 <div class="container">
   <div class="header">
-    <h2>Linked <b>{capitalize(basePath)}</b> accounts:</h2>
-    <a use:link href="/{basePath}/prove">Add</a>
+    <h2>Linked <b>{name}</b> accounts:</h2>
   </div>
   {#await $linkedStore then items}
     <ul>
       {#each items as item}
       <li>
-        <slot {item} />
+        <slot name="item" {item} />
         <Amount amount={item.balance} />
         <div class="withdraw-button">
+          <Button disabled={item.balance === 0} on:click={() => collect(item)} --border-width=0 --padding="0 24px">Claim</Button>
           {#if item.via_oauth}
-            <WhiteButton on:click={() => unlink(item)} --border-width=0>Unlink</WhiteButton>
+            <GrayButton on:click={() => unlink(item)} --padding="0 24px">Unlink</GrayButton>
           {/if}
-          <Button disabled={item.balance === 0} on:click={() => collect(item)} --border-width=0>Claim</Button>
         </div>
       </li>
       {/each}
+      <li class="add">
+        <SocialSigninButton type={basePath} width=300px>Add {name} account</SocialSigninButton>
+      </li>
     </ul>
   {/await}
 </div>
@@ -73,9 +77,8 @@
 }
 .header > h2 {
   font-weight: 500;
-  font-size: 18px;
   line-height: 24px;
-  font-size: 20px;
+  font-size: 18px;
 }
 .header > a {
   font-weight: 700;
@@ -99,6 +102,10 @@ li {
   padding-right: 0;
   background: linear-gradient(90deg, rgba(157, 237, 162, 0.15) 0%, rgba(157, 237, 162, 0) 100%);
   border-radius: 8px;
+}
+li.add {
+  justify-content: center;
+  background: transparent;
 }
 .withdraw-button {
   height: 44px;

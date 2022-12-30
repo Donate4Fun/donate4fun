@@ -1,7 +1,6 @@
 import logging
 import hashlib
 import json
-from base64 import b64encode
 from uuid import UUID
 from functools import partial
 from urllib.parse import urlencode
@@ -29,6 +28,7 @@ from .models import (
     DonatorStats, DonationPaidRequest, PayInvoiceResult, Donatee,
 )
 from .types import ValidationError, RequestHash, PaymentRequest
+from .core import to_base64
 from .donatees import apply_target
 from .db_models import DonationDb, WithdrawalDb
 from .db_donations import sent_donations_subquery, received_donations_subquery
@@ -117,7 +117,7 @@ async def donate(
     )
     if request.lightning_address:
         donation.lightning_address = request.lightning_address
-    elif request.receiver_id:
+    if request.receiver_id:
         # Donation to a donator - possibly just an own balance fulfillment
         receiver = await load_donator(db_session, request.receiver_id)
         if not receiver.connected:
@@ -462,10 +462,6 @@ async def payment_callback(
 
 def sha256hash(data: str) -> bytes:
     return hashlib.sha256(data.encode()).digest()
-
-
-def to_base64(data: bytes) -> str:
-    return b64encode(data).decode()
 
 
 async def send_withdrawal(

@@ -2,16 +2,20 @@ from __future__ import annotations
 from uuid import uuid4, UUID
 from datetime import datetime
 from typing import Any
+from functools import lru_cache
 import json
 
 import jwt
-from pydantic import BaseModel as PydanticBaseModel, validator, HttpUrl, Field, root_validator, EmailStr, AnyUrl
+from pydantic import BaseModel as PydanticBaseModel, validator, HttpUrl, Field, root_validator, EmailStr, AnyUrl, AnyHttpUrl
 from pydantic.datetime_parse import parse_datetime
 from funkybob import UniqueRandomNameGenerator
 from multiavatar.multiavatar import multiavatar
+from jwskate import Jwk, Jwt
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
 from .settings import settings
-from .core import to_datauri
+from .core import to_datauri, from_base64, to_base64
 from .types import Url, RequestHash, PaymentRequest, LightningAddress
 
 
@@ -23,15 +27,45 @@ class BaseModel(PydanticBaseModel):
             datetime: lambda d: f'{d.isoformat()}+00:00',
         }
 
-    def to_json_dict(self):
+    def to_json_dict(self) -> dict:
         return json.loads(self.json())
 
     def to_jwt(self) -> str:
         return jwt.encode(self.to_json_dict(), settings.jwt_secret, algorithm="HS256")
 
     @classmethod
-    def from_jwt(cls, token: str):
+    def from_jwt(cls, token: str) -> BaseModel:
         return cls(**jwt.decode(token, settings.jwt_secret, algorithms=["HS256"]))
+
+    def to_encrypted_jwt(self) -> str:
+        """
+        Difference with to_jwe:
+         - not a standard JWE
+         - smaller size due to headers absense
+        """
+        jwt = self.to_jwt()
+        cyphertext, iv, tag = get_jwk().encrypt(jwt.encode(), alg='A256GCM')
+        return to_base64(iv + tag + cyphertext)
+
+    @classmethod
+    def from_encrypted_jwt(cls, encrypted_jwt: str) -> BaseModel:
+        data: bytes = from_base64(encrypted_jwt)
+        iv = data[:12]
+        tag = data[12:28]
+        cyphertext = data[28:]
+        return cls.from_jwt(get_jwk().decrypt(cyphertext, alg='A256GCM', iv=iv, tag=tag))
+
+    def to_jwe(self) -> str:
+        jwe = Jwt.sign_and_encrypt(
+            self.to_json_dict(), sign_jwk=get_jwk(), enc_jwk=get_jwk(), enc="A128GCM", sign_alg='HS256',
+            enc_alg='A256GCMKW',
+        )
+        return str(jwe)
+
+    @classmethod
+    def from_jwe(cls, token: str):
+        jwt = Jwt.decrypt_and_verify(token, enc_jwk=get_jwk(), sig_jwk=get_jwk(), sig_alg='HS256')
+        return cls(**jwt.claims)
 
 
 class WithdrawalToken(BaseModel):
@@ -284,3 +318,21 @@ class Donatee(BaseModel):
     total_donated: int
     type: str
     id: UUID
+
+
+@lru_cache
+def get_jwk():
+    algorithm = HKDF(algorithm=hashes.SHA256(), length=32, salt=None, info=None)
+    material: bytes = settings.jwt_secret.encode()
+    key_data: bytes = algorithm.derive(material)
+    return Jwk(key_data)
+
+
+class OAuthState(BaseModel):
+    last_url: AnyHttpUrl
+    donator_id: UUID
+    code_verifier: str | None = None
+
+
+class OAuthResponse(BaseModel):
+    url: str

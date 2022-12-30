@@ -6,10 +6,9 @@ import sqlalchemy
 
 from donate4fun.api import DonateRequest, DonateResponse
 from donate4fun.lnd import monitor_invoices, LndClient, lnd
-from donate4fun.models import Donation, YoutubeChannel, Donator, YoutubeChannelOwned
+from donate4fun.models import Donation, YoutubeChannel, Donator, YoutubeChannelOwned, OAuthState
 from donate4fun.types import PaymentRequest
 from donate4fun.youtube import query_or_fetch_youtube_video, ChannelInfo
-from donate4fun.api_youtube import GoogleAuthState
 
 from tests.test_util import verify_response, check_response, check_notification, login_to, mark_vcr
 
@@ -302,8 +301,8 @@ async def test_unlink_youtube_channel_with_balance(db, client, settings, monkeyp
         return ChannelInfo(id=youtube_channel.channel_id, title='title', description='descr')
     monkeypatch.setattr('donate4fun.api_youtube.fetch_user_channel', patched_fetch_user_channel)
     check_response(await client.get(
-        '/api/v1/youtube/auth-redirect',
-        params=dict(state=GoogleAuthState(donator_id=donator.id, last_url='http://a.com').to_jwt(), code=123),
+        '/api/v1/youtube/oauth-redirect',
+        params=dict(state=OAuthState(donator_id=donator.id, last_url='http://a.com').to_jwt(), code=123),
     ), 307)
     async with db.session() as db_session:
         new_donator: Donator = await db_session.query_donator(donator.id)
@@ -314,7 +313,7 @@ async def test_unlink_youtube_channel_with_balance(db, client, settings, monkeyp
 async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids):
     info = ChannelInfo(id='UCxxx', title='title', description='descr')
 
-    async def patched_fetch_user_channel(request, code):
+    async def patched_fetch_user_channel(code):
         return info
     monkeypatch.setattr('donate4fun.api_youtube.fetch_user_channel', patched_fetch_user_channel)
     async with db.session() as db_session:
@@ -328,8 +327,8 @@ async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids):
     donator = Donator(id=UUID(int=0))
     login_to(client, settings, donator)
     response = await client.get(
-        '/api/v1/youtube/auth-redirect',
-        params=dict(state=GoogleAuthState(donator_id=donator.id, last_url='http://a.com').to_jwt(), code=123),
+        '/api/v1/youtube/oauth-redirect',
+        params=dict(state=OAuthState(donator_id=donator.id, last_url='http://a.com').to_jwt(), code=123),
     )
     check_response(response, 307)
     me = Donator(**check_response(await client.get('/api/v1/me')).json())
@@ -340,8 +339,8 @@ async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids):
     other_donator = Donator(id=UUID(int=1))
     login_to(client, settings, other_donator)
     response = await client.get(
-        '/api/v1/youtube/auth-redirect',
-        params=dict(state=GoogleAuthState(donator_id=other_donator.id, last_url='http://a.com').to_jwt(), code=123),
+        '/api/v1/youtube/oauth-redirect',
+        params=dict(state=OAuthState(donator_id=other_donator.id, last_url='http://a.com').to_jwt(), code=123),
     )
     check_response(response, 307)
     me = Donator(**check_response(await client.get('/api/v1/me')).json())

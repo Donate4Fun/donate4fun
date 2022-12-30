@@ -3,13 +3,15 @@ from uuid import UUID
 
 import posthog
 from fastapi import Depends, APIRouter, Request, HTTPException
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import RedirectResponse
 from aiogoogle import Aiogoogle
-from pydantic import AnyHttpUrl
 from sqlalchemy.orm.exc import NoResultFound
 
 from .api_utils import get_donator, load_donator, get_db_session
-from .models import BaseModel, YoutubeVideo, YoutubeChannel, Donator, YoutubeChannelOwned, Donation, TransferResponse
+from .models import (
+    BaseModel, YoutubeVideo, YoutubeChannel, Donator, YoutubeChannelOwned, Donation, TransferResponse, OAuthState,
+    OAuthResponse,
+)
 from .youtube import (
     find_comment, query_or_fetch_youtube_channel, ChannelInfo, fetch_user_channel,
 )
@@ -62,33 +64,28 @@ async def ownership_check(donator=Depends(get_donator), db=Depends(get_db_sessio
     return channels
 
 
-class GoogleAuthState(BaseModel):
-    last_url: AnyHttpUrl
-    donator_id: UUID
-
-
-@router.get('/oauth', response_class=JSONResponse)
+@router.get('/oauth', response_model=OAuthResponse)
 async def login_via_google(request: Request, donator=Depends(get_donator)):
     aiogoogle = Aiogoogle()
     url = aiogoogle.oauth2.authorization_url(
         client_creds=dict(
             scopes=['https://www.googleapis.com/auth/youtube.readonly'],
-            redirect_uri=f'{settings.base_url}/api/v1/youtube/auth-redirect',
+            redirect_uri=f'{settings.base_url}/api/v1/youtube/oauth-redirect',
             **settings.youtube.oauth.dict(),
         ),
-        state=GoogleAuthState(last_url=request.headers['referer'], donator_id=donator.id).to_jwt(),
+        state=OAuthState(last_url=request.headers['referer'], donator_id=donator.id).to_jwt(),
         prompt='select_account',
         include_granted_scopes=True,
     )
-    return dict(url=url)
+    return OAuthResponse(url=url)
 
 
-@router.get('/auth-redirect')
+@router.get('/oauth-redirect')
 async def auth_google(
     request: Request, state: str, error: str = None, error_description: str = None, code: str = None,
     db_session=Depends(get_db_session), donator=Depends(get_donator),
 ):
-    auth_state = GoogleAuthState.from_jwt(state)
+    auth_state = OAuthState.from_jwt(state)
     if auth_state.donator_id != donator.id:
         raise ValidationError(
             f"User that initiated Google Auth {donator.id} is not the current user {auth_state.donator_id}, rejecting auth"
@@ -100,7 +97,7 @@ async def auth_google(
         }
     elif code:
         try:
-            channel_info: ChannelInfo = await fetch_user_channel(request, code)
+            channel_info: ChannelInfo = await fetch_user_channel(code)
         except Exception:
             logger.exception("Failed to fetch user's channel")
             # TODO: add exception info to last_url hash param and show it using toast

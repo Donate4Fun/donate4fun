@@ -115,7 +115,8 @@ async def settings():
         settings.rollbar = None
         settings.bugsnag.enabled = False
         settings.posthog.enabled = False
-        settings.twitter.bearer_token = None
+        settings.base_url = 'http://localhost:3000'
+        settings.frontend_port = 3000
         yield settings
 
 

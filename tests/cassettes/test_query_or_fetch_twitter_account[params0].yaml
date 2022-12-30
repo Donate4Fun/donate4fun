@@ -6,8 +6,6 @@ interactions:
       - '*/*'
       accept-encoding:
       - gzip, deflate
-      authorization:
-      - Bearer AAAAAAAAAAAAAAAAAAAAAM2SjQEAAAAATvwK3CA%2FZZLPbXjRTV9JuYyhNbY%3DQEktpAB2BYRBtioRryYjjHOEKjvSb1HR26PjONkefPfdFmuR57
       connection:
       - keep-alive
       host:
@@ -15,15 +13,15 @@ interactions:
       user-agent:
       - python-httpx/0.23.1
     method: GET
-    uri: https://api.twitter.com/2/users/by/username/donate4_fun?user.fields=id%2Cname%2Cprofile_image_url%2Cdescription
+    uri: https://api.twitter.com/2/users/by/username/donate4_fun?user.fields=id%2Cname%2Cprofile_image_url%2Cdescription%2Cverified%2Centities
   response:
-    content: "{\"data\":{\"id\":\"1572908920485576704\",\"description\":\"Donations
-      with #Bitcoin #LightningNetwork on Twitter and Youtube. \\nDM to claim your
-      donation.\\nCreated by @Novaklim1 and @nbryskin.\",\"username\":\"donate4_fun\",\"profile_image_url\":\"https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_normal.png\",\"name\":\"Donate4.Fun
-      \u26A1\"}}"
+    content: "{\"data\":{\"profile_image_url\":\"https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_normal.png\",\"name\":\"Donate4.Fun
+      \u26A1\",\"id\":\"1572908920485576704\",\"description\":\"Donations with #Bitcoin
+      #LightningNetwork on Twitter and Youtube. \\nDM to claim your donation.\\nCreated
+      by @Novaklim1 and @nbryskin.\",\"username\":\"donate4_fun\",\"entities\":{\"url\":{\"urls\":[{\"start\":0,\"end\":23,\"url\":\"https://t.co/xu5wqhAwa7\",\"expanded_url\":\"https://donate4.fun/\",\"display_url\":\"donate4.fun\"}]},\"description\":{\"hashtags\":[{\"start\":15,\"end\":23,\"tag\":\"Bitcoin\"},{\"start\":24,\"end\":41,\"tag\":\"LightningNetwork\"}],\"mentions\":[{\"start\":105,\"end\":115,\"username\":\"Novaklim1\"},{\"start\":120,\"end\":129,\"username\":\"nbryskin\"}]}},\"verified\":false}}"
     headers:
       api-version:
-      - '2.55'
+      - '2.59'
       cache-control:
       - no-cache, no-store, max-age=0
       content-disposition:
@@ -31,24 +29,24 @@ interactions:
       content-encoding:
       - gzip
       content-length:
-      - '287'
+      - '437'
       content-type:
       - application/json; charset=utf-8
       date:
-      - Tue, 06 Dec 2022 19:34:02 UTC
+      - Thu, 29 Dec 2022 16:41:05 UTC
       perf:
       - '7626143928'
       server:
       - tsa_o
       set-cookie:
-      - guest_id=v1%3A167035524231124655; Max-Age=34214400; Expires=Sat, 06 Jan 2024
-        19:34:02 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      - guest_id=v1%3A167233206594103528; Max-Age=34214400; Expires=Mon, 29 Jan 2024
+        16:41:05 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
       strict-transport-security:
       - max-age=631138519
       x-access-level:
       - read
       x-connection-hash:
-      - e07c1f3c973e2ee7036598bedc636f24122c42c9aef4790a2f6df3927b62aebd
+      - 4f6c6ec20f16461cd214ba2d1157fd31d1f878998eef2b13f45c46503b1d1f50
       x-content-type-options:
       - nosniff
       x-frame-options:
@@ -56,13 +54,13 @@ interactions:
       x-rate-limit-limit:
       - '300'
       x-rate-limit-remaining:
-      - '299'
+      - '292'
       x-rate-limit-reset:
-      - '1670356142'
+      - '1672332797'
       x-response-time:
-      - '199'
+      - '139'
       x-transaction-id:
-      - d6d0b47135c84f30
+      - a0e5731e4ee37da6
       x-xss-protection:
       - '0'
     http_version: HTTP/1.1

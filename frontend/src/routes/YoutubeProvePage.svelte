@@ -9,7 +9,7 @@
   import WhiteButton from "$lib/WhiteButton.svelte";
   import Infobox from "$lib/Infobox.svelte";
   import Separator from "$lib/Separator.svelte";
-  import YoutubeSigninButton from "$lib/YoutubeSigninButton.svelte";
+  import SocialSigninButton from "$lib/SocialSigninButton.svelte";
   import { me, reloadMe } from "$lib/session.js";
   import { sleep } from "$lib/utils.js";
   import api from "$lib/api.js";
@@ -76,7 +76,7 @@
       </li>
     </ol>
     <Separator>OR</Separator>
-    <YoutubeSigninButton on:click={useOAuth} />
+    <SocialSigninButton type="youtube" on:click={useOAuth}>Signin with YouTube</SocialSigninButton>
     <GrayButton on:click={() => navigate(-1)} --width=140px>Back</GrayButton>
   </main>
 </Section>

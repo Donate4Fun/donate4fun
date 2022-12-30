@@ -6,8 +6,6 @@ interactions:
       - '*/*'
       accept-encoding:
       - gzip, deflate
-      authorization:
-      - Bearer AAAAAAAAAAAAAAAAAAAAAM2SjQEAAAAATvwK3CA%2FZZLPbXjRTV9JuYyhNbY%3DQEktpAB2BYRBtioRryYjjHOEKjvSb1HR26PjONkefPfdFmuR57
       connection:
       - keep-alive
       host:
@@ -15,12 +13,13 @@ interactions:
       user-agent:
       - python-httpx/0.23.1
     method: GET
-    uri: https://api.twitter.com/2/users/by/username/twiteis?user.fields=id%2Cname%2Cprofile_image_url%2Cdescription
+    uri: https://api.twitter.com/2/users/by/username/twiteis?user.fields=id%2Cname%2Cprofile_image_url%2Cdescription%2Cverified%2Centities
   response:
-    content: "{\"data\":{\"description\":\"\u26A1\uFE0F leo@getalby.com\",\"profile_image_url\":\"https://pbs.twimg.com/profile_images/1261863462591959040/3KXJQfH__normal.jpg\",\"username\":\"twiteis\",\"name\":\"Leo\",\"id\":\"180438388\"}}"
+    content: "{\"data\":{\"profile_image_url\":\"https://pbs.twimg.com/profile_images/1261863462591959040/3KXJQfH__normal.jpg\",\"name\":\"Leo\",\"description\":\"\u26A1\uFE0F
+      leo@getalby.com\",\"id\":\"180438388\",\"verified\":false,\"username\":\"twiteis\"}}"
     headers:
       api-version:
-      - '2.55'
+      - '2.59'
       cache-control:
       - no-cache, no-store, max-age=0
       content-disposition:
@@ -28,24 +27,24 @@ interactions:
       content-encoding:
       - gzip
       content-length:
-      - '196'
+      - '208'
       content-type:
       - application/json; charset=utf-8
       date:
-      - Tue, 06 Dec 2022 19:34:04 UTC
+      - Thu, 29 Dec 2022 16:41:07 UTC
       perf:
       - '7626143928'
       server:
       - tsa_o
       set-cookie:
-      - guest_id=v1%3A167035524461451068; Max-Age=34214400; Expires=Sat, 06 Jan 2024
-        19:34:04 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      - guest_id=v1%3A167233206698646373; Max-Age=34214400; Expires=Mon, 29 Jan 2024
+        16:41:07 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
       strict-transport-security:
       - max-age=631138519
       x-access-level:
       - read
       x-connection-hash:
-      - b145d094ba8a303dd8fee7ea1ce7e169bef00a665c10a5480b21e40412b53af6
+      - c09640d30bb8d36f86c401a2a9fc808db2a2376509489461d87919e9331e08eb
       x-content-type-options:
       - nosniff
       x-frame-options:
@@ -53,13 +52,13 @@ interactions:
       x-rate-limit-limit:
       - '300'
       x-rate-limit-remaining:
-      - '298'
+      - '291'
       x-rate-limit-reset:
-      - '1670356142'
+      - '1672332797'
       x-response-time:
-      - '140'
+      - '135'
       x-transaction-id:
-      - 758ae3c0b07ccb9f
+      - 4ee08b9a3f894e6b
       x-xss-protection:
       - '0'
     http_version: HTTP/1.1

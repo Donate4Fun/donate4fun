@@ -144,15 +144,27 @@ async def save_token(db: Database, token: dict[str, Any], refresh_token: str):
         await db_session.save_oauth_token('twitter_oauth2', token)
 
 
+def make_bot_oauth2_client(token=None, update_token=None):
+    scope = "tweet.read users.read dm.read dm.write offline.access"
+    return make_oauth2_client(scope=scope, token=token, update_token=update_token)
+
+
+def make_link_oauth2_client(token=None):
+    """
+    This client is used to link Twitter account to donator (OAuth2 flow)
+    """
+    return make_oauth2_client(scope='tweet.read users.read', token=token)
+
+
 @asynccontextmanager
-async def make_oauth2_client(token=None, update_token=None):
+async def make_oauth2_client(scope: str, token=None, update_token=None):
     oauth = settings.twitter.oauth
     async with AsyncOAuth2Client(
         client_id=oauth.client_id,
         client_secret=oauth.client_secret,
-        scope="tweet.read users.read dm.read dm.write offline.access",
+        scope=scope,
         token_endpoint='https://api.twitter.com/2/oauth2/token',
-        redirect_uri='https://donate4.fun/api/v1/twitter/oauth-callback',
+        redirect_uri=f'{settings.base_url}/api/v1/twitter/oauth-redirect',
         code_challenge_method='S256',
         token=token,
         update_token=update_token,
@@ -207,6 +219,21 @@ async def obtain_twitter_oauth1_token():
             await db_session.save_oauth_token('twitter_oauth1', token)
 
 
+def get_user_fields():
+    return 'id,name,profile_image_url,description,verified,entities'
+
+
+def api_data_to_twitter_account(data: dict):
+    return TwitterAccount(
+        user_id=int(data['id']),
+        handle=data['username'],
+        name=data['name'],
+        profile_image_url=data['profile_image_url'],
+        lightning_address=scrape_lightning_address(data['description']),
+        last_fetched_at=datetime.utcnow(),
+    )
+
+
 async def fetch_twitter_author(handle: str | None = None, user_id: int | None = None) -> TwitterAccount:
     async with make_noauth_client() as client:
         if handle is not None:
@@ -215,15 +242,13 @@ async def fetch_twitter_author(handle: str | None = None, user_id: int | None = 
             path = f'users/{user_id}'
         else:
             raise ValueError("One of handle or user_id should be provided")
-        data = await api_get(client, path, params={'user.fields': 'id,name,profile_image_url,description'})
-        return TwitterAccount(
-            user_id=int(data['id']),
-            handle=data['username'],
-            name=data['name'],
-            profile_image_url=data['profile_image_url'],
-            lightning_address=scrape_lightning_address(data['description']),
-            last_fetched_at=datetime.utcnow(),
-        )
+        data: dict = await api_get(client, path, params={'user.fields': get_user_fields()})
+        return api_data_to_twitter_account(data)
+
+
+async def fetch_twitter_me(client) -> TwitterAccount:
+    data: dict = await api_get(client, 'users/me', params={'user.fields': get_user_fields()})
+    return api_data_to_twitter_account(data)
 
 
 @dataclass
@@ -489,7 +514,7 @@ async def test_upload_media():
 
 @register_command
 async def fetch_twitter_conversations(token: str):
-    oauth2_ctx = make_oauth2_client(token=json.loads(token))
+    oauth2_ctx = make_bot_oauth2_client(token=json.loads(token))
     async with oauth2_ctx as oauth2_client:
         print([conversation_id async for conversation_id in fetch_conversations(oauth2_client)])
 
@@ -512,7 +537,7 @@ async def run_twitter_bot(db: Database):
         logger.debug("Using tokens %s %s", oauth1_token, oauth2_token)
 
     oauth1_ctx = make_oauth1_client()
-    oauth2_ctx = make_oauth2_client(token=oauth2_token, update_token=partial(save_token, db))
+    oauth2_ctx = make_bot_oauth2_client(token=oauth2_token, update_token=partial(save_token, db))
     async with oauth1_ctx as oauth1_client, oauth2_ctx as oauth2_client, anyio.create_task_group() as tg:
         oauth1_client.token = oauth1_token
         while True:

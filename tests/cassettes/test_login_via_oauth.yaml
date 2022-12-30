@@ -1,0 +1,260 @@
+interactions:
+- request:
+    body: grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fv1%2Ftwitter%2Foauth-redirect&code=TFExNmJaZVR4b3NuOGxmTF9IbmVYRkt0ajVPN0RmS3VRdUFmbXFhcVNHNnp3OjE2NzIzNDAxNjUyODM6MTowOmFjOjE&code_verifier=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA%3D%3D
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '286'
+      content-type:
+      - application/x-www-form-urlencoded;charset=UTF-8
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.1
+    method: POST
+    uri: https://api.twitter.com/2/oauth2/token
+  response:
+    content: '{"token_type":"bearer","expires_in":7200,"access_token":"QTBBc3F2YzNBcUtENXowbFhubF85R1hvczhJbXFoa3paTjZoVmJJT1ItcFNCOjE2NzIzNDAxNzA4MjU6MToxOmF0OjE","scope":"users.read
+      tweet.read"}'
+    headers:
+      cache-control:
+      - no-cache, no-store, must-revalidate, pre-check=0, post-check=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '187'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Thu, 29 Dec 2022 18:56:10 GMT
+      expires:
+      - Tue, 31 Mar 1981 05:00:00 GMT
+      last-modified:
+      - Thu, 29 Dec 2022 18:56:10 GMT
+      perf:
+      - '7626143928'
+      pragma:
+      - no-cache
+      server:
+      - tsa_o
+      set-cookie:
+      - guest_id=v1%3A167234017024833987; Max-Age=34214400; Expires=Mon, 29 Jan 2024
+        18:56:10 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      strict-transport-security:
+      - max-age=631138519
+      x-connection-hash:
+      - 7d02bbac38eea53c608b90bc4048d1af7306b030ff74484fa1af7ec88780d3d4
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-response-time:
+      - '688'
+      x-transaction-id:
+      - b7f8d2e6d1e7050a
+      x-twitter-response-tags:
+      - BouncerCompliant
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.1
+    method: GET
+    uri: https://api.twitter.com/2/users/me?user.fields=id%2Cname%2Cprofile_image_url%2Cdescription%2Cverified%2Centities
+  response:
+    content: '{"data":{"id":"1591008723912343553","name":"Nikolay Bryskin","verified":false,"description":"","username":"Bryskin2","profile_image_url":"https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"}}'
+    headers:
+      api-version:
+      - '2.59'
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '180'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Thu, 29 Dec 2022 18:56:11 UTC
+      perf:
+      - '7626143928'
+      server:
+      - tsa_o
+      set-cookie:
+      - guest_id=v1%3A167234017127479197; Max-Age=34214400; Expires=Mon, 29 Jan 2024
+        18:56:11 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      strict-transport-security:
+      - max-age=631138519
+      x-access-level:
+      - read
+      x-connection-hash:
+      - 0ff90816c66dde2238fe0391deadbb507154875fbb45442f091b114df184cc73
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '75'
+      x-rate-limit-remaining:
+      - '73'
+      x-rate-limit-reset:
+      - '1672340462'
+      x-response-time:
+      - '154'
+      x-transaction-id:
+      - 08cd5489f58158d5
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fv1%2Ftwitter%2Foauth-redirect&code=ZTRnTkV5M014UXF2cmV1QWowSGVfaDZUY1dxSjNxSEZxSWQzRkJwWTFpU05fOjE2NzIzNDAxNzQxNzg6MTowOmFjOjE&code_verifier=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA%3D%3D
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '286'
+      content-type:
+      - application/x-www-form-urlencoded;charset=UTF-8
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.1
+    method: POST
+    uri: https://api.twitter.com/2/oauth2/token
+  response:
+    content: '{"token_type":"bearer","expires_in":7200,"access_token":"LXp3WVdFYV93UHhrWDVubGRkVE9uNXFuNHRCaTRjeXRZM2ZzcThJZTVOTVdMOjE2NzIzNDAxNzg5MTQ6MToxOmF0OjE","scope":"users.read
+      tweet.read"}'
+    headers:
+      cache-control:
+      - no-cache, no-store, must-revalidate, pre-check=0, post-check=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '188'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Thu, 29 Dec 2022 18:56:18 GMT
+      expires:
+      - Tue, 31 Mar 1981 05:00:00 GMT
+      last-modified:
+      - Thu, 29 Dec 2022 18:56:18 GMT
+      perf:
+      - '7626143928'
+      pragma:
+      - no-cache
+      server:
+      - tsa_o
+      set-cookie:
+      - guest_id=v1%3A167234017860636282; Max-Age=34214400; Expires=Mon, 29 Jan 2024
+        18:56:18 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      strict-transport-security:
+      - max-age=631138519
+      x-connection-hash:
+      - b084e4894ae2bde846aa9b5aa99314447b03da0141a87e25628ff7e7830a7391
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-response-time:
+      - '415'
+      x-transaction-id:
+      - 26c7943bae2f627a
+      x-twitter-response-tags:
+      - BouncerCompliant
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.1
+    method: GET
+    uri: https://api.twitter.com/2/users/me?user.fields=id%2Cname%2Cprofile_image_url%2Cdescription%2Cverified%2Centities
+  response:
+    content: '{"data":{"name":"Nikolay Bryskin","profile_image_url":"https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png","description":"","id":"1591008723912343553","username":"Bryskin2","verified":false}}'
+    headers:
+      api-version:
+      - '2.59'
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '182'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Thu, 29 Dec 2022 18:56:19 UTC
+      perf:
+      - '7626143928'
+      server:
+      - tsa_o
+      set-cookie:
+      - guest_id=v1%3A167234017914388684; Max-Age=34214400; Expires=Mon, 29 Jan 2024
+        18:56:19 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      strict-transport-security:
+      - max-age=631138519
+      x-access-level:
+      - read
+      x-connection-hash:
+      - 44a9d5d1625f062c31abd6d1ef9da6ebaa840b3827bb7dd7b8d21b4957cfdc86
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '75'
+      x-rate-limit-remaining:
+      - '72'
+      x-rate-limit-reset:
+      - '1672340462'
+      x-response-time:
+      - '141'
+      x-transaction-id:
+      - 20dd246e3ff08ba7
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 200
+version: 1

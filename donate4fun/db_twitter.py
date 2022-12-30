@@ -1,11 +1,11 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import select, update, func, delete
 from sqlalchemy.dialects.postgresql import insert
 
 from .models import TwitterAccount, TwitterTweet, Donator, TwitterAccountOwned
-from .db_models import TwitterAuthorDb, TwitterTweetDb, OAuthTokenDb, TwitterAuthorLink, DonationDb
+from .db_models import TwitterAuthorDb, TwitterTweetDb, OAuthTokenDb, TwitterAuthorLink, DonationDb, DonatorDb
 from .db_utils import insert_on_conflict_update
 
 
@@ -37,23 +37,43 @@ class TwitterDbMixin:
             id_ = resp.scalar()
         author.id = id_
 
-    async def query_donator_twitter_accounts(self, donator_id: UUID) -> list[TwitterAccount]:
+    async def query_donator_twitter_accounts(self, donator_id: UUID) -> list[TwitterAccountOwned]:
         result = await self.execute(
-            select(TwitterAuthorDb)
+            select(*TwitterAuthorDb.__table__.columns, func.bool_or(TwitterAuthorLink.via_oauth).label('via_oauth'))
             .join(TwitterAuthorLink, TwitterAuthorDb.id == TwitterAuthorLink.twitter_author_id)
             .where(TwitterAuthorLink.donator_id == donator_id)
+            .group_by(TwitterAuthorDb.id)
         )
-        return [TwitterAccount.from_orm(obj) for obj in result.unique().scalars()]
+        return [TwitterAccountOwned(**obj) for obj in result.all()]
 
-    async def link_twitter_account(self, twitter_author: TwitterAccount, donator: Donator):
+    async def link_twitter_account(self, twitter_author: TwitterAccount, donator: Donator, via_oauth: bool):
+        """
+        Links Twitter author to the donator account.
+        Returns True if new link is created, False otherwise
+        """
+        # Do no use save_donator because it overwrites fields like lnauth_pubkey which could be uninitialized in `donator`
         await self.execute(
+            insert(DonatorDb)
+            .values(**donator.dict(exclude={'connected'}))
+            .on_conflict_do_nothing()
+        )
+        result = await self.execute(
             insert(TwitterAuthorLink)
             .values(
                 twitter_author_id=twitter_author.id,
                 donator_id=donator.id,
+                via_oauth=via_oauth,
             )
-            .on_conflict_do_nothing()
+            .on_conflict_do_update(
+                index_elements=[TwitterAuthorLink.donator_id, TwitterAuthorLink.twitter_author_id],
+                set_={TwitterAuthorLink.via_oauth: TwitterAuthorLink.via_oauth | via_oauth},
+                where=(
+                    (TwitterAuthorLink.donator_id == donator.id)
+                    & (TwitterAuthorLink.twitter_author_id == twitter_author.id)
+                )
+            )
         )
+        return result.rowcount == 1
 
     async def query_twitter_account(self, owner_id: UUID | None = None, **filter_by) -> TwitterAccountOwned:
         owner_links = select(TwitterAuthorLink).where(
@@ -105,6 +125,16 @@ class TwitterDbMixin:
             .where(*filters)
         )
         return [TwitterAccount.from_orm(row) for row in result.scalars()]
+
+    async def unlink_twitter_account(self, account_id: UUID, owner_id: UUID):
+        await self.execute(
+            delete(TwitterAuthorLink)
+            .where(
+                (TwitterAuthorLink.twitter_author_id == account_id)
+                & (TwitterAuthorLink.donator_id == owner_id)
+            )
+        )
+        await self.object_changed('donator', owner_id)
 
 
 class OAuthTokenDbMixin:

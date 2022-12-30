@@ -1,0 +1,12 @@
+json:
+  balance: 0
+  handle: handle
+  id: 00000000-0000-0000-0000-000000000001
+  is_my: false
+  last_fetched_at: '2022-02-02T22:22:22+00:00'
+  lightning_address: null
+  name: null
+  profile_image_url: null
+  total_donated: 0
+  user_id: 123
+status_code: 200

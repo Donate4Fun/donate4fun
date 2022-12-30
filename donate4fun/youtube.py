@@ -228,12 +228,12 @@ async def fetch_youtube_channel(aiogoogle, youtube, channel_id: str) -> YoutubeC
     )
 
 
-async def fetch_user_channel(request, code: str) -> ChannelInfo:
+async def fetch_user_channel(code: str) -> ChannelInfo:
     async with Aiogoogle() as aiogoogle:
         full_user_creds = await aiogoogle.oauth2.build_user_creds(
             grant=code,
             client_creds=dict(
-                redirect_uri=f'{settings.base_url}/api/v1/youtube/auth-redirect',
+                redirect_uri=f'{settings.base_url}/api/v1/youtube/oauth-redirect',
                 **settings.youtube.oauth.dict(),
             ),
         )

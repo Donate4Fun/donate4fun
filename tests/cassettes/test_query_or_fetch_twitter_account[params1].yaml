@@ -6,8 +6,6 @@ interactions:
       - '*/*'
       accept-encoding:
       - gzip, deflate
-      authorization:
-      - Bearer AAAAAAAAAAAAAAAAAAAAAM2SjQEAAAAATvwK3CA%2FZZLPbXjRTV9JuYyhNbY%3DQEktpAB2BYRBtioRryYjjHOEKjvSb1HR26PjONkefPfdFmuR57
       connection:
       - keep-alive
       host:
@@ -15,13 +13,13 @@ interactions:
       user-agent:
       - python-httpx/0.23.1
     method: GET
-    uri: https://api.twitter.com/2/users/12345?user.fields=id%2Cname%2Cprofile_image_url%2Cdescription
+    uri: https://api.twitter.com/2/users/12345?user.fields=id%2Cname%2Cprofile_image_url%2Cdescription%2Cverified%2Centities
   response:
-    content: '{"data":{"username":"harperreed","name":"ID 12345","description":"ID
-      12345","id":"12345","profile_image_url":"https://pbs.twimg.com/profile_images/58849851/harper_4_normal.jpg"}}'
+    content: '{"data":{"name":"ID 12345","profile_image_url":"https://pbs.twimg.com/profile_images/58849851/harper_4_normal.jpg","description":"ID
+      12345","id":"12345","username":"harperreed","verified":false,"entities":{"url":{"urls":[{"start":0,"end":22,"url":"http://t.co/2H67IeuXKZ","expanded_url":"http://www.harperrules.com","display_url":"harperrules.com"}]}}}}'
     headers:
       api-version:
-      - '2.55'
+      - '2.59'
       cache-control:
       - no-cache, no-store, max-age=0
       content-disposition:
@@ -29,24 +27,24 @@ interactions:
       content-encoding:
       - gzip
       content-length:
-      - '154'
+      - '247'
       content-type:
       - application/json; charset=utf-8
       date:
-      - Tue, 06 Dec 2022 19:34:03 UTC
+      - Thu, 29 Dec 2022 16:41:06 UTC
       perf:
       - '7626143928'
       server:
       - tsa_o
       set-cookie:
-      - guest_id=v1%3A167035524349468967; Max-Age=34214400; Expires=Sat, 06 Jan 2024
-        19:34:03 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      - guest_id=v1%3A167233206649132512; Max-Age=34214400; Expires=Mon, 29 Jan 2024
+        16:41:06 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
       strict-transport-security:
       - max-age=631138519
       x-access-level:
       - read
       x-connection-hash:
-      - bdf209ba5035167172ab60161e07dd169d561557188552dd500cfb2783ba8773
+      - 60c754c448e368e95e8782b038b8b5263999790ecc91ebb1402c6ab1068fe508
       x-content-type-options:
       - nosniff
       x-frame-options:
@@ -54,13 +52,13 @@ interactions:
       x-rate-limit-limit:
       - '300'
       x-rate-limit-remaining:
-      - '299'
+      - '298'
       x-rate-limit-reset:
-      - '1670356143'
+      - '1672332821'
       x-response-time:
-      - '124'
+      - '133'
       x-transaction-id:
-      - a466151c0a1b22c5
+      - 4398fed79738096f
       x-xss-protection:
       - '0'
     http_version: HTTP/1.1

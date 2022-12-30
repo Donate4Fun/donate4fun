@@ -1,7 +1,7 @@
 import io
 import asyncio
 import logging
-from base64 import b64encode
+from base64 import b64encode, b64decode
 from contextvars import ContextVar
 from contextlib import contextmanager, asynccontextmanager
 from functools import wraps
@@ -157,3 +157,11 @@ def addLoggingLevel(levelName, levelNum, methodName=None):
 
 
 addLoggingLevel('TRACE', 5, 'trace')
+
+
+def to_base64(data: bytes) -> str:
+    return b64encode(data).decode()
+
+
+def from_base64(data: str) -> bytes:
+    return b64decode(data)

@@ -1,4 +1,6 @@
 import asyncio
+import secrets
+from uuid import uuid4, UUID
 from contextvars import ContextVar
 
 import anyio
@@ -6,6 +8,7 @@ import pytest
 
 from donate4fun.core import as_task
 from donate4fun.types import LightningAddress
+from donate4fun.models import OAuthState, WithdrawalToken
 
 
 async def test_anyio():
@@ -80,3 +83,47 @@ async def test_context_leak(async_fixture):
 @pytest.mark.parametrize('text', ['⚡ BitFrankie@zbd.gg'])
 async def test_parse_lightning_address(text: str):
     assert LightningAddress.parse(text) != None  # noqa
+
+
+async def test_jws(settings):
+    orig = WithdrawalToken(withdrawal_id=uuid4())
+    new = WithdrawalToken.from_jwt(orig.to_jwt())
+    assert new == orig
+
+
+async def test_jwe(settings):
+    orig_state = OAuthState(
+        last_url='http://some-url.com/some-long-path-that-could-be-here',
+        donator_id=uuid4(), code_verifier=secrets.token_urlsafe(43),
+    )
+    token: str = orig_state.to_jwe()
+    new_state = OAuthState.from_jwe(token)
+    assert new_state == orig_state
+
+
+async def test_encrypted_jwt(settings):
+    orig_state = OAuthState(
+        last_url='http://localhost:5173/donator/f28b5bc4-1946-45f7-a7dd-33c0ae002465',
+        donator_id=uuid4(), code_verifier=secrets.token_urlsafe(32),
+    )
+    token: str = orig_state.to_encrypted_jwt()
+    assert len(token) <= 500, "Twitter requires state be smaller than 500 symbols"
+    new_state = OAuthState.from_encrypted_jwt(token)
+    assert new_state == orig_state
+
+
+async def test_jwt_is_immutable(settings):
+    state = OAuthState(last_url='http://a.com', donator_id=UUID(int=0), code_verifier=b'\x00' * 43)
+    assert state.to_jwt() == state.to_jwt()
+
+
+async def test_encrypted_jwt_is_immutable(settings, monkeypatch):
+    monkeypatch.setattr('secrets.token_bytes', lambda size: b'\x00' * size)
+    state = OAuthState(last_url='http://a.com', donator_id=UUID(int=0), code_verifier=b'\x00' * 43)
+    assert state.to_encrypted_jwt() == state.to_encrypted_jwt()
+
+
+async def test_jwe_is_immutable(settings, monkeypatch):
+    monkeypatch.setattr('secrets.token_bytes', lambda size: b'\x00' * size)
+    state = OAuthState(last_url='http://a.com', donator_id=UUID(int=0), code_verifier=b'\x00' * 43)
+    assert state.to_jwe() == state.to_jwe()

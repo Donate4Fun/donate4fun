@@ -1,6 +1,7 @@
 <script>
   import { link } from "svelte-navigator";
   import ModalPopup from "$lib/ModalPopup.svelte";
+  import SocialSigninButton from "$lib/SocialSigninButton.svelte";
 
   export let show;
 </script>
@@ -9,14 +10,8 @@
   <div class="container">
     <h1>Where did you receive a donation?</h1>
     <div class="list">
-      <a class="item" use:link on:click={() => show = false} href="/youtube/prove">
-        <img alt=youtube src="/static/youtube.svg">
-        <div class="text">YouTube</div>
-      </a>
-      <a class="item" use:link on:click={() => show = false} href="/twitter/prove">
-        <img alt=twitter src="/static/twitter.svg">
-        <div class="text">Twitter</div>
-      </a>
+      <SocialSigninButton type="youtube">Claim from YouTube</SocialSigninButton>
+      <SocialSigninButton type="twitter">Claim from Twitter</SocialSigninButton>
     </div>
   </div>
 </ModalPopup>
@@ -37,23 +32,6 @@ h1 {
 .list {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
-}
-.item {
-  display: flex;
-  justify-content: start;
-  align-items: center;
-  padding: 14px 36px 14px 0px;
-  gap: 16px;
-}
-.item .text {
-  font-weight: 600;
-  font-size: 16px;
-  line-height: 22px;
-}
-.item img {
-  min-height: 20px;
-  min-width: 32px;
+  gap: 32px;
 }
 </style>

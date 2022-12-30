@@ -73,13 +73,13 @@
       </div>
       {#if itsMe}
         <div class="linked">
-          <LinkedItems let:item={channel} basePath="youtube" transferPath="channel">
-            <div class="linked-item">
+          <LinkedItems let:item={channel} basePath="youtube" transferPath="channel" name="YouTube">
+            <div class="linked-item" slot="item">
               <YoutubeChannel linkto="withdraw" channel={channel} logo --gap=16px />
             </div>
           </LinkedItems>
-          <LinkedItems let:item={account} basePath="twitter" transferPath="account">
-            <div class="linked-item">
+          <LinkedItems let:item={account} basePath="twitter" transferPath="account" name="Twitter">
+            <div class="linked-item" slot="item">
               <TwitterAccount account={account} --gap=16px />
             </div>
           </LinkedItems>
