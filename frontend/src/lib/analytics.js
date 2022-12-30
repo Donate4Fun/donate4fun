@@ -12,10 +12,10 @@ export const trackingEnabled = writableStorage('track', null);
 const websiteOnlyPlugins = isInsideExtension() ? [] : [googleAnalytics({
   measurementIds: ['G-K9B229WW3F'],
 })];
-const plugins = import.meta.env.DEV ? [] : [
+const plugins = /*import.meta.env.DEV ? [] : */[
   plausiblePlugin({
     apiHost: "/proxy/event",
-    trackLocalhost: true,
+    trackLocalhost: false,
   }),
   postHog({
     token: 'phc_2CphDSfOn61NrqYZnloxHWpwFFjd4mHxUtZwcwrogC0',
@@ -26,6 +26,7 @@ const plugins = import.meta.env.DEV ? [] : [
       persistence: 'memory',
       disable_cookie: true,
       disable_session_recording: true,
+      autocapture: false,
     },
   }),
 ];
