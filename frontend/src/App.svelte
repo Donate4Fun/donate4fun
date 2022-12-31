@@ -40,7 +40,13 @@
     }
   });
 
-  onMount(analytics.page);
+  onMount(() => {
+    analytics.page();
+    const url = new URL(window.location.href);
+    const error = url.searchParams.get('error');
+    if (error !== null)
+      notify("Error", error, "error");
+  });
 
   function onNavigate(event) {
     console.log("onNavigate", event);
