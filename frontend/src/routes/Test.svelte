@@ -5,6 +5,7 @@
   import AmountButton from "$lib/AmountButton.svelte";
   import LandingButton from "$lib/LandingButton.svelte";
   import ServiceLinkButton from "$lib/ServiceLinkButton.svelte";
+  import HoldButton from "$lib/HoldButton.svelte";
   import Spinner from "$lib/Spinner.svelte";
   import Loader from "$lib/Loader.svelte";
   import SocialUserpic from "$lib/SocialUserpic.svelte";
@@ -24,6 +25,8 @@
 <div>
   <SocialUserpic social="twitter" src="https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_x96.png" />
   <SocialUserpic social="youtube" src="https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_x96.png" />
+  <HoldButton on:click={async () => {notify("done"); await sleep(1000);}}>Hold me</HoldButton>
+  <Button on:click={async () => await sleep(1000)}>Sleep 1000</Button>
   <Button on:click={() => {notify(`default title ${i}`, 'default message', 'info', 15000); i++;}}>notify</Button>
   <Button on:click={() => {return new Promise((resolve_) => {resolve = resolve_;})}}>Start Loader</Button>
   <Button on:click={() => {resolve && resolve();}}>Stop Loader</Button>

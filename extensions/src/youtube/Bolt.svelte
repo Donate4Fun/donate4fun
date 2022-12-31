@@ -9,7 +9,7 @@
   import Bolt from "$lib/Bolt.svelte";
   import { getVideoId, postComment, isShorts } from "./youtube.js";
   import CommentTip from "./CommentTip.svelte";
-  import HoldButton from "$lib/HoldButton.svelte";
+  import HoldAmountButton from "$lib/HoldAmountButton.svelte";
 
 	export let text = '…';
   export let loading = true;
@@ -114,7 +114,7 @@
 
 <div class="root" class:shorts class:full={!shorts}>
   <div class="button" disabled={donating}>
-    <HoldButton bind:amount={amount} on:release={doDonate}>
+    <HoldAmountButton bind:amount={amount} on:release={doDonate}>
       {#if confetti}
         <Confetti />
       {/if}
@@ -133,7 +133,7 @@
           Donate sats
         </div>
       {/if}
-    </HoldButton>
+    </HoldAmountButton>
   </div>
   {#if showCommentTip}
     <CommentTip bind:element={commentTipElement} amount={donation.amount} on:comment={onCommentClick} on:click-outside={() => {showCommentTip = false;}} />

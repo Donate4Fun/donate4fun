@@ -7,33 +7,7 @@
   export let link = null;
   export let target = null;
   export let title = null;
-
-  let spin = false;
-
-  // This dispatcher returns promise
-  function createAwaitableDispatcher() {
-    const component = get_current_component();
-
-    return (type, detail) => {
-      const callbacks = component.$$.callbacks[type];
-
-      if (callbacks) {
-        // TODO are there situations where events could be dispatched
-        // in a server (non-DOM) environment?
-        const arr = [];
-        const hasCallbacks = !!callbacks.length;
-        const event = custom_event(type, detail);
-        callbacks.slice().forEach(fn => {
-          const res = fn.call(component, event);
-          if (res instanceof Promise) {
-            arr.push(res);
-          }
-        });
-        return Promise.all(arr).then(() => hasCallbacks);
-      }
-      return new Promise((resolve) => resolve(false));
-    };
-  }
+  export let spin = false;
 
   const dispatchClick = clickDispatcher();
 
@@ -59,9 +33,10 @@
     <div class="loader">
       <Loader />
     </div>
-  {:else}
-    <slot />
   {/if}
+  <div class="wrapper" class:hidden={spin}>
+    <slot />
+  </div>
 </button>
 
 <style>
@@ -100,5 +75,11 @@ button:disabled {
   display: flex;
   align-items: center;
   height: 1.219em; /* try to emulate 1lh (line-height) unit */
+}
+.wrapper {
+  display: contents;
+}
+.wrapper.hidden {
+  display: none;
 }
 </style>

@@ -5,7 +5,7 @@
   import { LottiePlayer } from '@lottiefiles/svelte-lottie-player';
 
   import Bolt from "$lib/Bolt.svelte";
-  import HoldButton from "$lib/HoldButton.svelte";
+  import HoldAmountButton from "$lib/HoldAmountButton.svelte";
   import AmountButton from "$lib/AmountButton.svelte";
   import { cLog, cInfo } from "$lib/log.js";
   import { worker, donate, getStatic, waitElement, pageScript, selectByPattern } from "$extlib/common.js";
@@ -110,7 +110,7 @@
   {:else if donating}
     <div class="donating-bolt"><Bolt /></div>
   {:else}
-    <HoldButton bind:this={holdButton} bind:amount={amount} on:release={doDonate}>
+    <HoldAmountButton bind:this={holdButton} bind:amount={amount} on:release={doDonate}>
       {#if amount}
         <div class="amount-container">
           ⚡ <span class="amount">{amount.toFixed()}</span> sats
@@ -140,7 +140,7 @@
           Hold to donate more
         </div>
       {/if}
-    </HoldButton>
+    </HoldAmountButton>
   {/if}
 </div>
 

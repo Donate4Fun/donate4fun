@@ -155,7 +155,6 @@
   flex-direction: column;
   align-items: center;
   gap: 44px;
-  overflow-x: scroll;
   width: 100%;
 }
 .linked::-webkit-scrollbar, .history::-webkit-scrollbar {

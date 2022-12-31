@@ -3,7 +3,7 @@
   import { asyncable } from 'svelte-asyncable';
 
   import Button from "$lib/Button.svelte";
-  import GrayButton from "$lib/GrayButton.svelte";
+  import HoldButton from "$lib/HoldButton.svelte";
   import Amount from "$lib/Amount.svelte";
   import SocialSigninButton from "$lib/SocialSigninButton.svelte";
   import api from "$lib/api.js";
@@ -51,7 +51,12 @@
         <div class="withdraw-button">
           <Button disabled={item.balance === 0} on:click={() => collect(item)} --border-width=0 --padding="0 24px">Claim</Button>
           {#if item.via_oauth}
-            <GrayButton on:click={() => unlink(item)} --padding="0 24px">Unlink</GrayButton>
+            <HoldButton
+              --background-color=#E9E9E9
+              --fill-color=red
+              --border-width=0
+              on:click={() => unlink(item)}
+            ><span class="unlink">Unlink</span></HoldButton>
           {/if}
         </div>
       </li>
@@ -79,11 +84,6 @@
   font-weight: 500;
   line-height: 24px;
   font-size: 18px;
-}
-.header > a {
-  font-weight: 700;
-  font-size: 16px;
-  line-height: 19px;
 }
 ul {
   display: flex;
@@ -113,5 +113,8 @@ li.add {
   flex-grow: 1;
   display: flex;
   gap: 8px;
+}
+.unlink {
+  padding: 0 24px;
 }
 </style>
