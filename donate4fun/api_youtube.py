@@ -6,6 +6,7 @@ from fastapi import Depends, APIRouter, Request, HTTPException
 from fastapi.responses import RedirectResponse
 from aiogoogle import Aiogoogle
 from sqlalchemy.orm.exc import NoResultFound
+from furl import furl
 
 from .api_utils import get_donator, load_donator, get_db_session
 from .models import (
@@ -91,17 +92,13 @@ async def auth_google(
             f"User that initiated Google Auth {donator.id} is not the current user {auth_state.donator_id}, rejecting auth"
         )
     if error:
-        return {
-            'error': error,
-            'error_description': error_description
-        }
+        return RedirectResponse(furl(auth_state.last_url).add(dict(error=error, message=error_description)).url)
     elif code:
         try:
             channel_info: ChannelInfo = await fetch_user_channel(code)
-        except Exception:
+        except Exception as exc:
             logger.exception("Failed to fetch user's channel")
-            # TODO: add exception info to last_url hash param and show it using toast
-            return RedirectResponse(auth_state.last_url)
+            return RedirectResponse(furl(auth_state.last_url).add(dict(error=str(exc))).url)
         else:
             channel: YoutubeChannel = await query_or_fetch_youtube_channel(channel_id=channel_info.id, db=db_session)
             owned_channel: YoutubeChannelOwned = await db_session.query_youtube_channel(channel.id)
@@ -110,7 +107,7 @@ async def auth_google(
             else:
                 await db_session.link_youtube_channel(channel, donator, via_oauth=True)
             request.session['connected'] = True
-            return RedirectResponse(f'/youtube/{channel.id}/owner')
+            return RedirectResponse(auth_state.last_url)
     else:
         # Should either receive a code or an error
         raise Exception("Something's probably wrong with your callback")

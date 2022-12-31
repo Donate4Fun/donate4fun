@@ -5,6 +5,7 @@ from uuid import UUID
 import posthog
 from fastapi import Depends, APIRouter, HTTPException, Request
 from fastapi.responses import RedirectResponse
+from furl import furl
 
 from .models import TwitterAccount, TransferResponse, Donator, TwitterAccountOwned, Donation, OAuthState, OAuthResponse
 from .types import ValidationError
@@ -84,20 +85,16 @@ async def auth_redirect(
             f"User that initiated Google Auth {donator.id} is not the current user {auth_state.donator_id}, rejecting auth"
         )
     if error:
-        return {
-            'error': error,
-            'error_description': error_description
-        }
+        return RedirectResponse(furl(auth_state.last_url).add(dict(error=error, message=error_description)).url)
     elif code:
         async with make_link_oauth2_client() as client:
             token: dict = await client.fetch_token(code=code, code_verifier=auth_state.code_verifier)
         try:
             async with make_link_oauth2_client(token=token) as client:
                 account: TwitterAccount = await fetch_twitter_me(client)
-        except Exception:
+        except Exception as exc:
             logger.exception("Failed to fetch user's account")
-            # TODO: add exception info to last_url hash param and show it using toast
-            return RedirectResponse(auth_state.last_url)
+            return RedirectResponse(furl(auth_state.last_url).add(dict(error=str(exc))).url)
         else:
             await db_session.save_twitter_account(account)
             owned_account: TwitterAccountOwned = await db_session.query_twitter_account(user_id=account.user_id)
@@ -106,7 +103,7 @@ async def auth_redirect(
             else:
                 await db_session.link_twitter_account(account, donator, via_oauth=True)
             request.session['connected'] = True
-            return RedirectResponse(f'/twitter/{account.id}/owner')
+            return RedirectResponse(auth_state.last_url)
     else:
         # Should either receive a code or an error
         raise Exception("Something's probably wrong with your callback")
