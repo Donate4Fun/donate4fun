@@ -1,12 +1,5 @@
 #!/bin/sh -e
 
-# deinit
-(cd polar && docker-compose down)
-rm -rf polar/volumes
-
-# init
-cp -rf polar/volumes-ref polar/volumes
-(cd polar && docker-compose up -d)
 while true; do
   ./scripts/lncli.sh bob getinfo && break || true
   sleep 0.1
