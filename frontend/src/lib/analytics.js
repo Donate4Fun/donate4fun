@@ -26,7 +26,7 @@ const plugins = /*import.meta.env.DEV ? [] : */[
       persistence: 'memory',
       disable_cookie: true,
       disable_session_recording: true,
-      autocapture: false,
+      autocapture: !isInsideExtension(),
     },
   }),
 ];
