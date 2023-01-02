@@ -97,18 +97,6 @@ optional = false
 python-versions = "*"
 
 [[package]]
-name = "ascii-magic"
-version = "1.6"
-description = "Converts pictures into ASCII art"
-category = "dev"
-optional = false
-python-versions = ">=3.5"
-
-[package.dependencies]
-colorama = "*"
-Pillow = "*"
-
-[[package]]
 name = "asgi-testclient"
 version = "0.3.1"
 description = "Test Clietn for ASGI web applications"
@@ -1883,7 +1871,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "4743a9e3bb1e6b4250b0665a7c082eaffb6064af7acbb6442328f216e2ca0add"
+content-hash = "067dd8e146b9acbf1e0c7ac4118af0aa9c51cd92c066afa2aabc056653bdaeb1"
 
 [metadata.files]
 aiofiles = [
@@ -1998,10 +1986,6 @@ anyio = [
 appnope = [
     {file = "appnope-0.1.3-py2.py3-none-any.whl", hash = "sha256:265a455292d0bd8a72453494fa24df5a11eb18373a60c7c0430889f22548605e"},
     {file = "appnope-0.1.3.tar.gz", hash = "sha256:02bd91c4de869fbb1e1c50aafc4098827a7a54ab2f39d9dcba6c9547ed920e24"},
-]
-ascii-magic = [
-    {file = "ascii_magic-1.6-py3-none-any.whl", hash = "sha256:937447d8677b7428856729c298c0264afd62fc2b8e7ff90c82000492cdc5f8d4"},
-    {file = "ascii_magic-1.6.tar.gz", hash = "sha256:7da5518f7368e73f11e2151a0c060804aa149e267b369b7ee7653fbd7b046a51"},
 ]
 asgi-testclient = []
 asgiref = [
