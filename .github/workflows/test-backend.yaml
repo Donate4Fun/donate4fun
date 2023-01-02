@@ -3,8 +3,9 @@ name: Test Backend
 on: push
 
 env:
-  lnd_version: v0.15.5-beta
-  bitcoin_version: 22.0
+  lnd_version: "v0.15.5-beta"
+  bitcoin_version: "22.0"
+  DEBIAN_FRONTEND: noninteractive
 
 jobs:
   test:
@@ -62,35 +63,44 @@ jobs:
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
-          installer-parallel: true
       - name: Load cached venv
         id: cached-poetry-dependencies
         uses: actions/cache@v3
         with:
           path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('poetry.lock') }}
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        # --no-ansi because of https://github.com/python-poetry/poetry/issues/7184
+        run: poetry install --no-interaction --no-root --no-ansi
+      - name: Load cached Playwright
+        id: cached-playwright
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}
+      - name: Install Playwright
+        run: |
+          source .venv/bin/activate
+          playwright install
       - name: sshd
+        # This is for debug only. Use `ssh root@localhost -p 12345` to connect
+        if: false
         run: |
           apt-get update
           apt-get install -y openssh-server
-          dpkg -L openssh-server
           mkdir -p /run/sshd
           ssh-keygen -A
-          echo 'root:ubuntu' | chpasswd
+          passwd -d root
           sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/g' /etc/ssh/sshd_config
-          env >> /root/.env
+          sed -i 's/#PermitEmptyPasswords no/PermitEmptyPasswords yes/g' /etc/ssh/sshd_config
+          env | sed -r 's/=(.*)$/="\1"/' >> /root/.ssh/environment
           /usr/sbin/sshd -p 12345 -D -o ListenAddress=0.0.0.0
-        env:
-          DEBIAN_FRONTEND: noninteractive
-
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
-        shell: bash
       - name: Run tests
+        # Set to false to regenerate caches regardless of test results
+        if: true
         run: |
           source .venv/bin/activate
           pytest
         env:
-          DONATE4FUN_CONFIG: config-test.yaml
+          DONATE4FUN_TEST_DB_URL: "postgresql+asyncpg://postgres:postgres@localhost/postgres"
