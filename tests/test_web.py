@@ -86,8 +86,17 @@ async def test_404(client):
     verify_response(response, 'twitter-404', 404)
 
 
-async def test_twitter_donation_image(client, settings, twitter_account, webapp, rich_donator):
+async def test_twitter_donation_image(client, settings, twitter_account, webapp, rich_donator, monkeypatch):
     login_to(client, settings, rich_donator)
+    # https://peter.sh/experiments/chromium-command-line-switches/
+    chromium_flags = [
+        '--disable-gpu',
+        '--font-render-hinting=none',
+        '--disable-skia-runtime-opts',
+        '--disable-font-subpixel-positioning',
+        '--disable-lcd-text',
+    ]
+    monkeypatch.setattr('donate4fun.screenshot.chromium_flags', lambda: chromium_flags)
     donate_response = await client.post(
         "/api/v1/donate",
         json=DonateRequest(

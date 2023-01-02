@@ -27,6 +27,10 @@ class ScreenshotError(Exception):
     pass
 
 
+def chromium_flags():
+    return ['--disable-gpu']
+
+
 class Screenshoter:
     def __init__(self, playwright):
         self.playwright = playwright
@@ -37,7 +41,7 @@ class Screenshoter:
         if self.browser is None or not self.browser.is_connected():
             if self.browser:
                 await self.browser.close()
-            self.browser = await self.playwright.chromium.launch(args=['--disable-gpu'])
+            self.browser = await self.playwright.chromium.launch(args=chromium_flags())
             logger.info("Started Chromium")
         return self.browser
 
