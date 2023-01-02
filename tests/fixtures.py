@@ -109,7 +109,8 @@ def event_loop():
 
 
 @pytest.fixture
-async def settings():
+async def settings(monkeypatch):
+    monkeypatch.setattr('donate4fun.settings.default_settings_file', lambda: 'config-test.yaml')
     with load_settings() as settings:
         settings.fastapi.debug = False  # We need to disable Debug Toolbar to avoid zero-division error (because of freezegun)
         settings.rollbar = None

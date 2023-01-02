@@ -120,8 +120,12 @@ class PostHogSettings(BaseModel):
     debug: bool = False
 
 
+def default_settings_file():
+    return 'config.yaml'
+
+
 def yaml_config_source(settings: BaseSettings) -> dict[str, Any]:
-    return yaml.safe_load(open(os.getenv('DONATE4FUN_CONFIG', 'config.yaml')))
+    return yaml.safe_load(open(os.getenv('DONATE4FUN_CONFIG', default_settings_file())))
 
 
 class Settings(BaseSettings):
