@@ -5,7 +5,7 @@ import psutil
 
 from donate4fun.models import YoutubeChannel, DonateRequest
 
-from tests.test_util import verify_response, check_response, login_to
+from tests.test_util import verify_response, check_response, login_to, mark_vcr
 from tests.fixtures import find_unused_port, app_serve
 
 
@@ -23,6 +23,7 @@ async def test_sitemap(client, db):
     verify_response(response, 'sitemap')
 
 
+@mark_vcr
 async def test_donate_redirect(client):
     response = await client.get('/d/UCk2OzObixhe_mbMfMQGLuJw')
     check_response(response, 302)

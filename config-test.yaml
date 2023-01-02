@@ -1,0 +1,102 @@
+youtube:
+  api_key: api_key
+  service_account_key_file: service-account.json
+  refresh_timeout: P1D  # https://en.wikipedia.org/wiki/ISO_8601#Durations
+  oauth:
+    client_id: client_id
+    client_secret: client_secret
+twitter:
+  bearer_token: bearer_token
+  greeting: ""
+  enable_bot: false
+  self_id: "123"
+  dm_check_interval: PT30S
+  refresh_timeout: P1D
+  oauth:
+    client_id: client_id
+    client_secret: client_secret
+    consumer_key: consumer_key
+    consumer_secret: consumer_secret
+lnd:
+  url: https://localhost:8081
+  tls_cert: polar/volumes/lnd/alice/tls.cert
+  macaroon_by_path: polar/volumes/lnd/alice/data/chain/bitcoin/regtest/admin.macaroon
+  lnurl_base_url: http://localhost:5173
+db:
+  url: postgresql+asyncpg://donate4fun@localhost/donate4fun
+  echo: false
+  connect_args:
+    timeout: 3
+hypercorn:
+  use_reloader: true
+  websocket_ping_interval: 2
+  access_log_format: '%(h)s %({X-Forwarded-For}i)s "%(R)s" %(L)s %(s)s %(b)s "%(f)s" "%(a)s"'
+  include_server_header: false
+lnurlp:
+  min_sendable_sats: 10
+  max_sendable_sats: 10_000_000
+server_name: 'dev'
+jwt_secret: secret
+min_withdraw: 10
+fee_limit: 10
+withdraw_timeout: 10
+cookie_secure: true
+cookie_http_only: false
+release: false
+base_url: http://localhost:5173
+frontend_port: 5173
+api_port: 8000
+fastapi:
+  debug: true
+  root_path: ""
+donator_name_seed: 30598
+ownership_message: "I confirm that donate 4 fun account {donator_id} could withdraw my donations."
+log:
+  version: 1
+  disable_existing_loggers: false
+  formatters:
+    std:
+      format: '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+  handlers:
+    stderr:
+      class: logging.StreamHandler
+      level: TRACE
+      formatter: std
+      stream: ext://sys.stderr
+  loggers:
+    donate4fun:
+      level: DEBUG
+    donate4fun.core:
+      level: DEBUG
+    donate4fun.twitter:
+      level: TRACE
+    donate4fun.screenshot:
+      level: TRACE
+    donate4fun.pubsub:
+      level: INFO
+    donate4fun.api:
+      level: TRACE
+    donate4fun.lnd:
+      level: DEBUG
+    donate4fun.settings:
+      level: INFO
+    tests:
+      level: DEBUG
+    asgi_testclient:
+      level: DEBUG
+    vcr:
+      level: WARNING
+    sqlalchemy.engine.Engine:
+      level: WARNING
+    sqlalchemy.pool:
+      level: WARNING
+    hypercorn:
+      level: DEBUG
+    asyncio:
+      level: INFO
+    posthog:
+      level: DEBUG
+  root:
+    level: DEBUG
+    propagate: true
+    handlers: [stderr]

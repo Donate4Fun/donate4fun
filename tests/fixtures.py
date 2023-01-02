@@ -113,8 +113,8 @@ async def settings():
     with load_settings() as settings:
         settings.fastapi.debug = False  # We need to disable Debug Toolbar to avoid zero-division error (because of freezegun)
         settings.rollbar = None
-        settings.bugsnag.enabled = False
-        settings.posthog.enabled = False
+        settings.bugsnag = None
+        settings.posthog = None
         settings.base_url = 'http://localhost:3000'
         settings.frontend_port = 3000
         yield settings

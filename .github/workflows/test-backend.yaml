@@ -1,0 +1,96 @@
+name: Test Backend
+
+on: push
+
+env:
+  lnd_version: v0.15.5-beta
+  bitcoin_version: 22.0
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - name: Load cached lncli
+        id: cached-lncli
+        uses: actions/cache@v3
+        with:
+          path: /usr/local/bin/lncli
+          key: lncli-${{ runner.os }}-${{ env.lnd_version }}
+      - if: steps.cached-lncli.outputs.cache-hit != 'true'
+        name: install-lncli
+        run: |
+          wget https://github.com/lightningnetwork/lnd/releases/download/${lnd_version}/lnd-linux-amd64-${lnd_version}.tar.gz -O - | tar -zxf - -C /usr/local/bin lnd-linux-amd64-${lnd_version}/lncli --strip-components 1
+      - name: Load cached bitcoin-cli
+        id: cached-bitcoin-cli
+        uses: actions/cache@v3
+        with:
+          path: /usr/local/bin/bitcoin-cli
+          key: bitcoin-cli-${{ runner.os }}-${{ env.bitcoin_version }}
+      - name: install-bitcoin-cli
+        if: steps.cached-bitcoin-cli.outputs.cache-hit != 'true'
+        run: |
+          wget https://bitcoin.org/bin/bitcoin-core-${bitcoin_version}/bitcoin-${bitcoin_version}-x86_64-linux-gnu.tar.gz -O - | tar -zxf - -C /usr/local/bin bitcoin-${bitcoin_version}/bin/bitcoin-cli --strip-components 2
+      - uses: actions/checkout@v3
+      - name: copy-volumes
+        run: cp -rf polar/volumes-ref polar/volumes
+      - uses: isbang/compose-action@v1.4.1
+        with:
+          compose-file: "polar/docker-compose.yml"
+          down-flags: "--volumes"
+      - name: init-polar
+        run: scripts/init-polar.sh
+        shell: bash
+      - name: Set up python
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: sshd
+        run: |
+          apt-get update
+          apt-get install -y openssh-server
+          dpkg -L openssh-server
+          mkdir -p /run/sshd
+          ssh-keygen -A
+          echo 'root:ubuntu' | chpasswd
+          sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/g' /etc/ssh/sshd_config
+          env >> /root/.env
+          /usr/sbin/sshd -p 12345 -D -o ListenAddress=0.0.0.0
+        env:
+          DEBIAN_FRONTEND: noninteractive
+
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+        shell: bash
+      - name: Run tests
+        run: |
+          source .venv/bin/activate
+          pytest
+        env:
+          DONATE4FUN_CONFIG: config-test.yaml

@@ -476,7 +476,7 @@ async def send_withdrawal(
             await db_session.finish_withdraw(withdrawal_id=withdrawal_id, fee_msat=result.fee_msat)
     except PayInvoiceError as exc:
         logger.exception("Failed to send withdrawal payment")
-        if settings.bugsnag.enabled:
+        if settings.bugsnag:
             bugsnag.notify(exc)
         async with db.session() as db_session:
             await db_session.notify(
@@ -485,7 +485,7 @@ async def send_withdrawal(
             )
     except Exception as exc:
         logger.exception("Internal error in send_withdrawal")
-        if settings.bugsnag.enabled:
+        if settings.bugsnag:
             bugsnag.notify(exc)
         raise
 

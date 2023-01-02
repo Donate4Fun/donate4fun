@@ -70,15 +70,32 @@ def as_task(func):
     @asynccontextmanager
     @wraps(func)
     async def manager(*args, **kwargs):
-        task = asyncio.create_task(log_exception(func(*args, **kwargs)))
-        try:
-            yield
-        finally:
-            task.cancel()
+        coro = func(*args, **kwargs)
+        started = asyncio.Event()
+        if hasattr(coro, '__aenter__'):
+            async def starter(coro):
+                try:
+                    async with coro:
+                        started.set()
+                finally:
+                    # In any case set `started` event to unfreeze waiter
+                    started.set()
+            coro = starter(coro)
+        else:
+            started.set()
+        task = asyncio.create_task(log_exception(coro))
+        await started.wait()
+        if task.done():
+            await task
+        else:
             try:
-                await task
-            except asyncio.CancelledError:
-                pass
+                yield task
+            finally:
+                task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
     return manager
 
 

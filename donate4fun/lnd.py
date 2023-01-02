@@ -8,10 +8,7 @@ from functools import cached_property
 from typing import Any, Literal
 from contextlib import asynccontextmanager
 
-import anyio
 import httpx
-from anyio import TASK_STATUS_IGNORED
-from anyio.abc import TaskStatus
 from lnpayencode import LnAddr
 from lnurl.helpers import _lnurl_decode
 from lnurl.models import LnurlResponseModel
@@ -85,7 +82,7 @@ class LndClient:
     async def request(self, api: str, method: str, **kwargs):
         async with httpx.AsyncClient(verify=self.settings.tls_cert or True) as client:
             url = f'{self.settings.url}{api}'
-            logger.trace(f"{method} {url}")
+            logger.trace("request: %s %s %s", method, url, kwargs)
             if self.invoice_macaroon:
                 kwargs['headers'] = {"Grpc-Metadata-macaroon": self.invoice_macaroon}
             async with client.stream(
@@ -93,7 +90,7 @@ class LndClient:
                 url=url,
                 **kwargs,
             ) as resp:
-                logger.debug(f"{method} {url} {resp.status_code}")
+                logger.debug("response: %s %s %d", method, url, resp.status_code)
                 if not resp.is_success:
                     await resp.aread()
                 resp.raise_for_status()
@@ -102,17 +99,22 @@ class LndClient:
     async def subscribe(self, api: str, **request: Data):
         # WORKAROUND: This should be after the request but
         # lnd does not return headers until the first event, so it deadlocks
-        logger.trace("subscribe %s", api)
+        logger.trace("subscribe %s %s", api, request)
 
+        @as_task
+        @asynccontextmanager
         async def request_impl(queue):
+            # FIXME: instead of this we should wait for a connection to be established, but httpx has no such event
+            await self.query_info()
+            yield
             async with self.request(api, method='GET', json=request, timeout=None) as resp:
                 async for line in resp.aiter_lines():
                     logger.trace("subscribe line %s", line)
                     await queue.put(json.loads(line))
 
-        async with anyio.create_task_group() as tg:
-            queue = asyncio.Queue()
-            tg.start_soon(request_impl, queue)
+        queue = asyncio.Queue()
+        async with request_impl(queue):
+            # FIXME: instead of this we should wait for a connection to be established, but httpx has no such event
             await asyncio.sleep(0.2)
             yield
             while result := await queue.get():
@@ -191,22 +193,25 @@ lnd = ContextualObject('lnd')
 async def monitor_invoices(lnd_client, db):
     while True:
         try:
-            await monitor_invoices_step(lnd_client, db)
+            async with monitor_invoices_step(lnd_client, db) as task:
+                await task
         except Exception as exc:
             logger.exception(f"Exception in monitor_invoices task: {exc}")
             await asyncio.sleep(5)
 
 
-async def monitor_invoices_step(lnd_client, db, *, task_status: TaskStatus = TASK_STATUS_IGNORED):
+@as_task
+@asynccontextmanager
+async def monitor_invoices_step(lnd_client, db):
     logger.debug("Start monitoring invoices")
     # FIXME: monitor only invoices created by this web worker to avoid conflicts between workers
     try:
         async for data in lnd_client.subscribe("/v1/invoices/subscribe"):
-            logger.debug(f"monitor_invoices {data}")
             if data is None:
-                task_status.started()
                 logger.debug("Connected to LND")
+                yield
                 continue
+            logger.debug("monitor_invoices %s", data)
             invoice: Invoice = Invoice(**data['result'])
             if invoice.state == 'SETTLED':
                 logger.debug(f"donation paid {data}")
