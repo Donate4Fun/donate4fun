@@ -1,6 +1,6 @@
 [![Telegram Chat](https://img.shields.io/static/v1?label=chat&message=Telegram&color=blue&logo=telegram)](https://t.me/donate4fun)
 [![Twitter Follow](https://img.shields.io/twitter/follow/donate4_fun?style=social)](https://twitter.com/donate4_fun)
-[![Website](https://img.shields.io/website/https/donate4.fun%2Fapi%2Fv1%2Fstatus)](https://donate4.fun)
+[![Website](https://img.shields.io/website?url=https%3A%2F%2Fdonate4.fun%2Fapi%2Fv1%2Fstatus)](https://donate4.fun)
 
 [![Chrome Web Store](https://img.shields.io/chrome-web-store/v/acckcppgcafhbdledejfiiaomafpjmgc?color=green&label=Chrome%20Extension&logo=google-chrome)](https://chrome.google.com/webstore/detail/donate4fun/acckcppgcafhbdledejfiiaomafpjmgc)
 [![Firefox Add-on](https://img.shields.io/amo/v/donate4fun?label=Firefox%20Addon&logo=firefox)](https://addons.mozilla.org/en-US/firefox/addon/donate4fun/)
