@@ -12,7 +12,7 @@ from anyio.abc import TaskStatus
 from sqlalchemy import update
 
 from donate4fun.api import DonateRequest, DonateResponse, WithdrawResponse, LnurlWithdrawResponse
-from donate4fun.lnd import monitor_invoices, LndClient, Invoice, lnd
+from donate4fun.lnd import monitor_invoices_step, LndClient, Invoice, lnd
 from donate4fun.models import Donation, Donator, SubscribeEmailRequest, YoutubeChannel, TwitterAccount
 from donate4fun.db import Notification
 from donate4fun.db_models import DonatorDb
@@ -90,7 +90,7 @@ async def test_fulfill(
     payment_request = PaymentRequest(donate_response.json()['payment_request'])
     check_donation_notification = check_notification(client, 'donation', donation_id)
     check_donator_notification = check_notification(client, 'donator', registered_donator.id)
-    async with monitor_invoices(lnd, db), check_donation_notification, check_donator_notification:
+    async with monitor_invoices_step(lnd, db), check_donation_notification, check_donator_notification:
         await payer_lnd.pay_invoice(payment_request)
     donation_response = await client.get(f"/api/v1/donation/{donation_id}")
     check_response(donation_response, 200)

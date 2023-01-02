@@ -11,7 +11,7 @@ from donate4fun.models import (
     PayInvoiceResult, DonationPaidRouteInfo, Donation,
 )
 from donate4fun.twitter import query_or_fetch_twitter_account
-from donate4fun.lnd import lnd, monitor_invoices, PayInvoiceError
+from donate4fun.lnd import lnd, monitor_invoices_step, PayInvoiceError
 from donate4fun.types import PaymentRequest, LightningAddress
 from donate4fun.db import db as db_var
 from donate4fun.settings import settings
@@ -108,7 +108,7 @@ async def test_donate_tweet_with_lightning_address(
         async with app_serve(app_wrapper, port):
             if use_rich_donator:
                 login_to(client, settings, rich_donator)
-            async with monitor_invoices(payer_lnd, db2):
+            async with monitor_invoices_step(payer_lnd, db2):
                 donate_response = DonateResponse(**check_response(await client.post(
                     "/api/v1/donate",
                     json=DonateRequest(

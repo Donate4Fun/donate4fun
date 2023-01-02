@@ -98,7 +98,6 @@ class FastApiSettings(BaseModel):
 
 
 class BugsnagSettings(BaseModel):
-    enabled: bool
     api_key: str | None
     release_stage: str | None
     app_version: str | None
@@ -110,17 +109,12 @@ class RollbarSettings(BaseModel):
     code_version: str
 
 
-class GoogleCloudLoggingSettings(BaseModel):
-    enabled: bool
-
-
 class LnurlpSettings(BaseModel):
     min_sendable_sats: int
     max_sendable_sats: int
 
 
 class PostHogSettings(BaseModel):
-    enabled: bool
     project_api_key: str
     host: str
     debug: bool = False
@@ -137,11 +131,11 @@ class Settings(BaseSettings):
     db: DbSettings
     log: LoggingConfig
     fastapi: FastApiSettings
-    bugsnag: BugsnagSettings
-    rollbar: RollbarSettings | None
-    google_cloud_logging: GoogleCloudLoggingSettings
+    bugsnag: BugsnagSettings | None = None
+    rollbar: RollbarSettings | None = None
+    google_cloud_logging: bool | None = None
+    posthog: PostHogSettings | None = None
     lnurlp: LnurlpSettings
-    posthog: PostHogSettings
     hypercorn: dict[str, Any]
     jwt_secret: str
     min_withdraw: int  # Limit in sats for claiming

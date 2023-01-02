@@ -5,9 +5,6 @@ ingress:
 backend:
   config:
     base_url: https://stage.donate4.fun
-    bugsnag:
-      enabled: false
-      release_stage: staging
     twitter:
       enable_bot: false
     rollbar:

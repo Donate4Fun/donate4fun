@@ -128,17 +128,17 @@ async def serve():
     pubsub_ = PubSubBroker()
     lnd_ = LndClient(settings.lnd)
     async with create_app(settings) as app_, anyio.create_task_group() as tg:
-        if settings.google_cloud_logging.enabled:
+        if settings.google_cloud_logging:
             client = google.cloud.logging.Client()
             client.setup_logging()
-        if settings.bugsnag.enabled:
+        if settings.bugsnag:
             bugsnag.configure(**settings.bugsnag.dict(), project_root=os.path.dirname(__file__))
-        if settings.posthog.enabled:
+        if settings.posthog:
             posthog.project_api_key = settings.posthog.project_api_key
             posthog.host = settings.posthog.host
             posthog.debug = settings.posthog.debug
         else:
-            posthog.disable = True
+            posthog.disabled = True
         with app.assign(app_), lnd.assign(lnd_), pubsub.assign(pubsub_), task_group.assign(tg):
             async with pubsub.run(db), monitor_invoices(lnd_, db), AsyncExitStack() as stack:
                 if settings.twitter.enable_bot:
@@ -147,6 +147,6 @@ async def serve():
                 hyper_config.accesslog = logging.getLogger('hypercorn.acceslog')
                 iface = hyper_config.bind[0].split(':')[0]
                 hyper_config.bind = f'{iface}:{settings.api_port}'
-                if settings.bugsnag.enabled:
+                if settings.bugsnag:
                     app_ = BugsnagMiddleware(app_)
                 await hypercorn_serve(app_, hyper_config)

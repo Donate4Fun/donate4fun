@@ -13,17 +13,12 @@ backend:
   image:
     repository: europe-central2-docker.pkg.dev/donate4fun-prod/docker/donate4fun-backend
   config:
-    bugsnag:
-      enabled: false
-      release_stage: production
     rollbar:
       environment: production
     posthog:
-      enabled: true
       project_api_key: 'phc_2CphDSfOn61NrqYZnloxHWpwFFjd4mHxUtZwcwrogC0'
       host: 'https://eu.posthog.com'
-    google_cloud_logging:
-      enabled: true
+    google_cloud_logging: true
     db:
       echo: false
       max_overflow: 30

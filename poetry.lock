@@ -1816,7 +1816,7 @@ yarl = "*"
 type = "git"
 url = "https://github.com/nikicat/vcrpy"
 reference = "fix-httpx-stub"
-resolved_reference = "6ae2073e03110e9f759f5b2244fc92ccb56fc0f5"
+resolved_reference = "00a9072e703277a2d6665ace9021f4494b1a9b98"
 
 [[package]]
 name = "watchfiles"

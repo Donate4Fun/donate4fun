@@ -5,7 +5,7 @@ import pytest
 import sqlalchemy
 
 from donate4fun.api import DonateRequest, DonateResponse
-from donate4fun.lnd import monitor_invoices, LndClient, lnd
+from donate4fun.lnd import LndClient, lnd, monitor_invoices_step
 from donate4fun.models import Donation, YoutubeChannel, Donator, YoutubeChannelOwned, OAuthState
 from donate4fun.types import PaymentRequest
 from donate4fun.youtube import query_or_fetch_youtube_video, ChannelInfo
@@ -47,6 +47,7 @@ async def test_donate_video(
     verify_response(donate_response, 'donate_youtube_video', 200)
 
 
+@mark_vcr
 @pytest.mark.freeze_time('2022-02-02T22:22:22')
 async def test_cancel_donation(client, app, db, freeze_uuids, rich_donator, settings):
     login_to(client, settings, rich_donator)
@@ -74,6 +75,7 @@ async def test_cancel_donation(client, app, db, freeze_uuids, rich_donator, sett
         assert youtube_channel.balance == 0
 
 
+@mark_vcr
 async def test_cancel_donation_fail(client, app, db, freeze_uuids, rich_donator, settings):
     login_to(client, settings, rich_donator)
     amount = 10
@@ -98,6 +100,7 @@ async def test_cancel_donation_fail(client, app, db, freeze_uuids, rich_donator,
         assert youtube_channel.balance == 0
 
 
+@mark_vcr
 async def test_donate_full(
     client, app, freeze_uuids, payer_lnd: LndClient, freeze_request_hash_json, db,
 ):
@@ -112,7 +115,7 @@ async def test_donate_full(
     payment_request = PaymentRequest(donate_response.json()['payment_request'])
     check_donation_notification = check_notification(client, 'donation', donation_id)
     check_video_notification = check_notification(client, 'youtube-video-by-vid', video_id)
-    async with monitor_invoices(lnd, db), check_donation_notification, check_video_notification:
+    async with monitor_invoices_step(lnd, db), check_donation_notification, check_video_notification:
         await payer_lnd.pay_invoice(payment_request)
     donation_response = await client.get(f"/api/v1/donation/{donation_id}")
     check_response(donation_response, 200)
@@ -174,6 +177,7 @@ async def test_youtube_video_no_cors(client):
     assert 'Access-Control-Allow-Origin' not in response.headers
 
 
+@mark_vcr
 async def test_donate_from_balance(
     client, app, freeze_uuids, rich_donator, settings,
 ):
