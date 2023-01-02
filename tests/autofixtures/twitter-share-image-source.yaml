@@ -7,7 +7,7 @@ html: |
     * {
       box-sizing: border-box;
       margin: 0;
-      font-family: 'Montserrat';
+      font-family: 'Montserrat', 'Twemoji', 'TwitterChirp';
     }
     body {
       width: 600px;

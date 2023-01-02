@@ -199,6 +199,21 @@
   src: url("montserrat.ttf");
   font-display: block;
 }
+@font-face {
+ font-family: "Noto Emoji Regular";
+ src: url('NotoColorEmoji.ttf') format('truetype');
+}
+@font-face {
+ font-family: Twemoji;
+ src: url('Twemoji.Mozilla.ttf') format('truetype');
+}
+@font-face {
+  font-family: TwitterChirp;
+  src: url(chirp-medium-web.woff) format('woff');
+  font-weight: 500;
+  font-style: 'normal';
+  font-display: 'swap';
+}
 
 /* mobile layout */
 @media (min-width: 641px) {
