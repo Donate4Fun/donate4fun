@@ -10,14 +10,14 @@ from io import BytesIO
 import anyio
 import pytest
 import yaml
-import ascii_magic
 from authlib.jose import jwt
-from PIL import Image
+from PIL import Image, ImageChops
 from vcr.filters import replace_query_parameters
 
 from donate4fun.models import Donator, Credentials
 from donate4fun.db import Notification
 from donate4fun.settings import Settings
+from donate4fun.core import to_base64
 
 logger = logging.getLogger(__name__)
 # This file is needed because pytest modifies "assert" only in test_*.py files
@@ -48,6 +48,35 @@ def verify_fixture(data: dict[str, Any], name: str):
     except FileNotFoundError:
         with open(filename, 'w') as f:
             yaml.dump(data, f)
+
+
+def verify_image_fixture(data: dict, image: Image, name: str):
+    # Compare only digest to make fixtures smaller and avoid nasty pytest bug
+    # https://github.com/pytest-dev/pytest/issues/8998
+    filename = f'tests/autofixtures/{name}.yaml'
+    image_filename = f'tests/autofixtures/{name}.png'
+    try:
+        with open(filename) as f:
+            original = yaml.unsafe_load(f)
+        original_image = Image.open(image_filename)
+        diff_image = concat_images(original_image, image)
+        buff = BytesIO()
+        diff_image.save(buff, format="PNG")
+        diff_image_url = f"data:image/png;base64,{to_base64(buff.getvalue())}"
+        assert original == data, f"Response for {filename} differs, difference {diff_image_url}"
+    except FileNotFoundError:
+        with open(filename, 'w') as f:
+            yaml.dump(data, f)
+        image.save(image_filename)
+
+
+def concat_images(image_a: Image, image_b: Image):
+    result = Image.new('RGBA', (image_a.width, image_a.height + image_b.height + max(image_a.height, image_b.height)))
+    result.paste(image_a, (0, 0))
+    result.paste(image_b, (0, image_a.height))
+    diff_image = ImageChops.difference(image_a, image_b)
+    result.paste(diff_image, (0, image_a.height + image_b.height))
+    return result
 
 
 var = ContextVar('var')
@@ -83,8 +112,10 @@ def verify_response(response, name, status_code=None):
         # Compare only digest to make fixtures smaller and avoid nasty pytest bug
         # https://github.com/pytest-dev/pytest/issues/8998
         image = Image.open(BytesIO(response.content))
-        ascii_image = ascii_magic.from_image(image, width_ratio=1, mode=ascii_magic.Modes.ASCII)
-        data = dict(status_code=response.status_code, md5=md5(response.content).digest(), image=ascii_image)
+        scaled_image = image.resize((image.width // 2, image.height // 2))
+        data = dict(status_code=response.status_code, md5=md5(response.content).digest())
+        verify_image_fixture(data, scaled_image, name)
+        return
     else:
         raise ValueError(f"Not implemented for {content_type}")
     verify_fixture(data, name)
