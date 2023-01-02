@@ -80,3 +80,17 @@ max_line_length = 130
 [tool.poetry.scripts]
 withdraw = 'donate4fun.scripts:withdraw'
 pay = 'donate4fun.scripts:pay'
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore:Inheritance class AiohttpSession from ClientSession is discouraged:DeprecationWarning",
+# freezegun related
+    "ignore:datetime.datetime size changed, may indicate binary incompatibility. Expected 48 from C header, got 64 from PyObject:RuntimeWarning",
+    "ignore:datetime.date size changed, may indicate binary incompatibility. Expected 32 from C header, got 48 from PyObject:RuntimeWarning",
+# https://github.com/ktosiek/pytest-freezegun/issues/35
+    "ignore:distutils Version classes are deprecated. Use packaging.version instead:DeprecationWarning",
+# Rollbar triggers warning in httpx
+    "ignore:Use 'content=<...>' to upload raw bytes/text content.:DeprecationWarning",
+]
+asyncio_mode = "auto"
+testpaths = ["tests"]

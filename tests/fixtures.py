@@ -5,6 +5,7 @@ import functools
 import logging
 import socket
 import traceback
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 from datetime import datetime
@@ -20,6 +21,7 @@ from asgi_testclient import TestClient
 from sqlalchemy import update
 from hypercorn.asyncio import serve as hypercorn_serve
 from hypercorn.config import Config
+from furl import furl
 
 from donate4fun.core import as_task
 from donate4fun.app import create_app
@@ -129,10 +131,11 @@ async def db(settings: Settings):
 
 @asynccontextmanager
 async def create_db(db_name: str):
-    base_db = Database(DbSettings(url='postgresql+asyncpg://tester@localhost/postgres', isolation_level='AUTOCOMMIT'))
+    test_db_url = os.getenv('DONATE4FUN_TEST_DB_URL', 'postgresql+asyncpg://tester@localhost/postgres')
+    base_db = Database(DbSettings(url=test_db_url, isolation_level='AUTOCOMMIT'))
     await base_db.create_database(db_name)
+    db = Database(DbSettings(url=str(furl(test_db_url).set(path=db_name))))
     try:
-        db = Database(DbSettings(url=f'postgresql+asyncpg://tester@localhost/{db_name}'))
         await db.create_tables()
         yield db
     finally:
