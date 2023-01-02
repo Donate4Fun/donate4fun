@@ -70,7 +70,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-family: Montserrat;
+  font-family: "Montserrat", "Twemoji", "TwitterChirp";
   color: inherit;
 }
 .image-name {

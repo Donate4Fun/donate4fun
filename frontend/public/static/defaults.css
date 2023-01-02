@@ -1,5 +1,5 @@
 :root {
-  --font: "Inter var experimental", "system-ui";
+  --font: "Inter var experimental", "Twemoji", "TwitterChirp", "system-ui";
   --color: #414141;
   --link-color: #2E6CFF;
   --background-color: #F7F9FF;
