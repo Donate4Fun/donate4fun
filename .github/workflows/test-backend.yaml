@@ -46,13 +46,31 @@ jobs:
       - uses: actions/checkout@v3
       - name: copy-volumes
         run: cp -rf polar/volumes-ref polar/volumes
+      - name: sshd
+        # This is for debug only. Use `ssh root@localhost -p 12345` to connect
+        # FIXME: use https://github.com/marketplace/actions/debugging-with-ssh instead?
+        if: false
+        run: |
+          apt-get update
+          apt-get install -y openssh-server
+          mkdir -p /run/sshd
+          ssh-keygen -A
+          passwd -d root
+          sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/g' /etc/ssh/sshd_config
+          sed -i 's/#PermitEmptyPasswords no/PermitEmptyPasswords yes/g' /etc/ssh/sshd_config
+          env | sed -r 's/=(.*)$/="\1"/' >> /root/.ssh/environment
+          /usr/sbin/sshd -p 12345 -D -o ListenAddress=0.0.0.0
+      - name: Fix docker-compose binary
+        # It's needed until https://github.com/isbang/compose-action/issues/20 is fixed
+        if: ${{ env.ACT }}
+        run: |
+          ln -s /usr/libexec/docker/cli-plugins/docker-compose /usr/local/bin/docker-compose
       - uses: isbang/compose-action@v1.4.1
         with:
           compose-file: "polar/docker-compose.yml"
           down-flags: "--volumes"
       - name: init-polar
         run: scripts/init-polar.sh
-        shell: bash
       - name: Set up python
         id: setup-python
         uses: actions/setup-python@v4
@@ -78,29 +96,26 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}
+          key: playwright-deps-${{ runner.os }}
       - name: Install Playwright
         run: |
           source .venv/bin/activate
           playwright install
-      - name: sshd
-        # This is for debug only. Use `ssh root@localhost -p 12345` to connect
-        if: false
-        run: |
-          apt-get update
-          apt-get install -y openssh-server
-          mkdir -p /run/sshd
-          ssh-keygen -A
-          passwd -d root
-          sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/g' /etc/ssh/sshd_config
-          sed -i 's/#PermitEmptyPasswords no/PermitEmptyPasswords yes/g' /etc/ssh/sshd_config
-          env | sed -r 's/=(.*)$/="\1"/' >> /root/.ssh/environment
-          /usr/sbin/sshd -p 12345 -D -o ListenAddress=0.0.0.0
+          # FIXME: use https://github.com/marketplace/actions/cache-apt-packages for cache?
+          playwright install-deps
       - name: Run tests
         # Set to false to regenerate caches regardless of test results
         if: true
         run: |
           source .venv/bin/activate
-          pytest
+          coverage run --source=donate4fun --concurrency greenlet,thread --branch -m pytest
         env:
           DONATE4FUN_TEST_DB_URL: "postgresql+asyncpg://postgres:postgres@localhost/postgres"
+      - name: Generate coverate report
+        run: |
+          source .venv/bin/activate
+          coverage xml
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: coverage.xml
