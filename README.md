@@ -95,7 +95,7 @@ Chrome Web Store
 To make a new release and publish extension to Chrome Web Store
 NB: always build with `pnpm build` before publishing
 ```
-cd extension/src
+cd extensions/src
 npx semantic-release --no-ci
 ```
 The following environment variables are needed
@@ -108,6 +108,7 @@ Firefox Add On
 ===
 To publish add-on to addons.mozilla.org
 ```
+(cd extensions/src && pnpm package-clean)
 ./scripts/publish-amo.py
 ```
 The following environment variables are needed
