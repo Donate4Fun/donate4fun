@@ -96,6 +96,8 @@ log:
       level: INFO
     posthog:
       level: DEBUG
+    PIL.PngImagePlugin:
+      level: INFO
   root:
     level: DEBUG
     propagate: true
