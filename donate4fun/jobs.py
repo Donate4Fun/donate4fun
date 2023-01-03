@@ -16,7 +16,8 @@ logger = logging.getLogger(__name__)
 async def refetch_twitter_authors():
     async with db.session() as db_session:
         accounts: list[TwitterAccount] = await db_session.query_twitter_accounts(
-            TwitterAuthorDb.last_fetched_at < func.now() - settings.twitter.refresh_timeout,
+            (TwitterAuthorDb.last_fetched_at < func.now() - settings.twitter.refresh_timeout)
+            | TwitterAuthorDb.last_fetched_at.is_(None)
         )
     logger.info("refetching %d authors", len(accounts))
     for account in accounts:
