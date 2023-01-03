@@ -33,7 +33,7 @@ Mako = "^1.2.0"
 starlette-authlib = "^0.1.9"
 multiavatar = "^1.0.3"
 funkybob = {git = "https://github.com/nikicat/funkybob"}
-setuptools = "^62.3.2"
+setuptools = "^65.5.1"
 lnurl = "^0.3.6"
 bugsnag = "^4.2.1"
 lightning-payencode = {git = "https://github.com/donate4fun/lightning-payencode"}
