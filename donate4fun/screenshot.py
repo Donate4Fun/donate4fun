@@ -65,6 +65,7 @@ class Screenshoter:
                     error_messages.append(msg)
             page.on("console", console_msg)
             await page.goto(f'http://localhost:{settings.api_port}/preview/{path}?{urlencode(params)}')
+            await page.evaluate('() => document.fonts.ready')
             result = await page.locator('body').screenshot()
             if error_messages:
                 raise ScreenshotError(f"Browser console has error messages: {error_messages}")
