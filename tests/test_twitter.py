@@ -15,7 +15,8 @@ from donate4fun.lnd import lnd, monitor_invoices_step, PayInvoiceError
 from donate4fun.types import PaymentRequest, LightningAddress
 from donate4fun.db import db as db_var
 from donate4fun.settings import settings
-from tests.test_util import verify_response, mark_vcr, check_notification, login_to, check_response
+from donate4fun.jobs import refetch_twitter_authors
+from tests.test_util import verify_response, mark_vcr, check_notification, login_to, check_response, freeze_time
 from tests.fixtures import find_unused_port, app_serve, make_registered_donator, create_db
 
 
@@ -291,3 +292,16 @@ async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids):
 
     # Test channel API
     verify_response(await client.get(f'/api/v1/twitter/account/{account.id}'), 'twitter-account-owned')
+
+
+@mark_vcr
+@freeze_time
+@pytest.mark.parametrize('last_fetched_at', [None, datetime.fromisoformat('2021-01-01T00:00:00')])
+async def test_refetch_twitter_authors(db, twitter_account, last_fetched_at):
+    twitter_account.last_fetched_at = last_fetched_at
+    async with db.session() as db_session:
+        await db_session.save_twitter_account(twitter_account)
+    await refetch_twitter_authors()
+    async with db.session() as db_session:
+        refetched_account = await db_session.query_twitter_account(id=twitter_account.id)
+    assert refetched_account.last_fetched_at == datetime.utcnow()
