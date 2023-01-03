@@ -122,6 +122,11 @@ async def test_state(client):
     verify_response(response, "status", 200)
 
 
+async def test_status_head(client):
+    response = await client.head("/api/v1/status")
+    verify_response(response, "status", 200)
+
+
 @pytest.mark.parametrize('case_name,_registered_donator', [
     ('signup', None),
     ('signin', pytest.lazy_fixture('registered_donator')),

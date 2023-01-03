@@ -321,6 +321,7 @@ class StatusResponse(BaseModel):
     lnd: str
 
 
+@router.head("/status")
 @router.get("/status")
 async def status(db=Depends(get_db_session)):
     return StatusResponse(
