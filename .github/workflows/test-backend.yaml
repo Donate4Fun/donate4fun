@@ -23,6 +23,8 @@ jobs:
         ports:
           - 5432:5432
     steps:
+      - run: apt-get update
+        if: ${{ env.ACT }}
       - name: Load cached lncli
         id: cached-lncli
         uses: actions/cache@v3
@@ -43,15 +45,11 @@ jobs:
         if: steps.cached-bitcoin-cli.outputs.cache-hit != 'true'
         run: |
           wget https://bitcoin.org/bin/bitcoin-core-${bitcoin_version}/bitcoin-${bitcoin_version}-x86_64-linux-gnu.tar.gz -O - | tar -zxf - -C /usr/local/bin bitcoin-${bitcoin_version}/bin/bitcoin-cli --strip-components 2
-      - uses: actions/checkout@v3
-      - name: copy-volumes
-        run: cp -rf polar/volumes-ref polar/volumes
       - name: sshd
         # This is for debug only. Use `ssh root@localhost -p 12345` to connect
         # FIXME: use https://github.com/marketplace/actions/debugging-with-ssh instead?
         if: false
         run: |
-          apt-get update
           apt-get install -y openssh-server
           mkdir -p /run/sshd
           ssh-keygen -A
@@ -60,6 +58,14 @@ jobs:
           sed -i 's/#PermitEmptyPasswords no/PermitEmptyPasswords yes/g' /etc/ssh/sshd_config
           env | sed -r 's/=(.*)$/="\1"/' >> /root/.ssh/environment
           /usr/sbin/sshd -p 12345 -D -o ListenAddress=0.0.0.0
+      - uses: awalsh128/cache-apt-pkgs-action@9b3b2b590c20bc969b78d74ec349254d1f24ee21
+        with:
+          version: 1.0
+          execute_install_scripts: true
+          packages: libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libatspi2.0-0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libxkbcommon0 libasound2
+      - uses: actions/checkout@v3
+      - name: copy-volumes
+        run: cp -rf polar/volumes-ref polar/volumes
       - name: Fix docker-compose binary
         # It's needed until https://github.com/isbang/compose-action/issues/20 is fixed
         if: ${{ env.ACT }}
@@ -96,13 +102,12 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-deps-${{ runner.os }}
+          key: playwright-${{ runner.os }}
       - name: Install Playwright
+        if: steps.cached-playwright.outputs.cache-hit != 'true'
         run: |
           source .venv/bin/activate
           playwright install
-          # FIXME: use https://github.com/marketplace/actions/cache-apt-packages for cache?
-          playwright install-deps
       - name: Run tests
         # Set to false to regenerate caches regardless of test results
         if: true
@@ -111,7 +116,7 @@ jobs:
           coverage run --source=donate4fun --concurrency greenlet,thread --branch -m pytest
         env:
           DONATE4FUN_TEST_DB_URL: "postgresql+asyncpg://postgres:postgres@localhost/postgres"
-      - name: Generate coverate report
+      - name: Generate coverage report
         run: |
           source .venv/bin/activate
           coverage xml
