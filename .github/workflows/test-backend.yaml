@@ -1,6 +1,6 @@
 name: Test Backend
 
-on: push
+on: [push, pull_request]
 
 env:
   lnd_version: "v0.15.5-beta"
