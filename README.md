@@ -85,7 +85,7 @@ Build
 ===
 To build release version of extension
 ```
-cd extension/src
+cd extensions/src
 pnpm install
 pnpm build
 ```
