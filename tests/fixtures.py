@@ -126,7 +126,8 @@ async def settings(monkeypatch):
 @pytest.fixture
 async def db(settings: Settings):
     async with create_db("donate4fun-test") as db:
-        yield db
+        with db_var.assign(db):
+            yield db
 
 
 @asynccontextmanager
@@ -179,7 +180,7 @@ async def app(db, settings, pubsub):
     posthog.disabled = True
     async with create_app(settings) as app, anyio.create_task_group() as tg:
         lnd = get_alice_lnd()
-        with db_var.assign(db), lnd_var.assign(lnd), pubsub_var.assign(pubsub), task_group.assign(tg):
+        with lnd_var.assign(lnd), pubsub_var.assign(pubsub), task_group.assign(tg):
             yield app
 
 

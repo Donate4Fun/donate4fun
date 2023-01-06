@@ -35,9 +35,10 @@ class YoutubeDbMixin:
         )
         return YoutubeChannel.from_orm(resp.scalars().one())
 
-    async def query_youtube_channels(self) -> list[YoutubeChannel]:
+    async def query_youtube_channels(self, *filters) -> list[YoutubeChannel]:
         resp = await self.execute(
             select(YoutubeChannelDb)
+            .where(*filters)
         )
         return [YoutubeChannel.from_orm(data) for data in resp.scalars()]
 

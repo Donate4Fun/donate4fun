@@ -9,8 +9,9 @@ from donate4fun.lnd import LndClient, lnd, monitor_invoices_step
 from donate4fun.models import Donation, YoutubeChannel, Donator, YoutubeChannelOwned, OAuthState
 from donate4fun.types import PaymentRequest
 from donate4fun.youtube import query_or_fetch_youtube_video, ChannelInfo
+from donate4fun.jobs import refetch_youtube_channels
 
-from tests.test_util import verify_response, check_response, check_notification, login_to, mark_vcr
+from tests.test_util import verify_response, check_response, check_notification, login_to, mark_vcr, freeze_time
 
 
 async def test_create_donation_unsupported_youtube_url(client):
@@ -362,3 +363,20 @@ async def test_query_or_fetch_youtube_video(db_session, video_id):
     One channel has banner, other not
     """
     await query_or_fetch_youtube_video(video_id='VOG-fFhq7kk', db=db_session)
+
+
+@mark_vcr
+@freeze_time
+@pytest.mark.parametrize('last_fetched_at', [None, datetime.fromisoformat('2021-01-01T00:00:00')])
+async def test_refetch_youtube_channels(db, last_fetched_at):
+    youtube_channel = YoutubeChannel(
+        channel_id='UCi0q9rOpx1wLBJpdNypbC6w',
+        title='Donate4Fun',
+        last_fetched_at=last_fetched_at,
+    )
+    async with db.session() as db_session:
+        await db_session.save_youtube_channel(youtube_channel)
+    await refetch_youtube_channels()
+    async with db.session() as db_session:
+        refetched_channel = await db_session.query_youtube_channel(youtube_channel.id)
+    assert refetched_channel.last_fetched_at == datetime.utcnow()
