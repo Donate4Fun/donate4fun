@@ -22,9 +22,13 @@ async def refetch_twitter_authors():
         )
     logger.info("refetching %d authors", len(accounts))
     for account in accounts:
-        account: TwitterAccount = await fetch_twitter_author(user_id=account.user_id)
-        async with db.session() as db_session:
-            await db_session.save_twitter_account(account)
+        try:
+            account: TwitterAccount = await fetch_twitter_author(user_id=account.user_id)
+        except Exception:
+            logger.exception("Failed to fetch twitter account %s", account)
+        else:
+            async with db.session() as db_session:
+                await db_session.save_twitter_account(account)
 
 
 @register_command
@@ -36,9 +40,13 @@ async def refetch_youtube_channels():
         )
     logger.info("refetching %d channels", len(channels))
     for channel in channels:
-        channel: YoutubeChannel = await fetch_youtube_channel(channel_id=channel.channel_id)
-        async with db.session() as db_session:
-            await db_session.save_youtube_channel(channel)
+        try:
+            channel: YoutubeChannel = await fetch_youtube_channel(channel_id=channel.channel_id)
+        except Exception:
+            logger.exception("Failed to fetch youtube channel %s", channel)
+        else:
+            async with db.session() as db_session:
+                await db_session.save_youtube_channel(channel)
 
 
 @register_command
