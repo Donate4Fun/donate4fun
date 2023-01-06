@@ -24,7 +24,7 @@
   async function load() {
     channel = await api.get(baseUrl);
     if (!channel.is_my)
-      navigate('/youtube/prove', {replace: true});
+      navigate('/signin', {replace: true});
     $title = `Manage ${channel.title} YouTube channel`
   }
 

@@ -22,7 +22,7 @@
     <ul>
       <li><a href="https://github.com/Donate4Fun/donate4fun/blob/master/docs/HELP.md" target="_blank">Docs</a></li>
       <li><a href="https://github.com/orgs/Donate4Fun/projects/1" target="_blank">Roadmap</a></li>
-      <li><a href={"#"} on:click={() => {showClaim = true;}}>Claim donations</a></li>
+      <li><a use:link href="/signin">Claim donations</a></li>
       <li><a use:link href="/login">Connect wallet</li>
       <li><a use:link href="/#team">Team</a></li>
       {#await $me then me}

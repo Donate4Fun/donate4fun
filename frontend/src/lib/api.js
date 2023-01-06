@@ -84,9 +84,9 @@ export async function post(path, body) {
   }
 }
 
-export async function get(path) {
+export async function get(path, config) {
   try {
-    return handle_response(await axios.get(fullpath(path)));
+    return handle_response(await axios.get(fullpath(path), config));
   } catch (error) {
     return handle_error(error);
   }
