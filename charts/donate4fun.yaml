@@ -85,3 +85,6 @@ cronjobs:
 - name: refetch-twitter
   schedule: "37 * * * *"
   func: jobs.refetch_twitter_authors
+- name: refetch-youtube
+  schedule: "51 * * * *"
+  func: jobs.refetch_youtube_channels

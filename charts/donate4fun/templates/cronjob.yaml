@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{ include "donate4fun.fullname" $ }}-{{ .name }}
+  name: {{ .name }}
   labels:
     {{- include "donate4fun.labels" $ | nindent 4 }}
 spec:
@@ -50,4 +50,6 @@ spec:
           - name: secret
             secret:
               secretName: {{ template "donate4fun.fullname" $ }}
+
+---
 {{- end }}
