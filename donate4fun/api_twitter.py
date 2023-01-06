@@ -9,7 +9,7 @@ from furl import furl
 
 from .models import TwitterAccount, TransferResponse, Donator, TwitterAccountOwned, Donation, OAuthState, OAuthResponse
 from .types import ValidationError
-from .api_utils import get_donator, load_donator, get_db_session
+from .api_utils import get_donator, load_donator, get_db_session, make_absolute_uri
 from .twitter import make_prove_message, make_link_oauth2_client, fetch_twitter_me
 from .db_models import DonationDb
 
@@ -60,10 +60,14 @@ async def donatee_donations(account_id: UUID, db=Depends(get_db_session)):
 
 
 @router.get('/oauth', response_model=OAuthResponse)
-async def login_via_twitter(request: Request, donator=Depends(get_donator)):
+async def login_via_twitter(request: Request, return_to: str | None = None, donator=Depends(get_donator)):
     async with make_link_oauth2_client() as client:
         code_verifier = secrets.token_urlsafe(32)
-        state = OAuthState(last_url=request.headers['referer'], donator_id=donator.id, code_verifier=code_verifier)
+        state = OAuthState(
+            last_url=make_absolute_uri(return_to) if return_to is not None else request.headers['referer'],
+            donator_id=donator.id,
+            code_verifier=code_verifier,
+        )
         encrypted_state = state.to_encrypted_jwt()
         if len(encrypted_state) > 500:
             raise ValidationError("State is too long for Twitter: %d chars", len(encrypted_state))

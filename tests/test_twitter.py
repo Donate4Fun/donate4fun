@@ -16,6 +16,7 @@ from donate4fun.types import PaymentRequest, LightningAddress
 from donate4fun.db import db as db_var
 from donate4fun.settings import settings
 from donate4fun.jobs import refetch_twitter_authors
+from donate4fun.api_utils import make_absolute_uri
 from tests.test_util import verify_response, mark_vcr, check_notification, login_to, check_response, freeze_time
 from tests.fixtures import find_unused_port, app_serve, make_registered_donator, create_db
 
@@ -237,8 +238,12 @@ async def test_donate_to_lightning_address(client, address: str):
     )).json())
 
 
-async def follow_oauth_flow(client, code: str):
-    response = check_response(await client.get('/api/v1/twitter/oauth', headers=dict(referer=settings.base_url))).json()
+async def follow_oauth_flow(client, code: str, return_to: str):
+    response = check_response(await client.get(
+        '/api/v1/twitter/oauth',
+        params=return_to and dict(return_to=return_to),
+        headers=dict(referer=settings.base_url),
+    )).json()
     auth_url: str = response['url']
     encrypted_state: str = furl(auth_url).query.params['state']
     # Change to True to get new code
@@ -250,11 +255,13 @@ async def follow_oauth_flow(client, code: str):
         params=dict(state=encrypted_state, code=code),
     )
     check_response(response, 307)
+    assert response.headers['location'] == (make_absolute_uri(return_to) if return_to is not None else settings.base_url)
 
 
 @mark_vcr
 @pytest.mark.freeze_time('2022-02-02 22:22:22')
-async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids):
+@pytest.mark.parametrize('return_to', [None, '/donator/me'])
+async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids, return_to):
     monkeypatch.setattr('secrets.token_urlsafe', lambda size: urlsafe_b64encode(b'\x00' * size))
     monkeypatch.setattr('secrets.token_bytes', lambda size: b'\x00' * size)
 
@@ -275,6 +282,7 @@ async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids):
     login_to(client, settings, donator)
     await follow_oauth_flow(
         client, code='TFExNmJaZVR4b3NuOGxmTF9IbmVYRkt0ajVPN0RmS3VRdUFmbXFhcVNHNnp3OjE2NzIzNDAxNjUyODM6MTowOmFjOjE',
+        return_to=return_to,
     )
     me = Donator(**check_response(await client.get('/api/v1/me')).json())
     assert me.id == donator.id
@@ -285,6 +293,7 @@ async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids):
     login_to(client, settings, other_donator)
     await follow_oauth_flow(
         client, code='ZTRnTkV5M014UXF2cmV1QWowSGVfaDZUY1dxSjNxSEZxSWQzRkJwWTFpU05fOjE2NzIzNDAxNzQxNzg6MTowOmFjOjE',
+        return_to=return_to,
     )
     me = Donator(**check_response(await client.get('/api/v1/me')).json())
     assert me.id == donator.id

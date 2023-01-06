@@ -27,7 +27,7 @@
   async function load() {
     account = await api.get(baseUrl);
     if (!account.is_my)
-      navigate('/twitter/prove', {replace: true});
+      navigate('/signin', {replace: true});
   }
 
   async function claim() {

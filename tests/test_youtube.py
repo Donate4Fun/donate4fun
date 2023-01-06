@@ -315,7 +315,8 @@ async def test_unlink_youtube_channel_with_balance(db, client, settings, monkeyp
 
 
 @pytest.mark.freeze_time('2022-02-02 22:22:22')
-async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids):
+@pytest.mark.parametrize('return_to', [None, '/donator/me'])
+async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids, return_to: str):
     info = ChannelInfo(id='UCxxx', title='title', description='descr')
 
     async def patched_fetch_user_channel(code):
@@ -331,6 +332,11 @@ async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids):
         await db_session.save_youtube_channel(channel)
     donator = Donator(id=UUID(int=0))
     login_to(client, settings, donator)
+    check_response(await client.get(
+        '/api/v1/youtube/oauth',
+        params=return_to and dict(return_to=return_to),
+        headers=dict(referer=settings.base_url),
+    ))
     response = await client.get(
         '/api/v1/youtube/oauth-redirect',
         params=dict(state=OAuthState(donator_id=donator.id, last_url='http://a.com').to_jwt(), code=123),

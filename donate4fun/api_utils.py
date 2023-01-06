@@ -2,6 +2,7 @@ import unicodedata
 from uuid import uuid4, UUID
 
 import posthog
+from furl import furl
 from fastapi import Request, Depends, HTTPException
 from sqlalchemy.orm.exc import NoResultFound  # noqa - imported from other modules
 
@@ -9,6 +10,7 @@ from .models import Donator, Credentials, Donation
 from .db import DbSession, db
 from .core import ContextualObject
 from .types import LightningAddress
+from .settings import settings
 
 
 task_group = ContextualObject('task_group')
@@ -64,3 +66,7 @@ def track_donation(donation: Donation):
         via = 'donate4fun'
     donator_id = donation.donator and donation.donator.id
     posthog.capture(donator_id, 'donation-paid', dict(amount=donation.amount, target_type=target_type, via=via))
+
+
+def make_absolute_uri(path: str) -> str:
+    return str(furl(url=settings.base_url, path=path))

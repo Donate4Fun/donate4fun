@@ -8,7 +8,7 @@ from aiogoogle import Aiogoogle
 from sqlalchemy.orm.exc import NoResultFound
 from furl import furl
 
-from .api_utils import get_donator, load_donator, get_db_session
+from .api_utils import get_donator, load_donator, get_db_session, make_absolute_uri
 from .models import (
     BaseModel, YoutubeVideo, YoutubeChannel, Donator, YoutubeChannelOwned, Donation, TransferResponse, OAuthState,
     OAuthResponse,
@@ -66,15 +66,19 @@ async def ownership_check(donator=Depends(get_donator), db=Depends(get_db_sessio
 
 
 @router.get('/oauth', response_model=OAuthResponse)
-async def login_via_google(request: Request, donator=Depends(get_donator)):
+async def login_via_google(request: Request, return_to: str | None = None, donator=Depends(get_donator)):
+    # FIXME: merge to /twitter/oauth
     aiogoogle = Aiogoogle()
     url = aiogoogle.oauth2.authorization_url(
         client_creds=dict(
             scopes=['https://www.googleapis.com/auth/youtube.readonly'],
-            redirect_uri=f'{settings.base_url}/api/v1/youtube/oauth-redirect',
+            redirect_uri=make_absolute_uri('/api/v1/youtube/oauth-redirect'),
             **settings.youtube.oauth.dict(),
         ),
-        state=OAuthState(last_url=request.headers['referer'], donator_id=donator.id).to_jwt(),
+        state=OAuthState(
+            last_url=make_absolute_uri(return_to) if return_to is not None else request.headers['referer'],
+            donator_id=donator.id,
+        ).to_jwt(),
         prompt='select_account',
         include_granted_scopes=True,
     )

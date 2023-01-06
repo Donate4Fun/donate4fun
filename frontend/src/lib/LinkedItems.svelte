@@ -42,8 +42,8 @@
   <div class="header">
     <h2>Linked <b>{name}</b> accounts:</h2>
   </div>
-  {#await $linkedStore then items}
-    <ul>
+  <ul>
+    {#await $linkedStore then items}
       {#each items as item}
       <li>
         <slot name="item" {item} />
@@ -61,11 +61,11 @@
         </div>
       </li>
       {/each}
-      <li class="add">
-        <SocialSigninButton type={basePath} width=300px>Add {name} account</SocialSigninButton>
-      </li>
-    </ul>
-  {/await}
+    {/await}
+    <li class="add">
+      <SocialSigninButton type={basePath} width=300px returnTo="/donator/me">Add {name} account</SocialSigninButton>
+    </li>
+  </ul>
 </div>
 
 <style>

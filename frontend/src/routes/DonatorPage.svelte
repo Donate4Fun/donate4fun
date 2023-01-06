@@ -1,5 +1,5 @@
 <script>
-  import { link } from "svelte-navigator";
+  import { link, useNavigate } from "svelte-navigator";
 
   import Loader from "$lib/Loader.svelte";
   import Userpic from "$lib/Userpic.svelte";
@@ -23,8 +23,11 @@
 
   export let donator_id;
   let activeTab = 'sent';
+  const navigate = useNavigate();
 
   async function load(me, donator_id) {
+    if (donator_id === 'me')
+      await navigate(`/donator/${me.donator.id}`, {replace: true})
     const itsMe = donator_id === me.donator?.id;
     let donator;
     if (itsMe) {
@@ -68,7 +71,7 @@
             {/if}
           </div>
         {:else}
-          <Button link="/fulfill/{donator_id}">Donate</Button>
+          <Button link="/fulfill/{donator.id}">Donate</Button>
         {/if}
       </div>
       {#if itsMe}
@@ -108,10 +111,10 @@
             {/await}
           </div>
           <div style:display={activeTab === 'sent' ? 'block' : 'none'}>
-            <TransactionHistory {donator_id} direction=sent />
+            <TransactionHistory donator_id={donator.id} direction=sent />
           </div>
           <div style:display={activeTab === 'received' ? 'block' : 'none'}>
-            <TransactionHistory {donator_id} direction=received />
+            <TransactionHistory donator_id={donator.id} direction=received />
           </div>
         </div>
       {/if}

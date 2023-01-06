@@ -136,7 +136,7 @@
   <section id="claim">
     <img src="/static/coin.png" alt="bitcoin" width=88 height=88>
     <h1 class="gradient light">Want to get your donations?</h1>
-    <WhiteButton --width=300px link={resolve("/prove/youtube")}>Claim here</WhiteButton>
+    <WhiteButton --width=300px link={resolve("/signin")}>Claim here</WhiteButton>
   </section>
   <div class="flex-row gap-20 justify-center flex-wrap">
     <Section>
