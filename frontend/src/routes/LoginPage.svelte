@@ -96,10 +96,13 @@
 <style>
 h1 {
   font-weight: 900;
+  text-align: center;
+  margin: 16px;
 }
 .main {
   padding: 36px 0 54px;
-  width: 640px;
+  max-width: 640px;
+  width: 100vw;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -109,8 +112,7 @@ a.qrcode {
   margin-bottom: 32px;
 }
 div.buttons {
-  padding: 0 172px;
-  width: 100%;
+  max-width: 300px;
   display: flex;
   flex-direction: column;
   gap: 1em;

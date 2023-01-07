@@ -30,6 +30,7 @@ footer {
 .links {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
 }
 .links a {
   font-weight: 500;
