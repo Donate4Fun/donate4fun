@@ -3,7 +3,7 @@
 
   import Lnurl from "$lib/Lnurl.svelte";
   import Button from "$lib/Button.svelte";
-  import WhiteButton from "$lib/WhiteButton.svelte";
+  import HoldButton from "$lib/HoldButton.svelte";
   import GrayButton from "$lib/GrayButton.svelte";
   import QRCode from "$lib/QRCode.svelte";
   import Section from "$lib/Section.svelte";
@@ -77,11 +77,19 @@
         <div class="buttons">
           <Button on:click={() => connect(lnurl)}>Connect using Wallet</Button>
           <Lnurl lnurl="{lnurl}" class="lnurl" />
-          <WhiteButton on:click={resetMe}>Reset session</WhiteButton>
+          <HoldButton
+            on:click={resetMe}
+            --border-width=1px
+            --height=44px
+            tooltipText="Hold to logout"
+          >Logout</HoldButton>
           {#if me.donator.lnauth_pubkey}
-            <WhiteButton
+            <HoldButton
               on:click={disconnect}
-            >Disconnect wallet</WhiteButton>
+              --border-width=1px
+              --height=44px
+              tooltipText="Hold to disconnect"
+            >Disconnect wallet</HoldButton>
           {/if}
           <GrayButton on:click={() => navigate(-1)}>Cancel</GrayButton>
           <NeedHelp />
