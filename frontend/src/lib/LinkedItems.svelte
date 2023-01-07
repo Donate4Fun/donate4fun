@@ -62,7 +62,7 @@
       {/each}
     {/await}
     <li class="add">
-      <SocialSigninButton type={basePath} width=300px returnTo="/donator/me">Add {name} account</SocialSigninButton>
+      <SocialSigninButton type={basePath} width=300px>Add {name} account</SocialSigninButton>
     </li>
   </ul>
 </div>

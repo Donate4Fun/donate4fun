@@ -16,8 +16,8 @@
     </div>
     <div class="buttons">
       <SocialSigninButton height=48px link="/login?return=/donator/me" type="bolt">Sign in with Lightining</SocialSigninButton>
-      <SocialSigninButton height=48px returnTo="/donator/me" type="youtube">Sign in with YouTube</SocialSigninButton>
-      <SocialSigninButton height=48px returnTo="/donator/me" type="twitter">Sign in with Twitter</SocialSigninButton>
+      <SocialSigninButton height=48px type="youtube">Sign in with YouTube</SocialSigninButton>
+      <SocialSigninButton height=48px type="twitter">Sign in with Twitter</SocialSigninButton>
     </div>
   </div>
 </Section>
