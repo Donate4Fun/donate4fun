@@ -2,7 +2,8 @@
   --font: "Inter var experimental", "Twemoji", "TwitterChirp", "system-ui";
   --color: #414141;
   --link-color: #2E6CFF;
-  --background-color: #F7F9FF;
+  --light-color: #F7F9FF;
+  --background-color: var(--light-color);
 }
 body {
   font-family: var(--font);

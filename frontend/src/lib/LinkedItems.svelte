@@ -52,10 +52,9 @@
           <Button disabled={item.balance === 0} on:click={() => collect(item)} --border-width=0 --padding="0 24px">Claim</Button>
           {#if item.via_oauth}
             <HoldButton
-              --background-color=#E9E9E9
-              --fill-color=red
               --border-width=0
               on:click={() => unlink(item)}
+              tooltipText="Hold to unlink"
             ><span class="unlink">Unlink</span></HoldButton>
           {/if}
         </div>
