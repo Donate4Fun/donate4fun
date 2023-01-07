@@ -18,13 +18,13 @@ html: |
       <meta name="msapplication-config" content="/static/browserconfig.xml">
       <meta name="msapplication-TileColor" content="#F7F9FF">
       <meta name="theme-color" content="#F7F9FF">
-      <meta name="description" content="Donate to creators with Bitcoin Lightning">
+      <meta name="description" content="Support creators with Bitcoin Lightning donations">
 
       <meta property="og:image" content="http://localhost:3000/preview/twitter/00000000-0000-0000-0000-000000000001">
       <meta property="og:type" content="website">
       <meta property="og:url" content="http://localhost:3000/twitter/00000000-0000-0000-0000-000000000001">
       <meta property="og:title" content="Donate4.Fun">
-      <meta property="og:description" content="Donate to creators with Bitcoin Lightning">
+      <meta property="og:description" content="Support creators with Bitcoin Lightning donations">
 
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:site" content="@donate4_fun" />

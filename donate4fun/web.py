@@ -81,7 +81,7 @@ async def index(request: Request, object_id: UUID | None = None, full_path: str 
             donation: Donation = await db_session.query_donation(id=object_id)
         description = f"{donation.amount} sats was donated to {target_name(donation)}"
     else:
-        description = "Donate to creators with Bitcoin Lightning"
+        description = "Support creators with Bitcoin Lightning donations"
     return TemplateResponse(
         "index.html", request=request, og_image_path=og_image_path, manifest=manifest, description=description,
     )
@@ -145,7 +145,7 @@ def TemplateResponse(name, *args, status_code=200, **kwargs) -> HTMLResponse:
 async def default_index(request: Request, full_path: str):
     og_image_path = default_sharing_image()
     manifest = await fetch_manifest() if settings.release else None
-    description = "Donate to creators with Bitcoin Lightning"
+    description = "Support creators with Bitcoin Lightning donations"
     return TemplateResponse(
         "index.html", request=request, og_image_path=og_image_path, manifest=manifest, description=description,
     )
