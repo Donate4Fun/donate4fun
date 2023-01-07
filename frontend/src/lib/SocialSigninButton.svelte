@@ -9,7 +9,7 @@
   export let width = 'auto';
   export let height = '40px'
   export let link;
-  export let returnTo;
+  export let returnTo = '/donator/me';
 
   const navigate = useNavigate();
 
