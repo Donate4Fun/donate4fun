@@ -5,9 +5,6 @@
   import QRCode from "$lib/QRCode.svelte";
   import Loading from "$lib/Loading.svelte";
   import Lnurl from "$lib/Lnurl.svelte";
-  import Amount from "$lib/Amount.svelte";
-  import YoutubeChannel from "$lib/YoutubeChannel.svelte";
-  import Donator from "$lib/Donator.svelte";
   import NeedHelp from "$lib/NeedHelp.svelte";
   import { partial, sendPayment } from "$lib/utils.js";
   import api from "$lib/api.js";
