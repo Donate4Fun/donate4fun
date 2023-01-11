@@ -2,14 +2,18 @@
   import { useNavigate } from "svelte-navigator";
   import { clickDispatcher } from "$lib/utils.js";
   import BaseButton from "$lib/BaseButton.svelte";
+  import ColoredBorder from "$lib/ColoredBorder.svelte";
   import { api } from "$lib/api.js";
   import { sleep } from "$lib/utils.js";
 
   export let type;
   export let width = 'auto';
   export let height = '40px'
+  export let border = '1px';
   export let link;
   export let returnTo = '/donator/me';
+  export let colored = false;
+  export let padding = '0 40px';
   const isMobile = 'ontouchstart' in document.documentElement;
   // WORKAROUND: Twitter OAuth 2.0 doesn't work on Android/iOS
   // See https://twittercommunity.com/t/web-oauth-2-0-is-broken-on-android-if-twitter-app-is-installed/169698/13
@@ -28,37 +32,43 @@
   }
 </script>
 
-<div class=outer>
-  <BaseButton
-    --padding="0 40px"
-    --background-image="linear-gradient(to right, white, white 100%)"
-    --border-width=1px
-    --border-color=#E9E9E9
-    --height={height}
-    --width={width}
-    on:click={click}
-    {...$$restProps}
-  >
-    <div class=inner>
+<BaseButton
+  --border-width={colored ? 0 : border}
+  --border-color=#E9E9E9
+  --button-background-color=white
+  --height={height}
+  --width={width}
+  padding=0
+  on:click={click}
+  {...$$restProps}
+>
+{#if colored}
+  <ColoredBorder --background-color="var(--light-color)">
+    <div class="inner" style:padding={padding}>
       <img alt="{type}" src="/static/{type}.svg">
       <span class="text"><slot /></span>
     </div>
-  </BaseButton>
-</div>
+  </ColoredBorder>
+{:else}
+  <div class=inner style:padding={padding}>
+    <img alt="{type}" src="/static/{type}.svg">
+    <span class="text"><slot /></span>
+  </div>
+{/if}
+</BaseButton>
 
 <style>
-.outer {
-  box-shadow: 10px 15px 25px rgba(209, 217, 230, 0.4);
-  display: contents;
-}
 .inner {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+
   font-weight: 700;
   font-size: 16px;
   line-height: 22px;
   letter-spacing: 0.02em;
-  display: flex;
-  gap: 16px;
   width: 100%;
+  height: 100%;
 }
 .text {
   margin: 0 auto;
