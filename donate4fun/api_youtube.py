@@ -66,7 +66,7 @@ async def ownership_check(donator=Depends(get_donator), db=Depends(get_db_sessio
 
 
 @router.get('/oauth', response_model=OAuthResponse)
-async def login_via_google(request: Request, return_to: str | None = None, donator=Depends(get_donator)):
+async def login_via_google(request: Request, return_to: str, donator=Depends(get_donator)):
     # FIXME: merge to /twitter/oauth
     aiogoogle = Aiogoogle()
     url = aiogoogle.oauth2.authorization_url(
@@ -76,7 +76,8 @@ async def login_via_google(request: Request, return_to: str | None = None, donat
             **settings.youtube.oauth.dict(),
         ),
         state=OAuthState(
-            last_url=make_absolute_uri(return_to) if return_to is not None else request.headers['referer'],
+            error_url=request.headers['referer'],
+            success_url=make_absolute_uri(return_to),
             donator_id=donator.id,
         ).to_jwt(),
         prompt='select_account',
@@ -96,13 +97,13 @@ async def auth_google(
             f"User that initiated Google Auth {donator.id} is not the current user {auth_state.donator_id}, rejecting auth"
         )
     if error:
-        return RedirectResponse(furl(auth_state.last_url).add(dict(error=error, message=error_description)).url)
+        return RedirectResponse(furl(auth_state.error_url).set(dict(error="OAuth error", message=error)).url)
     elif code:
         try:
             channel_info: ChannelInfo = await fetch_user_channel(code)
         except Exception as exc:
             logger.exception("Failed to fetch user's channel")
-            return RedirectResponse(furl(auth_state.last_url).add(dict(error=str(exc))).url)
+            return RedirectResponse(furl(auth_state.success_url).add(dict(error=str(exc))).url)
         else:
             channel: YoutubeChannel = await query_or_fetch_youtube_channel(channel_id=channel_info.id, db=db_session)
             owned_channel: YoutubeChannelOwned = await db_session.query_youtube_channel(channel.id)
@@ -110,8 +111,9 @@ async def auth_google(
                 request.session['donator'] = str(owned_channel.owner_id)
             else:
                 await db_session.link_youtube_channel(channel, donator, via_oauth=True)
+                await db_session.transfer_youtube_donations(channel, donator)
             request.session['connected'] = True
-            return RedirectResponse(auth_state.last_url)
+            return RedirectResponse(auth_state.success_url)
     else:
         # Should either receive a code or an error
         raise Exception("Something's probably wrong with your callback")

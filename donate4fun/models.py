@@ -329,7 +329,8 @@ def get_jwk():
 
 
 class OAuthState(BaseModel):
-    last_url: AnyHttpUrl
+    success_url: AnyHttpUrl
+    error_url: AnyHttpUrl
     donator_id: UUID
     code_verifier: str | None = None
 
