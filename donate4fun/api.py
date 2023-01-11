@@ -33,7 +33,7 @@ from .donatees import apply_target
 from .db_models import DonationDb, WithdrawalDb
 from .db_donations import sent_donations_subquery, received_donations_subquery
 from .settings import settings
-from .api_utils import get_donator, load_donator, get_db_session, task_group, only_me, track_donation
+from .api_utils import get_donator, load_donator, get_db_session, task_group, only_me, track_donation, auto_transfer_donations
 from .lnd import PayInvoiceError, LnurlWithdrawResponse, lnd, lightning_payment_metadata, LndIsNotReady
 from .pubsub import pubsub
 from .twitter import query_or_fetch_twitter_account
@@ -182,6 +182,8 @@ async def donate(
         await db_session.donation_paid(
             donation_id=donation.id, amount=amount, paid_at=paid_at, fee_msat=fee_msat, claimed_at=claimed_at,
         )
+        await auto_transfer_donations(db_session, donation)
+        # Reload donation with a fresh state
         donation = await db_session.query_donation(id=donation.id)
         # FIXME: balance is saved in cookie to notify extension about balance change, but it should be done via VAPID
         web_request.session['balance'] = (await db_session.query_donator(id=donator.id)).balance

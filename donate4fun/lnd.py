@@ -223,6 +223,7 @@ async def monitor_invoices_step(lnd_client, db):
                             paid_at=invoice.settle_date,
                             amount=invoice.amt_paid_sat,
                         )
+                        await auto_transfer_donations(sess, donation)
                 except Exception:
                     logger.exception("Error while handling donation notification from lnd")
     finally:

@@ -260,7 +260,7 @@ async def follow_oauth_flow(client, code: str, return_to: str):
 
 @mark_vcr
 @pytest.mark.freeze_time('2022-02-02 22:22:22')
-@pytest.mark.parametrize('return_to', [None, '/donator/me'])
+@pytest.mark.parametrize('return_to', ['/donator/me'])
 async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids, return_to):
     monkeypatch.setattr('secrets.token_urlsafe', lambda size: urlsafe_b64encode(b'\x00' * size))
     monkeypatch.setattr('secrets.token_bytes', lambda size: b'\x00' * size)

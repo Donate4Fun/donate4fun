@@ -10,7 +10,7 @@ from .db_utils import insert_on_conflict_update
 
 
 class YoutubeDbMixin:
-    async def query_youtube_channel(self, youtube_channel_id: UUID, owner_id: UUID | None = None) -> YoutubeChannelOwned:
+    async def query_youtube_channel(self, *, owner_id: UUID | None = None, **filter_by) -> YoutubeChannelOwned:
         owner_links = select(YoutubeChannelLink).where(
             (YoutubeChannelLink.donator_id == owner_id) if owner_id is not None else YoutubeChannelLink.via_oauth
         ).subquery()
@@ -20,11 +20,11 @@ class YoutubeDbMixin:
                 owner_links.c.donator_id.label('owner_id'),
                 func.coalesce(owner_links.c.via_oauth, False).label('via_oauth'),
             )
+            .filter_by(**filter_by)
             .outerjoin(
                 owner_links,
                 onclause=YoutubeChannelDb.id == owner_links.c.youtube_channel_id,
             )
-            .where(YoutubeChannelDb.id == youtube_channel_id)
         )
         return YoutubeChannelOwned.from_orm(resp.one())
 

@@ -93,7 +93,8 @@ async def test_jws(settings):
 
 async def test_jwe(settings):
     orig_state = OAuthState(
-        last_url='http://some-url.com/some-long-path-that-could-be-here',
+        success_url='http://some-url.com/some-long-path-that-could-be-here',
+        error_url='http://some-other-url.com',
         donator_id=uuid4(), code_verifier=secrets.token_urlsafe(43),
     )
     token: str = orig_state.to_jwe()
@@ -101,9 +102,11 @@ async def test_jwe(settings):
     assert new_state == orig_state
 
 
+@pytest.mark.skip('We dont use encrypted JWT anymore')
 async def test_encrypted_jwt(settings):
     orig_state = OAuthState(
-        last_url='http://localhost:5173/donator/f28b5bc4-1946-45f7-a7dd-33c0ae002465',
+        success_url='http://localhost:5173/donator/f28b5bc4-1946-45f7-a7dd-33c0ae002465',
+        error_url='http://b.com',
         donator_id=uuid4(), code_verifier=secrets.token_urlsafe(32),
     )
     token: str = orig_state.to_encrypted_jwt()
@@ -113,17 +116,17 @@ async def test_encrypted_jwt(settings):
 
 
 async def test_jwt_is_immutable(settings):
-    state = OAuthState(last_url='http://a.com', donator_id=UUID(int=0), code_verifier=b'\x00' * 43)
+    state = OAuthState(success_url='http://a.com', error_url='http://b.com', donator_id=UUID(int=0), code_verifier=b'\x00' * 43)
     assert state.to_jwt() == state.to_jwt()
 
 
 async def test_encrypted_jwt_is_immutable(settings, monkeypatch):
     monkeypatch.setattr('secrets.token_bytes', lambda size: b'\x00' * size)
-    state = OAuthState(last_url='http://a.com', donator_id=UUID(int=0), code_verifier=b'\x00' * 43)
+    state = OAuthState(success_url='http://a.com', error_url='http://b.com', donator_id=UUID(int=0), code_verifier=b'\x00' * 43)
     assert state.to_encrypted_jwt() == state.to_encrypted_jwt()
 
 
 async def test_jwe_is_immutable(settings, monkeypatch):
     monkeypatch.setattr('secrets.token_bytes', lambda size: b'\x00' * size)
-    state = OAuthState(last_url='http://a.com', donator_id=UUID(int=0), code_verifier=b'\x00' * 43)
+    state = OAuthState(success_url='http://a.com', error_url='http://b.com', donator_id=UUID(int=0), code_verifier=b'\x00' * 43)
     assert state.to_jwe() == state.to_jwe()

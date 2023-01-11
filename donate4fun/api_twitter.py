@@ -135,6 +135,7 @@ async def login_or_link_twitter_account(client, donator: Donator, request):
                 request.session['donator'] = str(owned_account.owner_id)
             else:
                 await db_session.link_twitter_account(account, donator, via_oauth=True)
+                await db_session.transfer_twitter_donations(account, donator)
             request.session['connected'] = True
     except Exception as exc:
         raise OAuthError("Failed to link account") from exc
