@@ -17,6 +17,7 @@
   import api from "$lib/api.js";
   import { notify } from "$lib/notifications.js";
   import { me } from "$lib/session.js";
+  import { cError } from "$lib/log.js";
 
   export let navigate;
 
@@ -24,9 +25,9 @@
   let ws;
   onDestroy(() => ws?.close());
 
-  async function load() {
+  async function load(me) {
     try {
-      const me_ = await get(me);
+      const me_ = await me;
       const response = await api.get("me/withdraw");
       title.set(`Withdraw ${response.amount} sats`);
       ws = await api.subscribe(`withdrawal:${response.withdrawal_id}`);
@@ -42,7 +43,7 @@
       await ws.ready();
       return response;
     } catch (err) {
-      console.log(err);
+      cError(err);
       if (err.response.status === 403 || (err.response.data.status === 'error' && err.response.data.type === 'ValidationError'))
         navigate(".");
     }
@@ -51,7 +52,7 @@
 
 <Section>
   <div class="withdraw">
-    {#await load() then { lnurl, amount }}
+    {#await load($me) then { lnurl, amount }}
       <h1>Withdraw <Amount amount={amount} /></h1>
       <div>Scan with your Lightning Wallet</div>
       <a class="qrcode" href="lightning:{lnurl}"><QRCode value={lnurl} /></a>
