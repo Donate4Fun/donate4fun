@@ -30,6 +30,7 @@
   import SigninPage from "./routes/SigninPage.svelte";
 
   const url = "";
+  let simpleHeader = false;
 
   window.history.pushState = new Proxy(window.history.pushState, {
     apply (target, thisArg, argumentsList) {
@@ -81,7 +82,7 @@
 </svelte:head>
 
 <Router url={url} primary={false}>
-  <Page>
+  <Page simpleHeader={simpleHeader}>
     <Route path="youtube/*">
       <Route path=":channel_id" component="{YoutubeChannelPage}" />
       <Route path=":channel_id/link" component="{YoutubeLinkPage}" />

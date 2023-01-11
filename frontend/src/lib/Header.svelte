@@ -8,6 +8,8 @@
   import { me } from "$lib/session.js";
   import { resolve } from "$lib/utils.js";
 
+  export let simple = false;
+
   let showMenu = false;
   let showClaim = false;
 </script>
@@ -39,7 +41,9 @@
   <nav class="quick-links">
     <a target=_blank href="https://github.com/orgs/Donate4Fun/projects/1">Roadmap</a>
     <a target=_blank href="https://github.com/Donate4Fun/donate4fun/blob/master/docs/HELP.md">Docs</a>
-    <a href={'#'} on:click={() => {showClaim = true; return false;}}>Claim donations</a>
+    {#if !simple}
+      <a href={'#'} on:click={() => {showClaim = true; return false;}}>Claim donations</a>
+    {/if}
   </nav>
   <div class="right">
     <div class="connect-button">

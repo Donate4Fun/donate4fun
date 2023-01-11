@@ -3,10 +3,12 @@
   import Footer from "$lib/Footer.svelte";
   import Toast from "$lib/Toast.svelte";
   import Consent from "$lib/Consent.svelte";
+
+  export let simpleHeader = false;
 </script>
 
 <div class="page">
-  <Header />
+  <Header simple={simpleHeader} />
   <Toast />
   <div class="content">
     <slot />
