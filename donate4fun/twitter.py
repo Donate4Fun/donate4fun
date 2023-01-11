@@ -173,12 +173,12 @@ async def make_oauth2_client(scope: str, token=None, update_token=None):
 
 
 @asynccontextmanager
-async def make_oauth1_client():
+async def make_oauth1_client(**kwargs):
     oauth = settings.twitter.oauth
     async with AsyncOAuth1Client(
         client_id=oauth.consumer_key,
         client_secret=oauth.consumer_secret,
-        redirect_uri='oob',
+        **kwargs,
     ) as client:
         yield client
 
@@ -209,7 +209,7 @@ async def obtain_twitter_oauth2_token():
 
 @register_command
 async def obtain_twitter_oauth1_token():
-    async with make_oauth1_client() as client:
+    async with make_oauth1_client(redirect_uri='oob') as client:
         await client.fetch_request_token('https://api.twitter.com/oauth/request_token')
         auth_url = client.create_authorization_url('https://api.twitter.com/oauth/authorize')
         pin: str = input(f"Open this url {auth_url} and paste here PIN:\n")
@@ -486,7 +486,7 @@ async def upload_media(client, image: bytes, mime_type: str) -> int:
 @register_command
 async def get_profile_banner():
     async with Database(settings.db).session() as db_session:
-        token = await db_session.query_oauth_token('twitter_oauth1')
+        token: dict = await db_session.query_oauth_token('twitter_oauth1')
     async with make_oauth1_client() as client:
         client.token = token
         url = 'https://api.twitter.com/1.1/users/profile_banner.json'
@@ -502,7 +502,7 @@ async def get_profile_banner():
 @register_command
 async def test_upload_media():
     async with Database(settings.db).session() as db_session:
-        token = await db_session.query_oauth_token('twitter_oauth1')
+        token: dict = await db_session.query_oauth_token('twitter_oauth1')
     async with make_oauth1_client() as client:
         client.token = token
         try:
