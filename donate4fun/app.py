@@ -89,7 +89,12 @@ class ServerNameMiddleware:
 
 class AuthMiddleware(AuthlibMiddleware):
     def __init__(self, settings: Settings, **kwargs):
-        super().__init__(**kwargs, secret_key=settings.jwt_secret, same_site="None", https_only=settings.cookie_secure)
+        super().__init__(
+            **kwargs,
+            secret_key=settings.jwt_secret,
+            same_site=settings.cookie_same_site,
+            https_only=settings.cookie_secure,
+        )
         if not settings.cookie_http_only:
             self.security_flags = self.security_flags.replace('httponly; ', '')
 

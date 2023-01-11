@@ -154,6 +154,7 @@ class Settings(BaseSettings):
     cookie_domain: str | None = None
     cookie_secure: bool = True
     cookie_http_only: bool = False
+    cookie_same_site: str = 'None'
     latest_donations_count: int = 50
     server_name: str = ''
 
