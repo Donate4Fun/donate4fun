@@ -10,15 +10,19 @@
   export let height = '40px'
   export let link;
   export let returnTo = '/donator/me';
+  const isMobile = 'ontouchstart' in document.documentElement;
+  // WORKAROUND: Twitter OAuth 2.0 doesn't work on Android/iOS
+  // See https://twittercommunity.com/t/web-oauth-2-0-is-broken-on-android-if-twitter-app-is-installed/169698/13
+  export let apiPath = (isMobile && type === 'twitter') ? `${type}/oauth1` : `${type}/oauth`;
 
   const navigate = useNavigate();
 
   async function click() {
-    if (link)
+    if (link) {
       navigate(link)
-    else {
-      const response = await api.get(`${type}/oauth`, {params: {return_to: returnTo}});
-      window.location.href = response.url;
+    } else {
+      const response = await api.get(apiPath, {params: {return_to: returnTo}});
+      window.location.assign(response.url);
       await sleep(10000); // to disable button blinking
     }
   }

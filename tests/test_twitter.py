@@ -241,7 +241,7 @@ async def test_donate_to_lightning_address(client, address: str):
 async def follow_oauth_flow(client, code: str, return_to: str):
     response = check_response(await client.get(
         '/api/v1/twitter/oauth',
-        params=return_to and dict(return_to=return_to),
+        params=dict(return_to=return_to),
         headers=dict(referer=settings.base_url),
     )).json()
     auth_url: str = response['url']
@@ -255,7 +255,7 @@ async def follow_oauth_flow(client, code: str, return_to: str):
         params=dict(state=encrypted_state, code=code),
     )
     check_response(response, 307)
-    assert response.headers['location'] == (make_absolute_uri(return_to) if return_to is not None else settings.base_url)
+    assert response.headers['location'] == make_absolute_uri(return_to)
 
 
 @mark_vcr
@@ -295,6 +295,65 @@ async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids, 
         client, code='ZTRnTkV5M014UXF2cmV1QWowSGVfaDZUY1dxSjNxSEZxSWQzRkJwWTFpU05fOjE2NzIzNDAxNzQxNzg6MTowOmFjOjE',
         return_to=return_to,
     )
+    me = Donator(**check_response(await client.get('/api/v1/me')).json())
+    assert me.id == donator.id
+    assert me.connected == True  # noqa
+
+    # Test channel API
+    verify_response(await client.get(f'/api/v1/twitter/account/{account.id}'), 'twitter-account-owned')
+
+
+async def follow_oauth1_flow(client):
+    response = check_response(await client.get(
+        '/api/v1/twitter/oauth1',
+        headers=dict(referer=settings.base_url),
+    )).json()
+    # Change to True to get new token
+    obtain = False
+    if obtain:
+        auth_url: str = response['url']
+        redirect_url = input(f"Open this url {auth_url}, authorize and paste url after redirect here:\n")
+        params = dict(furl(redirect_url).query.params)
+    else:
+        params = dict(oauth_token='token', oauth_verifier='verifier')
+    response = await client.get(
+        '/api/v1/twitter/oauth1-callback',
+        params=params,
+    )
+    check_response(response, 307)
+    assert response.headers['location'] == make_absolute_uri('donator/me')
+
+
+@mark_vcr
+@pytest.mark.freeze_time('2022-02-02 22:22:22')
+async def test_login_via_oauth1(client, settings, monkeypatch, db, freeze_uuids):
+    monkeypatch.setattr('secrets.token_urlsafe', lambda size: urlsafe_b64encode(b'\x00' * size))
+    monkeypatch.setattr('secrets.token_bytes', lambda size: b'\x00' * size)
+
+    async def patched_fetch_twitter_me(client) -> TwitterAccount:
+        return account
+    monkeypatch.setattr('donate4fun.twitter.fetch_twitter_me', patched_fetch_twitter_me)
+    account = TwitterAccount(
+        user_id=123,
+        title='title',
+        handle='handle',
+        description='description',
+        last_fetched_at=datetime.utcnow(),
+    )
+    async with db.session() as db_session:
+        await db_session.save_twitter_account(account)
+
+    donator = Donator(id=UUID(int=0))
+    login_to(client, settings, donator)
+    await follow_oauth1_flow(client)
+    me = Donator(**check_response(await client.get('/api/v1/me')).json())
+    assert me.id == donator.id
+    assert me.connected == True  # noqa
+
+    # Try to relogin from other account to the first account
+    other_donator = Donator(id=UUID(int=1))
+    login_to(client, settings, other_donator)
+    await follow_oauth1_flow(client)
     me = Donator(**check_response(await client.get('/api/v1/me')).json())
     assert me.id == donator.id
     assert me.connected == True  # noqa

@@ -60,6 +60,31 @@ async def donatee_donations(account_id: UUID, db=Depends(get_db_session)):
     return await db.query_donations((DonationDb.twitter_account_id == account_id) & DonationDb.paid_at.isnot(None))
 
 
+@router.get('/oauth1', response_model=OAuthResponse)
+async def login_via_twitter_oauth1(request: Request, donator=Depends(get_donator)):
+    async with make_oauth1_client(redirect_uri=make_absolute_uri(request.url_for('oauth1_callback'))) as client:
+        await client.fetch_request_token('https://api.twitter.com/oauth/request_token')
+        auth_url: str = client.create_authorization_url('https://api.twitter.com/oauth/authorize')
+        return OAuthResponse(url=auth_url)
+
+
+@router.get('/oauth1-callback')
+async def oauth1_callback(
+    request: Request, oauth_token: str = None, oauth_verifier: str = None, denied: str = None, donator=Depends(get_donator),
+):
+    if denied is not None:
+        return error_response(make_absolute_uri('settings'), "Authorization denied by user", '')
+    try:
+        async with make_oauth1_client(token=oauth_token) as client:
+            token: dict = await client.fetch_access_token('https://api.twitter.com/oauth/access_token', verifier=oauth_verifier)
+            client.token = token
+            await login_or_link_twitter_account(client, donator, request)
+            return RedirectResponse(make_absolute_uri('donator/me'))
+    except OAuthError as exc:
+        logger.exception("OAuth error")
+        return error_response(make_absolute_uri('settings'), exc.args[0], exc.__cause__)
+
+
 class OAuthError(Exception):
     pass
 
