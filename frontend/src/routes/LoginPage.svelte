@@ -11,7 +11,7 @@
   import Loading from "$lib/Loading.svelte";
   import NeedHelp from "$lib/NeedHelp.svelte";
   import api from "$lib/api.js";
-  import { me, resetMe, reloadMe } from "$lib/session.js";
+  import { me, reloadMe } from "$lib/session.js";
   import { notify } from "$lib/notifications.js";
   import cLog from "$lib/log.js";
 
@@ -31,7 +31,7 @@
       await api.post('update-session', {creds_jwt: token.message});
       await reloadMe();
       const mee = await me.get();
-      navigate(return_ || -1);
+      navigate(return_ || '/donator/me');
       if (mee.connected)
         notify("Success", `You've successefully connected your wallet`, "success");
       else
@@ -42,11 +42,6 @@
     return response.lnurl;
   }
   onDestroy(() => ws?.close());
-
-  async function disconnect() {
-    await api.post('disconnect-wallet');
-    await reloadMe();
-  }
 
   async function connect(lnurl) {
     if (window.webln) {
@@ -77,20 +72,6 @@
         <div class="buttons">
           <Button on:click={() => connect(lnurl)}>Connect using Wallet</Button>
           <Lnurl lnurl="{lnurl}" class="lnurl" />
-          <HoldButton
-            on:click={resetMe}
-            --border-width=1px
-            --height=44px
-            tooltipText="Hold to logout"
-          >Logout</HoldButton>
-          {#if me.donator.lnauth_pubkey}
-            <HoldButton
-              on:click={disconnect}
-              --border-width=1px
-              --height=44px
-              tooltipText="Hold to disconnect"
-            >Disconnect wallet</HoldButton>
-          {/if}
           <GrayButton on:click={() => navigate(-1)}>Cancel</GrayButton>
           <NeedHelp />
         </div>

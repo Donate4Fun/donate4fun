@@ -3,6 +3,7 @@
   import Button from "$lib/Button.svelte";
   import WhiteButton from "$lib/WhiteButton.svelte";
   import GrayButton from "$lib/GrayButton.svelte";
+  import Amount from "$lib/Amount.svelte";
   import { resolve } from "$lib/utils.js";
 
   export let target = null;
@@ -11,16 +12,13 @@
 {#await $me}
   <GrayButton disabled>...</GrayButton>
 {:then me}
-  <WhiteButton link={resolve('/login')} target={target} --height="40px" --width="160px" --border-width="2px">
+  <WhiteButton link={resolve('/signin')} target={target} --height="40px" --width="160px" --border-width="2px">
     {#if me.connected}
       <div class="inner">
-        <p class="connected">Connected<img src="/static/checkbox.svg" alt="checkbox"></p>
-        {#if me.shortkey}
-          <p class="pubkey ellipsis">{me.shortkey}</p>
-        {/if}
+        <p class="connected"><Amount amount={me.donator.balance} /></p>
       </div>
     {:else}
-      Connect Wallet
+      Sign in
     {/if}
   </WhiteButton>
 {:catch err}
@@ -41,11 +39,5 @@
   font-size: 11px;
   line-height: 16px;
   letter-spacing: 0.01em;
-}
-.pubkey {
-  font-weight: 700;
-  font-size: 11px;
-  line-height: 16px;
-  text-align: left;
 }
 </style>

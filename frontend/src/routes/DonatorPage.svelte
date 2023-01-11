@@ -8,13 +8,11 @@
   import Amount from "$lib/Amount.svelte";
   import FiatAmount from "$lib/FiatAmount.svelte";
   import Button from "$lib/Button.svelte";
+  import BaseButton from "$lib/BaseButton.svelte";
   import Separator from "$lib/Separator.svelte";
   import MeNamePubkey from "$lib/MeNamePubkey.svelte";
   import MeBalance from "$lib/MeBalance.svelte";
   import Infobox from "$lib/Infobox.svelte";
-  import LinkedItems from "$lib/LinkedItems.svelte";
-  import TwitterAccount from "$lib/TwitterAccount.svelte";
-  import YoutubeChannel from "$lib/YoutubeChannel.svelte";
   import ChannelLogo from "$lib/ChannelLogo.svelte";
   import TransactionHistory from "$lib/TransactionHistory.svelte";
   import { me, reloadMe } from "$lib/session.js";
@@ -26,8 +24,10 @@
   const navigate = useNavigate();
 
   async function load(me, donator_id) {
-    if (donator_id === 'me')
+    if (donator_id === 'me') {
       await navigate(`/donator/${me.donator.id}`, {replace: true})
+      return;
+    }
     const itsMe = donator_id === me.donator?.id;
     let donator;
     if (itsMe) {
@@ -45,14 +45,22 @@
   }
 </script>
 
-{#await $me}
-  <Loader />
-{:then me}
-{#await load(me, donator_id)}
-  <Loader />
-{:then {itsMe, donator}}
+{#await $me then me}
+{#await load(me, donator_id) then {itsMe, donator}}
   <Section>
     <div class="main">
+      <div class="settings-button">
+        <BaseButton
+          --border-width=1px
+          --border-color="rgba(0, 0, 0, 0.2)"
+          --width=115px
+          --height=32px
+          --text-color=black
+          --font-weight=500
+          --font-size=12px
+          link="/settings"
+        >Settings</BaseButton>
+      </div>
       <div class="top-block">
         <div class="image-and-name">
           <Userpic user={donator} class="userpic" --width=88px/>
@@ -67,7 +75,7 @@
             {#if me.connected}
               <MeBalance />
             {:else}
-              <Button link="/login">Connect a wallet</Button>
+              <Button link="/signin">Sign in</Button>
             {/if}
           </div>
         {:else}
@@ -75,18 +83,6 @@
         {/if}
       </div>
       {#if itsMe}
-        <div class="linked">
-          <LinkedItems let:item={channel} basePath="youtube" transferPath="channel" name="YouTube">
-            <div class="linked-item" slot="item">
-              <YoutubeChannel linkto="withdraw" channel={channel} logo --gap=16px />
-            </div>
-          </LinkedItems>
-          <LinkedItems let:item={account} basePath="twitter" transferPath="account" name="Twitter">
-            <div class="linked-item" slot="item">
-              <TwitterAccount account={account} --gap=16px />
-            </div>
-          </LinkedItems>
-        </div>
         <div class="history">
           <div class="tabs">
             <div><button disabled={activeTab === 'sent'} on:click={() => activeTab = 'sent'}>Sent</button></div>
@@ -128,7 +124,8 @@
   display: flex;
   flex-direction: column;
   gap: 64px;
-  padding: 36px 34px;
+  padding: 40px 34px;
+  position: relative;
 }
 @media (max-width: 639px) {
   .main {
@@ -141,6 +138,11 @@
     align-items: center;
   }
 }
+.settings-button {
+  position: absolute;
+  right: 24px;
+  top: 24px;
+}
 .top-block {
   display: flex;
   flex-direction: column;
@@ -151,25 +153,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
-}
-.linked {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 44px;
-  width: 100%;
-}
-.linked::-webkit-scrollbar, .history::-webkit-scrollbar {
-  display: none;  /* hide scroll for Safari and Chrome */
-}
-.linked-item {
-  flex-grow: 100;
+  gap: 24px;
 }
 .balance-actions {
   width: 300px;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 8px;
 }
 .history {
@@ -214,5 +204,8 @@
 .totals span {
   font-size: 14px;
   line-height: 20px;
+}
+.history::-webkit-scrollbar {
+  display: none;  /* hide scroll for Safari and Chrome */
 }
 </style>

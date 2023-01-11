@@ -3,9 +3,16 @@
   import {webOrigin} from "$lib/utils.js";
 
   export let user;
+  export let clickable = true;
 </script>
 
-<a href="{$webOrigin}/donator/{user.id}" use:link {...$$restProps}><img title={user.name} src="{user.avatar_url}" alt="user logo"></a>
+{#if clickable}
+  <a href="{$webOrigin}/donator/{user.id}" use:link {...$$restProps}>
+    <img title={user.name} src="{user.avatar_url}" alt="user logo">
+  </a>
+{:else}
+  <img title={user.name} src="{user.avatar_url}" alt="user logo">
+{/if}
 
 <style>
 a {

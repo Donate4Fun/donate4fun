@@ -5,6 +5,7 @@
   import Userpic from "$lib/Userpic.svelte";
   import WalletLogin from "$lib/WalletLogin.svelte";
   import ClaimPopup from "$lib/ClaimPopup.svelte";
+  import Amount from "$lib/Amount.svelte";
   import { me } from "$lib/session.js";
   import { resolve } from "$lib/utils.js";
 
@@ -24,11 +25,14 @@
     <ul>
       <li><a href="https://github.com/Donate4Fun/donate4fun/blob/master/docs/HELP.md" target="_blank">Docs</a></li>
       <li><a href="https://github.com/orgs/Donate4Fun/projects/1" target="_blank">Roadmap</a></li>
-      <li><a use:link href="/signin">Claim donations</a></li>
-      <li><a use:link href="/login">Connect wallet</li>
       <li><a use:link href="/#team">Team</a></li>
       {#await $me then me}
         <li><a use:link href="/donator/{me.donator.id}">Profile</a></li>
+        {#if me.connected}
+          <li><a use:link href="/settings">Settings</a></li>
+        {:else}
+          <li><a use:link href="/signin">Sign in</li>
+        {/if}
       {/await}
     </ul>
   </nav>
@@ -46,9 +50,15 @@
     {/if}
   </nav>
   <div class="right">
-    <div class="connect-button">
-      <WalletLogin />
-    </div>
+    {#await $me then me}
+      <div class="amount">
+        {#if me.connected}
+          <Amount amount={me.donator.balance} />
+        {:else}
+          <a use:link href="/signin">Sign In</a>
+        {/if}
+      </div>
+    {/await}
     <div class="userpic">
       {#await $me then me}
         <Userpic user={me.donator} />
@@ -120,7 +130,7 @@ header {
   align-items: center;
 }
 @media (max-width: 640px) {
-  .connect-button {
+  .amount {
     display: none;
   }
   header {
@@ -163,7 +173,7 @@ header {
 .menu-popup ul {
   padding: 0;
 }
-.quick-links a, .menu-popup ul a {
+.quick-links a, .menu-popup ul a, .right a {
   font-size: 15px;
   line-height: 18px;
   text-align: center;

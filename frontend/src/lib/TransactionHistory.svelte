@@ -1,5 +1,6 @@
 <script>
   import { get } from "svelte/store";
+
   import { link } from "svelte-navigator";
   import TwitterBrand from "svelte-awesome-icons/TwitterBrand.svelte";
   import YoutubeBrand from "svelte-awesome-icons/YoutubeBrand.svelte";
@@ -45,7 +46,7 @@
     {#await firstLoad()}
       <Loader --size=4em />
     {:then me}
-      {#each donations as donation}
+      {#each donations as donation (donation.id)}
         {#if donation.receiver}
           <Datetime dt={donation.paid_at}/>
         {:else}
