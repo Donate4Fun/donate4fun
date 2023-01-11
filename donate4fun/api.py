@@ -34,7 +34,7 @@ from .db_models import DonationDb, WithdrawalDb
 from .db_donations import sent_donations_subquery, received_donations_subquery
 from .settings import settings
 from .api_utils import get_donator, load_donator, get_db_session, task_group, only_me, track_donation
-from .lnd import PayInvoiceError, LnurlWithdrawResponse, lnd, lightning_payment_metadata
+from .lnd import PayInvoiceError, LnurlWithdrawResponse, lnd, lightning_payment_metadata, LndIsNotReady
 from .pubsub import pubsub
 from .twitter import query_or_fetch_twitter_account
 from . import api_twitter, api_youtube
@@ -57,6 +57,16 @@ def http_status_error_handler(request, exc):
     else:
         body = exc.response.text
     return JSONResponse(status_code=500, content={"message": f"Upstream server returned {status_code}: {body}"})
+
+
+@app.exception_handler(LndIsNotReady)
+def lnd_is_not_ready_handler(request, exc):
+    info: dict = exc.args[0]
+    synced_to_chain: bool = info['synced_to_chain']
+    synced_to_graph: bool = info['synced_to_graph']
+    return JSONResponse(status_code=503, content=dict(
+        message=f"Lightning node is not ready: synced_to_chain={synced_to_chain} synced_to_graph={synced_to_graph}"
+    ))
 
 
 @app.exception_handler(NoResultFound)
