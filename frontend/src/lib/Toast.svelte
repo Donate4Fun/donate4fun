@@ -21,18 +21,18 @@
       {:else if notification.type === "info"}
         <Fa icon={faCircleInfo} size=2x color=blue />
       {/if}
-      <div class="text">
+      <div class="content">
         <div class="title">{notification.title}</div>
-        <pre class="message">{notification.message}</pre>
-        {#if notification.type === "error"}
-          <div class="support">If it persists contact us using <a href="https://discord.gg/VvqUaFeQZU" target=_blank>Discord</a> or <a href="https://t.me/+XZmgmy8iLYFiZDRi" target=_blank>Telegram</a></div>
+        <div class="message">{notification.message}</div>
+        {#if notification.type === "error" && notification.options?.showFooter !== false}
+          <div class="support">If the error persists please contact us via <a href="https://t.me/+XZmgmy8iLYFiZDRi" target=_blank>Telegram</a></div>
         {/if}
-        {#if notification.hasClose}
+        {#if notification.options?.hasClose}
           <Button class=white on:click={notification.close} --font-size=12px --padding="5px 15px">Close</Button>
         {/if}
       </div>
     </div>
-    <div class="progress" class:paused={hidden} style="--duration: {notification.timeout}ms" on:animationstart={() => notification.isShown = true} on:animationend={notification.close}></div>
+    <div class="progress" class:paused={hidden} style="--duration: {notification.options?.timeout || 3000}ms" on:animationstart={() => notification.isShown = true} on:animationend={notification.close}></div>
   </div>
 {/each}
   <VisibilityChange bind:hidden />
@@ -52,6 +52,7 @@
   box-shadow: 0px 8px 20px rgba(185, 192, 204, 0.4);
   border-radius: 8px;
   width: 509px;
+  max-width: 100vw;
   overflow: hidden;
 }
 .icon-and-text {
@@ -60,25 +61,30 @@
   font-size: 14px;
   padding: 23px 21px 35px 17px;
 }
-div.text {
+.content {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
-pre.message {
-  font-size: 10px;
+.message {
   overflow: auto;
   max-height: 400px;
+  font-weight: 600;
 }
 .title {
-  font-weight: 700;
-  font-size: 16px;
-  margin-bottom: 12px;
+  font-weight: 400;
+  font-size: 14px;
 }
 .progress {
   height: 3px;
   animation: var(--duration) progress linear forwards;
   background: blue;
 }
-.toast:hover .progress {
+.support {
+  font-size: 12px;
+}
+.toast:hover .progress,.toast:active .progress {
   animation-play-state: paused;
 }
 .progress.paused {
