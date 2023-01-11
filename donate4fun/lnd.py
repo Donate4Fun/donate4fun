@@ -5,7 +5,7 @@ import json
 import logging
 import math
 from functools import cached_property
-from typing import Any, Literal
+from typing import Literal
 from contextlib import asynccontextmanager
 
 import httpx
@@ -19,12 +19,11 @@ from .settings import LndSettings, settings
 from .types import RequestHash, PaymentRequest
 from .models import Invoice, Donator, PayInvoiceResult
 from .core import as_task, register_command, ContextualObject
-from .api_utils import track_donation
+from .api_utils import track_donation, auto_transfer_donations
 
 logger = logging.getLogger(__name__)
 
 
-Data = dict[str, Any]
 State = str
 
 
@@ -70,7 +69,7 @@ class LndClient:
         if macaroon_path:
             return binascii.hexlify(open(os.path.expanduser(macaroon_path), "rb").read())
 
-    async def query(self, method: str, api: str, data: Data = None, **kwargs) -> Data:
+    async def query(self, method: str, api: str, data: dict = None, **kwargs) -> dict:
         async with self.request(api, method=method, json=data, **kwargs) as resp:
             results = [json.loads(line) async for line in resp.aiter_lines()]
             if len(results) == 1:
@@ -96,7 +95,7 @@ class LndClient:
                 resp.raise_for_status()
                 yield resp
 
-    async def subscribe(self, api: str, **request: Data):
+    async def subscribe(self, api: str, **request: dict):
         # WORKAROUND: This should be after the request but
         # lnd does not return headers until the first event, so it deadlocks
         logger.trace("subscribe %s %s", api, request)
@@ -176,11 +175,11 @@ class LndClient:
         resp = await self.query('GET', '/v1/state')
         return resp['state']
 
-    async def query_info(self):
+    async def query_info(self) -> dict:
         return await self.query('GET', '/v1/getinfo')
 
     async def ensure_ready(self):
-        info = await lnd.query_info()
+        info: dict = await lnd.query_info()
         is_ready = info['synced_to_chain'] is True and info['synced_to_graph'] is True and info['num_active_channels'] > 0
         if not is_ready:
             raise LndIsNotReady(info)
