@@ -103,7 +103,6 @@ h1 {
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  width: 640px;
 }
 .buttons {
   display: flex;
