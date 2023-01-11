@@ -1,14 +1,17 @@
 <script>
   import { tick } from "svelte";
   import Loader from "$lib/Loader.svelte";
+  import { cError } from "$lib/log.js";
 
   export let id;
   let element;
 
   async function loadTweet() {
     await tick();
-    console.log("elem", element);
-    await twttr.widgets.createTweet(id.toString(), element);
+    if (typeof(twttr) !== 'undefined')
+      await twttr.widgets.createTweet(id.toString(), element);
+    else
+      cError("Could not embed tweet because twttr is undefined");
   }
 </script>
 
