@@ -209,10 +209,11 @@ class DonationsDbMixin:
             .subquery()
         )
         result = await self.execute(
-            select(functions.sum(subquery.c.amount).label('amount'))
+            select(func.coalesce(func.sum(subquery.c.amount), 0).label('amount'))
         )
-        if result.fetchone().amount != amount:
-            raise InvalidDbState
+        sum_amount: int = result.fetchone().amount
+        if sum_amount != amount:
+            raise InvalidDbState(f"Sum of donations ({sum_amount}) != account balance ({amount})")
         await self.execute(
             insert(TransferDb)
             .values(
