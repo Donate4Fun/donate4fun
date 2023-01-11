@@ -8,6 +8,8 @@
   import Donator from "$lib/Donator.svelte";
   import TwitterDonation from "$lib/TwitterDonation.svelte";
   import YoutubeDonation from "$lib/YoutubeDonation.svelte";
+  import TwitterShare from "$lib/TwitterShare.svelte";
+  import HoldButton from "$lib/HoldButton.svelte";
   import { me } from "$lib/session.js";
   import api from "$lib/api.js";
 
@@ -55,14 +57,18 @@
   {:else}
     {#await $me then me}
       {#if donation.donator.id === me.donator.id}
-        <BaseButton
-          --background-color="white"
-          --border-width="2px"
-          --border-color="#EDEDED"
-          --text-color="#FF4B4B"
-          --shadow="none"
-          on:click={cancel}
-        >Cancel donation</BaseButton>
+        <div class="buttons">
+          {#if donation.youtube_channel}
+            <!-- FIXME: add youtube share -->
+          {:else if donation.twitter_account}
+            <TwitterShare text="Hey @{donation.twitter_account.handle}, I've sent you a donation" />
+          {/if}
+          <HoldButton
+            --height=44px
+            --border-width=0
+            on:click={cancel}
+          >Cancel donation</HoldButton>
+        </div>
       {/if}
     {/await}
   {/if}
@@ -98,5 +104,11 @@
   font-weight: 700;
   font-size: 16px;
   line-height: 19px;
+}
+.buttons {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 </style>

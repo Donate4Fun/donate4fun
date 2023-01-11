@@ -12,7 +12,7 @@
   }
 </script>
 
-<WhiteButton link={shareUrl} target="_blank">
+<WhiteButton height=40px link={shareUrl} target="_blank">
   <div class="main">
     <img alt=youtube src="/static/twitter.svg" width=20>
     <span>Share</span>
