@@ -3,7 +3,7 @@ import { globalHistory } from "svelte-navigator";
 
 const notifications = writable([]);
 
-function notify(title, message, type = "error", timeout = 3000, hasClose = false) {
+function notify(title, message, type = "error", options = null) {
   notifications.update(state => {
     const id_ = id();
 
@@ -13,7 +13,7 @@ function notify(title, message, type = "error", timeout = 3000, hasClose = false
       });
     }
 
-    return [...state, { id: id_, type, title, message, close, hasClose, timeout, isShown: false }];
+    return [...state, { id: id_, type, title, message, close, options, isShown: false }];
   });
 }
 
