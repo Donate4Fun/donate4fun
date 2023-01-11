@@ -6,7 +6,7 @@ from furl import furl
 from fastapi import Request, Depends, HTTPException
 from sqlalchemy.orm.exc import NoResultFound  # noqa - imported from other modules
 
-from .models import Donator, Credentials, Donation
+from .models import Donator, Credentials, Donation, YoutubeChannelOwned, TwitterAccountOwned
 from .db import DbSession, db
 from .core import ContextualObject
 from .types import LightningAddress
@@ -70,3 +70,16 @@ def track_donation(donation: Donation):
 
 def make_absolute_uri(path: str) -> str:
     return str(furl(url=settings.base_url, path=furl(path).path))
+
+
+async def auto_transfer_donations(db: DbSession, donation: Donation):
+    if donation.youtube_channel:
+        if not isinstance(donation.youtube_channel, YoutubeChannelOwned):
+            donation.youtube_channel = await db.query_youtube_channel(id=donation.youtube_channel.id)
+        if donation.youtube_channel.owner_id is not None:
+            await db.transfer_youtube_donations(donation.youtube_channel, Donator(id=donation.youtube_channel.owner_id))
+    elif donation.twitter_account:
+        if not isinstance(donation.twitter_account, TwitterAccountOwned):
+            donation.twitter_account = await db.query_twitter_account(id=donation.twitter_account.id)
+        if donation.twitter_account.owner_id is not None:
+            await db.transfer_twitter_donations(donation.twitter_account, Donator(id=donation.twitter_account.owner_id))

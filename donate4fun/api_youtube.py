@@ -106,7 +106,7 @@ async def auth_google(
             return RedirectResponse(furl(auth_state.success_url).add(dict(error=str(exc))).url)
         else:
             channel: YoutubeChannel = await query_or_fetch_youtube_channel(channel_id=channel_info.id, db=db_session)
-            owned_channel: YoutubeChannelOwned = await db_session.query_youtube_channel(channel.id)
+            owned_channel: YoutubeChannelOwned = await db_session.query_youtube_channel(id=channel.id)
             if owned_channel.via_oauth:
                 request.session['donator'] = str(owned_channel.owner_id)
             else:
@@ -125,7 +125,7 @@ class YoutubeChannelResponse(YoutubeChannel):
 
 @router.get("/channel/{channel_id}", response_model=YoutubeChannelResponse)
 async def youtube_channel(channel_id: UUID, db=Depends(get_db_session), me=Depends(get_donator)):
-    channel: YoutubeChannelOwned = await db.query_youtube_channel(channel_id, owner_id=me.id)
+    channel: YoutubeChannelOwned = await db.query_youtube_channel(id=channel_id, owner_id=me.id)
     return YoutubeChannelResponse(
         **channel.dict(),
         is_my=channel.owner_id == me.id,
@@ -135,7 +135,7 @@ async def youtube_channel(channel_id: UUID, db=Depends(get_db_session), me=Depen
 @router.post('/channel/{channel_id}/transfer', response_model=TransferResponse)
 async def youtube_channel_transfer(channel_id: UUID, db=Depends(get_db_session), donator: Donator = Depends(get_donator)):
     donator = await load_donator(db, donator.id)
-    channel: YoutubeChannelOwned = await db.query_youtube_channel(channel_id, donator.id)
+    channel: YoutubeChannelOwned = await db.query_youtube_channel(id=channel_id, owner_id=donator.id)
     if channel.owner_id != donator.id:
         raise HTTPException(status_code=401, detail="You should prove that you own YouTube channel")
     if not donator.connected:
