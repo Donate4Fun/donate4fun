@@ -4,6 +4,7 @@
 
   import BaseButton from "$lib/BaseButton.svelte";
   import { clickDispatcher } from "$lib/utils.js";
+  import { cLog } from "$lib/log.js";
 
   export let tooltipText = "Hold this button";
 
@@ -34,8 +35,10 @@
   }
 
   function onAnimationEnd(ev) {
-    if (holding)
+    if (holding) {
       holded = true;
+      window.navigator.vibrate(100);
+    }
   }
 
   async function click() {
@@ -49,7 +52,7 @@
 </script>
 
 <BaseButton
-  --padding=0
+  padding=0
   --text-color=var(--color)
   spin={spin}
 >
@@ -57,9 +60,10 @@
     class="main"
     class:holding={holding}
     class:holded={holded}
-    on:mousedown={onMouseDown}
-    on:mouseup={onMouseUp}
-    on:mouseleave={onMouseLeave}
+    on:pointerdown={onMouseDown}
+    on:contextmenu|preventDefault
+    on:pointerup={onMouseUp}
+    on:pointerleave={onMouseLeave}
     on:animationend|self={onAnimationEnd}
   >
     <div class="tooltip" class:show={showTooltip} on:animationend={() => showTooltip = false}>
@@ -136,6 +140,7 @@
   width: 100%;
   background-image: linear-gradient(to right, var(---text-fill-color) 50%, var(--text-color) 50%);
   background-clip: text;
+  -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .holding {
