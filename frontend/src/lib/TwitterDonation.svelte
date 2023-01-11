@@ -4,6 +4,8 @@
   import WhiteButton from "$lib/WhiteButton.svelte";
   import TwitterShare from "$lib/TwitterShare.svelte";
   import EmbeddedTweet from "$lib/EmbeddedTweet.svelte";
+  import SocialSigninButton from "$lib/SocialSigninButton.svelte";
+  import ColoredBorder from "$lib/ColoredBorder.svelte";
 
   export let donation;
 </script>
@@ -38,12 +40,11 @@
       </div>
     </a>
   </div>
-  <div class="buttons">
-    {#if donation.cancelled_at === null && donation.claimed_at === null}
-      <TwitterShare text="Hey @{donation.twitter_account.handle}, I've sent you a donation" />
-      <WhiteButton link="/twitter/{donation.twitter_account.id}/owner">Claim</WhiteButton>
-    {/if}
-  </div>
+  {#if donation.cancelled_at === null && donation.claimed_at === null}
+    <div class="claim">
+      <SocialSigninButton colored height=48px width=300px type="twitter">Claim with Twitter</SocialSigninButton>
+    </div>
+  {/if}
   {#if donation.twitter_tweet !== null}
     <EmbeddedTweet id={donation.twitter_tweet.tweet_id} />
   {/if}
@@ -64,7 +65,6 @@
   flex-direction: column;
   gap: 16px;
   color: #2E6CFF;
-  width: 100%;
 }
 .twitter-account {
   display: flex;
@@ -116,15 +116,11 @@ img.avatar {
   color: #19B400;
   font-weight: 800;
 }
-.buttons {
+.claim {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  flex-direction: row;
-  gap: 16px;
   width: 100%;
-  height: 40px;
-  --height: 100%;
-  --font-size: 16px;
 }
 @media (max-width: 640px) {
   .name,.amount {

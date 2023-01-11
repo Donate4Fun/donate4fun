@@ -10,6 +10,7 @@
   import Amount from "$lib/Amount.svelte";
   import ModalPopup from "$lib/ModalPopup.svelte";
   import Donator from "$lib/Donator.svelte";
+  import SocialSigninButton from "$lib/SocialSigninButton.svelte";
   
   import { me } from "$lib/session.js";
   import { copy, youtube_video_url, youtube_channel_url } from "$lib/utils.js";
@@ -53,12 +54,6 @@
       {/if}
     </a>
   </div>
-  {#if donation.cancelled_at === null && donation.claimed_at === null}
-    <div class="buttons">
-      <WhiteButton on:click={() => showSharePopup = true}>Share</WhiteButton>
-      <WhiteButton link="/youtube/{donation.youtube_channel.id}/owner">Claim</WhiteButton>
-    </div>
-  {/if}
   {#if donation.youtube_video}
     <div class="for-the-video">for the video</div>
     <iframe
@@ -69,6 +64,11 @@
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
       allowfullscreen
     ></iframe>
+  {/if}
+  {#if donation.cancelled_at === null && donation.claimed_at === null}
+    <div class="claim">
+      <SocialSigninButton colored height=48px type=youtube>Claim with YouTube</SocialSigninButton>
+    </div>
   {/if}
 </div>
 <ModalPopup bind:show={showSharePopup}>
@@ -155,15 +155,11 @@ img.avatar {
   color: #19B400;
   font-weight: 800;
 }
-.buttons {
+.claim {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  flex-direction: row;
-  gap: 16px;
   width: 100%;
-  height: 40px;
-  --height: 100%;
-  --font-size: 16px;
 }
 .video {
   aspect-ratio: 16 / 9;
