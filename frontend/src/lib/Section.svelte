@@ -11,7 +11,12 @@ section {
   /* identical to box height, or 133% letter-spacing: 0.015em; */
 
   padding: var(--padding);
-  width: var(--width, fit-content);  /* replace with 100% always */
+  width: var(--width, 640px);  /* replace with 100% always */
   height: var(--height, fit-content);
+  max-width: 100vw;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 </style>
