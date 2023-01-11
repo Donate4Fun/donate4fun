@@ -10,8 +10,9 @@ from furl import furl
 from .models import TwitterAccount, TransferResponse, Donator, TwitterAccountOwned, Donation, OAuthState, OAuthResponse
 from .types import ValidationError
 from .api_utils import get_donator, load_donator, get_db_session, make_absolute_uri
-from .twitter import make_prove_message, make_link_oauth2_client, fetch_twitter_me
+from .twitter import make_prove_message, make_link_oauth2_client, make_oauth1_client, fetch_twitter_me
 from .db_models import DonationDb
+from .db import db
 
 router = APIRouter(prefix='/twitter')
 logger = logging.getLogger(__name__)
@@ -59,16 +60,25 @@ async def donatee_donations(account_id: UUID, db=Depends(get_db_session)):
     return await db.query_donations((DonationDb.twitter_account_id == account_id) & DonationDb.paid_at.isnot(None))
 
 
+class OAuthError(Exception):
+    pass
+
+
+def error_response(url: str, title: str, message: str):
+    return RedirectResponse(furl(url).set(dict(error=title, message=str(message))).url)
+
+
 @router.get('/oauth', response_model=OAuthResponse)
-async def login_via_twitter(request: Request, return_to: str | None = None, donator=Depends(get_donator)):
+async def login_via_twitter(request: Request, return_to: str, donator=Depends(get_donator)):
     async with make_link_oauth2_client() as client:
         code_verifier = secrets.token_urlsafe(32)
         state = OAuthState(
-            last_url=make_absolute_uri(return_to) if return_to is not None else request.headers['referer'],
+            success_url=make_absolute_uri(return_to),
+            error_url=request.headers['referer'],
             donator_id=donator.id,
             code_verifier=code_verifier,
         )
-        encrypted_state = state.to_encrypted_jwt()
+        encrypted_state = state.to_jwt()
         if len(encrypted_state) > 500:
             raise ValidationError("State is too long for Twitter: %d chars", len(encrypted_state))
         url, state = client.create_authorization_url(
@@ -81,36 +91,53 @@ async def login_via_twitter(request: Request, return_to: str | None = None, dona
 @router.get('/oauth-redirect')
 async def auth_redirect(
     request: Request, state: str, error: str = None, error_description: str = None, code: str = None,
-    db_session=Depends(get_db_session), donator=Depends(get_donator),
+    donator=Depends(get_donator),
 ):
-    auth_state = OAuthState.from_encrypted_jwt(state)
+    auth_state = OAuthState.from_jwt(state)
     if auth_state.donator_id != donator.id:
         raise ValidationError(
             f"User that initiated Google Auth {donator.id} is not the current user {auth_state.donator_id}, rejecting auth"
         )
-    if error:
-        return RedirectResponse(furl(auth_state.last_url).add(dict(error=error, message=error_description)).url)
-    elif code:
-        async with make_link_oauth2_client() as client:
-            token: dict = await client.fetch_token(code=code, code_verifier=auth_state.code_verifier)
-        try:
-            async with make_link_oauth2_client(token=token) as client:
-                account: TwitterAccount = await fetch_twitter_me(client)
-        except Exception as exc:
-            logger.exception("Failed to fetch user's account")
-            return RedirectResponse(furl(auth_state.last_url).add(dict(error=str(exc))).url)
+
+    try:
+        if error:
+            raise OAuthError("OAuth error", error)
+        elif code:
+            async with make_link_oauth2_client() as client:
+                try:
+                    token: dict = await client.fetch_token(code=code, code_verifier=auth_state.code_verifier)
+                except Exception as exc:
+                    raise OAuthError("Failed to fetch OAuth token") from exc
+                client.token = token
+                await login_or_link_twitter_account(client, donator, request)
+                return RedirectResponse(auth_state.success_url)
         else:
+            # Should either receive a code or an error
+            raise ValidationError("Something's probably wrong with your callback")
+    except OAuthError as exc:
+        logger.exception("OAuth error")
+        return error_response(auth_state.error_url, exc.args[0], exc.__cause__)
+
+
+async def login_or_link_twitter_account(client, donator: Donator, request):
+    try:
+        account: TwitterAccount = await fetch_twitter_me(client)
+    except Exception as exc:
+        raise OAuthError("Failed to fetch user's account") from exc
+
+    try:
+        async with db.session() as db_session:
             await db_session.save_twitter_account(account)
             owned_account: TwitterAccountOwned = await db_session.query_twitter_account(user_id=account.user_id)
             if owned_account.via_oauth:
+                if donator.connected:
+                    raise OAuthError("Could not link already linked account")
                 request.session['donator'] = str(owned_account.owner_id)
             else:
                 await db_session.link_twitter_account(account, donator, via_oauth=True)
             request.session['connected'] = True
-            return RedirectResponse(auth_state.last_url)
-    else:
-        # Should either receive a code or an error
-        raise Exception("Something's probably wrong with your callback")
+    except Exception as exc:
+        raise OAuthError("Failed to link account") from exc
 
 
 @router.post("/account/{account_id}/unlink")

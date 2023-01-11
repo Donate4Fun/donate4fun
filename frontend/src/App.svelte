@@ -7,6 +7,7 @@
   import { analytics } from "$lib/analytics.js";
   import { notify } from "$lib/notifications.js";
   import { ApiError, errorToText } from "$lib/api.js";
+  import { cLog } from "$lib/log.js";
   import DonatorPage from "./routes/DonatorPage.svelte";
   import DonatePage from "./routes/DonatePage.svelte";
   import FulfillPage from "./routes/FulfillPage.svelte";
@@ -32,7 +33,7 @@
 
   window.history.pushState = new Proxy(window.history.pushState, {
     apply (target, thisArg, argumentsList) {
-      console.log("apply", target);
+      cLog("apply", target);
       Reflect.apply(target, thisArg, argumentsList);
       scrollTo(0,0);
     }
@@ -42,26 +43,32 @@
     analytics.page();
     const url = new URL(window.location.href);
     const error = url.searchParams.get('error');
-    if (error !== null)
-      notify("Error", error, "error");
+    const message = url.searchParams.get('message');
+    if (error !== null) {
+      notify(error, message, "error", { showFooter: false });
+      url.searchParams.delete('error');
+      url.searchParams.delete('message');
+      window.history.replaceState({}, null, url);
+    }
   });
 
   function onNavigate(event) {
-    console.log("onNavigate", event);
+    cLog("onNavigate", event);
     analytics.page();
+    simpleHeader = event.location.pathname.match(/\/donation\/.*/)
   }
   const unlisten = globalHistory.listen(onNavigate);
 	onDestroy(unlisten);
 
   window.onerror = (event, source, lineno, colno, error) => {
-    console.log("onError", event, source, lineno, colno, error);
+    cLog("onError", event, source, lineno, colno, error);
     if (event.reason instanceof ApiError)
       notify("Server Error", errorToText(event.reason.response), "error");
     else
       notify("Unhandled error", event.reason, "error");
   };
   window.addEventListener("unhandledrejection", (event) => {
-    console.log("onUnhandledRejection", event);
+    cLog("onUnhandledRejection", event);
     if (event.reason instanceof ApiError)
       notify("Server Error", errorToText(event.reason.response), "error");
     else

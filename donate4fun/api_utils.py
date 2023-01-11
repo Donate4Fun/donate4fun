@@ -69,4 +69,4 @@ def track_donation(donation: Donation):
 
 
 def make_absolute_uri(path: str) -> str:
-    return str(furl(url=settings.base_url, path=path))
+    return str(furl(url=settings.base_url, path=furl(path).path))
