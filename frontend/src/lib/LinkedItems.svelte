@@ -1,4 +1,6 @@
 <script>
+  import { derived } from "svelte/store";
+  import { slide } from "svelte/transition";
   import { link } from "svelte-navigator";
   import { asyncable } from 'svelte-asyncable';
 
@@ -10,17 +12,20 @@
   import { capitalize } from "$lib/utils.js";
   import { me } from "$lib/session.js";
 
-  export let basePath;
+  export let basePath = null;
   export let transferPath;
   export let name;
+  export let items = [];
 
   async function collect(item) {
     await api.post(`${basePath}/${transferPath}/${item.id}/transfer`);
   }
 
-  const linkedStore = asyncable(async (set, me_) => {
-    const me = await me_;
-    const ws = api.subscribe(`donator:${me.donator.id}`, { autoReconnect: false });
+  const itemsStore = derived(me, async ($me, set) => {
+    if (basePath === null)
+      return;
+    const me_ = await $me;
+    const ws = api.subscribe(`donator:${me_.donator.id}`, { autoReconnect: false });
     ws.on("notification", async (notification) => {
       if (notification.status === 'OK') {
         set(await api.get(`${basePath}/linked`));
@@ -28,43 +33,48 @@
     });
     await ws.ready();
     set(await api.get(`${basePath}/linked`));
-    return async () => {
-      await ws.close();
+    return () => {
+      ws.close();
     };
-  }, null, [ me ]);
+  }, items);
 
   async function unlink(item) {
     await api.post(`${basePath}/${transferPath}/${item.id}/unlink`);
   }
+  export let onUnlink = unlink;
 </script>
 
 <div class="container">
-  <div class="header">
-    <h2>Linked <b>{name}</b> accounts:</h2>
-  </div>
-  <ul>
-    {#await $linkedStore then items}
-      {#each items as item}
-      <li>
-        <slot name="item" {item} />
-        <Amount amount={item.balance} />
-        <div class="withdraw-button">
-          <Button disabled={item.balance === 0} on:click={() => collect(item)} --border-width=0 --padding="0 24px">Claim</Button>
-          {#if item.via_oauth}
-            <HoldButton
-              --border-width=0
-              on:click={() => unlink(item)}
-              tooltipText="Hold to unlink"
-            ><span class="unlink">Unlink</span></HoldButton>
+  {#if $itemsStore.length > 0}
+    <h2 transition:slide>
+      <slot name="header">
+        Linked <b>{name}</b> accounts:
+      </slot>
+    </h2>
+    <ul>
+      {#each $itemsStore as item (item.id)}
+        <li transition:slide>
+          <slot name="item" {item} />
+          {#if item.balance > 0}
+            <Amount amount={item.balance} />
           {/if}
-        </div>
-      </li>
+          <div class="buttons">
+            {#if item.balance > 0}
+              <Button on:click={() => collect(item)} --border-width=0 padding="0 24px">Claim</Button>
+            {/if}
+            {#if item.via_oauth}
+              <HoldButton
+                --border-width=0
+                on:click={() => onUnlink(item)}
+                tooltipText="Hold to unlink"
+              ><span class="unlink">Unlink</span></HoldButton>
+            {/if}
+          </div>
+        </li>
       {/each}
-    {/await}
-    <li class="add">
-      <SocialSigninButton type={basePath} width=300px>Add {name} account</SocialSigninButton>
-    </li>
-  </ul>
+    </ul>
+  {/if}
+  <slot name=add />
 </div>
 
 <style>
@@ -74,12 +84,7 @@
   flex-direction: column;
   gap: 16px;
 }
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.header > h2 {
+h2 {
   font-weight: 500;
   line-height: 24px;
   font-size: 18px;
@@ -98,17 +103,11 @@ li {
   flex-wrap: wrap;
   gap: 17px;
   padding: 16px;
-  padding-right: 0;
   background: linear-gradient(90deg, rgba(157, 237, 162, 0.15) 0%, rgba(157, 237, 162, 0) 100%);
   border-radius: 8px;
 }
-li.add {
-  justify-content: center;
-  background: transparent;
-}
-.withdraw-button {
+.buttons {
   height: 44px;
-  justify-self: end;
   flex-grow: 1;
   display: flex;
   gap: 8px;

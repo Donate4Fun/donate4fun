@@ -28,6 +28,7 @@
   import FAQPage from "./routes/FAQ.svelte";
   import InstallWebLNWalletPage from "./routes/InstallWebLNWalletPage.svelte";
   import SigninPage from "./routes/SigninPage.svelte";
+  import SettingsPage from "./routes/SettingsPage.svelte";
 
   const url = "";
   let simpleHeader = false;
@@ -105,6 +106,7 @@
     <Route path="faq"><FAQPage /></Route>
     <Route path="install-webln-wallet"><InstallWebLNWalletPage /></Route>
     <Route path="signin"><SigninPage /></Route>
+    <Route path="settings"><SettingsPage /></Route>
     <Route path="/"><Landing /></Route>
     <Route component={NotFoundPage}></Route>
   </Page>

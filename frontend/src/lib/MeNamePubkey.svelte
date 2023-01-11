@@ -7,9 +7,6 @@
 <div class="outer" style:align-items={align}>
   {#await $me then me}
     <p class="name ellipsis" title={me.donator.name}>{me.donator.name}</p>
-    {#if me.connected}
-      <p class="connected">Connected <img src="/static/checkbox.svg" alt="checkbox"></p>
-    {/if}
   {/await}
 </div>
 
@@ -25,15 +22,6 @@
   font-weight: 500;
   font-size: 14px;
   line-height: 20px;
-  letter-spacing: 0.01em;
-}
-.connected {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-
-  font-size: 11px;
-  line-height: 16px;
   letter-spacing: 0.01em;
 }
 </style>
