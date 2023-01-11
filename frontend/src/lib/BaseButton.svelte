@@ -8,6 +8,7 @@
   export let target = null;
   export let title = null;
   export let spin = false;
+  export let padding = "12px 0";
 
   const dispatchClick = clickDispatcher();
 
@@ -28,7 +29,7 @@
   }
 </script>
 
-<button on:click={click} disabled={disabled || spin} title={title}>
+<button on:click={click} disabled={disabled || spin} title={title} style:padding={padding}>
   {#if spin}
     <div class="loader">
       <Loader />
@@ -44,7 +45,6 @@ button {
   font-weight: var(--font-weight, 700);
   font-size: var(--font-size, inherit);
   color: var(--text-color, var(--link-color));
-  padding: var(--padding, 12px 0);
   cursor: pointer;
   height: var(--height, auto);
   width: var(--width, 100%);
@@ -54,6 +54,8 @@ button {
   align-items: center;
   justify-content: center;
   white-space: nowrap;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 
   border-width: var(--border-width, 2px);
   border-style: solid;
@@ -62,6 +64,7 @@ button {
   background-image: var(--background-image);
   background-color: var(--button-background-color);
   background-clip: padding-box;
+  -webkit-background-clip: padding-box;
   letter-spacing: 0.02em;
 }
 button:hover:enabled {
