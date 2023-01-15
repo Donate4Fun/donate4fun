@@ -54,6 +54,11 @@
       {/if}
     </a>
   </div>
+  {#if donation.cancelled_at === null && donation.claimed_at === null}
+    <div class="claim">
+      <SocialSigninButton colored height=48px type=youtube>Claim with YouTube</SocialSigninButton>
+    </div>
+  {/if}
   {#if donation.youtube_video}
     <div class="for-the-video">for the video</div>
     <iframe
@@ -64,11 +69,6 @@
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
       allowfullscreen
     ></iframe>
-  {/if}
-  {#if donation.cancelled_at === null && donation.claimed_at === null}
-    <div class="claim">
-      <SocialSigninButton colored height=48px type=youtube>Claim with YouTube</SocialSigninButton>
-    </div>
   {/if}
 </div>
 <ModalPopup bind:show={showSharePopup}>

@@ -79,15 +79,19 @@
             <SocialSigninButton type=twitter height=48px width=min-content padding="0 20px" slot=add returnTo="/settings">Link Twitter</SocialSigninButton>
           </LinkedItems>
         </div>
-        <HoldButton
-          on:click={logout}
-          --border-width=1px
-          --border-color=#E9E9E9
-          --background-color=white
-          --height=48px
-          width=100%
-          tooltipText="Hold to logout"
-        >Logout</HoldButton>
+        {#await $me then me}
+          {#if me.connected}
+            <HoldButton
+              on:click={logout}
+              --border-width=1px
+              --border-color=#E9E9E9
+              --background-color=white
+              --height=48px
+              width=100%
+              tooltipText="Hold to logout"
+            >Logout</HoldButton>
+          {/if}
+        {/await}
       </div>
     </div>
   </div>
