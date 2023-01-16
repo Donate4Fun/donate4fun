@@ -217,12 +217,12 @@ async def monitor_invoices_step(lnd_client, db):
                 try:
                     async with db.session() as sess:
                         donation = await sess.lock_donation(r_hash=invoice.r_hash)
-                        track_donation(donation)
                         await sess.donation_paid(
                             donation_id=donation.id,
                             paid_at=invoice.settle_date,
                             amount=invoice.amt_paid_sat,
                         )
+                        track_donation(donation)
                         await auto_transfer_donations(sess, donation)
                 except Exception:
                     logger.exception("Error while handling donation notification from lnd")

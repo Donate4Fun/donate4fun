@@ -11,6 +11,8 @@ backend:
       environment: staging
     posthog:
       debug: true
+    sentry:
+      environment: stage
     youtube:
       oauth:
         redirect_base_url: https://stage.donate4.fun

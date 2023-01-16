@@ -120,6 +120,12 @@ class PostHogSettings(BaseModel):
     debug: bool = False
 
 
+class SentrySettings(BaseModel):
+    dsn: AnyUrl
+    traces_sample_rate: float
+    environment: str
+
+
 def default_settings_file():
     return 'config.yaml'
 
@@ -139,6 +145,7 @@ class Settings(BaseSettings):
     rollbar: RollbarSettings | None = None
     google_cloud_logging: bool | None = None
     posthog: PostHogSettings | None = None
+    sentry: SentrySettings | None = None
     lnurlp: LnurlpSettings
     hypercorn: dict[str, Any]
     jwt_secret: str
