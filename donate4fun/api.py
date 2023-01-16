@@ -535,6 +535,7 @@ async def lnauth_callback(
             message=credentials.to_jwt(),
         ))
         posthog.capture(credentials.donator, 'connect-wallet')
+        posthog.identify(credentials.donator, dict(pubkey=credentials.lnauth_pubkey))
     except Exception as exc:
         logger.exception("Error in lnuath callback")
         return dict(status="ERROR", reason=str(exc))
