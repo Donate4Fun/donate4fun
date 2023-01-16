@@ -22,6 +22,9 @@ lnd:
   tls_cert: polar/volumes/lnd/alice/tls.cert
   macaroon_by_path: polar/volumes/lnd/alice/data/chain/bitcoin/regtest/admin.macaroon
   lnurl_base_url: http://localhost:5173
+github:
+  client_id: xxx
+  client_secret: yyy
 db:
   url: postgresql+asyncpg://donate4fun@localhost/donate4fun
   echo: false

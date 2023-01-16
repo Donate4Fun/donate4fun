@@ -30,7 +30,7 @@ from .models import Donation, TwitterAccount, TwitterTweet, WithdrawalToken, Don
 from .types import ValidationError, EntityTooOld
 from .settings import settings
 from .core import as_task, register_command, catch_exceptions
-from .api_utils import scrape_lightning_address
+from .api_utils import scrape_lightning_address, make_absolute_uri
 
 logger = logging.getLogger(__name__)
 
@@ -164,7 +164,7 @@ async def make_oauth2_client(scope: str, token=None, update_token=None):
         client_secret=oauth.client_secret,
         scope=scope,
         token_endpoint='https://api.twitter.com/2/oauth2/token',
-        redirect_uri=f'{settings.base_url}/api/v1/twitter/oauth-redirect',
+        redirect_uri=make_absolute_uri('/api/v1/oauth-redirect/twitter'),
         code_challenge_method='S256',
         token=token,
         update_token=update_token,

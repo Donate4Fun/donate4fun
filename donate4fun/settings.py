@@ -44,6 +44,11 @@ class TwitterSettings(BaseModel):
     oauth: TwitterOAuth
 
 
+class GithubSettings(BaseModel):
+    client_id: str
+    client_secret: str
+
+
 class DbSettings(BaseModel):
     url: str
     echo: bool = False
@@ -138,6 +143,7 @@ class Settings(BaseSettings):
     lnd: LndSettings
     youtube: YoutubeSettings
     twitter: TwitterSettings
+    github: GithubSettings
     db: DbSettings
     log: LoggingConfig
     fastapi: FastApiSettings

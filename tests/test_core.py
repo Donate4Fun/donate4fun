@@ -9,6 +9,7 @@ import pytest
 from donate4fun.core import as_task
 from donate4fun.types import LightningAddress
 from donate4fun.models import OAuthState, WithdrawalToken
+from tests.test_util import freeze_time
 
 
 async def test_anyio():
@@ -115,17 +116,20 @@ async def test_encrypted_jwt(settings):
     assert new_state == orig_state
 
 
+@freeze_time
 async def test_jwt_is_immutable(settings):
     state = OAuthState(success_url='http://a.com', error_url='http://b.com', donator_id=UUID(int=0), code_verifier=b'\x00' * 43)
     assert state.to_jwt() == state.to_jwt()
 
 
+@freeze_time
 async def test_encrypted_jwt_is_immutable(settings, monkeypatch):
     monkeypatch.setattr('secrets.token_bytes', lambda size: b'\x00' * size)
     state = OAuthState(success_url='http://a.com', error_url='http://b.com', donator_id=UUID(int=0), code_verifier=b'\x00' * 43)
     assert state.to_encrypted_jwt() == state.to_encrypted_jwt()
 
 
+@freeze_time
 async def test_jwe_is_immutable(settings, monkeypatch):
     monkeypatch.setattr('secrets.token_bytes', lambda size: b'\x00' * size)
     state = OAuthState(success_url='http://a.com', error_url='http://b.com', donator_id=UUID(int=0), code_verifier=b'\x00' * 43)

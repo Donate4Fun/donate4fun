@@ -283,6 +283,7 @@ async def test_unlink_youtube_channel(db_session):
     assert donator.connected == False  # noqa
 
 
+@freeze_time
 async def test_unlink_youtube_channel_with_balance(db, client, settings, monkeypatch):
     donator = Donator(id=UUID(int=0), balance=100)
     async with db.session() as db_session:
@@ -316,12 +317,12 @@ async def test_unlink_youtube_channel_with_balance(db, client, settings, monkeyp
     check_response(await client.post(f'/api/v1/youtube/channel/{youtube_channel2.id}/unlink'))
 
     # Test that lnauth_pubkey is not changed after link
-    async def patched_fetch_user_channel(request, code):
+    async def patched_fetch_user_channel(code):
         return ChannelInfo(id=youtube_channel.channel_id, title='title', description='descr')
     monkeypatch.setattr('donate4fun.api_youtube.fetch_user_channel', patched_fetch_user_channel)
     state = OAuthState(donator_id=donator.id, success_url='http://a.com', error_url='http://b.com')
     check_response(await client.get(
-        '/api/v1/youtube/oauth-redirect',
+        '/api/v1/oauth-redirect/youtube',
         params=dict(state=state.to_jwt(), code=123),
     ), 307)
     async with db.session() as db_session:
@@ -329,7 +330,7 @@ async def test_unlink_youtube_channel_with_balance(db, client, settings, monkeyp
     assert new_donator.lnauth_pubkey == donator.lnauth_pubkey
 
 
-@pytest.mark.freeze_time('2022-02-02 22:22:22')
+@freeze_time
 @pytest.mark.parametrize('return_to', [None, '/donator/me'])
 async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids, return_to: str):
     info = ChannelInfo(id='UCxxx', title='title', description='descr')
@@ -354,7 +355,7 @@ async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids, 
     ))
     state = OAuthState(donator_id=donator.id, success_url='http://a.com', error_url='http://b.com')
     response = await client.get(
-        '/api/v1/youtube/oauth-redirect',
+        '/api/v1/oauth-redirect/youtube',
         params=dict(state=state.to_jwt(), code=123),
     )
     check_response(response, 307)
@@ -367,7 +368,7 @@ async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids, 
     login_to(client, settings, other_donator)
     state = OAuthState(donator_id=other_donator.id, success_url='http://a.com', error_url='http://b.com')
     response = await client.get(
-        '/api/v1/youtube/oauth-redirect',
+        '/api/v1/oauth-redirect/youtube',
         params=dict(state=state.to_jwt(), code=123),
     )
     check_response(response, 307)

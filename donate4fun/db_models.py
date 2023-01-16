@@ -68,6 +68,17 @@ class TwitterAuthorDb(Base):
     links = relationship('TwitterAuthorLink', viewonly=True)
 
 
+class GithubUserDb(DonateeDb):
+    __tablename__ = 'github_user'
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4())
+
+    user_id = Column(BigInteger, unique=True, nullable=False)
+    login = Column(String, nullable=False)
+    avatar_url = Column(String)
+    name = Column(String)
+
+
 class DonatorDb(Base):
     __tablename__ = 'donator'
 
@@ -93,6 +104,14 @@ class DonatorDb(Base):
         secondary=lambda: TwitterAuthorLink.__table__,
         primaryjoin=lambda: DonatorDb.id == TwitterAuthorLink.donator_id,
         secondaryjoin=lambda: TwitterAuthorDb.id == foreign(TwitterAuthorLink.twitter_author_id),
+    )
+    linked_github_users = relationship(
+        GithubUserDb,
+        lazy='noload',
+        foreign_keys=lambda: GithubUserLink.donator_id,
+        secondary=lambda: GithubUserLink.__table__,
+        primaryjoin=lambda: DonatorDb.id == GithubUserLink.donator_id,
+        secondaryjoin=lambda: GithubUserDb.id == foreign(GithubUserLink.github_user_id),
     )
 
 
@@ -143,6 +162,9 @@ class DonationDb(Base):
     twitter_tweet_id = Column(Uuid(as_uuid=True), ForeignKey(TwitterTweetDb.id))
     twitter_tweet = relationship(TwitterTweetDb, lazy='joined')
 
+    github_user_id = Column(Uuid(as_uuid=True), ForeignKey(GithubUserDb.id))
+    github_user = relationship(GithubUserDb, lazy='joined')
+
     lightning_address = Column(String)
 
     donator_twitter_account_id = Column(Uuid(as_uuid=True), ForeignKey(TwitterAuthorDb.id))
@@ -170,6 +192,9 @@ class TwitterAuthorLink(Base):
     created_at = Column(TIMESTAMP, server_default=func.now())
     via_oauth = Column(Boolean, server_default='f')
 
+class GithubUserLink(BaseLink):
+    __tablename__ = 'github_user_link'
+    github_user_id = Column(Uuid(as_uuid=True), ForeignKey(GithubUserDb.id), primary_key=True)
     __table_args__ = (
         Index('twitter_only_one_oauth_link', twitter_author_id, unique=True, postgresql_where=via_oauth),
     )

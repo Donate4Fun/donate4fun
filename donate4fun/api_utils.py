@@ -2,8 +2,10 @@ import unicodedata
 from uuid import uuid4, UUID
 
 import posthog
+import httpx
 from furl import furl
 from fastapi import Request, Depends, HTTPException
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm.exc import NoResultFound  # noqa - imported from other modules
 
 from .models import Donator, Credentials, Donation, YoutubeChannelOwned, TwitterAccountOwned
@@ -83,3 +85,16 @@ async def auto_transfer_donations(db: DbSession, donation: Donation):
             donation.twitter_account = await db.query_twitter_account(id=donation.twitter_account.id)
         if donation.twitter_account.owner_id is not None:
             await db.transfer_twitter_donations(donation.twitter_account, Donator(id=donation.twitter_account.owner_id))
+
+
+def error_redirect(url: str, title: str, message: str):
+    return RedirectResponse(furl(url).set(dict(error=title, message=str(message))).url)
+
+
+async def raise_on_4xx_5xx(response):
+    response.raise_for_status()
+
+
+class HttpClient(httpx.AsyncClient):
+    def __init__(self, **kwargs):
+        super().__init__(http2=True, event_hooks=dict(response=[raise_on_4xx_5xx]), **kwargs)

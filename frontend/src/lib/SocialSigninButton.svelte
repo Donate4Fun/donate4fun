@@ -6,7 +6,7 @@
   import { api } from "$lib/api.js";
   import { sleep } from "$lib/utils.js";
 
-  export let type;
+  export let idp;  // Identity Provider
   export let width = 'auto';
   export let height = '40px'
   export let border = '1px';
@@ -17,7 +17,7 @@
   const isMobile = 'ontouchstart' in document.documentElement;
   // WORKAROUND: Twitter OAuth 2.0 doesn't work on Android/iOS
   // See https://twittercommunity.com/t/web-oauth-2-0-is-broken-on-android-if-twitter-app-is-installed/169698/13
-  export let apiPath = (isMobile && type === 'twitter') ? `${type}/oauth1` : `${type}/oauth`;
+  export let apiPath = (isMobile && idp === 'twitter') ? `${idp}/oauth1` : `${idp}/oauth`;
 
   const navigate = useNavigate();
 
@@ -45,13 +45,13 @@
 {#if colored}
   <ColoredBorder --background-color="var(--light-color)">
     <div class="inner" style:padding={padding}>
-      <img alt="{type}" src="/static/{type}.svg">
+      <img alt="{idp}" src="/static/{idp}.svg">
       <span class="text"><slot /></span>
     </div>
   </ColoredBorder>
 {:else}
   <div class=inner style:padding={padding}>
-    <img alt="{type}" src="/static/{type}.svg">
+    <img alt="{idp}" src="/static/{idp}.svg">
     <span class="text"><slot /></span>
   </div>
 {/if}
@@ -69,6 +69,9 @@
   letter-spacing: 0.02em;
   width: 100%;
   height: 100%;
+}
+.inner > img {
+  width: 24px;
 }
 .text {
   margin: 0 auto;

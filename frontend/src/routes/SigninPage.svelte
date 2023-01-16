@@ -16,9 +16,10 @@
       {/await}
     </div>
     <div class="buttons">
-      <SocialSigninButton height=48px link="/login?return=/donator/me" type="bolt">Sign in with Lightning</SocialSigninButton>
-      <SocialSigninButton height=48px type="youtube">Sign in with YouTube</SocialSigninButton>
-      <SocialSigninButton height=48px type="twitter">Sign in with Twitter</SocialSigninButton>
+      <SocialSigninButton height=48px link="/login?return=/donator/me" idp="bolt">Sign in with Lightning</SocialSigninButton>
+      <SocialSigninButton height=48px idp="youtube">Sign in with YouTube</SocialSigninButton>
+      <SocialSigninButton height=48px idp="twitter">Sign in with Twitter</SocialSigninButton>
+      <SocialSigninButton height=48px idp="github">Sign in with GitHub</SocialSigninButton>
     </div>
   </div>
 </Section>
