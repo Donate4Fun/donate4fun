@@ -3,10 +3,8 @@ from uuid import UUID
 
 import posthog
 from fastapi import Depends, APIRouter, Request, HTTPException
-from fastapi.responses import RedirectResponse
 from aiogoogle import Aiogoogle
 from sqlalchemy.orm.exc import NoResultFound
-from furl import furl
 
 from .api_utils import get_donator, load_donator, get_db_session, make_absolute_uri
 from .models import (
@@ -18,11 +16,12 @@ from .youtube import (
 )
 from .db_models import DonationDb
 from .settings import settings
-from .types import ValidationError
+from .types import ValidationError, OAuthError
+from .db import db
 
 
 router = APIRouter(prefix='/youtube')
-legacy_router = APIRouter()
+legacy_router = APIRouter()  # For backward compatibility
 logger = logging.getLogger(__name__)
 
 
@@ -86,37 +85,25 @@ async def login_via_google(request: Request, return_to: str, donator=Depends(get
     return OAuthResponse(url=url)
 
 
-@router.get('/oauth-redirect')
-async def auth_google(
-    request: Request, state: str, error: str = None, error_description: str = None, code: str = None,
-    db_session=Depends(get_db_session), donator=Depends(get_donator),
-):
-    auth_state = OAuthState.from_jwt(state)
-    if auth_state.donator_id != donator.id:
-        raise ValidationError(
-            f"User that initiated Google Auth {donator.id} is not the current user {auth_state.donator_id}, rejecting auth"
-        )
-    if error:
-        return RedirectResponse(furl(auth_state.error_url).set(dict(error="OAuth error", message=error)).url)
-    elif code:
-        try:
-            channel_info: ChannelInfo = await fetch_user_channel(code)
-        except Exception as exc:
-            logger.exception("Failed to fetch user's channel")
-            return RedirectResponse(furl(auth_state.success_url).add(dict(error=str(exc))).url)
-        else:
+async def finish_youtube_oauth(code: str, donator: Donator, request: Request):
+    try:
+        channel_info: ChannelInfo = await fetch_user_channel(code)
+    except Exception as exc:
+        raise OAuthError("Failed to fetch user's channel") from exc
+    try:
+        async with db.session() as db_session:
             channel: YoutubeChannel = await query_or_fetch_youtube_channel(channel_id=channel_info.id, db=db_session)
             owned_channel: YoutubeChannelOwned = await db_session.query_youtube_channel(id=channel.id)
             if owned_channel.via_oauth:
+                if donator.connected:
+                    raise OAuthError("Could not link already linked account")
                 request.session['donator'] = str(owned_channel.owner_id)
             else:
                 await db_session.link_youtube_channel(channel, donator, via_oauth=True)
                 await db_session.transfer_youtube_donations(channel, donator)
-            request.session['connected'] = True
-            return RedirectResponse(auth_state.success_url)
-    else:
-        # Should either receive a code or an error
-        raise Exception("Something's probably wrong with your callback")
+        request.session['connected'] = True
+    except Exception as exc:
+        raise OAuthError("Failed to link account") from exc
 
 
 class YoutubeChannelResponse(YoutubeChannel):

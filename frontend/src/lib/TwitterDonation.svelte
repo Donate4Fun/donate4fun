@@ -42,7 +42,7 @@
   </div>
   {#if donation.cancelled_at === null && donation.claimed_at === null}
     <div class="claim">
-      <SocialSigninButton colored height=48px width=300px type="twitter">Claim with Twitter</SocialSigninButton>
+      <SocialSigninButton colored height=48px width=300px idp="twitter">Claim with Twitter</SocialSigninButton>
     </div>
   {/if}
   {#if donation.twitter_tweet !== null}

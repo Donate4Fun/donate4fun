@@ -110,3 +110,7 @@ class InvalidDbState(Exception):
 
 class EntityTooOld(Exception):
     pass
+
+
+class OAuthError(Exception):
+    pass

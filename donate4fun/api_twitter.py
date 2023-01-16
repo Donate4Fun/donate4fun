@@ -85,14 +85,6 @@ async def oauth1_callback(
         return error_response(make_absolute_uri('settings'), exc.args[0], exc.__cause__)
 
 
-class OAuthError(Exception):
-    pass
-
-
-def error_response(url: str, title: str, message: str):
-    return RedirectResponse(furl(url).set(dict(error=title, message=str(message))).url)
-
-
 @router.get('/oauth', response_model=OAuthResponse)
 async def login_via_twitter(request: Request, return_to: str, donator=Depends(get_donator)):
     async with make_link_oauth2_client() as client:
@@ -113,35 +105,14 @@ async def login_via_twitter(request: Request, return_to: str, donator=Depends(ge
         return OAuthResponse(url=url)
 
 
-@router.get('/oauth-redirect')
-async def auth_redirect(
-    request: Request, state: str, error: str = None, error_description: str = None, code: str = None,
-    donator=Depends(get_donator),
-):
-    auth_state = OAuthState.from_jwt(state)
-    if auth_state.donator_id != donator.id:
-        raise ValidationError(
-            f"User that initiated Google Auth {donator.id} is not the current user {auth_state.donator_id}, rejecting auth"
-        )
-
-    try:
-        if error:
-            raise OAuthError("OAuth error", error)
-        elif code:
-            async with make_link_oauth2_client() as client:
-                try:
-                    token: dict = await client.fetch_token(code=code, code_verifier=auth_state.code_verifier)
-                except Exception as exc:
-                    raise OAuthError("Failed to fetch OAuth token") from exc
-                client.token = token
-                await login_or_link_twitter_account(client, donator, request)
-                return RedirectResponse(auth_state.success_url)
-        else:
-            # Should either receive a code or an error
-            raise ValidationError("Something's probably wrong with your callback")
-    except OAuthError as exc:
-        logger.exception("OAuth error")
-        return error_response(auth_state.error_url, exc.args[0], exc.__cause__)
+async def finish_twitter_oauth(code: str, donator: Donator, request: Request, code_verifier: str):
+    async with make_link_oauth2_client() as client:
+        try:
+            token: dict = await client.fetch_token(code=code, code_verifier=code_verifier)
+        except Exception as exc:
+            raise OAuthError("Failed to fetch OAuth token") from exc
+        client.token = token
+        await login_or_link_twitter_account(client, donator, request)
 
 
 async def login_or_link_twitter_account(client, donator: Donator, request):

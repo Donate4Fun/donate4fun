@@ -1,6 +1,6 @@
 interactions:
 - request:
-    body: grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fv1%2Ftwitter%2Foauth-redirect&code=V2xfelp1SDljWE0tT1JwMTFiSUxNbE5qX2JuZm5tOHZpUTl2dkgyMko3cUNiOjE2NzMwMzg1OTI2MzQ6MTowOmFjOjE&code_verifier=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA%3D
+    body: grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fv1%2Foauth-redirect%2Ftwitter&code=V2xfelp1SDljWE0tT1JwMTFiSUxNbE5qX2JuZm5tOHZpUTl2dkgyMko3cUNiOjE2NzMwMzg1OTI2MzQ6MTowOmFjOjE&code_verifier=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA%3D
     headers:
       accept:
       - application/json
@@ -131,7 +131,7 @@ interactions:
     http_version: HTTP/1.1
     status_code: 200
 - request:
-    body: grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fv1%2Ftwitter%2Foauth-redirect&code=TlBRNFpmNmpDRTBDN2lWV1k3Nm5USnNQVmtQT3p3VU1NZ3V1MWZCQlkxc0V1OjE2NzMwMzg2MDIwNjM6MTowOmFjOjE&code_verifier=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA%3D
+    body: grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fv1%2Foauth-redirect%2Ftwitter&code=TlBRNFpmNmpDRTBDN2lWV1k3Nm5USnNQVmtQT3p3VU1NZ3V1MWZCQlkxc0V1OjE2NzMwMzg2MDIwNjM6MTowOmFjOjE&code_verifier=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA%3D
     headers:
       accept:
       - application/json

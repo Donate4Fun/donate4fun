@@ -57,7 +57,7 @@
               <div class="linked-item" slot="item">
                 <img alt='bolt' width=24px src="/static/bolt.svg"><span class="pubkey">{me.shortkey}</span>
               </div>
-              <SocialSigninButton slot="add" height=48px width=min-content padding="0 20px" link="/login?return=/settings" type="bolt">
+              <SocialSigninButton slot="add" height=48px width=min-content padding="0 20px" link="/login?return=/settings" idp="bolt">
                 {#if me.shortkey}
                   Change Lightning wallet
                 {:else}
@@ -70,13 +70,13 @@
             <div class="linked-item" slot="item">
               <YoutubeChannel linkto="withdraw" channel={channel} logo --gap=16px />
             </div>
-            <SocialSigninButton type=youtube height=48px width=min-content padding="0 20px" slot=add returnTo="/settings">Link YouTube</SocialSigninButton>
+            <SocialSigninButton idp=youtube height=48px width=min-content padding="0 20px" slot=add returnTo="/settings">Link YouTube</SocialSigninButton>
           </LinkedItems>
           <LinkedItems let:item={account} basePath="twitter" transferPath="account" name="Twitter">
             <div class="linked-item" slot="item">
               <TwitterAccount account={account} --gap=16px />
             </div>
-            <SocialSigninButton type=twitter height=48px width=min-content padding="0 20px" slot=add returnTo="/settings">Link Twitter</SocialSigninButton>
+            <SocialSigninButton idp=twitter height=48px width=min-content padding="0 20px" slot=add returnTo="/settings">Link Twitter</SocialSigninButton>
           </LinkedItems>
         </div>
         {#await $me then me}

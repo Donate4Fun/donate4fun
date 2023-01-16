@@ -11,7 +11,7 @@ import ecdsa
 import httpx
 import posthog
 from fastapi import FastAPI, WebSocket, Request, Depends, Query, WebSocketDisconnect, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from lnurl.core import _url_encode as lnurl_encode
 from lnpayencode import LnAddr
 from anyio.abc import TaskStatus
@@ -25,19 +25,21 @@ from sqlalchemy.orm.exc import NoResultFound
 from .models import (
     Donation, Donator, Invoice, DonateResponse, DonateRequest,
     WithdrawalToken, BaseModel, Notification, Credentials, SubscribeEmailRequest,
-    DonatorStats, DonationPaidRequest, PayInvoiceResult, Donatee,
+    DonatorStats, DonationPaidRequest, PayInvoiceResult, Donatee, OAuthState
 )
-from .types import ValidationError, RequestHash, PaymentRequest
+from .types import ValidationError, RequestHash, PaymentRequest, OAuthError
 from .core import to_base64
 from .donatees import apply_target
 from .db_models import DonationDb, WithdrawalDb
 from .db_donations import sent_donations_subquery, received_donations_subquery
 from .settings import settings
-from .api_utils import get_donator, load_donator, get_db_session, task_group, only_me, track_donation, auto_transfer_donations
+from .api_utils import (
+    get_donator, load_donator, get_db_session, task_group, only_me, track_donation, auto_transfer_donations, error_redirect,
+)
 from .lnd import PayInvoiceError, LnurlWithdrawResponse, lnd, lightning_payment_metadata, LndIsNotReady
 from .pubsub import pubsub
 from .twitter import query_or_fetch_twitter_account
-from . import api_twitter, api_youtube
+from . import api_twitter, api_youtube, api_github
 
 
 logger = logging.getLogger(__name__)
@@ -46,6 +48,7 @@ router.route_class = RollbarLoggingRoute
 app.include_router(api_twitter.router)
 app.include_router(api_youtube.router)
 app.include_router(api_youtube.legacy_router)
+app.include_router(api_github.router)
 
 
 @app.exception_handler(HTTPStatusError)
@@ -620,3 +623,36 @@ async def withdraw(request: Request, db=Depends(get_db_session), me: Donator = D
         amount=withdrawal.amount,
         withdrawal_id=withdrawal.id,
     )
+
+
+@router.get('/oauth-redirect/{provider}')
+async def oauth_redirect(
+    request: Request, provider: str, state: str, error: str = None, error_description: str = None, code: str = None,
+    donator=Depends(get_donator),
+):
+    auth_state = OAuthState.from_jwt(state)
+    if auth_state.donator_id != donator.id:
+        raise ValidationError(
+            f"User that initiated Google Auth {donator.id} is not the current user {auth_state.donator_id}, rejecting auth"
+        )
+
+    try:
+        if error:
+            raise OAuthError("OAuth error", error)
+        elif code:
+            if provider == 'twitter':
+                await api_twitter.finish_twitter_oauth(code, donator, request, auth_state.code_verifier)
+            elif provider == 'youtube':
+                await api_youtube.finish_youtube_oauth(code, donator, request)
+            elif provider == 'github':
+                await api_github.finish_github_oauth(code, donator, request)
+            return RedirectResponse(auth_state.success_url)
+        else:
+            # Should either receive a code or an error
+            raise ValidationError("Something's probably wrong with your callback")
+    except OAuthError as exc:
+        logger.exception("OAuth error")
+        message = '\n'.join(exc.args[1:])
+        if exc.__cause__:
+            message += '\n' + exc.__cause__
+        return error_redirect(auth_state.error_url, exc.args[0], message)

@@ -251,7 +251,7 @@ async def follow_oauth_flow(client, code: str, return_to: str):
     if obtain_code:
         code = input(f"Open this url {auth_url}, authorize and paste code here:\n")
     response = await client.get(
-        '/api/v1/twitter/oauth-redirect',
+        '/api/v1/oauth-redirect/twitter',
         params=dict(state=encrypted_state, code=code),
     )
     check_response(response, 307)

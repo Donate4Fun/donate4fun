@@ -10,8 +10,9 @@
   <div class="container">
     <h1>Where did you receive a donation?</h1>
     <div class="list">
-      <SocialSigninButton type="youtube">Claim from YouTube</SocialSigninButton>
-      <SocialSigninButton type="twitter">Claim from Twitter</SocialSigninButton>
+      <SocialSigninButton idp="youtube">Claim from YouTube</SocialSigninButton>
+      <SocialSigninButton idp="twitter">Claim from Twitter</SocialSigninButton>
+      <SocialSigninButton idp="github">Claim from GitHub</SocialSigninButton>
     </div>
   </div>
 </ModalPopup>

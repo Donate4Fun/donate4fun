@@ -56,7 +56,7 @@
   </div>
   {#if donation.cancelled_at === null && donation.claimed_at === null}
     <div class="claim">
-      <SocialSigninButton colored height=48px type=youtube>Claim with YouTube</SocialSigninButton>
+      <SocialSigninButton colored height=48px idp=youtube>Claim with YouTube</SocialSigninButton>
     </div>
   {/if}
   {#if donation.youtube_video}

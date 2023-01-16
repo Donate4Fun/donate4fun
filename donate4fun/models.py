@@ -1,9 +1,10 @@
 from __future__ import annotations
+import json
+import time
 from uuid import uuid4, UUID
 from datetime import datetime
 from typing import Any
 from functools import lru_cache
-import json
 
 import jwt
 from pydantic import BaseModel as PydanticBaseModel, validator, HttpUrl, Field, root_validator, EmailStr, AnyUrl, AnyHttpUrl
@@ -30,12 +31,16 @@ class BaseModel(PydanticBaseModel):
     def to_json_dict(self) -> dict:
         return json.loads(self.json())
 
+    def to_jwt_payload(self) -> dict:
+        return self.to_json_dict()
+
     def to_jwt(self) -> str:
-        return jwt.encode(self.to_json_dict(), settings.jwt_secret, algorithm="HS256")
+        return jwt.encode(self.to_jwt_payload(), settings.jwt_secret, algorithm="HS256")
 
     @classmethod
     def from_jwt(cls, token: str) -> BaseModel:
-        return cls(**jwt.decode(token, settings.jwt_secret, algorithms=["HS256"]))
+        data: dict = jwt.decode(token, settings.jwt_secret, algorithms=["HS256"])
+        return cls(**data)
 
     def to_encrypted_jwt(self) -> str:
         """
@@ -43,7 +48,7 @@ class BaseModel(PydanticBaseModel):
          - not a standard JWE
          - smaller size due to headers absense
         """
-        jwt = self.to_jwt()
+        jwt: str = self.to_jwt()
         cyphertext, iv, tag = get_jwk().encrypt(jwt.encode(), alg='A256GCM')
         return to_base64(iv + tag + cyphertext)
 
@@ -334,6 +339,20 @@ class OAuthState(BaseModel):
     donator_id: UUID
     code_verifier: str | None = None
 
+    def to_jwt_payload(self) -> dict:
+        data: dict = self.to_json_dict()
+        data['iat'] = data['nbf'] = now = int(time.time())
+        data['exp'] = now + 600  # ten minutes
+        return data
+
+    @classmethod
+    def from_jwt(cls, token: str) -> BaseModel:
+        data: dict = jwt.decode(token, settings.jwt_secret, algorithms=["HS256"], options=dict(require=["exp", "iat", "nbf"]))
+        data.pop('iat', None)
+        data.pop('nbf', None)
+        data.pop('exp', None)
+        return cls(**data)
+
 
 class OAuthResponse(BaseModel):
-    url: str
+    url: AnyUrl
