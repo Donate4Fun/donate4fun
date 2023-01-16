@@ -7,6 +7,7 @@ import bugsnag
 import rollbar
 import google.cloud.logging
 import posthog
+import sentry_sdk
 from bugsnag.asgi import BugsnagMiddleware
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -16,6 +17,7 @@ from hypercorn.config import Config
 from debug_toolbar.middleware import DebugToolbarMiddleware
 from starlette_authlib.middleware import AuthlibMiddleware
 from starlette.datastructures import MutableHeaders
+from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 
 from .settings import load_settings, Settings, settings
 from .db import Database, db
@@ -44,6 +46,13 @@ async def create_app(settings: Settings):
             panels=["debug_toolbar.panels.sqlalchemy.SQLAlchemyPanel"],
             profiler_options=dict(interval=.0002, async_mode='enabled'),
         )
+    if settings.sentry:
+        sentry_sdk.init(
+            dsn=settings.sentry.dsn,
+            traces_sample_rate=settings.sentry.traces_sample_rate,
+            environment=settings.sentry.environment,
+        )
+        app.add_middleware(SentryAsgiMiddleware)
     api.app.add_middleware(
         CORSMiddleware,
         allow_origins=[
@@ -56,7 +65,7 @@ async def create_app(settings: Settings):
         allow_headers=["*"],
         allow_credentials=True,
     )
-    # same_site = None is needed for CORS auth
+    # `same_site = None` is needed for CORS auth
     api.app.add_middleware(
         AuthMiddleware, settings=settings,
         domain=settings.cookie_domain,

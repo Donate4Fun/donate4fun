@@ -18,6 +18,9 @@ backend:
     posthog:
       project_api_key: 'phc_2CphDSfOn61NrqYZnloxHWpwFFjd4mHxUtZwcwrogC0'
       host: 'https://eu.posthog.com'
+    sentry:
+      traces_sample_rate: 1.0
+      environment: prod
     google_cloud_logging: true
     db:
       echo: false

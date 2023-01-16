@@ -49,18 +49,20 @@
 {#await load(me, donator_id) then {itsMe, donator}}
   <Section>
     <div class="main">
-      <div class="settings-button">
-        <BaseButton
-          --border-width=1px
-          --border-color="rgba(0, 0, 0, 0.2)"
-          --width=115px
-          --height=32px
-          --text-color=black
-          --font-weight=500
-          --font-size=12px
-          link="/settings"
-        >Settings</BaseButton>
-      </div>
+      {#if itsMe}
+        <div class="settings-button">
+          <BaseButton
+            --border-width=1px
+            --border-color="rgba(0, 0, 0, 0.2)"
+            --width=115px
+            --height=32px
+            --text-color=black
+            --font-weight=500
+            --font-size=12px
+            link="/settings"
+          >Settings</BaseButton>
+        </div>
+      {/if}
       <div class="top-block">
         <div class="image-and-name">
           <Userpic user={donator} class="userpic" --width=88px/>
