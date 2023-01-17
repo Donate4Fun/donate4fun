@@ -142,6 +142,7 @@ async def create_db(db_name: str):
     finally:
         await db.dispose()  # Close connections to release test db
         await base_db.drop_database(db_name)
+        await base_db.dispose()
 
 
 @pytest.fixture
