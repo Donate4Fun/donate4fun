@@ -6,7 +6,14 @@ from sqlalchemy.schema import CheckConstraint, Index
 Base = declarative_base()
 
 
-class YoutubeChannelDb(Base):
+class DonateeDb(Base):
+    __abstract__ = True
+    balance = Column(BigInteger, nullable=False, server_default=text('0'))
+    total_donated = Column(BigInteger, nullable=False, server_default=text('0'))
+    last_fetched_at = Column(TIMESTAMP)
+
+
+class YoutubeChannelDb(DonateeDb):
     __tablename__ = 'youtube_channel'
 
     id = Column(Uuid(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4())
@@ -17,10 +24,6 @@ class YoutubeChannelDb(Base):
     banner_url = Column(String)
     handle = Column(String)
     lightning_address = Column(String)
-
-    balance = Column(BigInteger, nullable=False, server_default=text('0'))
-    total_donated = Column(BigInteger, nullable=False, server_default=text('0'))
-    last_fetched_at = Column(TIMESTAMP)
 
     links = relationship('YoutubeChannelLink', viewonly=True)
 
@@ -50,7 +53,7 @@ class TwitterTweetDb(Base):
     tweet_id = Column(BigInteger, unique=True, nullable=False)
 
 
-class TwitterAuthorDb(Base):
+class TwitterAuthorDb(DonateeDb):
     __tablename__ = 'twitter_author'
 
     id = Column(Uuid(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4())
@@ -60,10 +63,6 @@ class TwitterAuthorDb(Base):
     name = Column(String)
     profile_image_url = Column(String)
     lightning_address = Column(String)
-
-    balance = Column(BigInteger, nullable=False, server_default=text('0'))
-    total_donated = Column(BigInteger, nullable=False, server_default=text('0'))
-    last_fetched_at = Column(TIMESTAMP)
 
     links = relationship('TwitterAuthorLink', viewonly=True)
 
@@ -171,32 +170,34 @@ class DonationDb(Base):
     donator_twitter_account = relationship(TwitterAuthorDb, lazy='joined', foreign_keys=[donator_twitter_account_id])
 
 
-class YoutubeChannelLink(Base):
-    __tablename__ = 'youtube_channel_link'
-
-    youtube_channel_id = Column(Uuid(as_uuid=True), ForeignKey(YoutubeChannelDb.id), primary_key=True)
+class BaseLink(Base):
+    __abstract__ = True
     donator_id = Column(Uuid(as_uuid=True), primary_key=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
     via_oauth = Column(Boolean, server_default='f')
 
+
+class YoutubeChannelLink(BaseLink):
+    __tablename__ = 'youtube_channel_link'
+    youtube_channel_id = Column(Uuid(as_uuid=True), ForeignKey(YoutubeChannelDb.id), primary_key=True)
     __table_args__ = (
-        Index('youtube_only_one_oauth_link', youtube_channel_id, unique=True, postgresql_where=via_oauth),
+        Index('youtube_only_one_oauth_link', youtube_channel_id, unique=True, postgresql_where='via_oauth'),
     )
 
 
-class TwitterAuthorLink(Base):
+class TwitterAuthorLink(BaseLink):
     __tablename__ = 'twitter_author_link'
-
     twitter_author_id = Column(Uuid(as_uuid=True), ForeignKey(TwitterAuthorDb.id), primary_key=True)
-    donator_id = Column(Uuid(as_uuid=True), primary_key=True)
-    created_at = Column(TIMESTAMP, server_default=func.now())
-    via_oauth = Column(Boolean, server_default='f')
+    __table_args__ = (
+        Index('twitter_only_one_oauth_link', twitter_author_id, unique=True, postgresql_where='via_oauth'),
+    )
+
 
 class GithubUserLink(BaseLink):
     __tablename__ = 'github_user_link'
     github_user_id = Column(Uuid(as_uuid=True), ForeignKey(GithubUserDb.id), primary_key=True)
     __table_args__ = (
-        Index('twitter_only_one_oauth_link', twitter_author_id, unique=True, postgresql_where=via_oauth),
+        Index('github_only_one_oauth_link', github_user_id, unique=True, postgresql_where='via_oauth'),
     )
 
 

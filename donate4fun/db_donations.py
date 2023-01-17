@@ -5,12 +5,11 @@ from datetime import datetime
 
 from sqlalchemy import select, desc, update, func, case, true
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.sql import functions
 
-from .models import Donation, YoutubeNotification, Donator, DonatorStats
-from .types import RequestHash, NotEnoughBalance, ValidationError, InvalidDbState
+from .models import Donation, YoutubeNotification, DonatorStats
+from .types import RequestHash, NotEnoughBalance, ValidationError
 from .db_models import (
-    DonatorDb, DonationDb, YoutubeChannelDb, YoutubeVideoDb, TwitterAuthorDb, TransferDb,
+    DonatorDb, DonationDb, YoutubeChannelDb, YoutubeVideoDb, TwitterAuthorDb,
     YoutubeChannelLink, TwitterAuthorLink,
 )
 
@@ -19,14 +18,6 @@ logger = logging.getLogger(__name__)
 
 class UnableToCancelDonation(ValidationError):
     pass
-
-
-def claimable_donation_filter():
-    return (
-        DonationDb.claimed_at.is_(None)
-        & DonationDb.paid_at.is_not(None)
-        & DonationDb.cancelled_at.is_(None)
-    )
 
 
 class DonationsDbMixin:
@@ -200,42 +191,6 @@ class DonationsDbMixin:
                 raise NotEnoughBalance(f"Donator {row.donator_id} hasn't enough money")
 
         await self.object_changed('donation', row.donation_id)
-
-    async def start_transfer(self, donator: Donator, amount: int, donations_filter, **transfer_fields):
-        subquery = (
-            select(DonationDb)
-            .where(claimable_donation_filter() & donations_filter)
-            .with_for_update()
-            .subquery()
-        )
-        result = await self.execute(
-            select(func.coalesce(func.sum(subquery.c.amount), 0).label('amount'))
-        )
-        sum_amount: int = result.fetchone().amount
-        if sum_amount != amount:
-            raise InvalidDbState(f"Sum of donations ({sum_amount}) != account balance ({amount})")
-        await self.execute(
-            insert(TransferDb)
-            .values(
-                amount=amount,
-                donator_id=donator.id,
-                created_at=functions.now(),
-                **transfer_fields,
-            )
-        )
-
-    async def finish_transfer(self, donator: Donator, amount: int, donations_filter):
-        await self.execute(
-            update(DonationDb)
-            .values(claimed_at=functions.now())
-            .where(claimable_donation_filter() & donations_filter)
-        )
-        await self.execute(
-            update(DonatorDb)
-            .values(balance=DonatorDb.balance + amount)
-            .where(DonatorDb.id == donator.id)
-        )
-        await self.object_changed('donator', donator.id)
 
     async def query_donator_stats(self, donator_id: UUID):
         received_sq = received_donations_subquery(donator_id)
