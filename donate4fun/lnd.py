@@ -67,7 +67,8 @@ class LndClient:
         elif network := self.settings.macaroon_by_network:
             macaroon_path = f'~/.lnd/data/chain/bitcoin/{network}/invoices.macaroon'
         if macaroon_path:
-            return binascii.hexlify(open(os.path.expanduser(macaroon_path), "rb").read())
+            with open(os.path.expanduser(macaroon_path), "rb") as f:
+                return binascii.hexlify(f.read())
 
     async def query(self, method: str, api: str, data: dict = None, **kwargs) -> dict:
         async with self.request(api, method=method, json=data, **kwargs) as resp:

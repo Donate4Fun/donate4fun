@@ -136,7 +136,8 @@ def default_settings_file():
 
 
 def yaml_config_source(settings: BaseSettings) -> dict[str, Any]:
-    return yaml.safe_load(open(os.getenv('DONATE4FUN_CONFIG', default_settings_file())))
+    with open(os.getenv('DONATE4FUN_CONFIG', default_settings_file())) as f:
+        return yaml.safe_load(f)
 
 
 class Settings(BaseSettings):
