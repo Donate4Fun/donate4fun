@@ -24,9 +24,7 @@ async def test_create_donation_unsupported_youtube_url(client):
 
 @mark_vcr
 @pytest.mark.freeze_time('2022-02-02 22:22:22')
-async def test_donate(
-    client, db_session, freeze_uuids, rich_donator, settings,
-):
+async def test_donate(client, db_session, freeze_uuids, rich_donator, settings):
     login_to(client, settings, rich_donator)
     donate_response = await client.post(
         "/api/v1/donate",
@@ -37,15 +35,31 @@ async def test_donate(
 
 @mark_vcr
 @pytest.mark.freeze_time('2022-02-02 22:22:22')
-async def test_donate_video(
-    client, db_session, freeze_uuids, rich_donator, settings,
-):
+async def test_donate_video(client, db_session, freeze_uuids, rich_donator, settings):
     login_to(client, settings, rich_donator)
     donate_response = await client.post(
         "/api/v1/donate",
         json=DonateRequest(amount=100, target='https://www.youtube.com/watch?v=7qH7WMzqOlU&t=692s').dict(),
     )
     verify_response(donate_response, 'donate_youtube_video', 200)
+
+
+@pytest.mark.freeze_time('2022-02-02 22:22:22')
+async def test_donate_on_website(client, db, freeze_uuids, rich_donator, settings):
+    async with db.session() as db_session:
+        youtube_channel = YoutubeChannel(
+            id=UUID(int=0),
+            channel_id="UCzxczxc",
+            title="channel_title",
+            thumbnail_url="https://thumbnail.url/asd",
+        )
+        await db_session.save_youtube_channel(youtube_channel)
+    login_to(client, settings, rich_donator)
+    donate_response = await client.post(
+        "/api/v1/donate",
+        json=DonateRequest(amount=100, channel_id=youtube_channel.id).to_json_dict(),
+    )
+    verify_response(donate_response, 'donate_youtube_video_on_website', 200)
 
 
 @mark_vcr

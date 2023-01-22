@@ -134,7 +134,7 @@ async def donate(
             raise ValidationError("Money receiver should have a connected wallet")
         donation.receiver = receiver
     elif request.channel_id:
-        donation.youtube_channel = await db_session.query_youtube_channel(youtube_channel_id=request.channel_id)
+        donation.youtube_channel = await db_session.query_youtube_channel(id=request.channel_id)
         donation.lightning_address = donation.youtube_channel.lightning_address
     elif request.twitter_account_id:
         donation.twitter_account = await db_session.query_twitter_account(id=request.twitter_account_id)
