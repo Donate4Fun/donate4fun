@@ -6,7 +6,6 @@ from functools import partial
 from urllib.parse import urlencode
 from datetime import datetime
 
-import bugsnag
 import ecdsa
 import httpx
 import posthog
@@ -492,17 +491,13 @@ async def send_withdrawal(
             await db_session.finish_withdraw(withdrawal_id=withdrawal_id, fee_msat=result.fee_msat)
     except PayInvoiceError as exc:
         logger.exception("Failed to send withdrawal payment")
-        if settings.bugsnag:
-            bugsnag.notify(exc)
         async with db.session() as db_session:
             await db_session.notify(
                 f'withdrawal:{withdrawal_id}',
                 Notification(id=withdrawal_id, status='ERROR', message=str(exc)),
             )
-    except Exception as exc:
+    except Exception:
         logger.exception("Internal error in send_withdrawal")
-        if settings.bugsnag:
-            bugsnag.notify(exc)
         raise
 
 
