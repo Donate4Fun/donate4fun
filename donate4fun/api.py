@@ -34,6 +34,7 @@ from .db_donations import sent_donations_subquery, received_donations_subquery
 from .settings import settings
 from .api_utils import (
     get_donator, load_donator, get_db_session, task_group, only_me, track_donation, auto_transfer_donations, error_redirect,
+    HttpClient,
 )
 from .lnd import PayInvoiceError, LnurlWithdrawResponse, lnd, lightning_payment_metadata, LndIsNotReady
 from .pubsub import pubsub
@@ -48,6 +49,15 @@ app.include_router(api_twitter.router)
 app.include_router(api_youtube.router)
 app.include_router(api_youtube.legacy_router)
 app.include_router(api_github.router)
+
+
+class LnurlpError(Exception):
+    pass
+
+
+@app.exception_handler(LnurlpError)
+def lnurlp_error_handler(request, exc):
+    return JSONResponse(status_code=503, content={"message": f"Failed to communicate with a Lightning Address provider: {exc}"})
 
 
 @app.exception_handler(HTTPStatusError)
@@ -195,15 +205,15 @@ async def donate(
         return DonateResponse(donation=donation, payment_request=pay_req)
 
 
-class LnurlpError(Exception):
-    pass
-
-
 async def fetch_lightning_address(donation: Donation) -> PaymentRequest:
     name, host = donation.lightning_address.split('@', 1)
-    async with httpx.AsyncClient() as client:
-        response = await client.get(f'https://{host}/.well-known/lnurlp/{name}', follow_redirects=True)
-        response.raise_for_status()
+    async with HttpClient() as client:
+        try:
+            response = await client.get(f'https://{host}/.well-known/lnurlp/{name}', follow_redirects=True)
+        except httpx.HTTPStatusError as exc:
+            raise LnurlpError(f"{exc.request.url} responded with {exc.response.status_code}: {exc.response.content}") from exc
+        except httpx.HTTPError as exc:
+            raise LnurlpError(f"HTTP error with {exc.request.url}: {exc}") from exc
         metadata = response.json()
         # https://github.com/lnurl/luds/blob/luds/06.md
         if metadata.get('status', 'OK') != 'OK':
@@ -234,11 +244,12 @@ async def fetch_lightning_address(donation: Donation) -> PaymentRequest:
         comment = f'Tip from {name} via Donate4.Fun for {target}'
         if 'commentAllowed' in metadata:
             params['comment'] = comment[:metadata['commentAllowed']]
-        response = await client.get(metadata['callback'], params=params)
         try:
-            response.raise_for_status()
-        except Exception as exc:
+            response = await client.get(metadata['callback'], params=params)
+        except httpx.HTTPStatusError as exc:
             raise LnurlpError(response.content) from exc
+        except httpx.HTTPError as exc:
+            raise LnurlpError(exc) from exc
         data = response.json()
         if data.get('status', 'OK') != 'OK':
             raise LnurlpError(f"Status is not OK: {data}")
