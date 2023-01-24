@@ -421,13 +421,13 @@ async def withdraw_callback(request: Request, k1: str, pr: PaymentRequest, db=De
         # According to https://github.com/fiatjaf/lnurl-rfc/blob/luds/03.md payment should not block response
         await task_group.start(partial(
             send_withdrawal,
+            donator_id=donator.id,
             withdrawal_id=withdrawal.id,
             amount=invoice_amount_sats,
             payment_request=pr,
             lnd=lnd,
             db=db.db,
         ))
-        posthog.capture(donator.id, 'withdraw', dict(amount=invoice_amount_sats, withdrawal_id=withdrawal.id))
     except Exception as exc:
         logger.exception("Exception while initiating payment")
         return dict(status="ERROR", reason=f"Error while initiating payment: {exc}")
@@ -480,7 +480,7 @@ def sha256hash(data: str) -> bytes:
 
 
 async def send_withdrawal(
-    *, withdrawal_id: UUID, payment_request: PaymentRequest, amount: int, lnd, db,
+    *, donator_id: UUID, withdrawal_id: UUID, payment_request: PaymentRequest, amount: int, lnd, db,
     task_status: TaskStatus,
 ):
     try:
@@ -491,14 +491,19 @@ async def send_withdrawal(
             await db_session.finish_withdraw(withdrawal_id=withdrawal_id, fee_msat=result.fee_msat)
     except PayInvoiceError as exc:
         logger.exception("Failed to send withdrawal payment")
+        params = dict(amount=amount, withdrawal_id=withdrawal_id, message=str(exc))
+        posthog.capture(donator_id, 'withdraw-error-payinvoice', params)
         async with db.session() as db_session:
             await db_session.notify(
                 f'withdrawal:{withdrawal_id}',
                 Notification(id=withdrawal_id, status='ERROR', message=str(exc)),
             )
-    except Exception:
+    except Exception as exc:
         logger.exception("Internal error in send_withdrawal")
+        posthog.capture(donator_id, 'withdraw-error', dict(amount=amount, withdrawal_id=withdrawal_id, message=str(exc)))
         raise
+    else:
+        posthog.capture(donator_id, 'withdraw', dict(amount=amount, withdrawal_id=withdrawal_id))
 
 
 class LoginLnurlResponse(BaseModel):
