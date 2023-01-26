@@ -198,7 +198,6 @@ def load_settings():
     with settings.assign(_settings):
         log_config = _settings.log.dict(by_alias=True)
         logging.config.dictConfig(log_config)
-        logger.debug('setting loaded: %s', _settings.json())
         if settings.lnd.lnurl_base_url.startswith('http://localnetwork:'):
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
                 sock.connect(("8.8.8.8", 80))
