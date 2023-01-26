@@ -26,7 +26,7 @@
 <div>
   <SocialUserpic social="twitter" src="https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_x96.png" />
   <SocialUserpic social="youtube" src="https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_x96.png" />
-  <SocialSigninButton colored idp=twitter>Colored twitter sign in</SocialSigninButton>
+  <SocialSigninButton colored idp=twitter apiPath="twitter/oauth">Colored Twitter OAuth2</SocialSigninButton>
   <SocialSigninButton idp=youtube>Uncolored youtube sign in</SocialSigninButton>
   <SocialSigninButton idp=twitter apiPath="twitter/oauth1">Twitter OAuth1</SocialSigninButton>
   <HoldButton --height=48px on:click={async () => {notify("done"); await sleep(1000);}}>Hold me</HoldButton>

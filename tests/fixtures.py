@@ -31,6 +31,9 @@ from donate4fun.lnd import LndClient, lnd as lnd_var
 from donate4fun.settings import load_settings, Settings, DbSettings
 from donate4fun.db import DbSession, Database, db as db_var
 from donate4fun.db_models import DonatorDb
+from donate4fun.db_youtube import YoutubeDbLib
+from donate4fun.db_twitter import TwitterDbLib
+from donate4fun.db_donations import DonationsDbLib
 from donate4fun.models import (
     RequestHash, PaymentRequest, YoutubeChannel, Donator, YoutubeVideo, TwitterAccount, TwitterTweet,
 )
@@ -221,10 +224,11 @@ def freeze_uuids(monkeypatch):
 @pytest.fixture
 async def unpaid_donation_fixture(app, db, donator_id, freeze_uuids, settings):
     async with db.session() as db_session:
+        youtube_db = YoutubeDbLib(db_session)
         youtube_channel = YoutubeChannel(
             channel_id='q2dsaf', title='asdzxc', thumbnail_url='http://example.com/thumbnail',
         )
-        await db_session.save_youtube_channel(youtube_channel)
+        await youtube_db.save_account(youtube_channel)
         invoice: Invoice = await LndClient(settings.lnd).create_invoice(memo="Donate4.fun to asdzxc", value=100)
         donation: Donation = Donation(
             donator=Donator(id=donator_id),
@@ -232,19 +236,20 @@ async def unpaid_donation_fixture(app, db, donator_id, freeze_uuids, settings):
             youtube_channel=youtube_channel,
             r_hash=invoice.r_hash,
         )
-        await db_session.create_donation(donation)
+        await DonationsDbLib(db_session).create_donation(donation)
         return donation
 
 
 @pytest.fixture
 async def paid_donation_fixture(db, unpaid_donation_fixture) -> Donation:
     async with db.session() as db_session:
-        await db_session.donation_paid(
+        donations_db = DonationsDbLib(db_session)
+        await donations_db.donation_paid(
             donation_id=unpaid_donation_fixture.id,
             amount=unpaid_donation_fixture.amount,
             paid_at=datetime.now(),
         )
-        return await db_session.query_donation(id=unpaid_donation_fixture.id)
+        return await donations_db.query_donation(id=unpaid_donation_fixture.id)
 
 
 @pytest.fixture
@@ -293,7 +298,7 @@ async def twitter_account(app, db, freeze_uuids):
             profile_image_url='https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_normal.png',
             last_fetched_at=datetime.utcnow(),
         )
-        await db_session.save_twitter_account(account)
+        await TwitterDbLib(db_session).save_account(account)
         return account
 
 
@@ -308,3 +313,13 @@ async def app_serve(app, port):
     hyper_config = Config()
     hyper_config.bind = f'localhost:{port}'
     await hypercorn_serve(app, hyper_config)
+
+
+@pytest.fixture
+async def twitter_db(db_session):
+    return TwitterDbLib(db_session)
+
+
+@pytest.fixture
+async def youtube_db(db_session):
+    return YoutubeDbLib(db_session)

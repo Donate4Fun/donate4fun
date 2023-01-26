@@ -8,8 +8,9 @@ from fastapi import Request, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm.exc import NoResultFound  # noqa - imported from other modules
 
-from .models import Donator, Credentials, Donation, YoutubeChannelOwned, TwitterAccountOwned
+from .models import Donator, Credentials, Donation
 from .db import DbSession, db
+from .db_libs import TwitterDbLib, YoutubeDbLib, GithubDbLib, DonationsDbLib
 from .core import ContextualObject
 from .types import LightningAddress
 from .settings import settings
@@ -47,6 +48,10 @@ async def get_db_session():
         yield session
 
 
+async def get_donations_db(db_session=Depends(get_db_session)):
+    return DonationsDbLib(db_session)
+
+
 def scrape_lightning_address(text: str):
     # Remove Mark characters
     text = ''.join(char for char in text if unicodedata.category(char)[0] != 'M')
@@ -76,15 +81,20 @@ def make_absolute_uri(path: str) -> str:
 
 async def auto_transfer_donations(db: DbSession, donation: Donation):
     if donation.youtube_channel:
-        if not isinstance(donation.youtube_channel, YoutubeChannelOwned):
-            donation.youtube_channel = await db.query_youtube_channel(id=donation.youtube_channel.id)
-        if donation.youtube_channel.owner_id is not None:
-            await db.transfer_youtube_donations(donation.youtube_channel, Donator(id=donation.youtube_channel.owner_id))
+        social_db = YoutubeDbLib(db)
     elif donation.twitter_account:
-        if not isinstance(donation.twitter_account, TwitterAccountOwned):
-            donation.twitter_account = await db.query_twitter_account(id=donation.twitter_account.id)
-        if donation.twitter_account.owner_id is not None:
-            await db.transfer_twitter_donations(donation.twitter_account, Donator(id=donation.twitter_account.owner_id))
+        social_db = TwitterDbLib(db)
+    elif donation.github_user:
+        social_db = GithubDbLib(db)
+    else:
+        social_db = None
+
+    if social_db:
+        account = getattr(donation, social_db.donation_field)
+        if not isinstance(account, social_db.owned_model):
+            account = await social_db.query_account(id=account.id)
+        if account.owner_id is not None:
+            await social_db.transfer_donations(account, Donator(id=account.owner_id))
 
 
 def error_redirect(url: str, title: str, message: str):

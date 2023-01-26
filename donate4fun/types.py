@@ -7,6 +7,7 @@ from lnpayencode import lndecode, LnAddr
 
 
 Url = str
+Satoshi = int
 
 
 class LightningAddress(str):

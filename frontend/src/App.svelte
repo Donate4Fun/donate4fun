@@ -18,6 +18,8 @@
   import YoutubeLinkPage from "./routes/YoutubeLinkPage.svelte";
   import TwitterAccountPage from "./routes/TwitterAccountPage.svelte";
   import TwitterAccountOwnerPage from "./routes/TwitterAccountOwnerPage.svelte";
+  import GithubUserPage from "./routes/GithubUserPage.svelte";
+  import GithubUserOwnerPage from "./routes/GithubUserOwnerPage.svelte";
   import LoginPage from "./routes/LoginPage.svelte";
   import Test from "./routes/Test.svelte";
   import Landing from "./routes/Landing.svelte";
@@ -74,7 +76,7 @@
     if (event.reason instanceof ApiError)
       notify("Server Error", errorToText(event.reason.response), "error");
     else
-      notify("Unhandled error", event.reason, "error");
+      notify("Unhandled rejection", event.reason, "error");
   });
 </script>
 
@@ -92,6 +94,10 @@
     <Route path="twitter/*">
       <Route path=":account_id" component="{TwitterAccountPage}"/>
       <Route path=":account_id/owner" component="{TwitterAccountOwnerPage}"/>
+    </Route>
+    <Route path="github/*">
+      <Route path=":user_id" component="{GithubUserPage}"/>
+      <Route path=":user_id/owner" component="{GithubUserOwnerPage}"/>
     </Route>
     <Route path="me/withdraw" component="{WithdrawPage}" />
     <Route path="donation/:donation_id" component="{DonationPage}" />

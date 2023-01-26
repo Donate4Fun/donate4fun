@@ -82,6 +82,7 @@ class DonateRequest(BaseModel):
     receiver_id: UUID | None
     channel_id: UUID | None
     twitter_account_id: UUID | None
+    github_user_id: UUID | None
     target: HttpUrl | None
     lightning_address: LightningAddress | None
     donator_twitter_handle: str | None
@@ -130,24 +131,35 @@ class IdModel(BaseModel):
     id: UUID = Field(default_factory=uuid4)
 
 
-class YoutubeChannel(IdModel):
+class SocialAccount(IdModel):
+    last_fetched_at: datetime | None
+    balance: int = 0
+    total_donated: int = 0
+    lightning_address: LightningAddress | None
+
+
+class YoutubeChannel(SocialAccount):
     title: str
     channel_id: str
     thumbnail_url: Url | None
     banner_url: Url | None
     handle: str | None
-    balance: int = 0
-    total_donated: int = 0
-    lightning_address: LightningAddress | None
-    last_fetched_at: datetime | None
 
     class Config:
         orm_mode = True
 
 
-class YoutubeChannelOwned(YoutubeChannel):
+class OwnedMixin(BaseModel):
     via_oauth: bool
     owner_id: UUID | None
+
+
+class SocialAccountOwned(SocialAccount, OwnedMixin):
+    pass
+
+
+class YoutubeChannelOwned(YoutubeChannel, SocialAccountOwned):
+    pass
 
 
 class YoutubeVideo(IdModel):
@@ -162,23 +174,18 @@ class YoutubeVideo(IdModel):
         orm_mode = True
 
 
-class TwitterAccount(IdModel):
+class TwitterAccount(SocialAccount):
     user_id: int
     handle: str
-    balance: int = 0
-    total_donated: int = 0
     name: str | None
     profile_image_url: Url | None
-    lightning_address: LightningAddress | None
-    last_fetched_at: datetime | None
 
     class Config:
         orm_mode = True
 
 
-class TwitterAccountOwned(TwitterAccount):
-    via_oauth: bool | None
-    owner_id: UUID | None
+class TwitterAccountOwned(TwitterAccount, SocialAccountOwned):
+    pass
 
 
 class TwitterTweet(IdModel):
@@ -186,6 +193,20 @@ class TwitterTweet(IdModel):
 
     class Config:
         orm_mode = True
+
+
+class GithubUser(SocialAccount):
+    user_id: int
+    login: str
+    name: str
+    avatar_url: AnyUrl
+
+    class Config:
+        orm_mode = True
+
+
+class GithubUserOwned(GithubUser, SocialAccountOwned):
+    pass
 
 
 class Donator(BaseModel):
@@ -232,8 +253,9 @@ class Donation(BaseModel):
     fee_msat: int | None
 
     # Sender
-    donator_id: UUID | None
+    donator_id: UUID | None  # Could be None when fulfilling via lightning
     donator: Donator | None
+    donator_twitter_account: TwitterAccount | None
 
     # Receiver
     receiver: Donator | None
@@ -241,7 +263,7 @@ class Donation(BaseModel):
     youtube_video: YoutubeVideo | None
     twitter_account: TwitterAccount | None
     twitter_tweet: TwitterTweet | None
-    donator_twitter_account: TwitterAccount | None
+    github_user: GithubUser | None
     lightning_address: LightningAddress | None
 
     created_at: datetime = Field(default_factory=datetime.utcnow)

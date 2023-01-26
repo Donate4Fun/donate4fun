@@ -6,12 +6,16 @@ from datetime import datetime
 from sqlalchemy import select, desc, update, func, case, true
 from sqlalchemy.dialects.postgresql import insert
 
-from .models import Donation, YoutubeNotification, DonatorStats
+from .models import Donation, DonatorStats
 from .types import RequestHash, NotEnoughBalance, ValidationError
+from .db import DbSessionWrapper
 from .db_models import (
-    DonatorDb, DonationDb, YoutubeChannelDb, YoutubeVideoDb, TwitterAuthorDb,
+    DonatorDb, DonationDb, YoutubeChannelDb, TwitterAuthorDb,
     YoutubeChannelLink, TwitterAuthorLink,
 )
+from .db_youtube import YoutubeDbLib
+from .db_twitter import TwitterDbLib
+from .db_github import GithubDbLib
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +24,7 @@ class UnableToCancelDonation(ValidationError):
     pass
 
 
-class DonationsDbMixin:
+class DonationsDbLib(DbSessionWrapper):
     async def query_donations(self, where, limit: int = 20, offset: int = 0):
         result = await self.execute(
             select(DonationDb)
@@ -31,7 +35,7 @@ class DonationsDbMixin:
         )
         return [Donation.from_orm(obj) for obj in result.unique().scalars()]
 
-    async def lock_donation(self, r_hash: RequestHash):
+    async def lock_donation(self, r_hash: RequestHash) -> Donation:
         result = await self.execute(
             select(DonationDb)
             .where(DonationDb.r_hash == r_hash.as_base64)
@@ -63,6 +67,7 @@ class DonationsDbMixin:
                 youtube_video_id=donation.youtube_video and donation.youtube_video.id,
                 twitter_account_id=donation.twitter_account and donation.twitter_account.id,
                 twitter_tweet_id=donation.twitter_tweet and donation.twitter_tweet.id,
+                github_user_id=donation.github_user and donation.github_user.id,
                 donator_twitter_account_id=donation.donator_twitter_account and donation.donator_twitter_account.id,
             )
         )
@@ -123,54 +128,27 @@ class DonationsDbMixin:
         """
         # If donation was made to a lightning address then do not change social accounts' balances (it's already claimed)
         balance_amount = amount if donation.claimed_at is None else 0
-        row = donation  # FIXME
-        if row.youtube_channel_id:
-            resp = await self.execute(
-                update(YoutubeChannelDb)
-                .values(
-                    balance=YoutubeChannelDb.balance + balance_amount,
-                    total_donated=YoutubeChannelDb.total_donated + amount,
-                )
-                .where(YoutubeChannelDb.id == row.youtube_channel_id)
-                .returning(YoutubeChannelDb.balance)
-            )
-            if resp.fetchone().balance < 0:
-                raise NotEnoughBalance(f"YouTube channel {row.youtube_channel_id} hasn't enough money")
-            if row.youtube_video_id:
-                video_update_resp = await self.execute(
-                    update(YoutubeVideoDb)
-                    .values(total_donated=YoutubeVideoDb.total_donated + amount)
-                    .where(YoutubeVideoDb.id == row.youtube_video_id)
-                    .returning(YoutubeVideoDb.video_id, YoutubeVideoDb.total_donated)
-                )
-                vid, total_donated = video_update_resp.fetchone()
-                notification = YoutubeNotification(id=row.youtube_video_id, vid=vid, status='OK', total_donated=total_donated)
-                await self.notify(f'youtube-video:{row.youtube_video_id}', notification)
-                await self.notify(f'youtube-video-by-vid:{vid}', notification)
-        elif row.twitter_account_id:
-            resp = await self.execute(
-                update(TwitterAuthorDb)
-                .values(
-                    balance=TwitterAuthorDb.balance + balance_amount,
-                    total_donated=TwitterAuthorDb.total_donated + amount,
-                )
-                .where(TwitterAuthorDb.id == row.twitter_account_id)
-                .returning(TwitterAuthorDb.balance)
-            )
-            if resp.fetchone().balance < 0:
-                raise NotEnoughBalance(f"Twitter account {row.twitter_account_id} hasn't enough money")
-        elif row.receiver_id:
+        if donation.youtube_channel_id:
+            social_db = YoutubeDbLib(self)
+        elif donation.twitter_account_id:
+            social_db = TwitterDbLib(self)
+        elif donation.github_user_id:
+            social_db = GithubDbLib(self)
+        elif donation.receiver_id:
+            social_db = None
             resp = await self.execute(
                 update(DonatorDb)
                 .values(balance=DonatorDb.balance + balance_amount)
-                .where(DonatorDb.id == row.receiver_id)
+                .where(DonatorDb.id == donation.receiver_id)
                 .returning(DonatorDb.balance)
             )
             if resp.fetchone().balance < 0:
-                raise NotEnoughBalance(f"Donator {row.receiver_id} hasn't enough money")
-            await self.object_changed('donator', row.receiver_id)
+                raise NotEnoughBalance(f"Donator {donation.receiver_id} hasn't enough money")
+            await self.object_changed('donator', donation.receiver_id)
         else:
-            raise ValueError(f"Donation has no target: {row.donation_id}")
+            raise ValueError(f"Donation {donation.id} has no target")
+        if social_db:
+            await social_db.update_balance_for_donation(balance_diff=balance_amount, total_diff=amount, donation=donation)
         if (donation.r_hash is None) == (donation.lightning_address is None):
             # r_hash   | lightning_address | description                     | action
             # ==========================================================================================
@@ -183,14 +161,16 @@ class DonationsDbMixin:
             #          |                   |   an external lightning address |
             resp = await self.execute(
                 update(DonatorDb)
-                .where((DonatorDb.id == row.donator_id))
+                .where((DonatorDb.id == donation.donator_id))
                 .values(balance=DonatorDb.balance - amount - math.ceil((donation.fee_msat or 0) / 1000))
                 .returning(DonatorDb.balance)
             )
             if resp.fetchone().balance < 0:
-                raise NotEnoughBalance(f"Donator {row.donator_id} hasn't enough money")
+                raise NotEnoughBalance(f"Donator {donation.donator_id} hasn't enough money")
 
-        await self.object_changed('donation', row.donation_id)
+        await self.object_changed('donation', donation.id)
+        if donation.donator_id is not None:
+            await self.object_changed('donator', donation.donator_id)
 
     async def query_donator_stats(self, donator_id: UUID):
         received_sq = received_donations_subquery(donator_id)

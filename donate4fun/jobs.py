@@ -5,6 +5,7 @@ from sqlalchemy import func
 from .db import db
 from .models import TwitterAccount, YoutubeChannel
 from .db_models import TwitterAuthorDb, YoutubeChannelDb
+from .db_libs import TwitterDbLib, YoutubeDbLib
 from .settings import settings
 from .twitter import fetch_twitter_author
 from .youtube import fetch_youtube_channel
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 @register_command
 async def refetch_twitter_authors():
     async with db.session() as db_session:
-        accounts: list[TwitterAccount] = await db_session.query_twitter_accounts(
+        accounts: list[TwitterAccount] = await TwitterDbLib(db_session).query_accounts(
             (TwitterAuthorDb.last_fetched_at < func.now() - settings.twitter.refresh_timeout)
             | TwitterAuthorDb.last_fetched_at.is_(None)
         )
@@ -28,13 +29,13 @@ async def refetch_twitter_authors():
             logger.exception("Failed to fetch twitter account %s", account)
         else:
             async with db.session() as db_session:
-                await db_session.save_twitter_account(account)
+                await TwitterDbLib(db_session).save_account(account)
 
 
 @register_command
 async def refetch_youtube_channels():
     async with db.session() as db_session:
-        channels: list[YoutubeChannel] = await db_session.query_youtube_channels(
+        channels: list[YoutubeChannel] = await YoutubeDbLib(db_session).query_accounts(
             (YoutubeChannelDb.last_fetched_at < func.now() - settings.youtube.refresh_timeout)
             | YoutubeChannelDb.last_fetched_at.is_(None)
         )
@@ -46,7 +47,7 @@ async def refetch_youtube_channels():
             logger.exception("Failed to fetch youtube channel %s", channel)
         else:
             async with db.session() as db_session:
-                await db_session.save_youtube_channel(channel)
+                await YoutubeDbLib(db_session).save_account(channel)
 
 
 @register_command

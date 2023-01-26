@@ -16,25 +16,20 @@
 
   export let account_id;
 
-  let account;
-  let donations;
   let shareUrl;
-
-  $: baseUrl = `twitter/account/${account_id}`;
-
   const resolve = useResolve();
 
   async function load() {
-    account = await api.get(baseUrl);
+    const account = await api.get(`social/twitter/${account_id}`);
     $title = `Donate to @${account.handle} Twitter account`
-    donations = await api.get(`${baseUrl}/donations/by-donatee`);
+    return account;
   }
 </script>
 
 <div class="container">
   {#await load()}
     <Loader />
-  {:then}
+  {:then account}
     <Section>
       {#if account.banner_url}
         <div class="banner" style="background-image: url({account.banner_url})"></div>
@@ -53,7 +48,7 @@
     </Section>
 
     <div class="details">
-      <DonationsTable donations={donations} />
+      <DonationsTable socialProvider=twitter accountId={account.id} />
     </div>
   {:catch error}
     <NotFoundPage {error} />

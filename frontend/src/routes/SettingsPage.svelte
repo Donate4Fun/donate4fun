@@ -10,6 +10,7 @@
   import LinkedItems from "$lib/LinkedItems.svelte";
   import TwitterAccount from "$lib/TwitterAccount.svelte";
   import YoutubeChannel from "$lib/YoutubeChannel.svelte";
+  import GithubUser from "$lib/GithubUser.svelte";
   import { me, resetMe, reloadMe } from "$lib/session.js";
   import api from "$lib/api.js";
 
@@ -66,17 +67,23 @@
               </SocialSigninButton>
             </LinkedItems>
           {/await}
-          <LinkedItems let:item={channel} basePath="youtube" transferPath="channel" name="YouTube">
+          <LinkedItems let:item={channel} socialProvider="youtube" name="YouTube">
             <div class="linked-item" slot="item">
               <YoutubeChannel linkto="withdraw" channel={channel} logo --gap=16px />
             </div>
             <SocialSigninButton idp=youtube height=48px width=min-content padding="0 20px" slot=add returnTo="/settings">Link YouTube</SocialSigninButton>
           </LinkedItems>
-          <LinkedItems let:item={account} basePath="twitter" transferPath="account" name="Twitter">
+          <LinkedItems let:item={account} socialProvider="twitter" name="Twitter">
             <div class="linked-item" slot="item">
               <TwitterAccount account={account} --gap=16px />
             </div>
             <SocialSigninButton idp=twitter height=48px width=min-content padding="0 20px" slot=add returnTo="/settings">Link Twitter</SocialSigninButton>
+          </LinkedItems>
+          <LinkedItems let:item={user} socialProvider="github" name="GitHub">
+            <div class="linked-item" slot="item">
+              <GithubUser user={user} --gap=16px />
+            </div>
+            <SocialSigninButton idp=github height=48px width=min-content padding="0 20px" slot=add returnTo="/settings">Link GitHub</SocialSigninButton>
           </LinkedItems>
         </div>
         {#await $me then me}

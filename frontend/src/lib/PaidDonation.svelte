@@ -8,6 +8,7 @@
   import Donator from "$lib/Donator.svelte";
   import TwitterDonation from "$lib/TwitterDonation.svelte";
   import YoutubeDonation from "$lib/YoutubeDonation.svelte";
+  import GithubDonation from "$lib/GithubDonation.svelte";
   import TwitterShare from "$lib/TwitterShare.svelte";
   import HoldButton from "$lib/HoldButton.svelte";
   import { me } from "$lib/session.js";
@@ -44,6 +45,8 @@
       <YoutubeDonation {donation} />
     {:else if donation.twitter_account}
       <TwitterDonation {donation} />
+    {:else if donation.github_user}
+      <GithubDonation {donation} />
     {/if}
   </div>
   {#if donation.cancelled_at}

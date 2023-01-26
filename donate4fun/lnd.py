@@ -17,9 +17,10 @@ from pydantic import Field, AnyUrl
 
 from .settings import LndSettings, settings
 from .types import RequestHash, PaymentRequest
-from .models import Invoice, Donator, PayInvoiceResult
+from .models import Invoice, Donator, PayInvoiceResult, Donation
 from .core import as_task, register_command, ContextualObject
 from .api_utils import track_donation, auto_transfer_donations
+from .db_donations import DonationsDbLib
 
 logger = logging.getLogger(__name__)
 
@@ -180,7 +181,7 @@ class LndClient:
         return await self.query('GET', '/v1/getinfo')
 
     async def ensure_ready(self):
-        info: dict = await lnd.query_info()
+        info: dict = await self.query_info()
         is_ready = info['synced_to_chain'] is True and info['synced_to_graph'] is True and info['num_active_channels'] > 0
         if not is_ready:
             raise LndIsNotReady(info)
@@ -216,15 +217,16 @@ async def monitor_invoices_step(lnd_client, db):
             if invoice.state == 'SETTLED':
                 logger.debug(f"donation paid {data}")
                 try:
-                    async with db.session() as sess:
-                        donation = await sess.lock_donation(r_hash=invoice.r_hash)
-                        await sess.donation_paid(
+                    async with db.session() as db_session:
+                        donations_db = DonationsDbLib(db_session)
+                        donation: Donation = await donations_db.lock_donation(r_hash=invoice.r_hash)
+                        await donations_db.donation_paid(
                             donation_id=donation.id,
                             paid_at=invoice.settle_date,
                             amount=invoice.amt_paid_sat,
                         )
                         track_donation(donation)
-                        await auto_transfer_donations(sess, donation)
+                        await auto_transfer_donations(db_session, donation)
                 except Exception:
                     logger.exception("Error while handling donation notification from lnd")
     finally:

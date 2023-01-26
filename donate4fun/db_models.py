@@ -15,6 +15,9 @@ class DonateeDb(Base):
 
 class YoutubeChannelDb(DonateeDb):
     __tablename__ = 'youtube_channel'
+    __table_args__ = dict(info=dict(
+        external_key='channel_id',
+    ))
 
     id = Column(Uuid(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4())
 
@@ -55,6 +58,9 @@ class TwitterTweetDb(Base):
 
 class TwitterAuthorDb(DonateeDb):
     __tablename__ = 'twitter_author'
+    __table_args__ = dict(info=dict(
+        external_key='user_id',
+    ))
 
     id = Column(Uuid(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4())
 
@@ -69,6 +75,9 @@ class TwitterAuthorDb(DonateeDb):
 
 class GithubUserDb(DonateeDb):
     __tablename__ = 'github_user'
+    __table_args__ = dict(info=dict(
+        external_key='user_id',
+    ))
 
     id = Column(Uuid(as_uuid=True), primary_key=True, server_default=func.uuid_generate_v4())
 
@@ -238,7 +247,7 @@ class TransferDb(Base):
     __tablename__ = 'transfer'
     __table_args__ = (
         CheckConstraint(
-            num_nonnulls('youtube_channel_id', 'twitter_author_id') + '=1',
+            num_nonnulls('youtube_channel_id', 'twitter_author_id', 'github_user_id') + '=1',
             name='has_a_single_target',
         ),
     )
@@ -253,6 +262,9 @@ class TransferDb(Base):
 
     twitter_author_id = Column(Uuid(as_uuid=True), ForeignKey(TwitterAuthorDb.id))
     twitter_author = relationship(TwitterAuthorDb, lazy='joined')
+
+    github_user_id = Column(Uuid(as_uuid=True), ForeignKey(GithubUserDb.id))
+    github_user = relationship(GithubUserDb, lazy='joined')
 
 
 class EmailNotificationDb(Base):

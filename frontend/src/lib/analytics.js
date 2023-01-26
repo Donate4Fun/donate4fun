@@ -25,9 +25,10 @@ const plugins = /*import.meta.env.DEV ? [] : */[
       debug: process.env.NODE_ENV === 'dev',
       persistence: 'memory',
       disable_cookie: true,
-      disable_session_recording: true,
+      disable_session_recording: isInsideExtension(),
       autocapture: !isInsideExtension(),
       capture_pageview: !isInsideExtension(),
+      advanced_disable_decide: isInsideExtension(),
     },
   }),
 ];

@@ -25,7 +25,8 @@ from starlette.datastructures import URL
 from authlib.integrations.httpx_client import AsyncOAuth1Client, AsyncOAuth2Client
 from furl import furl
 
-from .db import DbSession, NoResultFound, Database, db
+from .db import NoResultFound, Database, DbSession, db
+from .db_twitter import TwitterDbLib
 from .models import Donation, TwitterAccount, TwitterTweet, WithdrawalToken, Donator
 from .types import ValidationError, EntityTooOld
 from .settings import settings
@@ -40,7 +41,8 @@ class TwitterDonatee:
     author_handle: str
     tweet_id: str | None = None
 
-    async def fetch(self, donation: Donation, db: DbSession):
+    async def fetch(self, donation: Donation, db_session: DbSession):
+        db = TwitterDbLib(db_session)
         if self.tweet_id is not None:
             tweet = TwitterTweet(tweet_id=self.tweet_id)
             # FIXME: we should possibly save link to the tweet author
@@ -76,14 +78,14 @@ def validate_twitter_url(parsed) -> TwitterDonatee:
         raise UnsupportedTwitterUrl
 
 
-async def query_or_fetch_twitter_account(db: DbSession, **params) -> TwitterAccount:
+async def query_or_fetch_twitter_account(db: TwitterDbLib, **params) -> TwitterAccount:
     try:
-        account: TwitterAccount = await db.query_twitter_account(**params)
+        account: TwitterAccount = await db.query_account(**params)
         if account.last_fetched_at is None or account.last_fetched_at < datetime.utcnow() - settings.twitter.refresh_timeout:
             raise EntityTooOld
     except (NoResultFound, EntityTooOld):
         account: TwitterAccount = await fetch_twitter_author(**params)
-        await db.save_twitter_account(account)
+        await db.save_account(account)
     return account
 
 
@@ -357,8 +359,9 @@ class Conversation:
     async def link_twitter_account(self, donator_id: str):
         logger.info(f"Linking Twitter account {self.peer_id} to {donator_id}")
         async with self.db.session() as db_session:
-            author: TwitterAccount = await query_or_fetch_twitter_account(db_session, user_id=self.peer_id)
-            await db_session.link_twitter_account(twitter_author=author, donator=Donator(id=donator_id))
+            twitter_db = TwitterDbLib(db_session)
+            author: TwitterAccount = await query_or_fetch_twitter_account(twitter_db, user_id=self.peer_id)
+            await twitter_db.link_twitter_account(twitter_author=author, donator=Donator(id=donator_id))
         profile_url = furl(settings.base_url) / 'donator' / donator_id
         await self.send_text(f"Your account is successefully linked. Go to {profile_url} to claim your donations.")
 

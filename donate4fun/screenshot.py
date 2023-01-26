@@ -18,6 +18,8 @@ from .core import register_command
 from .settings import settings
 from .models import TwitterAccount, Donation
 from .db import db
+from .db_twitter import TwitterDbLib
+from .db_donations import DonationsDbLib
 from .web import TemplateResponse
 
 logger = logging.getLogger(__name__)
@@ -131,7 +133,7 @@ async def sharing_image(request: Request, path: str, json: str | None = None):
 @router.get("/twitter/{account_id}")
 async def twitter_image(account_id: UUID, screenshoter=Depends(get_screenshoter)):
     async with db.session() as db_session:
-        account: TwitterAccount = await db_session.query_twitter_account(id=account_id)
+        account: TwitterAccount = await TwitterDbLib(db_session).query_account(id=account_id)
     png_image: bytes = await screenshoter.take_screenshot(
         'twitter-account-sharing.html',
         handle=account.handle,
@@ -147,7 +149,7 @@ class TwitterDonationShareInfo(Donation):
 @router.get("/donation/{donation_id}")
 async def donation_image(donation_id: UUID, screenshoter=Depends(get_screenshoter)):
     async with db.session() as db_session:
-        donation: Donation = await db_session.query_donation(id=donation_id)
+        donation: Donation = await DonationsDbLib(db_session).query_donation(id=donation_id)
     if donation.twitter_account:
         png_image: bytes = await screenshoter.take_screenshot(
             'twitter-donation-sharing.html',

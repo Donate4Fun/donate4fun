@@ -12,34 +12,33 @@
   import { capitalize } from "$lib/utils.js";
   import { me } from "$lib/session.js";
 
-  export let basePath = null;
-  export let transferPath;
+  export let socialProvider = null;
   export let name;
   export let items = [];
 
   async function collect(item) {
-    await api.post(`${basePath}/${transferPath}/${item.id}/transfer`);
+    await api.post(`social/${socialProvider}/${item.id}/transfer`);
   }
 
   const itemsStore = derived(me, async ($me, set) => {
-    if (basePath === null)
+    if (socialProvider === null)
       return;
     const me_ = await $me;
     const ws = api.subscribe(`donator:${me_.donator.id}`, { autoReconnect: false });
     ws.on("notification", async (notification) => {
       if (notification.status === 'OK') {
-        set(await api.get(`${basePath}/linked`));
+        set(await api.get(`social/${socialProvider}/linked`));
       }
     });
     await ws.ready();
-    set(await api.get(`${basePath}/linked`));
+    set(await api.get(`social/${socialProvider}/linked`));
     return () => {
       ws.close();
     };
   }, items);
 
   async function unlink(item) {
-    await api.post(`${basePath}/${transferPath}/${item.id}/unlink`);
+    await api.post(`social/${socialProvider}/${item.id}/unlink`);
   }
   export let onUnlink = unlink;
 </script>
