@@ -17,6 +17,7 @@
   donator_id: *id001
   donator_twitter_account: null
   fee_msat: null
+  github_user: null
   id: !!python/object/apply:asyncpg.pgproto.pgproto.UUID
   - !!binary |
     AAAAAAAAAAAAAAAAAAAAAQ==
@@ -27,7 +28,7 @@
     B+YCAhYWFgAAAA==
   r_hash: !!python/object/new:donate4fun.types.RequestHash
     args:
-    - b'\xe0\t\xf9\xcdva\xb2T\xbfV>\xbb\x82\x82.+\xc5,\x92\xb8\xab\xceP\xd3\x19\xab\xff\x01\x15\x9f\xa2|'
+    - b'\xd0\x8d]\xde\xd1d\x0b\xd9\x1c\x07\xfb\xf8WT\xc1~$/\xd6\xbf\xac2}\x13f\xf0\xf1\xfb\xd3"7\x89'
     state:
       data: !!binary |
         aGFzaA==

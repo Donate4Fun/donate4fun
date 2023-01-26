@@ -14,6 +14,7 @@ from glom import glom
 from .settings import settings
 from .types import UnsupportedTarget, Url, ValidationError, EntityTooOld
 from .db import DbSession, Database
+from .db_youtube import YoutubeDbLib
 from .models import YoutubeVideo, YoutubeChannel, Donation
 from .core import register_command
 from .api_utils import scrape_lightning_address
@@ -73,13 +74,14 @@ class YoutubeDonatee:
     handle: str | None = None
 
     async def fetch(self, donation: Donation, db: DbSession):
+        youtube_db = YoutubeDbLib(db)
         if self.video_id:
-            donation.youtube_video = await query_or_fetch_youtube_video(video_id=self.video_id, db=db)
+            donation.youtube_video = await query_or_fetch_youtube_video(video_id=self.video_id, db=youtube_db)
             donation.youtube_channel = donation.youtube_video.youtube_channel
         elif self.channel_id:
-            donation.youtube_channel = await query_or_fetch_youtube_channel(channel_id=self.channel_id, db=db)
+            donation.youtube_channel = await query_or_fetch_youtube_channel(channel_id=self.channel_id, db=youtube_db)
         elif self.handle:
-            donation.youtube_channel = await query_or_fetch_youtube_channel(handle=self.handle, db=db)
+            donation.youtube_channel = await query_or_fetch_youtube_channel(handle=self.handle, db=youtube_db)
         else:
             raise ValidationError("No YouTube donatee info")
         donation.lightning_address = donation.youtube_channel.lightning_address
@@ -130,7 +132,7 @@ def get_service_account_creds():
     )
 
 
-async def query_or_fetch_youtube_video(video_id: str, db: DbSession) -> YoutubeVideo:
+async def query_or_fetch_youtube_video(video_id: str, db: YoutubeDbLib) -> YoutubeVideo:
     try:
         video: YoutubeVideo = await db.query_youtube_video(video_id=video_id)
         if should_refresh_channel(video.youtube_channel):
@@ -163,7 +165,7 @@ def should_refresh_channel(channel: YoutubeChannel):
     return channel.last_fetched_at is None or channel.last_fetched_at < datetime.utcnow() - settings.youtube.refresh_timeout
 
 
-async def query_or_fetch_youtube_channel(db: DbSession, **params) -> YoutubeChannel:
+async def query_or_fetch_youtube_channel(db: YoutubeDbLib, **params) -> YoutubeChannel:
     try:
         channel: YoutubeChannel = await db.find_youtube_channel(**params)
         if should_refresh_channel(channel):
@@ -174,7 +176,7 @@ async def query_or_fetch_youtube_channel(db: DbSession, **params) -> YoutubeChan
         channel: YoutubeChannel = (
             await fetch_youtube_channel(**params) if 'channel_id' in params else await search_for_youtube_channel(**params)
         )
-        await db.save_youtube_channel(channel)
+        await db.save_account(channel)
         return channel
 
 

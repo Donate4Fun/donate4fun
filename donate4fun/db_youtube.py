@@ -1,16 +1,24 @@
 from uuid import UUID
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm.exc import NoResultFound  # noqa
 
-from .models import Donator, YoutubeChannel, YoutubeVideo, YoutubeChannelOwned
+from .models import Donator, YoutubeChannel, YoutubeVideo, YoutubeChannelOwned, YoutubeNotification
 from .db_models import YoutubeChannelDb, YoutubeVideoDb, YoutubeChannelLink, DonationDb
-from .db_utils import insert_on_conflict_update
-from .db_social import SocialDbMixin
+from .db_social import SocialDbWrapper
+from .types import Satoshi
 
 
-class YoutubeDbMixin(SocialDbMixin):
+class YoutubeDbLib(SocialDbWrapper):
+    db_model = YoutubeChannelDb
+    link_db_model = YoutubeChannelLink
+    donation_column = 'youtube_channel_id'
+    owned_model = YoutubeChannelOwned
+    model = YoutubeChannel
+    name = 'youtube'
+    donation_field = 'youtube_channel'
+
     async def query_youtube_channel(self, *, owner_id: UUID | None = None, **filter_by) -> YoutubeChannelOwned:
         return YoutubeChannelOwned.from_orm(
             await self.query_social_account(YoutubeChannelLink, owner_id=owner_id, **filter_by)
@@ -37,21 +45,6 @@ class YoutubeDbMixin(SocialDbMixin):
             .where(YoutubeChannelDb.id == youtube_channel_id)
         )
         return YoutubeChannel.from_orm(result.scalars().one())
-
-    async def unlink_youtube_channel(self, channel_id: UUID, owner_id: UUID):
-        await self.unlink_social_account(YoutubeChannelLink, channel_id, owner_id)
-
-    async def save_youtube_channel(self, youtube_channel: YoutubeChannel):
-        resp = await self.execute(
-            insert_on_conflict_update(YoutubeChannelDb, youtube_channel, YoutubeChannelDb.channel_id)
-        )
-        id_: UUID = resp.scalar()
-        if id_ is None:
-            resp = await self.execute(
-                select(YoutubeChannelDb.id).where(YoutubeChannelDb.channel_id == youtube_channel.channel_id)
-            )
-            id_ = resp.scalar()
-        youtube_channel.id = id_
 
     async def save_youtube_video(self, youtube_video: YoutubeVideo):
         resp = await self.execute(
@@ -85,13 +78,6 @@ class YoutubeDbMixin(SocialDbMixin):
             id_ = resp.scalar()
         youtube_video.id = id_
 
-    async def link_youtube_channel(self, youtube_channel: YoutubeChannel, donator: Donator, via_oauth: bool) -> bool:
-        """
-        Links YouTube channel to the donator account.
-        Returns True if new link is created, False otherwise
-        """
-        return await self.link_social_account(YoutubeChannelLink, youtube_channel, donator, via_oauth)
-
     async def query_youtube_video(self, video_id: str) -> YoutubeVideo:
         resp = await self.execute(
             select(YoutubeVideoDb)
@@ -109,8 +95,18 @@ class YoutubeDbMixin(SocialDbMixin):
         return [YoutubeChannelOwned(**obj) for obj in result.all()]
 
     async def transfer_youtube_donations(self, youtube_channel: YoutubeChannel, donator: Donator) -> int:
-        """
-        Transfers money from YouTube channel balance to donator balance
-        Returns amount transferred
-        """
         return await self.transfer_social_donations(DonationDb.youtube_channel, youtube_channel, donator)
+
+    async def update_balance_for_donation(self, balance_diff: Satoshi, total_diff: Satoshi, donation: DonationDb) -> Satoshi:
+        await super().update_balance_for_donation(balance_diff, total_diff, donation)
+        if donation.youtube_video_id:
+            video_update_resp = await self.execute(
+                update(YoutubeVideoDb)
+                .values(total_donated=YoutubeVideoDb.total_donated + total_diff)
+                .where(YoutubeVideoDb.id == donation.youtube_video_id)
+                .returning(YoutubeVideoDb.video_id, YoutubeVideoDb.total_donated)
+            )
+            vid, total_donated = video_update_resp.fetchone()
+            notification = YoutubeNotification(id=donation.youtube_video_id, vid=vid, status='OK', total_donated=total_donated)
+            await self.object_changed('youtube-video', donation.youtube_video_id, notification)
+            await self.object_changed('youtube-video-by-vid', vid, notification)

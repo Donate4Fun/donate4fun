@@ -8,6 +8,8 @@ from donate4fun.models import Donation, Donator, YoutubeChannel
 from donate4fun.types import RequestHash
 from donate4fun.db_models import DonationDb
 from donate4fun.db import Notification
+from donate4fun.db_youtube import YoutubeDbLib
+from donate4fun.db_donations import DonationsDbLib
 
 from tests.test_util import verify_fixture, freeze_time
 
@@ -23,35 +25,37 @@ async def test_query_donator(db_session, paid_donation_fixture):
 
 
 async def test_query_donation(db_session, unpaid_donation_fixture):
-    donation = await db_session.query_donation(id=unpaid_donation_fixture.id)
+    donation = await DonationsDbLib(db_session).query_donation(id=unpaid_donation_fixture.id)
     assert donation == unpaid_donation_fixture
 
 
 @freeze_time
 async def test_query_donations(db_session, paid_donation_fixture, freeze_request_hash):
-    donations = await db_session.query_donations(DonationDb.paid_at.isnot(None))
+    donations = await DonationsDbLib(db_session).query_donations(DonationDb.paid_at.isnot(None))
     verify_fixture([donation.dict() for donation in donations], 'query-donations')
 
 
 @freeze_time
 async def test_create_donation(db_session):
     youtube_channel = YoutubeChannel(channel_id='q2dsaf', title='asdzxc', thumbnail_url='http://example.com/thumbnail')
-    await db_session.save_youtube_channel(youtube_channel)
+    await YoutubeDbLib(db_session).save_account(youtube_channel)
     donation = Donation(
         donator=Donator(),
         amount=100,
         youtube_channel=youtube_channel,
         r_hash=RequestHash(b'123qwe'),
     )
-    donation: Donation = await db_session.create_donation(donation)
+    donations_db = DonationsDbLib(db_session)
+    donation: Donation = await donations_db.create_donation(donation)
     assert donation is not None
-    donation2: Donation = await db_session.query_donation(id=donation.id)
+    donation2: Donation = await donations_db.query_donation(id=donation.id)
     assert donation.r_hash == donation2.r_hash
 
 
 async def test_donation_paid(db_session, unpaid_donation_fixture):
-    await db_session.donation_paid(donation_id=unpaid_donation_fixture.id, paid_at=datetime.utcnow(), amount=100)
-    donation: Donation = await db_session.lock_donation(r_hash=unpaid_donation_fixture.r_hash)
+    donations_db = DonationsDbLib(db_session)
+    await donations_db.donation_paid(donation_id=unpaid_donation_fixture.id, paid_at=datetime.utcnow(), amount=100)
+    donation: Donation = await donations_db.lock_donation(r_hash=unpaid_donation_fixture.r_hash)
     assert donation.paid_at != None  # noqa
 
 

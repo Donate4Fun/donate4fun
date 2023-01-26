@@ -5,9 +5,11 @@ json:
   handle: null
   id: 00000000-0000-0000-0000-000000000001
   is_my: true
-  last_fetched_at: '2022-02-02T22:22:22+00:00'
+  last_fetched_at: '2022-02-02T22:22:22'
   lightning_address: null
+  owner_id: 00000000-0000-0000-0000-000000000000
   thumbnail_url: null
   title: title
   total_donated: 0
+  via_oauth: true
 status_code: 200

@@ -15,6 +15,7 @@ json:
     donator_id: 00000000-0000-0000-0000-000000000001
     donator_twitter_account: null
     fee_msat: null
+    github_user: null
     id: 00000000-0000-0000-0000-000000000001
     lightning_address: null
     message: null

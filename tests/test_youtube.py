@@ -10,6 +10,8 @@ from donate4fun.models import Donation, YoutubeChannel, Donator, YoutubeChannelO
 from donate4fun.types import PaymentRequest
 from donate4fun.youtube import query_or_fetch_youtube_video, ChannelInfo
 from donate4fun.jobs import refetch_youtube_channels
+from donate4fun.db_youtube import YoutubeDbLib
+from donate4fun.db_donations import DonationsDbLib
 
 from tests.test_util import verify_response, check_response, check_notification, login_to, mark_vcr, freeze_time
 
@@ -53,7 +55,7 @@ async def test_donate_on_website(client, db, freeze_uuids, rich_donator, setting
             title="channel_title",
             thumbnail_url="https://thumbnail.url/asd",
         )
-        await db_session.save_youtube_channel(youtube_channel)
+        await YoutubeDbLib(db_session).save_account(youtube_channel)
     login_to(client, settings, rich_donator)
     donate_response = await client.post(
         "/api/v1/donate",
@@ -76,17 +78,17 @@ async def test_cancel_donation(client, app, db, freeze_uuids, rich_donator, sett
     async with db.session() as db_session:
         me: Donator = await db_session.query_donator(id=rich_donator.id)
         assert me.balance == rich_donator.balance - amount
-        youtube_channel: YoutubeChannel = await db_session.query_youtube_channel(id=donation.youtube_channel.id)
+        youtube_channel: YoutubeChannel = await YoutubeDbLib(db_session).query_account(id=donation.youtube_channel.id)
         assert youtube_channel.balance == amount
 
     cancel_response = await client.post(f"/api/v1/donation/{donation.id}/cancel")
     check_response(cancel_response)
     async with db.session() as db_session:
-        donation_after_cancel: Donation = await db_session.query_donation(id=donation.id)
+        donation_after_cancel: Donation = await DonationsDbLib(db_session).query_donation(id=donation.id)
         assert donation_after_cancel.cancelled_at != None  # noqa
         donator: Donator = await db_session.query_donator(id=rich_donator.id)
         assert donator.balance == rich_donator.balance
-        youtube_channel: YoutubeChannel = await db_session.query_youtube_channel(id=donation.youtube_channel.id)
+        youtube_channel: YoutubeChannel = await YoutubeDbLib(db_session).query_account(id=donation.youtube_channel.id)
         assert youtube_channel.balance == 0
 
 
@@ -102,16 +104,16 @@ async def test_cancel_donation_fail(client, app, db, freeze_uuids, rich_donator,
     async with db.session() as db_session:
         other_donator = Donator(id=UUID(int=2))
         await db_session.save_donator(other_donator)
-        await db_session.transfer_youtube_donations(donation.youtube_channel, other_donator)
+        await YoutubeDbLib(db_session).transfer_donations(donation.youtube_channel, other_donator)
 
     cancel_response = await client.post(f"/api/v1/donation/{donation.id}/cancel")
     check_response(cancel_response, 400)
     async with db.session() as db_session:
-        donation_after_cancel: Donation = await db_session.query_donation(id=donation.id)
+        donation_after_cancel: Donation = await DonationsDbLib(db_session).query_donation(id=donation.id)
         assert donation_after_cancel.cancelled_at == None  # noqa
         new_rich_donator: Donator = await db_session.query_donator(id=rich_donator.id)
         assert new_rich_donator.balance == rich_donator.balance - amount
-        youtube_channel: YoutubeChannel = await db_session.query_youtube_channel(id=donation.youtube_channel.id)
+        youtube_channel: YoutubeChannel = await YoutubeDbLib(db_session).query_account(id=donation.youtube_channel.id)
         assert youtube_channel.balance == 0
 
 
@@ -142,26 +144,26 @@ async def test_transfer_from_youtube(client, db, paid_donation_fixture, register
     channel_id = paid_donation_fixture.youtube_channel.id
     # Update balance to target value
     async with db.session() as db_session:
-        await db_session.link_youtube_channel(
-            donator=registered_donator, youtube_channel=paid_donation_fixture.youtube_channel, via_oauth=False,
+        await YoutubeDbLib(db_session).link_account(
+            donator=registered_donator, account=paid_donation_fixture.youtube_channel, via_oauth=False,
         )
 
-    resp = await client.post(f'/api/v1/youtube/channel/{channel_id}/transfer')
+    resp = await client.post(f'/api/v1/social/youtube/{channel_id}/transfer')
     check_response(resp, 200)
     amount = resp.json()['amount']
     assert amount == paid_donation_fixture.amount
     async with db.session() as db_session:
-        channel = await db_session.query_youtube_channel(id=channel_id, owner_id=registered_donator.id)
+        channel = await YoutubeDbLib(db_session).query_account(id=channel_id, owner_id=registered_donator.id)
         assert channel.balance == 0
         donator = await db_session.query_donator(id=registered_donator.id)
         assert donator.balance == amount
-        donation = await db_session.query_donation(id=paid_donation_fixture.id)
+        donation = await DonationsDbLib(db_session).query_donation(id=paid_donation_fixture.id)
         assert donation.claimed_at != None  # noqa
 
 
 async def test_transfer_from_youtube_not_linked(client, db, paid_donation_fixture):
     channel_id = paid_donation_fixture.youtube_channel.id
-    resp = await client.post(f'/api/v1/youtube/channel/{channel_id}/transfer')
+    resp = await client.post(f'/api/v1/social/youtube/{channel_id}/transfer')
     verify_response(resp, 'transfer-from-youtube-not-linked', 401)
 
 
@@ -170,11 +172,11 @@ async def test_transfer_from_youtube_not_connected(client, db, paid_donation_fix
     channel_id = paid_donation_fixture.youtube_channel.id
     # Update balance to target value
     async with db.session() as db_session:
-        await db_session.link_youtube_channel(
-            donator=donator, youtube_channel=paid_donation_fixture.youtube_channel, via_oauth=False,
+        await YoutubeDbLib(db_session).link_account(
+            donator=donator, account=paid_donation_fixture.youtube_channel, via_oauth=False,
         )
 
-    resp = await client.post(f'/api/v1/youtube/channel/{channel_id}/transfer')
+    resp = await client.post(f'/api/v1/social/youtube/{channel_id}/transfer')
     verify_response(resp, 'transfer-from-youtube-not-connected', 400)
 
 
@@ -219,7 +221,7 @@ async def test_donate_from_balance(
     assert me_response.json()['donator']['balance'] == rich_donator.balance - amount
 
 
-async def test_link_youtube_channel(db_session):
+async def test_link_youtube_channel(youtube_db):
     donator = Donator(id=UUID(int=0))
     reference_channels = []
     for i in range(3):
@@ -231,21 +233,21 @@ async def test_link_youtube_channel(db_session):
             via_oauth=False,
         )
         reference_channels.append(youtube_channel)
-        await db_session.save_youtube_channel(youtube_channel)
-        await db_session.link_youtube_channel(youtube_channel, donator, via_oauth=False)
-    youtube_channels: list[YoutubeChannelOwned] = await db_session.query_donator_youtube_channels(donator.id)
+        await youtube_db.save_account(youtube_channel)
+        await youtube_db.link_account(youtube_channel, donator, via_oauth=False)
+    youtube_channels: list[YoutubeChannelOwned] = await youtube_db.query_donator_youtube_channels(donator.id)
     assert youtube_channels == reference_channels
-    channel: YoutubeChannelOwned = await db_session.query_youtube_channel(
+    channel: YoutubeChannelOwned = await youtube_db.query_account(
         id=reference_channels[0].id, owner_id=UUID(int=0)
     )
     assert channel.owner_id == donator.id
-    channel: YoutubeChannelOwned = await db_session.query_youtube_channel(
+    channel: YoutubeChannelOwned = await youtube_db.query_account(
         id=reference_channels[0].id, owner_id=UUID(int=1)
     )
     assert not channel.owner_id == donator.id
 
 
-async def test_link_youtube_channel_via_oauth(db_session):
+async def test_link_youtube_channel_via_oauth(db_session, youtube_db):
     donator = Donator(id=UUID(int=0))
     youtube_channel = YoutubeChannel(
         id=UUID(int=0),
@@ -253,22 +255,22 @@ async def test_link_youtube_channel_via_oauth(db_session):
         title="channel_title",
         thumbnail_url="https://thumbnail.url/asd",
     )
-    await db_session.save_youtube_channel(youtube_channel)
-    await db_session.link_youtube_channel(youtube_channel, donator, via_oauth=True)
+    await youtube_db.save_account(youtube_channel)
+    await youtube_db.link_account(youtube_channel, donator, via_oauth=True)
     donator = await db_session.query_donator(donator.id)
     assert donator.connected == True  # noqa
 
     # Test that after relinking without OAuth donator is still connected
-    await db_session.link_youtube_channel(youtube_channel, donator, via_oauth=False)
+    await youtube_db.link_account(youtube_channel, donator, via_oauth=False)
     donator = await db_session.query_donator(donator.id)
     assert donator.connected == True  # noqa
 
     # Test that multiple donators could not be linked using one channel
     with pytest.raises(sqlalchemy.exc.IntegrityError):
-        await db_session.link_youtube_channel(youtube_channel, Donator(id=UUID(int=1)), via_oauth=True)
+        await youtube_db.link_account(youtube_channel, Donator(id=UUID(int=1)), via_oauth=True)
 
 
-async def test_unlink_youtube_channel(db_session):
+async def test_unlink_youtube_channel(db_session, youtube_db):
     donator = Donator(id=UUID(int=0))
     youtube_channel = YoutubeChannel(
         id=UUID(int=0),
@@ -276,9 +278,9 @@ async def test_unlink_youtube_channel(db_session):
         title="channel_title",
         thumbnail_url="https://thumbnail.url/asd",
     )
-    await db_session.save_youtube_channel(youtube_channel)
-    await db_session.link_youtube_channel(youtube_channel, donator, via_oauth=True)
-    await db_session.unlink_youtube_channel(channel_id=youtube_channel.id, owner_id=donator.id)
+    await youtube_db.save_account(youtube_channel)
+    await youtube_db.link_account(youtube_channel, donator, via_oauth=True)
+    await youtube_db.unlink_account(account_id=youtube_channel.id, owner_id=donator.id)
     donator = await db_session.query_donator(donator.id)
     assert donator.connected == False  # noqa
 
@@ -287,6 +289,7 @@ async def test_unlink_youtube_channel(db_session):
 async def test_unlink_youtube_channel_with_balance(db, client, settings, monkeypatch):
     donator = Donator(id=UUID(int=0), balance=100)
     async with db.session() as db_session:
+        youtube_db = YoutubeDbLib(db_session)
         await db_session.save_donator(donator)
         youtube_channel = YoutubeChannel(
             id=UUID(int=0),
@@ -295,26 +298,26 @@ async def test_unlink_youtube_channel_with_balance(db, client, settings, monkeyp
             thumbnail_url="https://thumbnail.url/asd",
             last_fetched_at=datetime.utcnow(),
         )
-        await db_session.save_youtube_channel(youtube_channel)
-        await db_session.link_youtube_channel(youtube_channel, donator, via_oauth=True)
+        await youtube_db.save_account(youtube_channel)
+        await youtube_db.link_account(youtube_channel, donator, via_oauth=True)
         youtube_channel2 = YoutubeChannel(
             id=UUID(int=1),
             channel_id="UCzxczxd",
             title="channel_title",
             thumbnail_url="https://thumbnail.url/asd",
         )
-        await db_session.save_youtube_channel(youtube_channel2)
-        await db_session.link_youtube_channel(youtube_channel2, donator, via_oauth=True)
+        await youtube_db.save_account(youtube_channel2)
+        await youtube_db.link_account(youtube_channel2, donator, via_oauth=True)
 
     login_to(client, settings, donator)
-    check_response(await client.post(f'/api/v1/youtube/channel/{youtube_channel.id}/unlink'))
-    check_response(await client.post(f'/api/v1/youtube/channel/{youtube_channel2.id}/unlink'), 400)
+    check_response(await client.post(f'/api/v1/social/youtube/{youtube_channel.id}/unlink'))
+    check_response(await client.post(f'/api/v1/social/youtube/{youtube_channel2.id}/unlink'), 400)
 
     # Test unlink with lnauth_pubkey
     async with db.session() as db_session:
         donator.lnauth_pubkey = 'pubkey'
         await db_session.save_donator(donator)
-    check_response(await client.post(f'/api/v1/youtube/channel/{youtube_channel2.id}/unlink'))
+    check_response(await client.post(f'/api/v1/social/youtube/{youtube_channel2.id}/unlink'))
 
     # Test that lnauth_pubkey is not changed after link
     async def patched_fetch_user_channel(code):
@@ -345,7 +348,7 @@ async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids, 
             description=info.description,
             last_fetched_at=datetime.utcnow(),
         )
-        await db_session.save_youtube_channel(channel)
+        await YoutubeDbLib(db_session).save_account(channel)
     donator = Donator(id=UUID(int=0))
     login_to(client, settings, donator)
     check_response(await client.get(
@@ -377,7 +380,7 @@ async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids, 
     assert me.connected == True  # noqa
 
     # Test channel API
-    verify_response(await client.get(f'/api/v1/youtube/channel/{channel.id}'), 'youtube-channel-owned')
+    verify_response(await client.get(f'/api/v1/social/youtube/{channel.id}'), 'youtube-channel-owned')
 
 
 @mark_vcr
@@ -386,7 +389,7 @@ async def test_query_or_fetch_youtube_video(db_session, video_id):
     """
     One channel has banner, other not
     """
-    await query_or_fetch_youtube_video(video_id='VOG-fFhq7kk', db=db_session)
+    await query_or_fetch_youtube_video(video_id='VOG-fFhq7kk', db=YoutubeDbLib(db_session))
 
 
 @mark_vcr
@@ -399,8 +402,8 @@ async def test_refetch_youtube_channels(db, last_fetched_at):
         last_fetched_at=last_fetched_at,
     )
     async with db.session() as db_session:
-        await db_session.save_youtube_channel(youtube_channel)
+        await YoutubeDbLib(db_session).save_account(youtube_channel)
     await refetch_youtube_channels()
     async with db.session() as db_session:
-        refetched_channel = await db_session.query_youtube_channel(id=youtube_channel.id)
+        refetched_channel = await YoutubeDbLib(db_session).query_account(id=youtube_channel.id)
     assert refetched_channel.last_fetched_at == datetime.utcnow()

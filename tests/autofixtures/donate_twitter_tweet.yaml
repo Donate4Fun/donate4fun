@@ -24,6 +24,7 @@ json:
       total_donated: 0
       user_id: '1572908920485576704'
     fee_msat: null
+    github_user: null
     id: 00000000-0000-0000-0000-000000000001
     lightning_address: null
     message: null

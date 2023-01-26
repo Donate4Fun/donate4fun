@@ -8,11 +8,11 @@ from sqlalchemy.dialects.postgresql import insert
 
 from .types import NotFound
 from .db_models import WithdrawalDb, DonatorDb
-from .models import Notification
+from .db import DbSessionWrapper
 from .settings import settings
 
 
-class WithdrawalDbMixin:
+class WithdrawalDbLib(DbSessionWrapper):
     async def create_withdrawal(self, donator: DonatorDb) -> WithdrawalDb:
         result = await self.execute(
             insert(WithdrawalDb)
@@ -66,7 +66,7 @@ class WithdrawalDbMixin:
         )
         if result.rowcount != 1:
             raise NotFound(f"Donator {donator_id} does not exist or haven't enough money")
-        await self.notify(f'withdrawal:{withdrawal_id}', Notification(id=withdrawal_id, status='OK'))
+        await self.object_changed('withdrawal', withdrawal_id)
         await self.object_changed('donator', donator_id)
         return result.scalar()
 

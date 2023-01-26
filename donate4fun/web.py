@@ -11,12 +11,17 @@ from fastapi.exceptions import RequestValidationError
 from sqlalchemy.orm.exc import NoResultFound
 
 from .api_utils import get_db_session
-from .models import YoutubeChannel, TwitterAccount, Donation, Donator
+from .models import YoutubeChannel, TwitterAccount, Donation, Donator, GithubUser
 from .youtube import query_or_fetch_youtube_channel
 from .twitter import query_or_fetch_twitter_account
+from .github import query_or_fetch_github_user
 from .settings import settings
 from .db import db
 from .db_models import DonatorDb
+from .db_youtube import YoutubeDbLib
+from .db_twitter import TwitterDbLib
+from .db_github import GithubDbLib
+from .db_donations import DonationsDbLib
 from .lnd import lightning_payment_metadata
 
 app = FastAPI()
@@ -57,6 +62,8 @@ def target_name(donation: Donation) -> str:
         return channel.title
     elif account := donation.twitter_account:
         return account.name
+    elif user := donation.github_user:
+        return user.name
     else:
         raise ValueError("donation has no target")
 
@@ -67,6 +74,7 @@ def default_sharing_image():
 
 @app.get("/youtube/{object_id}")
 @app.get("/twitter/{object_id}")
+@app.get("/github/{object_id}")
 @app.get("/donation/{object_id}")
 async def index(request: Request, object_id: UUID | None = None, full_path: str | None = None):
     if object_id is not None:
@@ -78,7 +86,7 @@ async def index(request: Request, object_id: UUID | None = None, full_path: str 
     manifest = await fetch_manifest() if settings.release else None
     if object_type == 'donation':
         async with db.session() as db_session:
-            donation: Donation = await db_session.query_donation(id=object_id)
+            donation: Donation = await DonationsDbLib(db_session).query_donation(id=object_id)
         description = f"{donation.amount} sats was donated to {target_name(donation)}"
     else:
         description = "Support creators with Bitcoin Lightning donations"
@@ -92,7 +100,7 @@ async def sitemap(request: Request, db_session=Depends(get_db_session)):
     base_url = settings.base_url
     urlset = ET.Element('urlset', xmlns="http://www.sitemaps.org/schemas/sitemap/0.9")
 
-    for youtube_channel in await db_session.query_youtube_channels():
+    for youtube_channel in await YoutubeDbLib(db_session).query_accounts():
         url = ET.SubElement(urlset, 'url')
         loc = ET.SubElement(url, 'loc')
         loc.text = f'{base_url}/youtube-channel/{youtube_channel.id}'
@@ -105,14 +113,20 @@ async def sitemap(request: Request, db_session=Depends(get_db_session)):
 
 @app.get('/d/{channel_id}')
 async def donate_redirect(request: Request, channel_id: str, db=Depends(get_db_session)):
-    youtube_channel: YoutubeChannel = await query_or_fetch_youtube_channel(channel_id=channel_id, db=db)
+    youtube_channel: YoutubeChannel = await query_or_fetch_youtube_channel(channel_id=channel_id, db=YoutubeDbLib(db))
     return RedirectResponse(f'{settings.base_url}/donate/{youtube_channel.id}', status_code=302)
 
 
 @app.get('/tw/{handle}')
 async def twitter_account_redirect(request: Request, handle: str, db=Depends(get_db_session)):
-    account: TwitterAccount = await query_or_fetch_twitter_account(handle=handle, db=db)
+    account: TwitterAccount = await query_or_fetch_twitter_account(handle=handle, db=TwitterDbLib(db))
     return RedirectResponse(f'{settings.base_url}/twitter/{account.id}', status_code=302)
+
+
+@app.get('/gh/{login}')
+async def github_user_redirect(request: Request, login: str, db=Depends(get_db_session)):
+    user: GithubUser = await query_or_fetch_github_user(login=login, db=GithubDbLib(db))
+    return RedirectResponse(f'{settings.base_url}/github/{user.id}', status_code=302)
 
 
 @app.get('/.well-known/lnurlp/{username}', response_class=JSONResponse)

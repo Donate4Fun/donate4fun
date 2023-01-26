@@ -12,12 +12,9 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from .core import ContextualObject
 from .models import Donator, Notification, Credentials, Donatee
 from .settings import DbSettings
-from .db_youtube import YoutubeDbMixin
-from .db_twitter import TwitterDbMixin, OAuthTokenDbMixin
-from .db_donations import DonationsDbMixin
-from .db_withdraw import WithdrawalDbMixin
 from .db_models import (
     Base, DonatorDb, EmailNotificationDb, YoutubeChannelDb, TwitterAuthorDb, YoutubeChannelLink, TwitterAuthorLink,
+    GithubUserLink,
 )
 from .db_utils import insert_on_conflict_update
 
@@ -67,7 +64,7 @@ class Database:
 db = ContextualObject("db")
 
 
-class DbSession(YoutubeDbMixin, TwitterDbMixin, DonationsDbMixin, WithdrawalDbMixin, OAuthTokenDbMixin):
+class DbSession:
     def __init__(self, db, session):
         self.db = db
         self.session = session
@@ -82,8 +79,8 @@ class DbSession(YoutubeDbMixin, TwitterDbMixin, DonationsDbMixin, WithdrawalDbMi
         logger.trace("notify %s %s", channel, notification)
         await self.execute(select(func.pg_notify(channel, notification.json())))
 
-    async def object_changed(self, object_class: str, object_id: UUID):
-        return await self.notify(f'{object_class}:{object_id}', Notification(id=object_id, status='OK'))
+    async def object_changed(self, object_class: str, object_id: UUID, notification: Notification | None = None):
+        return await self.notify(f'{object_class}:{object_id}', notification or Notification(id=object_id, status='OK'))
 
     async def query_donator(self, id: UUID) -> Donator:
         return await self.find_donator(DonatorDb.id == id)
@@ -95,11 +92,13 @@ class DbSession(YoutubeDbMixin, TwitterDbMixin, DonationsDbMixin, WithdrawalDbMi
                 (
                     func.coalesce(func.bool_or(YoutubeChannelLink.via_oauth), False)
                     | func.coalesce(func.bool_or(TwitterAuthorLink.via_oauth), False)
+                    | func.coalesce(func.bool_or(GithubUserLink.via_oauth), False)
                     | DonatorDb.lnauth_pubkey.isnot(None)
                 ).label('connected'),
             )
             .outerjoin(YoutubeChannelLink, YoutubeChannelLink.donator_id == DonatorDb.id)
             .outerjoin(TwitterAuthorLink, TwitterAuthorLink.donator_id == DonatorDb.id)
+            .outerjoin(GithubUserLink, GithubUserLink.donator_id == DonatorDb.id)
             .where(*where)
             .group_by(DonatorDb.id)
         )
@@ -170,3 +169,10 @@ class DbSession(YoutubeDbMixin, TwitterDbMixin, DonationsDbMixin, WithdrawalDbMi
             .returning(EmailNotificationDb.id)
         )
         return resp.scalar()
+
+
+class DbSessionWrapper:
+    def __init__(self, session: DbSession):
+        self.session = session
+        self.execute = session.execute
+        self.object_changed = session.object_changed

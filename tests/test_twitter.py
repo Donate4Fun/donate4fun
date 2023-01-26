@@ -14,6 +14,8 @@ from donate4fun.twitter import query_or_fetch_twitter_account
 from donate4fun.lnd import lnd, monitor_invoices_step, PayInvoiceError
 from donate4fun.types import PaymentRequest, LightningAddress
 from donate4fun.db import db as db_var
+from donate4fun.db_twitter import TwitterDbLib
+from donate4fun.db_donations import DonationsDbLib
 from donate4fun.settings import settings
 from donate4fun.jobs import refetch_twitter_authors
 from donate4fun.api_utils import make_absolute_uri
@@ -95,8 +97,9 @@ async def test_donate_tweet_with_lightning_address(
                 last_fetched_at=datetime.utcnow(),
             )
             tweet = TwitterTweet(tweet_id=0)
-            await db_session.save_twitter_account(account)
-            await db_session.get_or_create_tweet(tweet)
+            twitter_db = TwitterDbLib(db_session)
+            await twitter_db.save_account(account)
+            await twitter_db.get_or_create_tweet(tweet)
 
         settings.frontend_port = port
         settings.base_url = f'http://localhost:{port}'
@@ -162,7 +165,7 @@ async def test_donate_tweet_with_lightning_address(
                 assert new_receiver.balance == amount
 
 
-async def test_link_twitter_account(db_session):
+async def test_link_twitter_account(twitter_db):
     donator = Donator(id=UUID(int=0))
     reference_accounts = []
     for i in range(3):
@@ -175,15 +178,15 @@ async def test_link_twitter_account(db_session):
             via_oauth=False,
         )
         reference_accounts.append(account)
-        await db_session.save_twitter_account(account)
-        await db_session.link_twitter_account(account, donator, via_oauth=False)
-    twitter_accounts: list[TwitterAccountOwned] = await db_session.query_donator_twitter_accounts(donator.id)
+        await twitter_db.save_account(account)
+        await twitter_db.link_account(account, donator, via_oauth=False)
+    twitter_accounts: list[TwitterAccountOwned] = await twitter_db.query_linked_accounts(owner_id=donator.id)
     assert twitter_accounts == reference_accounts
-    account: TwitterAccountOwned = await db_session.query_twitter_account(
+    account: TwitterAccountOwned = await twitter_db.query_account(
         id=reference_accounts[0].id, owner_id=UUID(int=0)
     )
     assert account.owner_id == donator.id
-    account: TwitterAccountOwned = await db_session.query_twitter_account(
+    account: TwitterAccountOwned = await twitter_db.query_account(
         id=reference_accounts[0].id, owner_id=UUID(int=1)
     )
     assert not account.owner_id == donator.id
@@ -191,8 +194,8 @@ async def test_link_twitter_account(db_session):
 
 @mark_vcr
 @pytest.mark.parametrize('params', [dict(handle='donate4_fun'), dict(user_id=12345), dict(handle='twiteis')])
-async def test_query_or_fetch_twitter_account(db_session, params):
-    await query_or_fetch_twitter_account(db=db_session, **params)
+async def test_query_or_fetch_twitter_account(twitter_db, params):
+    await query_or_fetch_twitter_account(db=twitter_db, **params)
 
 
 async def test_transfer_from_twitter(client, db, rich_donator, settings):
@@ -205,23 +208,26 @@ async def test_transfer_from_twitter(client, db, rich_donator, settings):
             handle="@donate4_fun",
             name="Donate4.Fun",
         )
-        await db_session.save_twitter_account(account)
+        twitter_db = TwitterDbLib(db_session)
+        await twitter_db.save_account(account)
         donation = Donation(amount=100, twitter_account=account, donator=rich_donator)
-        await db_session.create_donation(donation)
-        await db_session.donation_paid(donation_id=donation.id, amount=100, paid_at=datetime.now())
-        donation = await db_session.query_donation(id=donation.id)
-        await db_session.link_twitter_account(donator=rich_donator, twitter_author=account, via_oauth=False)
+        donations_db = DonationsDbLib(db_session)
+        await donations_db.create_donation(donation)
+        await donations_db.donation_paid(donation_id=donation.id, amount=100, paid_at=datetime.now())
+        donation = await donations_db.query_donation(id=donation.id)
+        await twitter_db.link_account(donator=rich_donator, account=account, via_oauth=False)
 
-    resp = await client.post(f'/api/v1/twitter/account/{account.id}/transfer')
+    resp = await client.post(f'/api/v1/social/twitter/{account.id}/transfer')
     check_response(resp, 200)
     amount = resp.json()['amount']
     assert amount == donation.amount
     async with db.session() as db_session:
-        account: TwitterAccount = await db_session.query_twitter_account(user_id=account.id, owner_id=rich_donator.id)
+        twitter_db = TwitterDbLib(db_session)
+        account: TwitterAccount = await twitter_db.query_account(user_id=account.id, owner_id=rich_donator.id)
         assert account.balance == 0
         donator = await db_session.query_donator(id=rich_donator.id)
         assert donator.balance == amount
-        donation = await db_session.query_donation(id=donation.id)
+        donation = await DonationsDbLib(db_session).query_donation(id=donation.id)
         assert donation.claimed_at != None  # noqa
 
 
@@ -276,7 +282,7 @@ async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids, 
         last_fetched_at=datetime.utcnow(),
     )
     async with db.session() as db_session:
-        await db_session.save_twitter_account(account)
+        await TwitterDbLib(db_session).save_account(account)
 
     donator = Donator(id=UUID(int=0))
     login_to(client, settings, donator)
@@ -300,7 +306,7 @@ async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids, 
     assert me.connected == True  # noqa
 
     # Test channel API
-    verify_response(await client.get(f'/api/v1/twitter/account/{account.id}'), 'twitter-account-owned')
+    verify_response(await client.get(f'/api/v1/social/twitter/{account.id}'), 'twitter-account-owned')
 
 
 async def follow_oauth1_flow(client):
@@ -341,7 +347,7 @@ async def test_login_via_oauth1(client, settings, monkeypatch, db, freeze_uuids)
         last_fetched_at=datetime.utcnow(),
     )
     async with db.session() as db_session:
-        await db_session.save_twitter_account(account)
+        await TwitterDbLib(db_session).save_account(account)
 
     donator = Donator(id=UUID(int=0))
     login_to(client, settings, donator)
@@ -359,7 +365,7 @@ async def test_login_via_oauth1(client, settings, monkeypatch, db, freeze_uuids)
     assert me.connected == True  # noqa
 
     # Test channel API
-    verify_response(await client.get(f'/api/v1/twitter/account/{account.id}'), 'twitter-account-owned')
+    verify_response(await client.get(f'/api/v1/social/twitter/{account.id}'), 'twitter-account-owned')
 
 
 @mark_vcr
@@ -368,8 +374,23 @@ async def test_login_via_oauth1(client, settings, monkeypatch, db, freeze_uuids)
 async def test_refetch_twitter_authors(db, twitter_account, last_fetched_at):
     twitter_account.last_fetched_at = last_fetched_at
     async with db.session() as db_session:
-        await db_session.save_twitter_account(twitter_account)
+        await TwitterDbLib(db_session).save_account(twitter_account)
     await refetch_twitter_authors()
     async with db.session() as db_session:
-        refetched_account = await db_session.query_twitter_account(id=twitter_account.id)
+        refetched_account = await TwitterDbLib(db_session).query_account(id=twitter_account.id)
     assert refetched_account.last_fetched_at == datetime.utcnow()
+
+
+async def test_unlink_twitter_account(client, db):
+    donator = Donator(id=UUID(int=0))
+    account = TwitterAccount(
+        user_id=123,
+        name='John Doe',
+        handle='john',
+    )
+    async with db.session() as db_session:
+        twitter_db = TwitterDbLib(db_session)
+        await twitter_db.save_account(account)
+        await twitter_db.link_account(account, donator, via_oauth=True)
+    login_to(client, settings, donator)
+    check_response(await client.post(f'/api/v1/social/twitter/{account.id}/unlink'))

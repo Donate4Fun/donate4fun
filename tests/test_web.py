@@ -4,6 +4,7 @@ import pytest
 import psutil
 
 from donate4fun.models import YoutubeChannel, DonateRequest
+from donate4fun.db_youtube import YoutubeDbLib
 
 from tests.test_util import verify_response, check_response, login_to, mark_vcr
 from tests.fixtures import find_unused_port, app_serve
@@ -12,7 +13,7 @@ from tests.fixtures import find_unused_port, app_serve
 @pytest.mark.freeze_time('2022-02-02T22:22:22')
 async def test_sitemap(client, db):
     async with db.session() as db_session:
-        await db_session.save_youtube_channel(
+        await YoutubeDbLib(db_session).save_account(
             YoutubeChannel(
                 title='test channel',
                 id=UUID(int=0),
