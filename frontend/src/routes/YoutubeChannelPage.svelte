@@ -9,7 +9,7 @@
   import ChannelLogo from "$lib/ChannelLogo.svelte";
   import DonationsTable from "$lib/DonationsTable.svelte";
   import PaymentWidget from "$lib/PaymentWidget.svelte";
-  import { api } from "$lib/api.js";
+  import { api, socialDonationsStore } from "$lib/api.js";
   import title from "$lib/title.js";
 
   export let channel_id;
@@ -43,7 +43,7 @@
     </Section>
 
     <div class="details">
-      <DonationsTable socialProvider="youtube" accountId={channel.id} />
+      <DonationsTable donations={socialDonationsStore("youtube", channel.id)} />
     </div>
   {/await}
 </div>

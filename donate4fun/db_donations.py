@@ -6,7 +6,7 @@ from datetime import datetime
 from sqlalchemy import select, desc, update, func, case, true
 from sqlalchemy.dialects.postgresql import insert
 
-from .models import Donation, DonatorStats
+from .models import Donation, DonatorStats, Notification
 from .types import RequestHash, NotEnoughBalance, ValidationError
 from .db import DbSessionWrapper
 from .db_models import (
@@ -169,6 +169,7 @@ class DonationsDbLib(DbSessionWrapper):
                 raise NotEnoughBalance(f"Donator {donation.donator_id} hasn't enough money")
 
         await self.object_changed('donation', donation.id)
+        await self.notify('donations', Notification(id=donation.id, status='OK'))
         if donation.donator_id is not None:
             await self.object_changed('donator', donation.donator_id)
 

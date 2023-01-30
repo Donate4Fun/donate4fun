@@ -323,10 +323,15 @@ async def cancel_donation(donation_id: UUID, db=Depends(get_donations_db), me=De
 
 
 @router.get("/donations/latest", response_model=list[Donation])
-async def latest_donations(db=Depends(get_donations_db)):
+async def latest_donations(offset: int = 0, db=Depends(get_donations_db)):
     return await db.query_donations(
-        DonationDb.paid_at.isnot(None) & DonationDb.youtube_channel_id.isnot(None),
-        limit=settings.latest_donations_count,
+        DonationDb.paid_at.isnot(None)
+        & DonationDb.cancelled_at.is_(None)
+        & (
+            (DonationDb.receiver_id != DonationDb.donator_id)
+            | DonationDb.receiver_id.is_(None)
+        ),
+        limit=settings.latest_donations_count, offset=offset,
     )
 
 

@@ -10,7 +10,7 @@
   import ChannelLogo from "$lib/ChannelLogo.svelte";
   import DonationsTable from "$lib/DonationsTable.svelte";
   import PaymentWidget from "$lib/PaymentWidget.svelte";
-  import { api } from "$lib/api.js";
+  import { api, socialDonationsStore } from "$lib/api.js";
   import title from "$lib/title.js";
 
   export let user_id;
@@ -42,7 +42,7 @@
     </Section>
 
     <div class="details">
-      <DonationsTable socialProvider=github accountId={user.id} />
+      <DonationsTable donations={socialDonationsStore('github', user.id)}/>
     </div>
   {:catch error}
     <NotFoundPage {error} />

@@ -31,6 +31,7 @@
   import InstallWebLNWalletPage from "./routes/InstallWebLNWalletPage.svelte";
   import SigninPage from "./routes/SigninPage.svelte";
   import SettingsPage from "./routes/SettingsPage.svelte";
+  import LatestDonationsPage from "./routes/LatestDonationsPage.svelte";
 
   const url = "";
   let simpleHeader = false;
@@ -113,6 +114,7 @@
     <Route path="install-webln-wallet"><InstallWebLNWalletPage /></Route>
     <Route path="signin"><SigninPage /></Route>
     <Route path="settings"><SettingsPage /></Route>
+    <Route path="latest"><LatestDonationsPage /></Route>
     <Route path="/"><Landing /></Route>
     <Route component={NotFoundPage}></Route>
   </Page>

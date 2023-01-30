@@ -7,30 +7,8 @@
   import Amount from "$lib/Amount.svelte";
   import Loader from "$lib/Loader.svelte";
   import TwitterAccount from "$lib/TwitterAccount.svelte";
-  import api from "$lib/api.js";
 
-  export let socialProvider;
-  export let accountId;
-
-  function apiStore(getPath, topic) {
-    return readable(null, set => {
-      const ws = api.subscribe(topic);
-      ws.on("notification", async (notification) => {
-        if (notification.status === 'OK')
-          set(await api.get(getPath));
-      });
-      (async () => {
-        await ws.ready();
-        set(await api.get(getPath));
-      })();
-      return () => ws.close();
-    });
-  }
-
-  const donations = apiStore(
-    `social/${socialProvider}/${accountId}/donations/by-donatee`,
-    `social:${socialProvider}:${accountId}`,
-  );
+  export let donations;
 </script>
 
 <div class="table">

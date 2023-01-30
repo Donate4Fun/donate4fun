@@ -96,6 +96,21 @@ export const me = asyncable(async (set) => {
   set(me_);
 });
 
+export const syncMe = readable(null, (set) => {
+  (async () => {
+    cLog("loading me sync");
+    let me_;
+    if (await isValid()) {
+      me_ = loadFrom({}, storage.me.donator);
+    } else {
+      cLog("stored session is invalid or missing, reloading");
+      me_ = loadFrom({}, await fetchMe());
+    }
+    await subscribeToDonator(me_.donator.id);
+    set(me_);
+  })();
+});
+
 async function subscribeToDonator(donatorId) {
   if (isInsideExtension())
     // TODO: implemet VAPID subscriptions in extension

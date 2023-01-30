@@ -1,7 +1,7 @@
 import axios from "axios";
 import WebSocket from "async-ws";
 import { notify } from "$lib/notifications.js";
-import { writable, get as store_get } from 'svelte/store';
+import { readable, writable, get as store_get } from 'svelte/store';
 import { sleep } from "$lib/utils.js";
 import { analytics } from "$lib/analytics.js";
 import { cLog } from "$lib/log.js";
@@ -92,11 +92,68 @@ export async function get(path, config) {
   }
 }
 
+export function apiStore(getPath, topic) {
+  return readable(null, set => {
+    const ws = subscribe(topic);
+    ws.on("notification", async (notification) => {
+      if (notification.status === 'OK')
+        set(await get(getPath));
+    });
+    (async () => {
+      await ws.ready();
+      set(await get(getPath));
+    })();
+    return () => ws.close();
+  });
+}
+
+export function apiListStore(listPath, itemGetter, topic) {
+  let set_;
+  let items = [];
+  const store = readable(null, set => {
+    const ws = subscribe(topic);
+    ws.on("notification", async (notification) => {
+      if (notification.status === 'OK') {
+        const item = await itemGetter(notification.id);
+        items = [item, ...items];
+        set(items);
+}
+    });
+    (async () => {
+      await ws.ready();
+      items = await get(listPath);
+      set(items);
+      set_ = set;
+    })();
+    return () => ws.close();
+  });
+
+  return {
+    subscribe: store.subscribe,
+    async loadMore() {
+      // FIXME: it can return duplicates that already exist in items or return with gap
+      // due to race conditions
+      const newItems = await api.get(`${listPath}?offset=${items.length}`);
+      items = [...items, ...newItems];
+      set_(items);
+    }
+  };
+}
+
+export function socialDonationsStore(socialProvider, accountId) {
+  return apiStore(
+    `social/${socialProvider}/${accountId}/donations/by-donatee`,
+    `social:${socialProvider}:${accountId}`,
+  );
+}
+
 export const api = {
   get,
   post,
   subscribe,
   errorToText,
+  apiStore,
+  socialDonationsStore,
 };
 
 export default api;
