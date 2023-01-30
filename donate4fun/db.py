@@ -176,3 +176,4 @@ class DbSessionWrapper:
         self.session = session
         self.execute = session.execute
         self.object_changed = session.object_changed
+        self.notify = session.notify

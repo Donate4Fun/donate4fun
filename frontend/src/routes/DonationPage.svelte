@@ -33,6 +33,8 @@
       targetName = donation.youtube_channel.title;
     else if (donation.twitter_account)
       targetName = donation.twitter_account.name;
+    else if (donation.github_user)
+      targetName = donation.github_user.name;
     else if (donation.receiver)
       targetName = donation.receiver.name;
     else

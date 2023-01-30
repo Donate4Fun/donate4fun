@@ -10,9 +10,9 @@
   import Section from "$lib/Section.svelte";
   import ChannelLogo from "$lib/ChannelLogo.svelte";
   import DonationsTable from "$lib/DonationsTable.svelte";
-  import { api } from "$lib/api.js";
+  import { api, socialDonationsStore } from "$lib/api.js";
   import title from "$lib/title.js";
-  import { me } from "$lib/session.js";
+  import { syncMe as me } from "$lib/session.js";
 
   export let user_id;
 
@@ -33,10 +33,6 @@
     await api.post(`${baseUrl}/transfer`);
     await load();
   }
-
-  async function loadDonations() {
-    return await api.get(`${baseUrl}/donations/by-donatee`);
-  }
 </script>
 
 <div class="container">
@@ -54,22 +50,18 @@
           <FiatAmount amount={user.balance} />
         </div>
         <div class="buttons">
-          {#await $me then me}
-            {#if me.connected}
-              <Button disabled={user.balance === 0} on:click={claim} --border-width=0>Collect</Button>
-            {:else}
-              <Button link='/login' --border-width=0>Login</Button>
-            {/if}
-          {/await}
+          {#if $me?.connected}
+            <Button disabled={user.balance === 0} on:click={claim} --border-width=0>Collect</Button>
+          {:else}
+            <Button link='/login' --border-width=0>Login</Button>
+          {/if}
           <a use:link href={resolve("..")}>Public page</a>
         </div>
       </div>
     </Section>
 
     <div class="details">
-      {#await loadDonations() then donations}
-        <DonationsTable donations={donations} />
-      {/await}
+      <DonationsTable donations={socialDonationsStore('github', user_id)} />
     </div>
   {:catch error}
     <NotFoundPage {error} />

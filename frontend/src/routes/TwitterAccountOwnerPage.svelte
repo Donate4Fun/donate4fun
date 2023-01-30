@@ -11,16 +11,16 @@
   import ChannelLogo from "$lib/ChannelLogo.svelte";
   import DonationsTable from "$lib/DonationsTable.svelte";
   import TwitterShare from "$lib/TwitterShare.svelte";
-  import { api } from "$lib/api.js";
+  import { api, socialDonationsStore } from "$lib/api.js";
   import title from "$lib/title.js";
-  import { me } from "$lib/session.js";
+  import { syncMe as me } from "$lib/session.js";
 
   export let account_id;
 
   let account;
   let shareUrl;
 
-  $: baseUrl = `twitter/account/${account_id}`;
+  $: baseUrl = `social/twitter/${account_id}`;
 
   const resolve = useResolve();
 
@@ -33,10 +33,6 @@
   async function claim() {
     await api.post(`${baseUrl}/transfer`);
     await load();
-  }
-
-  async function loadDonations() {
-    return await api.get(`${baseUrl}/donations/by-donatee`);
   }
 </script>
 
@@ -58,13 +54,11 @@
           <FiatAmount amount={account.balance} />
         </div>
         <div class="buttons">
-          {#await $me then me}
-            {#if me.connected}
-              <Button disabled={account.balance === 0} on:click={claim} --border-width=0>Collect</Button>
-            {:else}
-              <Button link='/login' --border-width=0>Login</Button>
-            {/if}
-          {/await}
+          {#if $me?.connected}
+            <Button disabled={account.balance === 0} on:click={claim} --border-width=0>Collect</Button>
+          {:else}
+            <Button link='/login' --border-width=0>Login</Button>
+          {/if}
           <TwitterShare text="Donate me" />
           <a use:link href={resolve("..")}>Public page</a>
         </div>
@@ -72,9 +66,7 @@
     </Section>
 
     <div class="details">
-      {#await loadDonations() then donations}
-        <DonationsTable donations={donations} />
-      {/await}
+      <DonationsTable donations={socialDonationsStore('twitter', account_id)} />
     </div>
   {:catch error}
     <NotFoundPage {error} />

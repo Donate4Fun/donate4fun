@@ -11,7 +11,7 @@
   import DonationsTable from "$lib/DonationsTable.svelte";
   import PaymentWidget from "$lib/PaymentWidget.svelte";
   import TwitterShare from "$lib/TwitterShare.svelte";
-  import { api } from "$lib/api.js";
+  import { api, socialDonationsStore } from "$lib/api.js";
   import title from "$lib/title.js";
 
   export let account_id;
@@ -48,7 +48,7 @@
     </Section>
 
     <div class="details">
-      <DonationsTable socialProvider=twitter accountId={account.id} />
+      <DonationsTable donations={socialDonationsStore('twitter', account_id)} />
     </div>
   {:catch error}
     <NotFoundPage {error} />
