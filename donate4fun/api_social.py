@@ -1,30 +1,14 @@
-from enum import Enum
 from uuid import UUID
 
 import posthog
 from fastapi import APIRouter, Depends, HTTPException
 
-from .db_libs import YoutubeDbLib, TwitterDbLib, GithubDbLib
-from .models import TransferResponse, Donator, SocialAccountOwned, Donation
+from .models import TransferResponse, Donator, SocialAccountOwned, Donation, SocialProvider
 from .types import ValidationError
-from .api_utils import get_db_session, load_donator, get_donator, get_donations_db
+from .api_utils import get_db_session, load_donator, get_donator, get_donations_db, get_social_provider_db
 from .db_models import DonationDb
 
 router = APIRouter(prefix='/social')
-
-
-class SocialProvider(str, Enum):
-    youtube = 'youtube'
-    twitter = 'twitter'
-    github = 'github'
-
-
-def get_social_provider_db(social_provider: SocialProvider):
-    return {
-        SocialProvider.youtube: YoutubeDbLib,
-        SocialProvider.twitter: TwitterDbLib,
-        SocialProvider.github: GithubDbLib,
-    }[social_provider]
 
 
 @router.post('/{social_provider}/{account_id}/transfer', response_model=TransferResponse)
