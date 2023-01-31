@@ -60,7 +60,6 @@ SQLAlchemy-Utils = "^0.38.2"
 anyio = "^3.6.1"
 pytest-icdiff = "^0.5"
 vcrpy = {git = "https://github.com/nikicat/vcrpy", branch = "fix-httpx-stub"}
-pytest-vcr = "^1.0.2"
 pytest-freezegun = "^0.4.2"
 asgi-testclient = {git = "https://github.com/nikicat/asgi-testClient", rev = "fix-busy-loop"}
 pytest-lazy-fixture = "^0.6.3"
@@ -70,6 +69,7 @@ pytest-asyncio = {git = "https://github.com/nikicat/pytest-asyncio"}
 psutil = "^5.9.4"
 watchfiles = "^0.18.1"
 coverage = "^7.0.2"
+pytest-recording = "^0.12.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

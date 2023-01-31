@@ -6,11 +6,11 @@ import psutil
 from donate4fun.models import YoutubeChannel, DonateRequest
 from donate4fun.db_youtube import YoutubeDbLib
 
-from tests.test_util import verify_response, check_response, login_to, mark_vcr
+from tests.test_util import verify_response, check_response, login_to, mark_vcr, freeze_time
 from tests.fixtures import find_unused_port, app_serve
 
 
-@pytest.mark.freeze_time('2022-02-02T22:22:22')
+@freeze_time
 async def test_sitemap(client, db):
     async with db.session() as db_session:
         await YoutubeDbLib(db_session).save_account(
@@ -71,6 +71,7 @@ async def test_twitter_share_image(client, twitter_account, webapp):
     verify_response(response, 'twitter-share-image', 200)
 
 
+@mark_vcr
 async def test_twitter_account_redirect(client, twitter_account):
     response = await client.get(f'/tw/{twitter_account.handle}')
     check_response(response, 302)
@@ -87,6 +88,7 @@ async def test_404(client):
     verify_response(response, 'twitter-404', 404)
 
 
+@mark_vcr
 async def test_twitter_donation_image(client, settings, twitter_account, webapp, rich_donator, monkeypatch):
     login_to(client, settings, rich_donator)
     # https://peter.sh/experiments/chromium-command-line-switches/

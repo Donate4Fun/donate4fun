@@ -21,6 +21,7 @@ from donate4fun.jobs import refetch_twitter_authors
 from donate4fun.api_utils import make_absolute_uri
 from tests.test_util import (
     verify_response, mark_vcr, check_notification, login_to, check_response, freeze_time, follow_oauth_flow,
+    load_or_ask,
 )
 from tests.fixtures import find_unused_port, app_serve, make_registered_donator, create_db
 
@@ -247,7 +248,7 @@ async def test_donate_to_lightning_address(client, address: str):
 
 
 @mark_vcr
-@pytest.mark.freeze_time('2022-02-02 22:22:22')
+@freeze_time
 @pytest.mark.parametrize('return_to', ['/donator/me'])
 async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids, return_to):
     monkeypatch.setattr('secrets.token_urlsafe', lambda size: urlsafe_b64encode(b'\x00' * size))
@@ -269,7 +270,7 @@ async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids, 
     donator = Donator(id=UUID(int=0))
     login_to(client, settings, donator)
     await follow_oauth_flow(
-        client, 'twitter', code='TFExNmJaZVR4b3NuOGxmTF9IbmVYRkt0ajVPN0RmS3VRdUFmbXFhcVNHNnp3OjE2NzIzNDAxNjUyODM6MTowOmFjOjE',
+        client, 'twitter', name='twitter-login-via-oauth',
         return_to=return_to, expected_account=account.id,
     )
     me = Donator(**check_response(await client.get('/api/v1/me')).json())
@@ -280,7 +281,7 @@ async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids, 
     other_donator = Donator(id=UUID(int=1))
     login_to(client, settings, other_donator)
     await follow_oauth_flow(
-        client, 'twitter', code='ZTRnTkV5M014UXF2cmV1QWowSGVfaDZUY1dxSjNxSEZxSWQzRkJwWTFpU05fOjE2NzIzNDAxNzQxNzg6MTowOmFjOjE',
+        client, 'twitter', name='twitter-login-via-oauth-relogin',
         return_to=return_to,
     )
     me = Donator(**check_response(await client.get('/api/v1/me')).json())
@@ -291,19 +292,14 @@ async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids, 
     verify_response(await client.get(f'/api/v1/social/twitter/{account.id}'), 'twitter-account-owned')
 
 
-async def follow_oauth1_flow(client):
+async def follow_oauth1_flow(client, name: str):
     response = check_response(await client.get(
         '/api/v1/twitter/oauth1',
         headers=dict(referer=settings.base_url),
     )).json()
-    # Change to True to get new token
-    obtain = False
-    if obtain:
-        auth_url: str = response['url']
-        redirect_url = input(f"Open this url {auth_url}, authorize and paste url after redirect here:\n")
-        params = dict(furl(redirect_url).query.params)
-    else:
-        params = dict(oauth_token='token', oauth_verifier='verifier')
+    auth_url: str = response['url']
+    redirect_url: str = load_or_ask(f'{name}.code', f"Open this url {auth_url}, authorize and paste url here:")
+    params = dict(furl(redirect_url).query.params)
     response = await client.get(
         '/api/v1/twitter/oauth1-callback',
         params=params,
@@ -313,8 +309,7 @@ async def follow_oauth1_flow(client):
 
 
 @mark_vcr
-@pytest.mark.freeze_time('2022-02-02 22:22:22')
-async def test_login_via_oauth1(client, settings, monkeypatch, db, freeze_uuids):
+async def test_login_via_oauth1(client, settings, monkeypatch, db, freeze_uuids, freeze_last_fetched_at, time_of_freeze):
     monkeypatch.setattr('secrets.token_urlsafe', lambda size: urlsafe_b64encode(b'\x00' * size))
     monkeypatch.setattr('secrets.token_bytes', lambda size: b'\x00' * size)
 
@@ -326,14 +321,14 @@ async def test_login_via_oauth1(client, settings, monkeypatch, db, freeze_uuids)
         title='title',
         handle='handle',
         description='description',
-        last_fetched_at=datetime.utcnow(),
+        last_fetched_at=time_of_freeze,
     )
     async with db.session() as db_session:
         await TwitterDbLib(db_session).save_account(account)
 
     donator = Donator(id=UUID(int=0))
     login_to(client, settings, donator)
-    await follow_oauth1_flow(client)
+    await follow_oauth1_flow(client, 'twitter-login-via-oauth1')
     me = Donator(**check_response(await client.get('/api/v1/me')).json())
     assert me.id == donator.id
     assert me.connected == True  # noqa
@@ -341,7 +336,7 @@ async def test_login_via_oauth1(client, settings, monkeypatch, db, freeze_uuids)
     # Try to relogin from other account to the first account
     other_donator = Donator(id=UUID(int=1))
     login_to(client, settings, other_donator)
-    await follow_oauth1_flow(client)
+    await follow_oauth1_flow(client, 'twitter-login-via-oauth1-relogin')
     me = Donator(**check_response(await client.get('/api/v1/me')).json())
     assert me.id == donator.id
     assert me.connected == True  # noqa

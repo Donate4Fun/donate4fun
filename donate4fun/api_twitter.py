@@ -35,6 +35,8 @@ async def oauth1_callback(
 ):
     if denied is not None:
         return error_redirect('settings', "Authorization denied by user", '')
+    if oauth_token is None or oauth_verifier is None:
+        raise ValidationError("oauth_token and oauth_verifier parameters must be present")
     try:
         async with make_oauth1_client(token=oauth_token) as client:
             token: dict = await client.fetch_access_token('https://api.twitter.com/oauth/access_token', verifier=oauth_verifier)

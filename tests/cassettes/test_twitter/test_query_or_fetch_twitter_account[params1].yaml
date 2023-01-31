@@ -6,20 +6,25 @@ interactions:
       - '*/*'
       accept-encoding:
       - gzip, deflate
+      authorization:
+      - secret
       connection:
       - keep-alive
       host:
       - api.twitter.com
       user-agent:
-      - python-httpx/0.23.1
+      - python-httpx/0.23.2
     method: GET
-    uri: https://api.twitter.com/2/users/by/username/twiteis?user.fields=id%2Cname%2Cprofile_image_url%2Cdescription%2Cverified%2Centities
+    uri: https://api.twitter.com/2/users/12345?user.fields=id%2Cname%2Cprofile_image_url%2Cdescription%2Cverified%2Centities
   response:
-    content: "{\"data\":{\"profile_image_url\":\"https://pbs.twimg.com/profile_images/1261863462591959040/3KXJQfH__normal.jpg\",\"name\":\"Leo\",\"description\":\"\u26A1\uFE0F
-      leo@getalby.com\",\"id\":\"180438388\",\"verified\":false,\"username\":\"twiteis\"}}"
+    content: '{"data": {"verified": false, "username": "harperreed", "description":
+      "ID 12345", "entities": {"url": {"urls": [{"start": 0, "end": 22, "url": "http://t.co/2H67IeuXKZ",
+      "expanded_url": "http://www.harperrules.com", "display_url": "harperrules.com"}]}},
+      "name": "ID 12345", "profile_image_url": "https://pbs.twimg.com/profile_images/58849851/harper_4_normal.jpg",
+      "id": "12345"}}'
     headers:
       api-version:
-      - '2.59'
+      - '2.61'
       cache-control:
       - no-cache, no-store, max-age=0
       content-disposition:
@@ -27,24 +32,24 @@ interactions:
       content-encoding:
       - gzip
       content-length:
-      - '208'
+      - '248'
       content-type:
       - application/json; charset=utf-8
       date:
-      - Thu, 29 Dec 2022 16:41:07 UTC
+      - Wed, 01 Feb 2023 12:26:11 UTC
       perf:
       - '7626143928'
       server:
       - tsa_o
       set-cookie:
-      - guest_id=v1%3A167233206698646373; Max-Age=34214400; Expires=Mon, 29 Jan 2024
-        16:41:07 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      - guest_id=v1%3A167525437190362595; Max-Age=34214400; Expires=Sun, 03 Mar 2024
+        12:26:11 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
       strict-transport-security:
       - max-age=631138519
       x-access-level:
       - read
       x-connection-hash:
-      - c09640d30bb8d36f86c401a2a9fc808db2a2376509489461d87919e9331e08eb
+      - a0c7ec48b887f6e7e1935eaf24811e5c8afeb77003f008fb4d8b7220a89b90b5
       x-content-type-options:
       - nosniff
       x-frame-options:
@@ -52,13 +57,13 @@ interactions:
       x-rate-limit-limit:
       - '300'
       x-rate-limit-remaining:
-      - '291'
+      - '287'
       x-rate-limit-reset:
-      - '1672332797'
+      - '1675254521'
       x-response-time:
-      - '135'
+      - '130'
       x-transaction-id:
-      - 4ee08b9a3f894e6b
+      - a8f918e36ba9b9e0
       x-xss-protection:
       - '0'
     http_version: HTTP/1.1
