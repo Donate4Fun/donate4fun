@@ -41,13 +41,12 @@ class PubSubBroker:
         except Exception:
             logger.exception("exception in subscribe yield")
         finally:
-            logger.debug(f"Unsubscribing from '{channel}'")
+            logger.debug("Unsubscribing from '%s'", channel)
             try:
                 async with self.lock, self.asyncpg_connection.transaction():
                     await self.asyncpg_connection.remove_listener(channel, wrapped_callback)
             except asyncio.CancelledError:
-                logger.exception("exception in remove listener")
-                raise
+                logger.info("exception in remove listener, ignoring")
 
     @asynccontextmanager
     async def run(self, db: Database):
