@@ -11,6 +11,7 @@
   export let height = '40px'
   export let border = '1px';
   export let link;
+  export let expectedAccount;
   export let returnTo = '/donator/me';
   export let colored = false;
   export let padding = '0 40px';
@@ -25,7 +26,7 @@
     if (link) {
       navigate(link)
     } else {
-      const response = await api.get(apiPath, {params: {return_to: returnTo}});
+      const response = await api.get(apiPath, {params: {return_to: returnTo, expected_account: expectedAccount}});
       window.location.assign(response.url);
       await sleep(10000); // to disable button blinking
     }

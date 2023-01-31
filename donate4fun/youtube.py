@@ -16,8 +16,8 @@ from .types import UnsupportedTarget, Url, ValidationError, EntityTooOld
 from .db import DbSession, Database
 from .db_youtube import YoutubeDbLib
 from .models import YoutubeVideo, YoutubeChannel, Donation
-from .core import register_command
-from .api_utils import scrape_lightning_address
+from .core import register_command, app
+from .api_utils import scrape_lightning_address, make_absolute_uri
 
 ChannelId = str
 VideoId = str
@@ -235,7 +235,7 @@ async def fetch_user_channel(code: str) -> ChannelInfo:
         full_user_creds = await aiogoogle.oauth2.build_user_creds(
             grant=code,
             client_creds=dict(
-                redirect_uri=f'{settings.base_url}/api/v1/youtube/oauth-redirect',
+                redirect_uri=make_absolute_uri(app.url_path_for('oauth_redirect', provider='youtube')),
                 **settings.youtube.oauth.dict(),
             ),
         )

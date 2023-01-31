@@ -15,8 +15,9 @@ from .youtube import (
 )
 from .db_youtube import YoutubeDbLib
 from .settings import settings
-from .types import OAuthError
+from .types import OAuthError, AccountAlreadyLinked, Satoshi
 from .db import db
+from .core import app
 
 
 router = APIRouter(prefix='/youtube')
@@ -70,12 +71,12 @@ async def login_via_google(request: Request, return_to: str, donator=Depends(get
     url = aiogoogle.oauth2.authorization_url(
         client_creds=dict(
             scopes=['https://www.googleapis.com/auth/youtube.readonly'],
-            redirect_uri=make_absolute_uri('/api/v1/youtube/oauth-redirect'),
+            redirect_uri=make_absolute_uri(app.url_path_for('oauth_redirect', provider='youtube')),
             **settings.youtube.oauth.dict(),
         ),
         state=OAuthState(
-            error_url=request.headers['referer'],
-            success_url=make_absolute_uri(return_to),
+            error_path=request.headers['referer'],
+            success_path=make_absolute_uri(return_to),
             donator_id=donator.id,
         ).to_jwt(),
         prompt='select_account',
@@ -84,7 +85,11 @@ async def login_via_google(request: Request, return_to: str, donator=Depends(get
     return OAuthResponse(url=url)
 
 
-async def finish_youtube_oauth(code: str, donator: Donator, request: Request):
+async def finish_youtube_oauth(code: str, donator: Donator) -> Satoshi:
+    """
+    Returns transferred amount on success linking and raises AccountAlreadyLinked if
+    account is already linked
+    """
     try:
         channel_info: ChannelInfo = await fetch_user_channel(code)
     except Exception as exc:
@@ -94,13 +99,10 @@ async def finish_youtube_oauth(code: str, donator: Donator, request: Request):
             youtube_db = YoutubeDbLib(db_session)
             channel: YoutubeChannel = await query_or_fetch_youtube_channel(channel_id=channel_info.id, db=youtube_db)
             owned_channel: YoutubeChannelOwned = await youtube_db.query_account(id=channel.id)
-            if owned_channel.via_oauth:
-                if donator.connected:
-                    raise OAuthError("Could not link already linked account")
-                request.session['donator'] = str(owned_channel.owner_id)
-            else:
+            if not owned_channel.via_oauth:
                 await youtube_db.link_account(channel, donator, via_oauth=True)
-                await youtube_db.transfer_donations(channel, donator)
-        request.session['connected'] = True
+                return await youtube_db.transfer_donations(channel, donator)
     except Exception as exc:
         raise OAuthError("Failed to link account") from exc
+    else:
+        raise AccountAlreadyLinked(owned_channel.owner_id)

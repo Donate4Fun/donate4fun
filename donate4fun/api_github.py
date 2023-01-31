@@ -7,7 +7,7 @@ from .core import app
 from .api_utils import HttpClient, make_absolute_uri, get_donator
 from .models import OAuthResponse, OAuthState, Donator, GithubUser, GithubUserOwned
 from .settings import settings
-from .types import OAuthError
+from .types import OAuthError, AccountAlreadyLinked, Satoshi
 from .db import db
 from .db_github import GithubDbLib
 
@@ -18,8 +18,8 @@ router = APIRouter(prefix='/github')
 @router.get('/oauth', response_model=OAuthResponse)
 async def login_via_github(request: Request, return_to: str, donator=Depends(get_donator)):
     state = OAuthState(
-        success_url=make_absolute_uri(return_to),
-        error_url=request.headers['referer'],
+        success_path=return_to,
+        error_path=str(furl(request.headers['referer']).path),
         donator_id=donator.id,
     )
 
@@ -32,7 +32,7 @@ async def login_via_github(request: Request, return_to: str, donator=Depends(get
     return OAuthResponse(url=furl('https://github.com/login/oauth/authorize', query_params=params).url)
 
 
-async def finish_github_oauth(code: str, donator: Donator, request: Request):
+async def finish_github_oauth(code: str, donator: Donator):
     async with HttpClient(headers={'Accept': 'application/json'}) as client:
         params = dict(
             client_id=settings.github.client_id,
@@ -53,22 +53,19 @@ async def finish_github_oauth(code: str, donator: Donator, request: Request):
             name=data['name'],
             login=data['login'],
         )
-        await login_or_link_github_user(github_user, donator, request)
+        await login_or_link_github_user(github_user, donator)
 
 
-async def login_or_link_github_user(account: GithubUser, donator: Donator, request):
+async def login_or_link_github_user(account: GithubUser, donator: Donator) -> Satoshi:
     try:
         async with db.session() as db_session:
             github_db = GithubDbLib(db_session)
             await github_db.save_account(account)
             owned_account: GithubUserOwned = await github_db.query_account(user_id=account.user_id)
-            if owned_account.via_oauth:
-                if donator.connected:
-                    raise OAuthError("Could not link already linked account")
-                request.session['donator'] = str(owned_account.owner_id)
-            else:
+            if not owned_account.via_oauth:
                 await github_db.link_account(account, donator, via_oauth=True)
-                await github_db.transfer_donations(account, donator)
-            request.session['connected'] = True
+                return await github_db.transfer_donations(account, donator)
     except Exception as exc:
         raise OAuthError("Failed to link account") from exc
+    else:
+        raise AccountAlreadyLinked(owned_account.owner_id)

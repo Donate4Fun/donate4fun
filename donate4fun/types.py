@@ -115,3 +115,11 @@ class EntityTooOld(Exception):
 
 class OAuthError(Exception):
     pass
+
+
+class LnurlpError(Exception):
+    pass
+
+
+class AccountAlreadyLinked(Exception):
+    pass

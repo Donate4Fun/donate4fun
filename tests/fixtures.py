@@ -24,9 +24,9 @@ from hypercorn.config import Config
 from furl import furl
 
 from donate4fun.core import as_task
-from donate4fun.app import create_app
+from donate4fun.app import create_app, app as app_var
 from donate4fun.api_utils import task_group
-from donate4fun.models import Invoice, Donation
+from donate4fun.models import Invoice, Donation, OAuthState
 from donate4fun.lnd import LndClient, lnd as lnd_var
 from donate4fun.settings import load_settings, Settings, DbSettings
 from donate4fun.db import DbSession, Database, db as db_var
@@ -184,7 +184,7 @@ async def app(db, settings, pubsub):
     posthog.disabled = True
     async with create_app(settings) as app, anyio.create_task_group() as tg:
         lnd = get_alice_lnd()
-        with lnd_var.assign(lnd), pubsub_var.assign(pubsub), task_group.assign(tg):
+        with app_var.assign(app), lnd_var.assign(lnd), pubsub_var.assign(pubsub), task_group.assign(tg):
             yield app
 
 
@@ -323,3 +323,8 @@ async def twitter_db(db_session):
 @pytest.fixture
 async def youtube_db(db_session):
     return YoutubeDbLib(db_session)
+
+
+@pytest.fixture
+def oauth_state():
+    return OAuthState(success_path='/success', error_path='/error', donator_id=UUID(int=0), code_verifier=b'\x00' * 43)
