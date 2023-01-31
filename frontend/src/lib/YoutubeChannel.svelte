@@ -1,5 +1,6 @@
 <script>
   import { link } from "svelte-navigator";
+  import Thumbnail from "$lib/Thumbnail.svelte";
   import { youtube_channel_url } from "$lib/utils.js";
 
   export let channel;
@@ -10,7 +11,7 @@
 
 <span {...$$restProps}>
   {#if logo}
-    <img src={channel.thumbnail_url} alt="youtube channel logo">
+    <Thumbnail url={channel.thumbnail_url} />
   {/if}
   {#if linkto === 'external'}
     <a href={youtube_channel_url(channel.channel_id)} target="_blank">{channel.title}</a>
@@ -29,9 +30,5 @@ span {
   align-items: center;
   gap: var(--gap, 0.4em);
   min-width: 0;
-}
-img {
-  width: 2em;
-  border-radius: 50%;
 }
 </style>

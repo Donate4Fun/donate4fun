@@ -1,5 +1,6 @@
 <script>
   import { link } from "svelte-navigator";
+  import Thumbnail from "$lib/Thumbnail.svelte";
 
   export let user;
   export let externalLink = false;
@@ -13,14 +14,14 @@
 
 <a use:link target={externalLink ? "_blank" : target} href={pageLink} class="container">
   {#if imagePlacement === 'before'}
-    <img class="avatar" alt=avatar src={imageUrl} />
+    <Thumbnail url={imageUrl} />
   {/if}
   <span class="name ellipsis">{user.name}</span>
   {#if showHandle}
     <span class="handle">{user.login}</span>
   {/if}
   {#if imagePlacement === 'after'}
-    <img class="avatar" alt=avatar src={imageUrl} />
+    <Thumbnail url={imageUrl} />
   {/if}
 </a>
 
@@ -30,11 +31,6 @@
   align-items: center;
   gap: var(--gap, 0.4em);
   min-width: 0;
-}
-.avatar {
-  width: var(--image-size, 32px);
-  height: var(--image-size, 32px);
-  border-radius: 100%;
 }
 .handle {
   opacity: 50%;
