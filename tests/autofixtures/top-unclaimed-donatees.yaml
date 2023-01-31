@@ -1,0 +1,14 @@
+json:
+- balance: 100
+  id: 00000000-0000-0000-0000-000000000002
+  thumbnail_url: http://example.com/twimg
+  title: name
+  total_donated: 100
+  type: twitter
+- balance: 50
+  id: 00000000-0000-0000-0000-000000000003
+  thumbnail_url: null
+  title: youtube channel name
+  total_donated: 150
+  type: youtube
+status_code: 200
