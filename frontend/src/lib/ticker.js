@@ -4,7 +4,7 @@ import { storage } from "$lib/storage";
 
 const updateEvery = 10 * 60 * 1000; // 10 minutes
 
-export const btcUsdRate = readable(null, function start(set) {
+export const btcUsdRate = readable(null, set => {
 	let lastUpdatedAt = storage.tickerLastUpdatedAt || 0;
   async function update() {
 		if (lastUpdatedAt)
@@ -21,7 +21,5 @@ export const btcUsdRate = readable(null, function start(set) {
 	const interval = setInterval(update, updateEvery);
 	update();
 
-	return function stop() {
-		clearInterval(interval);
-	};
+	return () => clearInterval(interval);
 });
