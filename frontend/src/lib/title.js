@@ -14,5 +14,5 @@ function createTitle() {
 	}
 }
 
-const title = createTitle();
+export const title = createTitle();
 export default title;
