@@ -5,4 +5,4 @@
 </script>
 
 <h3>Page not found</h3>
-<div>{ error ? errorToText(error.response) : error }</div>
+<div>{ error.response ? errorToText(error.response) : error }</div>
