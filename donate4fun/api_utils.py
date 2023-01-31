@@ -1,4 +1,5 @@
 import unicodedata
+import hashlib
 from uuid import uuid4, UUID
 
 import posthog
@@ -8,11 +9,11 @@ from fastapi import Request, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm.exc import NoResultFound  # noqa - imported from other modules
 
-from .models import Donator, Credentials, Donation
+from .models import Donator, Credentials, Donation, SocialProvider, SocialAccountOwned
 from .db import DbSession, db
 from .db_libs import TwitterDbLib, YoutubeDbLib, GithubDbLib, DonationsDbLib
 from .core import ContextualObject
-from .types import LightningAddress
+from .types import LightningAddress, Satoshi
 from .settings import settings
 
 
@@ -79,7 +80,10 @@ def make_absolute_uri(path: str) -> str:
     return str(furl(url=settings.base_url, path=furl(path).path))
 
 
-async def auto_transfer_donations(db: DbSession, donation: Donation):
+async def auto_transfer_donations(db: DbSession, donation: Donation) -> int:
+    """
+    Returns sats amount transferred
+    """
     if donation.youtube_channel:
         social_db = YoutubeDbLib(db)
     elif donation.twitter_account:
@@ -92,13 +96,21 @@ async def auto_transfer_donations(db: DbSession, donation: Donation):
     if social_db:
         account = getattr(donation, social_db.donation_field)
         if not isinstance(account, social_db.owned_model):
-            account = await social_db.query_account(id=account.id)
+            account: SocialAccountOwned = await social_db.query_account(id=account.id)
         if account.owner_id is not None:
-            await social_db.transfer_donations(account, Donator(id=account.owner_id))
+            return await social_db.transfer_donations(account, Donator(id=account.owner_id))
+    return 0
 
 
-def error_redirect(url: str, title: str, message: str):
-    return RedirectResponse(furl(url).set(dict(error=title, message=str(message))).url)
+def error_redirect(path: str, title: str, message: str):
+    return RedirectResponse(furl(make_absolute_uri(path)).set(dict(error=title, message=str(message))).url)
+
+
+def success_redirect(path: str, transferred_amount: Satoshi) -> RedirectResponse:
+    success_url = furl(make_absolute_uri(path))
+    if transferred_amount > 0:
+        success_url.set(message=f"{transferred_amount} sats are successefully claimed")
+    return RedirectResponse(success_url)
 
 
 async def raise_on_4xx_5xx(response):
@@ -108,3 +120,15 @@ async def raise_on_4xx_5xx(response):
 class HttpClient(httpx.AsyncClient):
     def __init__(self, **kwargs):
         super().__init__(http2=True, event_hooks=dict(response=[raise_on_4xx_5xx]), **kwargs)
+
+
+def sha256hash(data: str) -> bytes:
+    return hashlib.sha256(data.encode()).digest()
+
+
+def get_social_provider_db(social_provider: SocialProvider):
+    return {
+        SocialProvider.youtube: YoutubeDbLib,
+        SocialProvider.twitter: TwitterDbLib,
+        SocialProvider.github: GithubDbLib,
+    }[social_provider]
