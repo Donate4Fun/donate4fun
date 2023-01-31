@@ -1,21 +1,16 @@
 import logging
 from uuid import UUID
 from contextlib import asynccontextmanager
-from datetime import datetime
 
-from sqlalchemy import select, desc, func, text, literal, union, literal_column
-from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy import select, func, text, literal
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import NoResultFound  # noqa - imported from other modules
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 
 from .core import ContextualObject
-from .models import Donator, Notification, Credentials, Donatee
+from .models import Donator, Notification, Credentials
 from .settings import DbSettings
-from .db_models import (
-    Base, DonatorDb, EmailNotificationDb, YoutubeChannelDb, TwitterAuthorDb, YoutubeChannelLink, TwitterAuthorLink,
-    GithubUserLink,
-)
+from .db_models import Base, DonatorDb, YoutubeChannelLink, TwitterAuthorLink, GithubUserLink
 from .db_utils import insert_on_conflict_update
 
 logger = logging.getLogger(__name__)
@@ -134,40 +129,6 @@ class DbSession:
             insert_on_conflict_update(DonatorDb, donator)
         )
         await self.object_changed('donator', donator.id)
-        return resp.scalar()
-
-    async def query_recently_donated_donatees(self, limit=20, limit_days=180) -> list[Donatee]:
-        youtube_sq = select(
-            YoutubeChannelDb.id,
-            literal_column("'youtube'").label('type'),
-            YoutubeChannelDb.title.label('title'),
-            YoutubeChannelDb.thumbnail_url.label('thumbnail_url'),
-            YoutubeChannelDb.total_donated.label('total_donated'),
-        )
-        twitter_sq = select(
-            TwitterAuthorDb.id,
-            literal_column("'twitter'").label('type'),
-            TwitterAuthorDb.name.label('title'),
-            TwitterAuthorDb.profile_image_url.label('thumbnail_url'),
-            TwitterAuthorDb.total_donated.label('total_donated'),
-        )
-        resp = await self.execute(
-            union(youtube_sq, twitter_sq)
-            .order_by(desc('total_donated'))
-            .limit(limit)
-        )
-        return resp.fetchall()
-
-    async def save_email(self, email: str) -> UUID | None:
-        resp = await self.execute(
-            insert(EmailNotificationDb)
-            .values(
-                email=email,
-                created_at=datetime.utcnow(),
-            )
-            .on_conflict_do_nothing()
-            .returning(EmailNotificationDb.id)
-        )
         return resp.scalar()
 
 

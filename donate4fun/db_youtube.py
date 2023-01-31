@@ -18,6 +18,8 @@ class YoutubeDbLib(SocialDbWrapper):
     model = YoutubeChannel
     name = 'youtube'
     donation_field = 'youtube_channel'
+    db_model_name_column = 'title'
+    db_model_thumbnail_url_column = 'thumbnail_url'
 
     async def query_youtube_channel(self, *, owner_id: UUID | None = None, **filter_by) -> YoutubeChannelOwned:
         return YoutubeChannelOwned.from_orm(

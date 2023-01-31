@@ -359,12 +359,12 @@ async def update_session(request: Request, req: UpdateSessionRequest):
 
 @router.get("/donatee/recently-donated", response_model=list[Donatee])
 async def recently_donated_donatees(db=Depends(get_db_session)):
-    return await db.query_recently_donated_donatees(limit=20)
+    return await OtherDbLib(db).query_recently_donated_donatees(limit=20)
 
 
 @router.post("/subscribe-email", response_model=UUID | None)
 async def subscribe_email(request: SubscribeEmailRequest, db=Depends(get_db_session), me=Depends(get_donator)):
-    subscription_id: UUID = await db.save_email(request.email)
+    subscription_id: UUID = await OtherDbLib(db).save_email(request.email)
     posthog.capture(me.id, 'subscribe-email')
     return subscription_id
 
