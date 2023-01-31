@@ -1,13 +1,14 @@
 from __future__ import annotations
 import json
 import time
+from enum import Enum
 from uuid import uuid4, UUID
 from datetime import datetime
 from typing import Any
 from functools import lru_cache
 
 import jwt
-from pydantic import BaseModel as PydanticBaseModel, validator, HttpUrl, Field, root_validator, EmailStr, AnyUrl, AnyHttpUrl
+from pydantic import BaseModel as PydanticBaseModel, validator, HttpUrl, Field, root_validator, EmailStr, AnyUrl
 from pydantic.datetime_parse import parse_datetime
 from funkybob import UniqueRandomNameGenerator
 from multiavatar.multiavatar import multiavatar
@@ -77,12 +78,20 @@ class WithdrawalToken(BaseModel):
     withdrawal_id: UUID
 
 
+class SocialProvider(str, Enum):
+    youtube = 'youtube'
+    twitter = 'twitter'
+    github = 'github'
+
+
 class DonateRequest(BaseModel):
     amount: int
     receiver_id: UUID | None
-    channel_id: UUID | None
-    twitter_account_id: UUID | None
-    github_user_id: UUID | None
+    channel_id: UUID | None  # Deprecated
+    twitter_account_id: UUID | None  # Deprecated
+    github_user_id: UUID | None  # Deprecated
+    social_account_id: UUID | None
+    social_provider: SocialProvider | None
     target: HttpUrl | None
     lightning_address: LightningAddress | None
     donator_twitter_handle: str | None
@@ -137,6 +146,10 @@ class SocialAccount(IdModel):
     total_donated: int = 0
     lightning_address: LightningAddress | None
 
+    @property
+    def unique_name(self):
+        raise NotImplementedError
+
 
 class YoutubeChannel(SocialAccount):
     title: str
@@ -144,6 +157,10 @@ class YoutubeChannel(SocialAccount):
     thumbnail_url: Url | None
     banner_url: Url | None
     handle: str | None
+
+    @property
+    def unique_name(self):
+        return f'@{self.handle}' or self.title
 
     class Config:
         orm_mode = True
@@ -180,6 +197,10 @@ class TwitterAccount(SocialAccount):
     name: str | None
     profile_image_url: Url | None
 
+    @property
+    def unique_name(self):
+        return f'@{self.handle}'
+
     class Config:
         orm_mode = True
 
@@ -200,6 +221,10 @@ class GithubUser(SocialAccount):
     login: str
     name: str
     avatar_url: AnyUrl
+
+    @property
+    def unique_name(self):
+        return self.name
 
     class Config:
         orm_mode = True
@@ -286,6 +311,10 @@ class Donation(BaseModel):
             new_values['donator'] = Donator(id=donator_id)
         return new_values
 
+    @property
+    def receiver_social_account(self) -> SocialAccount | None:
+        return self.youtube_channel or self.twitter_account or self.github_user
+
     class Config:
         orm_mode = True
 
@@ -341,10 +370,14 @@ class DonationPaidRequest(BaseModel):
 
 class Donatee(BaseModel):
     title: str
-    thumbnail_url: AnyUrl
+    thumbnail_url: AnyUrl | None
     total_donated: int
+    balance: int
     type: str
     id: UUID
+
+    class Config:
+        orm_mode = True
 
 
 @lru_cache
@@ -356,10 +389,12 @@ def get_jwk():
 
 
 class OAuthState(BaseModel):
-    success_url: AnyHttpUrl
-    error_url: AnyHttpUrl
+    success_path: str
+    error_path: str
     donator_id: UUID
+    allow_sign_in: bool = True
     code_verifier: str | None = None
+    expected_account: UUID | None = None
 
     def to_jwt_payload(self) -> dict:
         data: dict = self.to_json_dict()

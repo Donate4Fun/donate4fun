@@ -1,6 +1,6 @@
 import asyncio
 import secrets
-from uuid import uuid4, UUID
+from uuid import uuid4
 from contextvars import ContextVar
 
 import anyio
@@ -94,8 +94,8 @@ async def test_jws(settings):
 
 async def test_jwe(settings):
     orig_state = OAuthState(
-        success_url='http://some-url.com/some-long-path-that-could-be-here',
-        error_url='http://some-other-url.com',
+        success_path='some-long-path-that-could-be-here' * 5,
+        error_path='/error',
         donator_id=uuid4(), code_verifier=secrets.token_urlsafe(43),
     )
     token: str = orig_state.to_jwe()
@@ -106,8 +106,8 @@ async def test_jwe(settings):
 @pytest.mark.skip('We dont use encrypted JWT anymore')
 async def test_encrypted_jwt(settings):
     orig_state = OAuthState(
-        success_url='http://localhost:5173/donator/f28b5bc4-1946-45f7-a7dd-33c0ae002465',
-        error_url='http://b.com',
+        success_path='/donator/f28b5bc4-1946-45f7-a7dd-33c0ae002465',
+        error_path='/error',
         donator_id=uuid4(), code_verifier=secrets.token_urlsafe(32),
     )
     token: str = orig_state.to_encrypted_jwt()
@@ -117,20 +117,17 @@ async def test_encrypted_jwt(settings):
 
 
 @freeze_time
-async def test_jwt_is_immutable(settings):
-    state = OAuthState(success_url='http://a.com', error_url='http://b.com', donator_id=UUID(int=0), code_verifier=b'\x00' * 43)
-    assert state.to_jwt() == state.to_jwt()
+async def test_jwt_is_immutable(settings, oauth_state):
+    assert oauth_state.to_jwt() == oauth_state.to_jwt()
 
 
 @freeze_time
-async def test_encrypted_jwt_is_immutable(settings, monkeypatch):
+async def test_encrypted_jwt_is_immutable(settings, monkeypatch, oauth_state):
     monkeypatch.setattr('secrets.token_bytes', lambda size: b'\x00' * size)
-    state = OAuthState(success_url='http://a.com', error_url='http://b.com', donator_id=UUID(int=0), code_verifier=b'\x00' * 43)
-    assert state.to_encrypted_jwt() == state.to_encrypted_jwt()
+    assert oauth_state.to_encrypted_jwt() == oauth_state.to_encrypted_jwt()
 
 
 @freeze_time
-async def test_jwe_is_immutable(settings, monkeypatch):
+async def test_jwe_is_immutable(settings, monkeypatch, oauth_state):
     monkeypatch.setattr('secrets.token_bytes', lambda size: b'\x00' * size)
-    state = OAuthState(success_url='http://a.com', error_url='http://b.com', donator_id=UUID(int=0), code_verifier=b'\x00' * 43)
-    assert state.to_jwe() == state.to_jwe()
+    assert oauth_state.to_jwe() == oauth_state.to_jwe()

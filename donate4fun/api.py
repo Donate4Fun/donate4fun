@@ -396,7 +396,7 @@ async def withdraw(request: Request, db=Depends(get_db_session), me: Donator = D
 
 @router.get('/oauth-redirect/{provider}')
 async def oauth_redirect(
-    request: Request, provider: str, state: str, error: str = None, error_description: str = None, code: str = None,
+    request: Request, provider: SocialProvider, state: str, error: str = None, error_description: str = None, code: str = None,
     donator=Depends(get_donator),
 ):
     auth_state = OAuthState.from_jwt(state)
@@ -409,22 +409,30 @@ async def oauth_redirect(
         if error:
             raise OAuthError("OAuth error", error)
         elif code:
-            if provider == 'twitter':
-                await api_twitter.finish_twitter_oauth(code, donator, request, auth_state.code_verifier)
-            elif provider == 'youtube':
-                await api_youtube.finish_youtube_oauth(code, donator, request)
-            elif provider == 'github':
-                await api_github.finish_github_oauth(code, donator, request)
-            return RedirectResponse(auth_state.success_url)
+            try:
+                if provider == 'twitter':
+                    transferred_amount = await api_twitter.finish_twitter_oauth(code, donator, auth_state.code_verifier)
+                elif provider == 'youtube':
+                    transferred_amount = await api_youtube.finish_youtube_oauth(code, donator)
+                elif provider == 'github':
+                    transferred_amount = await api_github.finish_github_oauth(code, donator)
+            except AccountAlreadyLinked as exc:
+                if auth_state.allow_sign_in:
+                    request.session['donator'] = str(exc.args[0])
+                    transferred_amount = 0
+                else:
+                    raise OAuthError("Could not link an already linked account") from exc
+            request.session['connected'] = True
+            return success_redirect(auth_state.success_path, transferred_amount)
         else:
             # Should either receive a code or an error
-            raise ValidationError("Something's probably wrong with your callback")
+            raise ValidationError("Something is probably wrong with your callback")
     except OAuthError as exc:
         logger.exception("OAuth error")
         message = '\n'.join(exc.args[1:])
         if exc.__cause__:
             message += '\n' + str(exc.__cause__)
-        return error_redirect(auth_state.error_url, exc.args[0], message)
+        return error_redirect(auth_state.error_path, exc.args[0], message)
 
 
 @router.get("/donatees/top-unclaimed", response_model=list[Donatee])

@@ -5,7 +5,7 @@ from sqlalchemy import select, func, update, delete
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.sql import functions
 
-from .db_models import DonatorDb, DonationDb, TransferDb, DonateeDb
+from .db_models import DonatorDb, DonationDb, TransferDb, DonateeDb, Base as BaseDbModel, BaseLink
 from .db_utils import insert_on_conflict_update
 from .db import DbSessionWrapper
 from .models import BaseModel, Donator, SocialAccount
@@ -149,20 +149,20 @@ class SocialDbWrapper(DbSessionWrapper, ABC):
         )
         await self.object_changed('donator', owner_id)
 
-    async def transfer_donations(self, account: BaseModel, donator: Donator) -> int:
+    async def transfer_donations(self, account: BaseModel, donator: Donator) -> Satoshi:
         """
         Transfers money from social account balance to donator balance
         *social_relation* is a relation inside DonationDb pointing to social account table
         Returns amount transferred
         """
-        # FIXME: it should be done simpler
         result = await self.execute(
             select(self.db_model.balance)
             .with_for_update()
             .where(self.db_model.id == account.id)
         )
-        amount: int = result.scalar()
+        amount: Satoshi = result.scalar()
         donations_filter = getattr(DonationDb, self.donation_column) == account.id
+        # FIXME: this line should be done simpler
         transfer_column = first(
             key for key in TransferDb.__table__.foreign_keys if key.column.table is self.db_model.__table__
         ).parent

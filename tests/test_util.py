@@ -13,11 +13,13 @@ import yaml
 from authlib.jose import jwt
 from PIL import Image, ImageChops
 from vcr.filters import replace_query_parameters
+from furl import furl
 
-from donate4fun.models import Donator, Credentials
+from donate4fun.models import Donator, Credentials, SocialProvider
 from donate4fun.db import Notification
-from donate4fun.settings import Settings
+from donate4fun.settings import Settings, settings
 from donate4fun.core import to_base64
+from donate4fun.api_utils import make_absolute_uri
 
 logger = logging.getLogger(__name__)
 # This file is needed because pytest modifies "assert" only in test_*.py files
@@ -178,3 +180,23 @@ def remove_url(response):
 
 
 mark_vcr = pytest.mark.vcr(before_record_request=remove_credentials_and_testclient, before_record_response=remove_url)
+
+
+async def follow_oauth_flow(client, provider: SocialProvider, code: str, return_to: str, **params):
+    response = check_response(await client.get(
+        f'/api/v1/{provider}/oauth',
+        params=dict(return_to=return_to, **params),
+        headers=dict(referer=settings.base_url),
+    )).json()
+    auth_url: str = response['url']
+    encrypted_state: str = furl(auth_url).query.params['state']
+    # Change to True to get new code
+    obtain_code = False
+    if obtain_code:
+        code = input(f"Open this url {auth_url}, authorize and paste code here:\n")
+    response = await client.get(
+        f'/api/v1/oauth-redirect/{provider}',
+        params=dict(state=encrypted_state, code=code),
+    )
+    check_response(response, 307)
+    assert response.headers['location'] == make_absolute_uri(return_to)

@@ -4,9 +4,8 @@ from datetime import datetime
 import pytest
 import sqlalchemy
 
-from donate4fun.api import DonateRequest, DonateResponse
 from donate4fun.lnd import LndClient, lnd, monitor_invoices_step
-from donate4fun.models import Donation, YoutubeChannel, Donator, YoutubeChannelOwned, OAuthState
+from donate4fun.models import Donation, YoutubeChannel, Donator, YoutubeChannelOwned, OAuthState, DonateRequest, DonateResponse
 from donate4fun.types import PaymentRequest
 from donate4fun.youtube import query_or_fetch_youtube_video, ChannelInfo
 from donate4fun.jobs import refetch_youtube_channels
@@ -323,7 +322,7 @@ async def test_unlink_youtube_channel_with_balance(db, client, settings, monkeyp
     async def patched_fetch_user_channel(code):
         return ChannelInfo(id=youtube_channel.channel_id, title='title', description='descr')
     monkeypatch.setattr('donate4fun.api_youtube.fetch_user_channel', patched_fetch_user_channel)
-    state = OAuthState(donator_id=donator.id, success_url='http://a.com', error_url='http://b.com')
+    state = OAuthState(donator_id=donator.id, success_path='/success', error_path='/error')
     check_response(await client.get(
         '/api/v1/oauth-redirect/youtube',
         params=dict(state=state.to_jwt(), code=123),
@@ -356,7 +355,7 @@ async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids, 
         params=dict(return_to=return_to),
         headers=dict(referer=settings.base_url),
     ))
-    state = OAuthState(donator_id=donator.id, success_url='http://a.com', error_url='http://b.com')
+    state = OAuthState(donator_id=donator.id, success_path='/success', error_path='/error')
     response = await client.get(
         '/api/v1/oauth-redirect/youtube',
         params=dict(state=state.to_jwt(), code=123),
@@ -369,7 +368,7 @@ async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids, 
     # Try to relogin from other account to the first account
     other_donator = Donator(id=UUID(int=1))
     login_to(client, settings, other_donator)
-    state = OAuthState(donator_id=other_donator.id, success_url='http://a.com', error_url='http://b.com')
+    state = OAuthState(donator_id=other_donator.id, success_path='/success', error_path='/error')
     response = await client.get(
         '/api/v1/oauth-redirect/youtube',
         params=dict(state=state.to_jwt(), code=123),

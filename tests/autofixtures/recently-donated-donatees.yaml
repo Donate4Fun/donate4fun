@@ -1,15 +1,18 @@
 json:
-- id: 00000000-0000-0000-0000-000000000002
+- balance: 45
+  id: 00000000-0000-0000-0000-000000000002
   thumbnail_url: http://example.com/ytimg
   title: '0001'
   total_donated: 45
   type: youtube
-- id: 00000000-0000-0000-0000-000000000002
+- balance: 45
+  id: 00000000-0000-0000-0000-000000000002
   thumbnail_url: http://example.com/twimg
   title: name
   total_donated: 45
   type: twitter
-- id: 00000000-0000-0000-0000-000000000001
+- balance: 20
+  id: 00000000-0000-0000-0000-000000000001
   thumbnail_url: http://example.com/thumbnail
   title: asdzxc
   total_donated: 20
