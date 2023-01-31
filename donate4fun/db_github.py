@@ -13,3 +13,5 @@ class GithubDbLib(SocialDbWrapper):
     donation_column = 'github_user_id'
     name = 'github'
     donation_field = 'github_user'
+    db_model_name_column = 'name'
+    db_model_thumbnail_url_column = 'avatar_url'

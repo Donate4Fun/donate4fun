@@ -17,6 +17,8 @@ class TwitterDbLib(SocialDbWrapper):
     model = TwitterAccount
     name = 'twitter'
     donation_field = 'twitter_account'
+    db_model_name_column = 'name'
+    db_model_thumbnail_url_column = 'profile_image_url'
 
     async def get_or_create_tweet(self, tweet: TwitterTweet) -> TwitterAuthorDb:
         resp = await self.execute(
