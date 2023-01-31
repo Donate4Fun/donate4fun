@@ -32,6 +32,7 @@
   import SigninPage from "./routes/SigninPage.svelte";
   import SettingsPage from "./routes/SettingsPage.svelte";
   import LatestDonationsPage from "./routes/LatestDonationsPage.svelte";
+  import TopUnclaimedDonateesPage from "./routes/TopUnclaimedDonateesPage.svelte";
 
   const url = "";
   let simpleHeader = false;
@@ -115,6 +116,7 @@
     <Route path="signin"><SigninPage /></Route>
     <Route path="settings"><SettingsPage /></Route>
     <Route path="latest"><LatestDonationsPage /></Route>
+    <Route path="top-unclaimed"><TopUnclaimedDonateesPage /></Route>
     <Route path="/"><Landing /></Route>
     <Route component={NotFoundPage}></Route>
   </Page>

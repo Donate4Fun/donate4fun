@@ -11,9 +11,11 @@ from lnurl.helpers import _lnurl_decode
 from anyio.abc import TaskStatus
 from sqlalchemy import update
 
-from donate4fun.api import DonateRequest, DonateResponse, WithdrawResponse, LnurlWithdrawResponse
 from donate4fun.lnd import monitor_invoices_step, LndClient, Invoice, lnd
-from donate4fun.models import Donation, Donator, SubscribeEmailRequest, YoutubeChannel, TwitterAccount
+from donate4fun.models import (
+    Donation, Donator, SubscribeEmailRequest, YoutubeChannel, TwitterAccount, DonateRequest, DonateResponse
+)
+from donate4fun.api import WithdrawResponse, LnurlWithdrawResponse
 from donate4fun.db import Notification
 from donate4fun.db_models import DonatorDb
 from donate4fun.db_youtube import YoutubeDbLib
@@ -323,3 +325,18 @@ async def donate(
         amount=donation.amount,
         paid_at=paid_at,
     )
+
+
+async def test_top_unclaimed_donatees(db, client):
+    async with db.session() as db_session:
+        twitter_account = TwitterAccount(
+            id=UUID(int=2), user_id=1, handle='handle', name='name',
+            profile_image_url='http://example.com/twimg', balance=100, total_donated=100,
+        )
+        await TwitterDbLib(db_session).save_account(twitter_account)
+        await YoutubeDbLib(db_session).save_account(YoutubeChannel(
+            id=UUID(int=3), channel_id='asdzxc', title='youtube channel name',
+            balance=50, total_donated=150,
+        ))
+
+    verify_response(check_response(await client.get('/api/v1/donatees/top-unclaimed')), 'top-unclaimed-donatees')

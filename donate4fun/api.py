@@ -425,3 +425,8 @@ async def oauth_redirect(
         if exc.__cause__:
             message += '\n' + str(exc.__cause__)
         return error_redirect(auth_state.error_url, exc.args[0], message)
+
+
+@router.get("/donatees/top-unclaimed", response_model=list[Donatee])
+async def donatees_list(db=Depends(get_db_session), limit: int = 20, offset: int = 0):
+    return await OtherDbLib(db).query_top_unclaimed_donatees(limit=limit, offset=offset)
