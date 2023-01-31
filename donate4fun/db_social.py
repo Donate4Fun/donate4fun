@@ -1,4 +1,5 @@
 from uuid import UUID
+from abc import ABC, abstractmethod
 
 from sqlalchemy import select, func, update, delete
 from sqlalchemy.dialects.postgresql import insert
@@ -26,11 +27,57 @@ def first(iterable):
         raise IndexError from exc
 
 
-class SocialDbWrapper(DbSessionWrapper):
+class SocialDbWrapper(DbSessionWrapper, ABC):
     """
     This is base class for classes that provide social provider specific methods
     and it also implements proxy methods for DbSession.
     """
+
+    @property
+    @abstractmethod
+    def db_model(self) -> BaseDbModel:
+        pass
+
+    @property
+    @abstractmethod
+    def link_db_model(self) -> BaseLink:
+        pass
+
+    @property
+    @abstractmethod
+    def donation_column(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def owned_model(self) -> BaseModel:
+        pass
+
+    @property
+    @abstractmethod
+    def model(self) -> BaseModel:
+        pass
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def donation_field(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def db_model_name_column(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def db_model_thumbnail_url_column(self) -> str:
+        pass
+
     @classmethod
     @property
     def link_db_model_foreign_key(cls):
