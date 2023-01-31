@@ -1,7 +1,7 @@
 with orig as (
   select
     sum(amount) as total_donated,
-    coalesce(twitter_account_id, youtube_channel_id) as id,
+    coalesce(twitter_account_id, youtube_channel_id, github_user_id) as id,
     sum(case when claimed_at is null and lightning_address is null then amount else 0 end) as balance,
     sum(case when lightning_address is not null then amount else 0 end) as lightning_amount,
     sum(case when lightning_address is null and claimed_at is not null then amount else 0 end) as claimed
@@ -12,9 +12,9 @@ with orig as (
   group by coalesce(twitter_account_id, youtube_channel_id)
 )
 , transfers as (
-  select coalesce(twitter_author_id, youtube_channel_id) as id, sum(amount) as amount_transferred
+  select coalesce(twitter_author_id, youtube_channel_id, github_user_id) as id, sum(amount) as amount_transferred
   from transfer
-  group by coalesce(twitter_author_id, youtube_channel_id)
+  group by coalesce(twitter_author_id, youtube_channel_id, github_user_id)
 )
 , targets as (
   select total_donated, balance, id, 'twitter' as type, handle as name
@@ -29,6 +29,9 @@ with orig as (
   union
   select twitter_author_id as id
   from twitter_author_link
+  union
+  select github_user_id as id
+  from github_user_link
 )
 select
   orig.total_donated as don_total,
