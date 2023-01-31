@@ -1,0 +1,76 @@
+interactions:
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - secret
+      connection:
+      - keep-alive
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.2
+    method: GET
+    uri: https://api.twitter.com/2/users/by/username/donate4_fun?user.fields=id%2Cname%2Cprofile_image_url%2Cdescription%2Cverified%2Centities
+  response:
+    content: '{"data": {"entities": {"url": {"urls": [{"start": 0, "end": 23, "url":
+      "https://t.co/xu5wqhAwa7", "expanded_url": "https://donate4.fun/", "display_url":
+      "donate4.fun"}]}, "description": {"hashtags": [{"start": 15, "end": 23, "tag":
+      "Bitcoin"}, {"start": 24, "end": 41, "tag": "LightningNetwork"}], "mentions":
+      [{"start": 78, "end": 88, "username": "Novaklim1"}, {"start": 93, "end": 102,
+      "username": "nbryskin"}]}}, "name": "Donate4.Fun \u26a1", "id": "1572908920485576704",
+      "profile_image_url": "https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_normal.png",
+      "verified": false, "username": "donate4_fun", "description": "Donations with
+      #Bitcoin #LightningNetwork on Twitter and Youtube. \nCreated by @Novaklim1 and
+      @nbryskin."}}'
+    headers:
+      api-version:
+      - '2.61'
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '416'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Wed, 01 Feb 2023 12:26:06 UTC
+      perf:
+      - '7626143928'
+      server:
+      - tsa_o
+      set-cookie:
+      - guest_id=v1%3A167525436606720983; Max-Age=34214400; Expires=Sun, 03 Mar 2024
+        12:26:06 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      strict-transport-security:
+      - max-age=631138519
+      x-access-level:
+      - read
+      x-connection-hash:
+      - 58f091b252efc6cee0a7ad126bf871af8a2a91fee8b45d287f3dbfe6941905a6
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '300'
+      x-rate-limit-remaining:
+      - '279'
+      x-rate-limit-reset:
+      - '1675254515'
+      x-response-time:
+      - '143'
+      x-transaction-id:
+      - 2dff2d0eb61a2c8e
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 200
+version: 1

@@ -1,10 +1,13 @@
 import logging
 import time
+import json
 from contextvars import ContextVar
 from contextlib import asynccontextmanager
 from uuid import UUID
 from typing import Any
 from hashlib import md5
+from pathlib import Path
+from urllib.parse import parse_qs, urlencode
 from io import BytesIO
 
 import anyio
@@ -46,7 +49,7 @@ def verify_fixture(data: dict[str, Any], name: str):
     try:
         with open(filename) as f:
             original = yaml.unsafe_load(f)
-        assert original == data, f"Response for {filename} differs"
+        assert data == original, f"Response for {filename} differs"
     except FileNotFoundError:
         with open(filename, 'w') as f:
             yaml.dump(data, f)
@@ -155,11 +158,24 @@ def login_to(client, settings: Settings, donator: Donator):
     client.cookies = dict(session=token)
 
 
+def is_json(headers: dict[str, list[str]]) -> bool:
+    content_types = headers.get('content-type', [])
+    if isinstance(content_types, str):
+        content_types = [content_types]
+    return any(content_type.startswith('application/json') for content_type in content_types)
+
+
 def remove_credentials_and_testclient(request):
     if 'grpc-metadata-macaroon' in request.headers:
-        del request.headers['grpc-metadata-macaroon']
+        request.headers['grpc-metadata-macaroon'] = 'secret'
     if 'authorization' in request.headers:
-        del request.headers['authorization']
+        request.headers['authorization'] = 'secret'
+
+    if is_json(request.headers):
+        body = json.loads(request.body)
+        if 'client_secret' in body:
+            body['client_secret'] = 'secret'
+            request.body = json.dumps(body)
     if request.host == 'youtube.googleapis.com':
         # WORKAROUND: key is a private credential
         replace_query_parameters(request, [('key', None)])
@@ -172,17 +188,48 @@ def remove_credentials_and_testclient(request):
     return request
 
 
-def remove_url(response):
+def remove_url_and_sanitize(response):
     # WORKAROUND: this is a fix for vcrpy async handler
     if 'url' in response:
         response['url'] = ''
+    if is_json(response['headers']):
+        body = json.loads(response['content'])
+        if 'access_token' in body:
+            body['access_token'] = 'secret'
+        if 'refresh_token' in body:
+            body['refresh_token'] = 'secret'
+        response['content'] = json.dumps(body)
+    else:
+        query = parse_qs(response.get('content', ''))
+        if query:
+            if 'oauth_token' in query:
+                query['oauth_token'] = ['secret']
+            if 'oauth_token_secret' in query:
+                query['oauth_token_secret'] = ['secret']
+            response['content'] = urlencode(query, doseq=True)
     return response
 
 
-mark_vcr = pytest.mark.vcr(before_record_request=remove_credentials_and_testclient, before_record_response=remove_url)
+def mark_vcr(func):
+    return pytest.mark.vcr(
+        before_record_request=remove_credentials_and_testclient,
+        before_record_response=remove_url_and_sanitize,
+    )(pytest.mark.block_network(allowed_hosts=['localhost', '::1', '127.0.0.1'])(func))
 
 
-async def follow_oauth_flow(client, provider: SocialProvider, code: str, return_to: str, **params):
+def load_or_ask(path: str, prompt: str) -> str:
+    full_path = Path(__file__).parent / 'autofixtures' / path
+    if full_path.exists():
+        with open(full_path, 'r') as f:
+            data = f.read()
+    else:
+        data = input(prompt + '\n')
+        with open(full_path, 'w+') as f:
+            f.write(data)
+    return data
+
+
+async def follow_oauth_flow(client, provider: SocialProvider, name: str, return_to: str, **params):
     response = check_response(await client.get(
         f'/api/v1/{provider}/oauth',
         params=dict(return_to=return_to, **params),
@@ -190,10 +237,7 @@ async def follow_oauth_flow(client, provider: SocialProvider, code: str, return_
     )).json()
     auth_url: str = response['url']
     encrypted_state: str = furl(auth_url).query.params['state']
-    # Change to True to get new code
-    obtain_code = False
-    if obtain_code:
-        code = input(f"Open this url {auth_url}, authorize and paste code here:\n")
+    code: str = load_or_ask(f'oauth-flow-{name}.code', f"Open this url {auth_url}, authorize and paste code here:")
     response = await client.get(
         f'/api/v1/oauth-redirect/{provider}',
         params=dict(state=encrypted_state, code=code),

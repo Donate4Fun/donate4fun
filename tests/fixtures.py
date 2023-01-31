@@ -29,6 +29,7 @@ from donate4fun.api_utils import task_group
 from donate4fun.models import Invoice, Donation, OAuthState
 from donate4fun.lnd import LndClient, lnd as lnd_var
 from donate4fun.settings import load_settings, Settings, DbSettings
+from donate4fun.twitter import api_data_to_twitter_account
 from donate4fun.db import DbSession, Database, db as db_var
 from donate4fun.db_models import DonatorDb
 from donate4fun.db_youtube import YoutubeDbLib
@@ -121,9 +122,24 @@ async def settings(monkeypatch):
         settings.rollbar = None
         settings.bugsnag = None
         settings.posthog = None
+        settings.sentry = None
         settings.base_url = 'http://localhost:3000'
         settings.frontend_port = 3000
         yield settings
+
+
+@pytest.fixture
+def time_of_freeze():
+    return datetime.fromisoformat('2022-02-02T22:22:22')
+
+
+@pytest.fixture
+async def freeze_last_fetched_at(monkeypatch, time_of_freeze):
+    def patched_api_data_to_twitter_account(data: dict):
+        account = api_data_to_twitter_account(data)
+        account.last_fetched_at = time_of_freeze
+        return account
+    monkeypatch.setattr('donate4fun.twitter.api_data_to_twitter_account', patched_api_data_to_twitter_account)
 
 
 @pytest.fixture
@@ -289,14 +305,14 @@ async def payer_lnd():
 
 
 @pytest.fixture
-async def twitter_account(app, db, freeze_uuids):
+async def twitter_account(app, db, freeze_uuids, time_of_freeze):
     async with db.session() as db_session:
         account = TwitterAccount(
             user_id=1572908920485576704,
             handle='donate4_fun',
             name='Donate4.Fun ⚡',
             profile_image_url='https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_normal.png',
-            last_fetched_at=datetime.utcnow(),
+            last_fetched_at=time_of_freeze,
         )
         await TwitterDbLib(db_session).save_account(account)
         return account
