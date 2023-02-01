@@ -27,7 +27,7 @@ from tests.fixtures import find_unused_port, app_serve, make_registered_donator,
 
 
 @mark_vcr
-@pytest.mark.freeze_time('2022-02-02 22:22:22')
+@freeze_time
 async def test_donate_author(
     client, db_session, freeze_uuids, freeze_request_hash, freeze_payment_request,
 ):
@@ -39,7 +39,7 @@ async def test_donate_author(
 
 
 @mark_vcr
-@pytest.mark.freeze_time('2022-02-02 22:22:22')
+@freeze_time
 async def test_donate_tweet(
     client, db_session, freeze_uuids, freeze_request_hash, freeze_payment_request,
 ):

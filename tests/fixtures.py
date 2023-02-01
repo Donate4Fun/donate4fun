@@ -26,7 +26,6 @@ from furl import furl
 from donate4fun.core import as_task
 from donate4fun.app import create_app, app as app_var
 from donate4fun.api_utils import task_group
-from donate4fun.models import Invoice, Donation, OAuthState
 from donate4fun.lnd import LndClient, lnd as lnd_var
 from donate4fun.settings import load_settings, Settings, DbSettings
 from donate4fun.twitter import api_data_to_twitter_account
@@ -36,7 +35,8 @@ from donate4fun.db_youtube import YoutubeDbLib
 from donate4fun.db_twitter import TwitterDbLib
 from donate4fun.db_donations import DonationsDbLib
 from donate4fun.models import (
-    RequestHash, PaymentRequest, YoutubeChannel, Donator, YoutubeVideo, TwitterAccount, TwitterTweet,
+    Invoice, Donation, OAuthState, IdModel,
+    RequestHash, PaymentRequest, YoutubeChannel, Donator, TwitterAccount,
 )
 from donate4fun.pubsub import PubSubBroker, pubsub as pubsub_var
 from donate4fun.dev_helpers import get_carol_lnd, get_alice_lnd
@@ -228,12 +228,18 @@ def freeze_payment_request(monkeypatch):
     monkeypatch.setattr(PaymentRequest, '__new__', mocknew)
 
 
+def all_subclasses(cls):
+    return {cls}.union(
+        s for c in cls.__subclasses__() for s in all_subclasses(c)
+    ) if cls.__module__.startswith('donate4fun') else set()
+
+
 @pytest.fixture
 def freeze_uuids(monkeypatch):
     def make_gen():
         c = count(1)
         return lambda: UUID(int=next(c))
-    for model in [Donation, YoutubeChannel, YoutubeVideo, TwitterAccount, TwitterTweet]:
+    for model in all_subclasses(IdModel):
         monkeypatch.setattr(model.__fields__['id'], 'default_factory', make_gen())
 
 

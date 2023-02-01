@@ -32,7 +32,7 @@ async def login_via_github(request: Request, return_to: str, donator=Depends(get
     return OAuthResponse(url=furl('https://github.com/login/oauth/authorize', query_params=params).url)
 
 
-async def finish_github_oauth(code: str, donator: Donator):
+async def finish_github_oauth(code: str, donator: Donator) -> Satoshi:
     async with HttpClient(headers={'Accept': 'application/json'}) as client:
         params = dict(
             client_id=settings.github.client_id,
@@ -53,7 +53,7 @@ async def finish_github_oauth(code: str, donator: Donator):
             name=data['name'],
             login=data['login'],
         )
-        await login_or_link_github_user(github_user, donator)
+        return await login_or_link_github_user(github_user, donator)
 
 
 async def login_or_link_github_user(account: GithubUser, donator: Donator) -> Satoshi:

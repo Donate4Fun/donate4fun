@@ -234,8 +234,7 @@ class GithubUserOwned(GithubUser, SocialAccountOwned):
     pass
 
 
-class Donator(BaseModel):
-    id: UUID = Field(default_factory=uuid4)
+class Donator(IdModel):
     name: str | None
     avatar_url: str | None
     lnauth_pubkey: str | None
@@ -266,8 +265,7 @@ class Donator(BaseModel):
         orm_mode = True
 
 
-class Donation(BaseModel):
-    id: UUID = Field(default_factory=uuid4)
+class Donation(IdModel):
     # This field contains only r_hash for local LND server, i.e. for incoming and outgoing payment
     r_hash: RequestHash | None
     # This field is for transient payment, e.g. when donation is done from external wallet to an external lightning address
