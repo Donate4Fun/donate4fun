@@ -1,0 +1,14 @@
+json:
+  avatar_url: http://url.com
+  balance: 0
+  id: 00000000-0000-0000-0000-000000000001
+  is_my: false
+  last_fetched_at: '2022-02-02T22:22:22'
+  lightning_address: null
+  login: handle
+  name: title
+  owner_id: null
+  total_donated: 0
+  user_id: 123
+  via_oauth: false
+status_code: 200
