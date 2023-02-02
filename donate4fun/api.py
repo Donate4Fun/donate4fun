@@ -15,6 +15,7 @@ from starlette.datastructures import URL
 from httpx import HTTPStatusError
 from pydantic import ValidationError as PydanticValidationError
 from sqlalchemy.orm.exc import NoResultFound
+from jwt import InvalidTokenError
 
 from .models import (
     Donation, Donator, Invoice,
@@ -399,13 +400,18 @@ async def oauth_redirect(
     request: Request, provider: SocialProvider, state: str, error: str = None, error_description: str = None, code: str = None,
     donator=Depends(get_donator),
 ):
-    auth_state = OAuthState.from_jwt(state)
-    if auth_state.donator_id != donator.id:
-        raise ValidationError(
-            f"User that initiated Google Auth {donator.id} is not the current user {auth_state.donator_id}, rejecting auth"
-        )
-
     try:
+        try:
+            auth_state = OAuthState.from_jwt(state)
+        except InvalidTokenError as exc:
+            error_path = '/'
+            raise OAuthError("Can't deserialize state") from exc
+        else:
+            error_path = auth_state.error_path
+        if auth_state.donator_id != donator.id:
+            raise ValidationError(
+                f"User that initiated Google Auth {donator.id} is not the current user {auth_state.donator_id}, rejecting auth"
+            )
         if error:
             raise OAuthError("OAuth error", error)
         elif code:
@@ -437,7 +443,7 @@ async def oauth_redirect(
         message = '\n'.join(exc.args[1:])
         if exc.__cause__:
             message += '\n' + str(exc.__cause__)
-        return make_redirect(auth_state.error_path, [Toast('error', exc.args[0], message)])
+        return make_redirect(error_path, [Toast('error', exc.args[0], message)])
 
 
 @router.get("/donatees/top-unclaimed", response_model=list[Donatee])
