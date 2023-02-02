@@ -13,6 +13,16 @@
   import { notify } from "$lib/notifications.js";
   import { sleep } from "$lib/utils.js";
   import { get, ApiError } from "$lib/api.js";
+  import { cLog } from "$lib/log.js";
+
+  import * as jose from "jose";
+
+  (async () => {
+    const JWKS = jose.createRemoteJWKSet(new URL(`${window.location.origin}/.well-known/jwks.json`));
+    const token = 'eyJhbGciOiJFUzI1NiJ9.eyJhYWEiOiJhYWEiLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0OjUxNzMiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjUxNzMiLCJzdWIiOiJnZyJ9.xDZJ0KH4i1SjNQ1qG1sgN5PFB9cs7QVyD_kmA-MBgKUkkcmNy_4PBJCyyAgJNtK3hX1W0YxmSpbHM47xDsCvrA';
+    const res = await jose.jwtVerify(token, JWKS);
+    cLog("jose", res);
+  })();
 
   let i = 0;
   let resolve;
@@ -34,7 +44,7 @@
   <a href="https://m.twitter.com" target="_self">Mob Twitter</a>
   <a href={'#'} on:click|preventDefault={() => window.open('https://twitter.com/', '_blank')}>Twitter Wnd</a>
   <Button on:click={async () => await sleep(1000)}>Sleep 1000</Button>
-  <Button on:click={() => {notify(`default title ${i}`, 'default message', 'info', 15000); i++;}}>notify</Button>
+  <Button on:click={() => {notify(`default title ${i}`, 'default message', 'info', {timeout: 15000}); i++;}}>notify</Button>
   <Button on:click={() => {return new Promise((resolve_) => {resolve = resolve_;})}}>Start Loader</Button>
   <Button on:click={() => {resolve && resolve();}}>Stop Loader</Button>
   <Button on:click={() => {throw new Error("some error");}}>Throw error</Button>

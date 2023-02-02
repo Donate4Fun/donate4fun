@@ -21,11 +21,14 @@ function id() {
   return '_' + Math.random().toString(36).substr(2, 9);
 }
 
+/*
+// FIXME: I don't remember why it's needed but it conflicts with notifications ater a redirect with messages
+// and a client-side redirect afterwards
 globalHistory.listen(() => {
   for (const notification of get(notifications)) {
     if (notification.isShown)
       notification.close()
   }
-});
+});*/
 
 export { notifications, notify };

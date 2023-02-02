@@ -19,7 +19,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from .models import (
     Donation, Donator, Invoice,
     WithdrawalToken, BaseModel, Notification, Credentials, SubscribeEmailRequest,
-    DonatorStats, PayInvoiceResult, Donatee, OAuthState, SocialProvider,
+    DonatorStats, PayInvoiceResult, Donatee, OAuthState, SocialProvider, Toast,
 )
 from .types import ValidationError, PaymentRequest, OAuthError, LnurlpError, AccountAlreadyLinked
 from .core import to_base64
@@ -27,8 +27,8 @@ from .db_models import WithdrawalDb
 from .db_libs import WithdrawalDbLib, DonationsDbLib, OtherDbLib
 from .settings import settings
 from .api_utils import (
-    get_donator, load_donator, get_db_session, task_group, only_me, error_redirect, get_donations_db, sha256hash,
-    success_redirect,
+    get_donator, load_donator, get_db_session, task_group, only_me, make_redirect, get_donations_db, sha256hash,
+    oauth_success_messages, signin_success_message,
 )
 from .lnd import PayInvoiceError, LnurlWithdrawResponse, lnd, lightning_payment_metadata, LndIsNotReady
 from .pubsub import pubsub
@@ -411,19 +411,24 @@ async def oauth_redirect(
         elif code:
             try:
                 if provider == 'twitter':
-                    transferred_amount = await api_twitter.finish_twitter_oauth(code, donator, auth_state.code_verifier)
+                    transferred_amount, linked_account = await api_twitter.finish_twitter_oauth(
+                        code, donator, auth_state.code_verifier,
+                    )
                 elif provider == 'youtube':
-                    transferred_amount = await api_youtube.finish_youtube_oauth(code, donator)
+                    transferred_amount, linked_account = await api_youtube.finish_youtube_oauth(code, donator)
                 elif provider == 'github':
-                    transferred_amount = await api_github.finish_github_oauth(code, donator)
+                    transferred_amount, linked_account = await api_github.finish_github_oauth(code, donator)
             except AccountAlreadyLinked as exc:
                 if auth_state.allow_sign_in:
-                    request.session['donator'] = str(exc.args[0])
-                    transferred_amount = 0
+                    linked_account = exc.args[0]
+                    request.session['donator'] = str(linked_account.owner_id)
+                    request.session['connected'] = True
+                    return make_redirect(auth_state.success_path, [signin_success_message(linked_account)])
                 else:
                     raise OAuthError("Could not link an already linked account") from exc
-            request.session['connected'] = True
-            return success_redirect(auth_state.success_path, transferred_amount)
+            else:
+                request.session['connected'] = True
+                return make_redirect(auth_state.success_path, oauth_success_messages(linked_account, transferred_amount))
         else:
             # Should either receive a code or an error
             raise ValidationError("Something is probably wrong with your callback")
@@ -432,7 +437,7 @@ async def oauth_redirect(
         message = '\n'.join(exc.args[1:])
         if exc.__cause__:
             message += '\n' + str(exc.__cause__)
-        return error_redirect(auth_state.error_path, exc.args[0], message)
+        return make_redirect(auth_state.error_path, [Toast('error', exc.args[0], message)])
 
 
 @router.get("/donatees/top-unclaimed", response_model=list[Donatee])

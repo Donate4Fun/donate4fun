@@ -1,5 +1,6 @@
 <script>
   import GithubUser from "$lib/GithubUser.svelte";
+  import SocialAccountPage from "$lib/SocialAccountPage.svelte";
 
   export let user_id;
 </script>

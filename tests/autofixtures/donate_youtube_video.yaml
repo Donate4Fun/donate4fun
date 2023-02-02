@@ -33,6 +33,7 @@ json:
       id: 00000000-0000-0000-0000-000000000001
       last_fetched_at: '2022-02-02T22:22:22+00:00'
       lightning_address: null
+      provider: youtube
       thumbnail_url: https://yt3.ggpht.com/XRROgwcAhtZPrd7FWz0jLU3b1ii45tmP1SX9BvWrZOFl4iTDKoSruJtK0wm8q4Lf2PlVJmoGTw=s240-c-k-c0x00ffffff-no-rj
       title: Alex007SC2
       total_donated: 100
@@ -57,6 +58,7 @@ json:
         id: 00000000-0000-0000-0000-000000000001
         last_fetched_at: '2022-02-02T22:22:22+00:00'
         lightning_address: null
+        provider: youtube
         thumbnail_url: https://yt3.ggpht.com/XRROgwcAhtZPrd7FWz0jLU3b1ii45tmP1SX9BvWrZOFl4iTDKoSruJtK0wm8q4Lf2PlVJmoGTw=s240-c-k-c0x00ffffff-no-rj
         title: Alex007SC2
         total_donated: 100

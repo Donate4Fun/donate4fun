@@ -22,7 +22,7 @@ from donate4fun.models import Donator, Credentials, SocialProvider
 from donate4fun.db import Notification
 from donate4fun.settings import Settings, settings
 from donate4fun.core import to_base64
-from donate4fun.api_utils import make_absolute_uri
+from donate4fun.api_utils import decode_jwt
 
 logger = logging.getLogger(__name__)
 # This file is needed because pytest modifies "assert" only in test_*.py files
@@ -107,7 +107,9 @@ def verify_response(response, name, status_code=None):
     if status_code is not None:
         check_response(response, status_code)
     content_type = response.headers['content-type']
-    if content_type == 'application/json':
+    if 300 <= response.status_code < 400:
+        data = dict(status_code=response.status_code, location=response.headers['location'])
+    elif content_type == 'application/json':
         data = dict(status_code=response.status_code, json=response.json())
     elif content_type == 'application/xml':
         data = dict(status_code=response.status_code, xml=response.text)
@@ -242,5 +244,16 @@ async def follow_oauth_flow(client, provider: SocialProvider, name: str, return_
         f'/api/v1/oauth-redirect/{provider}',
         params=dict(state=encrypted_state, code=code),
     )
+    verify_oauth_redirect(response, return_to, name)
+
+
+def verify_oauth_redirect(response, return_to: str, name: str):
     check_response(response, 307)
-    assert response.headers['location'] == make_absolute_uri(return_to)
+    redirect_url = furl(response.headers['location'])
+    assert redirect_url.path == return_to
+    # WORKAROUND: we can't put full JWT to fixture because it changes every time because
+    # ECDSA signature always uses PRNG (/dev/urandom in case of cryptography package)
+    # and it's quite compilcated to replace it with predictable PRNG
+    assert list(redirect_url.query.params) == ['toasts']
+    toasts: dict = decode_jwt(redirect_url.query.params['toasts'])
+    verify_fixture(toasts, f'oauth-redirect-toasts-{name}')

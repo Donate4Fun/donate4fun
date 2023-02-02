@@ -8,6 +8,7 @@ json:
   login: handle
   name: title
   owner_id: null
+  provider: github
   total_donated: 0
   user_id: 123
   via_oauth: false

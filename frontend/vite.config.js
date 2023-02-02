@@ -59,6 +59,7 @@ export default defineConfig({
       '/twitter/': httpProxy,
       '/donation/': httpProxy,
       '/preview/': httpProxy,
+      '/.well-known/': httpProxy,
       '^/$': httpProxy,
     },
   },

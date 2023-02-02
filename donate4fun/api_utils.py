@@ -1,5 +1,6 @@
 import unicodedata
 import hashlib
+import json
 from uuid import uuid4, UUID
 
 import posthog
@@ -8,8 +9,10 @@ from furl import furl
 from fastapi import Request, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm.exc import NoResultFound  # noqa - imported from other modules
+from jwcrypto.jwt import JWT
+from jwcrypto.jwk import JWK
 
-from .models import Donator, Credentials, Donation, SocialProvider, SocialAccountOwned
+from .models import Donator, Credentials, Donation, SocialProvider, SocialAccountOwned, SocialAccount, Toast
 from .db import DbSession, db
 from .db_libs import TwitterDbLib, YoutubeDbLib, GithubDbLib, DonationsDbLib
 from .core import ContextualObject
@@ -102,15 +105,42 @@ async def auto_transfer_donations(db: DbSession, donation: Donation) -> int:
     return 0
 
 
-def error_redirect(path: str, title: str, message: str):
-    return RedirectResponse(furl(make_absolute_uri(path)).set(dict(error=title, message=str(message))).url)
+def encode_jwt(**claims) -> str:
+    jwt = JWT(
+        header=dict(alg=settings.jwt.alg),
+        claims=dict(iss=settings.base_url, aud=settings.base_url, **claims),
+    )
+    key = JWK(**settings.jwt.jwk)
+    jwt.make_signed_token(key)
+    return jwt.serialize()
 
 
-def success_redirect(path: str, transferred_amount: Satoshi) -> RedirectResponse:
-    success_url = furl(make_absolute_uri(path))
+def decode_jwt(token: str) -> dict:
+    jwt = JWT(jwt=token, key=JWK(**settings.jwt.jwk))
+    return json.loads(jwt.claims)
+
+
+def make_redirect(path: str, toasts: list[Toast] = []) -> RedirectResponse:
+    url = furl(make_absolute_uri(path))
+    if toasts:
+        url.add(query_params=dict(toasts=encode_jwt(toasts=[toast.dict() for toast in toasts])))
+    return RedirectResponse(url.url)
+
+
+def oauth_success_messages(linked_account: SocialAccount, transferred_amount: Satoshi) -> list[Toast]:
+    yield Toast(
+        'success', "Social account is linked",
+        f"{linked_account.provider.capitalize()} account {linked_account.unique_name} was successefully linked",
+    )
     if transferred_amount > 0:
-        success_url.set(message=f"{transferred_amount} sats are successefully claimed")
-    return RedirectResponse(success_url)
+        yield Toast('success', "Funds claimed", f"{transferred_amount} sats are successefully claimed")
+
+
+def signin_success_message(account: SocialAccount) -> Toast:
+    return Toast(
+        'success', 'Successful sign-in',
+        f"You've successfully signed in using {account.unique_name} {account.provider.capitalize()} account",
+    )
 
 
 async def raise_on_4xx_5xx(response):

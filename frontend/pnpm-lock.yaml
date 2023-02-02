@@ -11,6 +11,7 @@ specifiers:
   async-ws: github:nikicat/async-ws
   axios: ^0.27.2
   dateformat: ^5.0.3
+  jose: ^4.11.2
   js-cookie: ^3.0.1
   jwt-decode: ^3.1.2
   qrcode: ^1.5.1
@@ -35,6 +36,7 @@ dependencies:
   '@sveltejs/vite-plugin-svelte': 1.4.0_svelte@3.55.0+vite@3.2.5
   axios: 0.27.2
   dateformat: 5.0.3
+  jose: 4.11.2
   js-cookie: 3.0.1
   jwt-decode: 3.1.2
   qrcode: 1.5.1
@@ -759,6 +761,10 @@ packages:
     resolution: {integrity: sha512-41Cifkg6e8TylSpdtTpeLVMqvSBEVzTttHvERD741+pnZ8ANv0004MRL43QKPDlK9cGvNp6NZWZUBlbGXYxxng==}
     engines: {node: '>=0.12.0'}
     dev: true
+
+  /jose/4.11.2:
+    resolution: {integrity: sha512-njj0VL2TsIxCtgzhO+9RRobBvws4oYyCM8TpvoUQwl/MbIM3NFJRR9+e6x0sS5xXaP1t6OCBkaBME98OV9zU5A==}
+    dev: false
 
   /js-cookie/3.0.1:
     resolution: {integrity: sha512-+0rgsUXZu4ncpPxRL+lNEptWMOWl9etvPHc/koSRp6MPwpRYAhmk0dUG00J4bxVV3r9uUzfo24wW0knS07SKSw==}

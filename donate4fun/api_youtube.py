@@ -85,7 +85,7 @@ async def login_via_google(request: Request, return_to: str, donator=Depends(get
     return OAuthResponse(url=url)
 
 
-async def finish_youtube_oauth(code: str, donator: Donator) -> Satoshi:
+async def finish_youtube_oauth(code: str, donator: Donator) -> tuple[Satoshi, YoutubeChannelOwned]:
     """
     Returns transferred amount on success linking and raises AccountAlreadyLinked if
     account is already linked
@@ -101,8 +101,8 @@ async def finish_youtube_oauth(code: str, donator: Donator) -> Satoshi:
             owned_channel: YoutubeChannelOwned = await youtube_db.query_account(id=channel.id)
             if not owned_channel.via_oauth:
                 await youtube_db.link_account(channel, donator, via_oauth=True)
-                return await youtube_db.transfer_donations(channel, donator)
+                return await youtube_db.transfer_donations(channel, donator), channel
     except Exception as exc:
         raise OAuthError("Failed to link account") from exc
     else:
-        raise AccountAlreadyLinked(owned_channel.owner_id)
+        raise AccountAlreadyLinked(owned_channel)
