@@ -21,6 +21,7 @@ json:
       lightning_address: null
       name: "Donate4.Fun \u26A1"
       profile_image_url: https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_normal.png
+      provider: twitter
       total_donated: 0
       user_id: '1572908920485576704'
     fee_msat: null
@@ -40,6 +41,7 @@ json:
       lightning_address: null
       name: "Donate4.Fun \u26A1"
       profile_image_url: https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_normal.png
+      provider: twitter
       total_donated: 0
       user_id: '1572908920485576704'
     twitter_tweet:

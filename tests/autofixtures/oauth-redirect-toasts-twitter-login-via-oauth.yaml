@@ -1,0 +1,6 @@
+aud: http://localhost:3000
+iss: http://localhost:3000
+toasts:
+- icon: success
+  message: Twitter account @donate4_fun was successefully linked
+  title: Social account is linked

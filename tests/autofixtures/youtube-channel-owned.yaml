@@ -8,6 +8,7 @@ json:
   last_fetched_at: '2022-02-02T22:22:22'
   lightning_address: null
   owner_id: 00000000-0000-0000-0000-000000000000
+  provider: youtube
   thumbnail_url: null
   title: title
   total_donated: 0

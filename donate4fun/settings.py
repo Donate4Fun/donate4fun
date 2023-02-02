@@ -131,6 +131,11 @@ class SentrySettings(BaseModel):
     environment: str
 
 
+class JwtSettings(BaseModel):
+    alg: str
+    jwk: dict
+
+
 def default_settings_file():
     return 'config.yaml'
 
@@ -147,6 +152,7 @@ class Settings(BaseSettings):
     github: GithubSettings
     db: DbSettings
     log: LoggingConfig
+    jwt: JwtSettings
     fastapi: FastApiSettings
     bugsnag: BugsnagSettings | None = None
     rollbar: RollbarSettings | None = None

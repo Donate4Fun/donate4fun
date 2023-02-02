@@ -8,6 +8,7 @@ json:
   name: null
   owner_id: null
   profile_image_url: null
+  provider: twitter
   total_donated: 0
   user_id: 123
   via_oauth: false

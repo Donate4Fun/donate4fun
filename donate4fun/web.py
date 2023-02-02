@@ -9,8 +9,9 @@ from fastapi import Request, Response, FastAPI, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.orm.exc import NoResultFound
+from jwcrypto.jwk import JWK
 
-from .api_utils import get_db_session
+from .api_utils import get_db_session, make_absolute_uri
 from .models import YoutubeChannel, TwitterAccount, Donation, Donator, GithubUser
 from .youtube import query_or_fetch_youtube_channel
 from .twitter import query_or_fetch_twitter_account
@@ -141,6 +142,19 @@ async def lightning_address(request: Request, username: str, db_session=Depends(
         commentAllowed=255,
         tag="payRequest",
     )
+
+
+@app.get("/.well-known/openid-configuration", response_class=JSONResponse)
+async def openid_configuration():
+    return dict(
+        issuer=make_absolute_uri(""),
+        jwks_uri=make_absolute_uri(".well-known/jwks.json"),
+    )
+
+
+@app.get("/.well-known/jwks.json", response_class=JSONResponse)
+async def jwks_json():
+    return dict(keys=[JWK(**settings.jwt.jwk).export_public(as_dict=True)])
 
 
 templates = TemplateLookup(

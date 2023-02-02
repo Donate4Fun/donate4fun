@@ -8,6 +8,7 @@
   import { notify } from "$lib/notifications.js";
   import { ApiError, errorToText } from "$lib/api.js";
   import { cLog } from "$lib/log.js";
+  import { decodeJwt } from "$lib/jwt.js";
   import DonatorPage from "./routes/DonatorPage.svelte";
   import DonatePage from "./routes/DonatePage.svelte";
   import FulfillPage from "./routes/FulfillPage.svelte";
@@ -45,15 +46,15 @@
     }
   });
 
-  onMount(() => {
+  onMount(async () => {
     analytics.page();
     const url = new URL(window.location.href);
-    const error = url.searchParams.get('error');
-    const message = url.searchParams.get('message');
-    if (error !== null) {
-      notify(error, message, "error", { showFooter: false });
-      url.searchParams.delete('error');
-      url.searchParams.delete('message');
+    const toastsToken = url.searchParams.get('toasts');
+    if (toastsToken !== null) {
+      url.searchParams.delete('toasts');
+      const toasts = await decodeJwt(toastsToken);
+      for (const toast of toasts.toasts)
+        notify(toast.title, toast.message, toast.icon, { showFooter: false });
       window.history.replaceState({}, null, url);
     }
   });

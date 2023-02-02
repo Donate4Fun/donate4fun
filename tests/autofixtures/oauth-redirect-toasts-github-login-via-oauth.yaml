@@ -1,0 +1,6 @@
+aud: http://localhost:3000
+iss: http://localhost:3000
+toasts:
+- icon: success
+  message: Github account Nikolay Bryskin was successefully linked
+  title: Social account is linked

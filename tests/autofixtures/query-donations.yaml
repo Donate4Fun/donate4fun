@@ -28,7 +28,7 @@
     B+YCAhYWFgAAAA==
   r_hash: !!python/object/new:donate4fun.types.RequestHash
     args:
-    - b'\xd0\x8d]\xde\xd1d\x0b\xd9\x1c\x07\xfb\xf8WT\xc1~$/\xd6\xbf\xac2}\x13f\xf0\xf1\xfb\xd3"7\x89'
+    - b'\x85f\xe7\x12\xad\t\x12t\x1b\x8eUC}\x8fLw\xbcv\xf6\xd2\r\xdbq?\xec\xb1\xfc\r*\tW#'
     state:
       data: !!binary |
         aGFzaA==
@@ -46,6 +46,7 @@
       AAAAAAAAAAAAAAAAAAAAAQ==
     last_fetched_at: null
     lightning_address: null
+    provider: youtube
     thumbnail_url: http://example.com/thumbnail
     title: asdzxc
     total_donated: 20

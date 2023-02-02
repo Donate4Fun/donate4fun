@@ -47,6 +47,13 @@ backend:
     lnurlp:
       min_sendable_sats: 10
       max_sendable_sats: 5_000_000
+    jwt:
+      alg: ES384
+      jwk:
+        kty: EC
+        crv: P-384
+        x: "ZiZS_SfY5iL_VcJY8w9lBVh8s8hV7qEJL_35unvaflyQ0PPj4sucBx7A0ZJxInSg"
+        "y": "0pX_4OWDds_6oc35Xp2U5KWG0GYwOWSSOGbk6aLlbRMluQ11zphfuCvGu4U7dAUi"
     min_withdraw: 10
     fee_limit: 10
     withdraw_timeout: 10

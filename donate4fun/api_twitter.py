@@ -5,9 +5,9 @@ from uuid import UUID
 from fastapi import Depends, APIRouter, Request
 from furl import furl
 
-from .models import TwitterAccount, Donator, TwitterAccountOwned, OAuthState, OAuthResponse
+from .models import TwitterAccount, Donator, TwitterAccountOwned, OAuthState, OAuthResponse, Toast
 from .types import ValidationError, OAuthError, AccountAlreadyLinked, Satoshi
-from .api_utils import get_donator, make_absolute_uri, error_redirect, success_redirect
+from .api_utils import get_donator, make_absolute_uri, make_redirect, signin_success_message, oauth_success_messages
 from .twitter import make_prove_message, make_link_oauth2_client, make_oauth1_client, fetch_twitter_me
 from .db_twitter import TwitterDbLib
 from .db import db
@@ -34,7 +34,7 @@ async def oauth1_callback(
     request: Request, oauth_token: str = None, oauth_verifier: str = None, denied: str = None, donator=Depends(get_donator),
 ):
     if denied is not None:
-        return error_redirect('settings', "Authorization denied by user", '')
+        return make_redirect('settings', [Toast("error", "Authorization denied by user", '')])
     if oauth_token is None or oauth_verifier is None:
         raise ValidationError("oauth_token and oauth_verifier parameters must be present")
     try:
@@ -42,18 +42,21 @@ async def oauth1_callback(
             token: dict = await client.fetch_access_token('https://api.twitter.com/oauth/access_token', verifier=oauth_verifier)
             client.token = token
             try:
-                transferred_amount: Satoshi = await login_or_link_twitter_account(client, donator)
+                transferred_amount, linked_account = await login_or_link_twitter_account(client, donator)
             except AccountAlreadyLinked as exc:
                 if not donator.connected:
-                    transferred_amount = 0
-                    request.session['donator'] = str(exc.args[0])
+                    linked_account = exc.args[0]
+                    request.session['donator'] = str(linked_account.owner_id)
+                    request.session['connected'] = True
+                    return make_redirect('donator/me', [signin_success_message(linked_account)])
                 else:
                     raise OAuthError("Could not link an already linked account") from exc
+            else:
                 request.session['connected'] = True
-            return success_redirect('donator/me', transferred_amount)
+                return make_redirect('donator/me', oauth_success_messages(linked_account, transferred_amount))
     except OAuthError as exc:
         logger.exception("OAuth error")
-        return error_redirect('settings', exc.args[0], exc.__cause__)
+        return make_redirect('settings', [Toast("error", exc.args[0], exc.__cause__)])
 
 
 @router.get('/oauth', response_model=OAuthResponse)
@@ -77,7 +80,7 @@ async def login_via_twitter(request: Request, return_to: str, expected_account: 
         return OAuthResponse(url=url)
 
 
-async def finish_twitter_oauth(code: str, donator: Donator, code_verifier: str) -> Satoshi:
+async def finish_twitter_oauth(code: str, donator: Donator, code_verifier: str) -> tuple[Satoshi, TwitterAccountOwned]:
     async with make_link_oauth2_client() as client:
         try:
             token: dict = await client.fetch_token(code=code, code_verifier=code_verifier)
@@ -87,7 +90,7 @@ async def finish_twitter_oauth(code: str, donator: Donator, code_verifier: str) 
         return await login_or_link_twitter_account(client, donator)
 
 
-async def login_or_link_twitter_account(client, donator: Donator) -> Satoshi:
+async def login_or_link_twitter_account(client, donator: Donator) -> tuple[Satoshi, TwitterAccountOwned]:
     try:
         account: TwitterAccount = await fetch_twitter_me(client)
     except Exception as exc:
@@ -100,8 +103,8 @@ async def login_or_link_twitter_account(client, donator: Donator) -> Satoshi:
             owned_account: TwitterAccountOwned = await twitter_db.query_account(user_id=account.user_id)
             if not owned_account.via_oauth:
                 await twitter_db.link_account(account, donator, via_oauth=True)
-                return await twitter_db.transfer_donations(account, donator)
+                return await twitter_db.transfer_donations(account, donator), owned_account
     except Exception as exc:
         raise OAuthError("Failed to link account") from exc
     else:
-        raise AccountAlreadyLinked(owned_account.owner_id)
+        raise AccountAlreadyLinked(owned_account)

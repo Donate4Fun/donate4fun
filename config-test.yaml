@@ -17,6 +17,14 @@ twitter:
     client_secret: client_secret
     consumer_key: consumer_key
     consumer_secret: consumer_secret
+jwt:
+  alg: ES384
+  jwk:
+    kty: EC
+    crv: P-384
+    x: apt_XmSA1Sxfdf_D-nT3g4Am-m7PAM8g8442KL-BGpFu6RtPwrZBVHu58M0WgxlI
+    y: wMcwPkCPqsSXrvbmKmcUXTnGP16FTx4naoLxSUlD-fo_6O8YC4k4HGOV7Xq7Ka8F
+    d: _3Yhqg8s9Ck6bnrGMxnD4Y27rsmFnW2-8Jn49UoMvDpjE_5MuCaGK574tUom9GfD
 lnd:
   url: https://localhost:8081
   tls_cert: polar/volumes/lnd/alice/tls.cert

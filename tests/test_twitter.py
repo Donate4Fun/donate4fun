@@ -18,10 +18,9 @@ from donate4fun.db_twitter import TwitterDbLib
 from donate4fun.db_donations import DonationsDbLib
 from donate4fun.settings import settings
 from donate4fun.jobs import refetch_twitter_authors
-from donate4fun.api_utils import make_absolute_uri
 from tests.test_util import (
     verify_response, mark_vcr, check_notification, login_to, check_response, freeze_time, follow_oauth_flow,
-    load_or_ask,
+    load_or_ask, verify_oauth_redirect,
 )
 from tests.fixtures import find_unused_port, app_serve, make_registered_donator, create_db
 
@@ -304,8 +303,7 @@ async def follow_oauth1_flow(client, name: str):
         '/api/v1/twitter/oauth1-callback',
         params=params,
     )
-    check_response(response, 307)
-    assert response.headers['location'] == make_absolute_uri('donator/me')
+    verify_oauth_redirect(response, '/donator/me', name)
 
 
 @mark_vcr

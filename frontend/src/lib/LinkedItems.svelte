@@ -61,13 +61,11 @@
             {#if item.balance > 0}
               <Button on:click={() => collect(item)} --border-width=0 padding="0 24px">Claim</Button>
             {/if}
-            {#if item.via_oauth}
-              <HoldButton
-                --border-width=0
-                on:click={() => onUnlink(item)}
-                tooltipText="Hold to unlink"
-              ><span class="unlink">Unlink</span></HoldButton>
-            {/if}
+            <HoldButton
+              --border-width=0
+              on:click={() => onUnlink(item)}
+              tooltipText="Hold to unlink"
+            ><span class="unlink">Unlink</span></HoldButton>
           </div>
         </li>
       {/each}

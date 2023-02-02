@@ -32,7 +32,7 @@ async def login_via_github(request: Request, return_to: str, donator=Depends(get
     return OAuthResponse(url=furl('https://github.com/login/oauth/authorize', query_params=params).url)
 
 
-async def finish_github_oauth(code: str, donator: Donator) -> Satoshi:
+async def finish_github_oauth(code: str, donator: Donator) -> tuple[Satoshi, GithubUser]:
     async with HttpClient(headers={'Accept': 'application/json'}) as client:
         params = dict(
             client_id=settings.github.client_id,
@@ -56,7 +56,7 @@ async def finish_github_oauth(code: str, donator: Donator) -> Satoshi:
         return await login_or_link_github_user(github_user, donator)
 
 
-async def login_or_link_github_user(account: GithubUser, donator: Donator) -> Satoshi:
+async def login_or_link_github_user(account: GithubUser, donator: Donator) -> tuple[Satoshi, GithubUserOwned]:
     try:
         async with db.session() as db_session:
             github_db = GithubDbLib(db_session)
@@ -64,8 +64,8 @@ async def login_or_link_github_user(account: GithubUser, donator: Donator) -> Sa
             owned_account: GithubUserOwned = await github_db.query_account(user_id=account.user_id)
             if not owned_account.via_oauth:
                 await github_db.link_account(account, donator, via_oauth=True)
-                return await github_db.transfer_donations(account, donator)
+                return await github_db.transfer_donations(account, donator), owned_account
     except Exception as exc:
         raise OAuthError("Failed to link account") from exc
     else:
-        raise AccountAlreadyLinked(owned_account.owner_id)
+        raise AccountAlreadyLinked(owned_account)

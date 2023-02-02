@@ -141,6 +141,7 @@ class IdModel(BaseModel):
 
 
 class SocialAccount(IdModel):
+    provider: SocialProvider
     last_fetched_at: datetime | None
     balance: int = 0
     total_donated: int = 0
@@ -152,6 +153,7 @@ class SocialAccount(IdModel):
 
 
 class YoutubeChannel(SocialAccount):
+    provider: SocialProvider = SocialProvider.youtube.value
     title: str
     channel_id: str
     thumbnail_url: Url | None
@@ -192,6 +194,7 @@ class YoutubeVideo(IdModel):
 
 
 class TwitterAccount(SocialAccount):
+    provider: SocialProvider = SocialProvider.twitter.value
     user_id: int
     handle: str
     name: str | None
@@ -217,6 +220,7 @@ class TwitterTweet(IdModel):
 
 
 class GithubUser(SocialAccount):
+    provider: SocialProvider = SocialProvider.github.value
     user_id: int
     login: str
     name: str
@@ -411,3 +415,12 @@ class OAuthState(BaseModel):
 
 class OAuthResponse(BaseModel):
     url: AnyUrl
+
+
+class Toast(BaseModel):
+    icon: str
+    title: str
+    message: str
+
+    def __init__(self, icon, title, message):
+        super().__init__(icon=icon, title=title, message=message)

@@ -33,6 +33,7 @@ json:
       id: 00000000-0000-0000-0000-000000000000
       last_fetched_at: null
       lightning_address: null
+      provider: youtube
       thumbnail_url: https://thumbnail.url/asd
       title: channel_title
       total_donated: 100
