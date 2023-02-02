@@ -13,8 +13,6 @@ backend:
   image:
     repository: europe-central2-docker.pkg.dev/donate4fun-prod/docker/donate4fun-backend
   config:
-    rollbar:
-      environment: production
     posthog:
       project_api_key: 'phc_2CphDSfOn61NrqYZnloxHWpwFFjd4mHxUtZwcwrogC0'
       host: 'https://eu.posthog.com'

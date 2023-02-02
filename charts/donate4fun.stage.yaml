@@ -7,8 +7,6 @@ backend:
     base_url: https://stage.donate4.fun
     twitter:
       enable_bot: false
-    rollbar:
-      environment: staging
     posthog:
       debug: true
     sentry:
