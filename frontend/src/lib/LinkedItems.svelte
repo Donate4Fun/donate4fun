@@ -45,14 +45,14 @@
 
 <div class="container">
   {#if $itemsStore.length > 0}
-    <h2 transition:slide>
+    <h2 transition:slide|local>
       <slot name="header">
         Linked <b>{name}</b> accounts:
       </slot>
     </h2>
     <ul>
       {#each $itemsStore as item (item.id)}
-        <li transition:slide>
+        <li transition:slide|local>
           <slot name="item" {item} />
           {#if item.balance > 0}
             <Amount amount={item.balance} />
