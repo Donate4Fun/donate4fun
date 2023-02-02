@@ -9,9 +9,9 @@
   import api from "$lib/api.js";
 
   export let target;
+  export let paymentRequest = null;
 
   let amount;
-  let paymentRequest;
   let donation;
   let showSuccess = false;
 
@@ -43,24 +43,19 @@
     await tick();
     showSuccess = false;
   }
-
-  async function cancel() {
-    paymentRequest = null;
-    await ws?.close();
-  }
 </script>
 
 <div class="payment">
   {#if paymentRequest}
-    <Amount amount={amount} />
-    <Invoice donation={donation} paymentRequest={paymentRequest} on:cancel={cancel} on:paid={paid} />
+    <Amount {amount} />
+    <Invoice {donation} {paymentRequest} on:cancel={() => paymentRequest = null} on:paid={paid} />
   {:else if showSuccess}
     <div class="success" out:slide={{duration: 300, delay: 2000, easing: cubicOut}}>
-      <div>Paid <Amount amount={amount} /></div>
+      <div>Paid <Amount {amount} /></div>
       <img src="/static/success.png" alt=success width=120 height=120>
     </div>
   {:else}
-    <AmountSelection donate={donate} />
+    <AmountSelection {donate} />
   {/if}
 </div>
 
