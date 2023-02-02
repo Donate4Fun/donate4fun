@@ -1,7 +1,6 @@
 <script>
   import { link, useNavigate } from "svelte-navigator";
 
-  import Loader from "$lib/Loader.svelte";
   import Userpic from "$lib/Userpic.svelte";
   import Section from "$lib/Section.svelte";
   import Donator from "$lib/Donator.svelte";
@@ -9,44 +8,24 @@
   import FiatAmount from "$lib/FiatAmount.svelte";
   import Button from "$lib/Button.svelte";
   import BaseButton from "$lib/BaseButton.svelte";
-  import Separator from "$lib/Separator.svelte";
   import MeNamePubkey from "$lib/MeNamePubkey.svelte";
   import MeBalance from "$lib/MeBalance.svelte";
-  import Infobox from "$lib/Infobox.svelte";
-  import ChannelLogo from "$lib/ChannelLogo.svelte";
+  import Title from "$lib/Title.svelte";
   import TransactionHistory from "$lib/TransactionHistory.svelte";
-  import { me, reloadMe } from "$lib/session.js";
-  import api from "$lib/api.js";
+  import { syncMe as me } from "$lib/session.js";
+  import { apiStore } from "$lib/api.js";
   import title from "$lib/title.js";
 
   export let donator_id;
   let activeTab = 'sent';
-  const navigate = useNavigate();
 
-  async function load(me, donator_id) {
-    if (donator_id === 'me') {
-      await navigate(`/donator/${me.donator.id}`, {replace: true})
-      return;
-    }
-    const itsMe = donator_id === me.donator?.id;
-    let donator;
-    if (itsMe) {
-      await reloadMe();
-      donator = me.donator;
-    } else {
-      donator = await api.get(`donator/${donator_id}`);
-    }
-    title.set(`Donator profile for ${donator.name}`);
-    return {itsMe, donator};
-  }
-
-  async function loadTotals(donator) {
-    return await api.get(`donator/${donator.id}/stats`);
-  }
+  const donator = apiStore(`donator/${donator_id}`, `donator:${donator_id}`);
+  const donatorStats = apiStore(`donator/${donator_id}/stats`, `donator:${donator_id}`);
+  $: itsMe = donator_id === $me?.donator?.id;
 </script>
 
-{#await $me then me}
-{#await load(me, donator_id) then {itsMe, donator}}
+{#if $donator}
+  <Title title="Donator profile for {$donator.name}" />
   <Section>
     <div class="main">
       {#if itsMe}
@@ -65,23 +44,23 @@
       {/if}
       <div class="top-block">
         <div class="image-and-name">
-          <Userpic user={donator} class="userpic" --width=88px/>
+          <Userpic user={$donator} class="userpic" --width=88px/>
           {#if itsMe}
             <MeNamePubkey align="center" />
           {:else}
-            <p>{donator.name}</p>
+            <p>{$donator.name}</p>
           {/if}
         </div>
         {#if itsMe}
           <div class="balance-actions">
-            {#if me.connected}
+            {#if $me.connected}
               <MeBalance />
             {:else}
               <Button link="/signin">Sign in</Button>
             {/if}
           </div>
         {:else}
-          <Button link="/fulfill/{donator.id}">Donate</Button>
+          <Button link="/fulfill/{donator_id}">Donate</Button>
         {/if}
       </div>
       {#if itsMe}
@@ -91,9 +70,8 @@
             <div><button disabled={activeTab === 'received'} on:click={() => activeTab = 'received'}>Received</button></div>
           </div>
           <div class="totals">
-            {#await loadTotals(donator)}
-              <Loader />
-            {:then {total_donated, total_claimed, total_received}}
+          {#if $donatorStats}
+            {@const {total_donated, total_claimed, total_received} = $donatorStats}
               <div style:display={activeTab === 'sent' ? 'block' : 'none'}>
                 <span>You donated: </span>
                 <Amount amount={total_donated} />
@@ -106,20 +84,19 @@
                 <span>You received: </span>
                 <Amount amount={total_received} />
               </div>
-            {/await}
+            {/if}
           </div>
           <div style:display={activeTab === 'sent' ? 'block' : 'none'}>
-            <TransactionHistory donator_id={donator.id} direction=sent />
+            <TransactionHistory {donator_id} direction=sent />
           </div>
           <div style:display={activeTab === 'received' ? 'block' : 'none'}>
-            <TransactionHistory donator_id={donator.id} direction=received />
+            <TransactionHistory {donator_id} direction=received />
           </div>
         </div>
       {/if}
     </div>
   </Section>
-{/await}
-{/await}
+{/if}
 
 <style>
 .main {

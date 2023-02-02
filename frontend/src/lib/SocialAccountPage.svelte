@@ -19,6 +19,8 @@
   export let provider;
   export let account_id;
 
+  let paymentRequest;
+
   const account = apiStore(`social/${provider}/${account_id}`, `social:${provider}:${account_id}`);
 </script>
 
@@ -37,13 +39,16 @@
           Donate to <slot name="target" account={$account} />
         </h1>
         <div class="buttons">
-          <PaymentWidget target={{social_provider: provider, social_account_id: account_id}} />
-          <TwitterShare text="Donate to me" />
-          {#if $account.balance > 0}
-            <p class="unclaimed" transition:slide>
-              Unclaimed: <Amount amount={toText($account.balance)} /><FiatAmount amount={$account.balance} />
-            </p>
-            <SocialSigninButton idp={provider}>Sign in with {capitalize(provider)} to claim</SocialSigninButton>
+          <PaymentWidget bind:paymentRequest={paymentRequest} target={{social_provider: provider, social_account_id: account_id}} />
+          {#if paymentRequest === null}
+            <TwitterShare text="Donate to me" />
+            {#if $account.balance > 0}
+              <!-- |local is needed because of this bug https://github.com/mefechoel/svelte-navigator/issues/43#issuecomment-933021677 -->
+              <p class="unclaimed" transition:slide|local>
+                Unclaimed: <Amount amount={toText($account.balance)} /><FiatAmount amount={$account.balance} />
+              </p>
+              <SocialSigninButton idp={provider}>Sign in with {capitalize(provider)} to claim</SocialSigninButton>
+            {/if}
           {/if}
         </div>
       </div>

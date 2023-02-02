@@ -9,7 +9,9 @@
   import { ApiError, errorToText } from "$lib/api.js";
   import { cLog } from "$lib/log.js";
   import { decodeJwt } from "$lib/jwt.js";
+
   import DonatorPage from "./routes/DonatorPage.svelte";
+  import DonatorMePage from "./routes/DonatorMePage.svelte";
   import DonatePage from "./routes/DonatePage.svelte";
   import FulfillPage from "./routes/FulfillPage.svelte";
   import DonationPage from "./routes/DonationPage.svelte";
@@ -104,6 +106,7 @@
     </Route>
     <Route path="me/withdraw" component="{WithdrawPage}" />
     <Route path="donation/:donation_id" component="{DonationPage}" />
+    <Route path="donator/me" component="{DonatorMePage}" />
     <Route path="donator/:donator_id" component="{DonatorPage}" />
     <Route path="donate/:channel_id" component="{DonatePage}" />
     <Route path="fulfill/:donator_id" component="{FulfillPage}" />
