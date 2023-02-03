@@ -117,6 +117,7 @@ class RollbarSettings(BaseModel):
 class LnurlpSettings(BaseModel):
     min_sendable_sats: int
     max_sendable_sats: int
+    enable_svg_images: bool = False
 
 
 class PostHogSettings(BaseModel):

@@ -18,7 +18,7 @@ from pydantic import Field, AnyUrl
 from .settings import LndSettings, settings
 from .types import RequestHash, PaymentRequest
 from .models import Invoice, Donator, PayInvoiceResult, Donation
-from .core import as_task, register_command, ContextualObject
+from .core import as_task, register_command, ContextualObject, from_base64, to_base64
 from .api_utils import track_donation, auto_transfer_donations
 from .db_donations import DonationsDbLib
 
@@ -249,8 +249,23 @@ async def pay_withdraw_request(lnurl: str):
         await client.get(lnurl_data.callback, params=dict(k1=lnurl_data.k1, pr=invoice.payment_request))
 
 
-def lightning_payment_metadata(receiver: Donator):
-    return json.dumps([
-        ("text/identifier", str(receiver.id)),
-        ("text/plain", f"Sats for {receiver.name}"),
-    ])
+def svg_to_png(svg_data: bytes) -> bytes:
+    from cairosvg import svg2png
+    return svg2png(svg_data)
+
+
+def lightning_payment_metadata(receiver: Donator) -> str:
+    fields = [
+        ("text/identifier", receiver.lightning_address),
+        ("text/plain", f"Tip for {receiver.name} [{receiver.id}]"),
+    ]
+    prefix = 'data:image/svg+xml;base64,'
+    if receiver.avatar_url.startswith(prefix):
+        svg_base64_data: str = receiver.avatar_url[len(prefix):]
+        if settings.lnurlp.enable_svg_images:
+            fields.append(("image/svg+xml;base64", svg_base64_data))
+        else:
+            svg_data: bytes = from_base64(svg_base64_data)
+            png_data = svg_to_png(svg_data)
+            fields.append(("image/png;base64", to_base64(png_data)))
+    return json.dumps(fields)
