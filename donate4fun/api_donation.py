@@ -158,6 +158,7 @@ async def fetch_lightning_address(donation: Donation) -> PaymentRequest:
             payerdata = {}
             if 'name' in payerdata_request:
                 payerdata['name'] = f'{name} via Donate4.Fun'
+            # Separators are important for hashes to match
             params['payerdata'] = json.dumps(payerdata, separators=(',', ':'))
         if donation.youtube_video:
             target = f'https://youtube.com/watch?v={donation.youtube_video.video_id}'
