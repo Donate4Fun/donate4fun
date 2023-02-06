@@ -109,4 +109,7 @@
   gap: 24px;
   align-items: center;
 }
+h1 {
+  text-align: center;
+}
 </style>
