@@ -81,17 +81,19 @@
         <FiatAmount bind:amount={amount} class="fiat-amount" />
       </div>
       <div class="button">
-        {#if me.connected}
-          <Button on:click={donate} disabled={amountError}>
-            {#if me.donator.id === donator_id}
+        {#if me.donator.id === donator_id}
+          {#if me.connected}
+            <Button on:click={donate} disabled={amountError}>
               <span>Fulfill</span>
-            {:else}
-              <span>Donate</span>
-            {/if}
-          </Button>
+            </Button>
+          {:else}
+            <Button link={resolve('/login') + '?return=' + location.pathname} disabled={amountError}>
+              <span>Connect Wallet</span>
+            </Button>
+          {/if}
         {:else}
-          <Button link={resolve('/login') + '?return=' + location.pathname} disabled={amountError}>
-            <span>Connect Wallet</span>
+          <Button on:click={donate} disabled={amountError}>
+            <span>Donate</span>
           </Button>
         {/if}
       </div>
