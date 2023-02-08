@@ -6,7 +6,7 @@
   import WalletLogin from "$lib/WalletLogin.svelte";
   import ClaimPopup from "$lib/ClaimPopup.svelte";
   import Amount from "$lib/Amount.svelte";
-  import { me } from "$lib/session.js";
+  import { syncMe as me } from "$lib/session.js";
   import { resolve } from "$lib/utils.js";
 
   export let simple = false;
@@ -26,14 +26,14 @@
       <li><a href="https://github.com/Donate4Fun/donate4fun/blob/master/docs/HELP.md" target="_blank">Docs</a></li>
       <li><a href="https://github.com/orgs/Donate4Fun/projects/1" target="_blank">Roadmap</a></li>
       <li><a use:link href="/#team">Team</a></li>
-      {#await $me then me}
-        <li><a use:link href="/donator/{me.donator.id}">Profile</a></li>
-        {#if me.connected}
+      {#if $me}
+        <li><a use:link href="/donator/{$me.donator.id}">Profile</a></li>
+        {#if $me.connected}
           <li><a use:link href="/settings">Settings</a></li>
         {:else}
           <li><a use:link href="/signin">Sign in</li>
         {/if}
-      {/await}
+      {/if}
     </ul>
   </nav>
 </div>
@@ -50,21 +50,19 @@
     {/if}
   </nav>
   <div class="right">
-    {#await $me then me}
+    {#if $me}
       <div class="amount">
-        {#if me.connected}
-          <Amount amount={me.donator.balance} />
+        {#if $me.connected}
+          <Amount amount={$me.donator.balance} />
         {:else}
           <a use:link href="/signin">Sign In</a>
         {/if}
       </div>
-    {/await}
+    {/if}
     <div class="userpic">
-      {#await $me then me}
-        <Userpic user={me.donator} />
-      {:catch err}
-        <p>Catch {err}</p>
-      {/await}
+      {#if $me}
+        <Userpic user={$me.donator} />
+      {/if}
     </div>
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <div class="menu-button" on:click={() => { showMenu = true; }}><img src="/static/Burger.svg" alt="burger"></div>

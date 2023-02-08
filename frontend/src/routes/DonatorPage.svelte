@@ -16,7 +16,7 @@
 
   export let donator_id;
 
-  const donator = apiStore(`donator/${donator_id}`, `donator:${donator_id}`);
+  $: donator = apiStore(`donator/${donator_id}`, `donator:${donator_id}`);
   $: itsMe = donator_id === $me?.donator?.id;
 </script>
 
