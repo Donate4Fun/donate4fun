@@ -151,6 +151,10 @@ class SocialAccount(IdModel):
     def unique_name(self):
         raise NotImplementedError
 
+    @property
+    def display_name(self):
+        raise NotImplementedError
+
 
 class YoutubeChannel(SocialAccount):
     provider: SocialProvider = SocialProvider.youtube.value
@@ -163,6 +167,10 @@ class YoutubeChannel(SocialAccount):
     @property
     def unique_name(self):
         return f'@{self.handle}' or self.title
+
+    @property
+    def display_name(self):
+        return self.title
 
     class Config:
         orm_mode = True
@@ -203,6 +211,10 @@ class TwitterAccount(SocialAccount):
     @property
     def unique_name(self):
         return f'@{self.handle}'
+
+    @property
+    def display_name(self):
+        return self.name
 
     class Config:
         orm_mode = True

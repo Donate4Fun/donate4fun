@@ -65,4 +65,6 @@ async def get_social_account(
     return dict(
         **account.dict(),
         is_my=account.owner_id == me.id,
+        unique_name=account.unique_name,
+        display_name=account.display_name,
     )

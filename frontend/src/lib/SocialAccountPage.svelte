@@ -28,7 +28,7 @@
   {#if $account === null}
     <Loader />
   {:else}
-    <Title title="Donate to {$account.name} {capitalize(provider)} account" />
+    <Title title="Donate to {$account.display_name} {capitalize(provider)} account" />
     <Section>
       {#if $account.banner_url}
         <div class="banner" style="background-image: url({$account.banner_url})"></div>

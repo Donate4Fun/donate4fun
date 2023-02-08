@@ -21,7 +21,7 @@
 </script>
 
 {#if $donator}
-  <Title title="Donator profile for {$donator.name}" />
+  <Title title="{$donator.name} profile" />
   <Section>
     <div class="main">
       {#if itsMe}
