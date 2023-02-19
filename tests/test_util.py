@@ -18,7 +18,8 @@ from PIL import Image, ImageChops
 from vcr.filters import replace_query_parameters
 from furl import furl
 
-from donate4fun.models import Donator, Credentials, SocialProvider
+from donate4fun.models import Donator, Credentials
+from donate4fun.social import SocialProvider
 from donate4fun.db import Notification
 from donate4fun.settings import Settings, settings
 from donate4fun.core import to_base64

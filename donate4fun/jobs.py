@@ -7,7 +7,7 @@ from .models import TwitterAccount, YoutubeChannel
 from .db_models import TwitterAuthorDb, YoutubeChannelDb
 from .db_libs import TwitterDbLib, YoutubeDbLib
 from .settings import settings
-from .twitter import fetch_twitter_author
+from .twitter import TwitterApiClient, make_apponly_client
 from .youtube import fetch_youtube_channel
 from .core import register_command
 
@@ -22,14 +22,16 @@ async def refetch_twitter_authors():
             | TwitterAuthorDb.last_fetched_at.is_(None)
         )
     logger.info("refetching %d authors", len(accounts))
-    for account in accounts:
-        try:
-            account: TwitterAccount = await fetch_twitter_author(user_id=account.user_id)
-        except Exception:
-            logger.exception("Failed to fetch twitter account %s", account)
-        else:
-            async with db.session() as db_session:
-                await TwitterDbLib(db_session).save_account(account)
+    async with make_apponly_client(token=settings.twitter.linking_oauth.bearer_token) as client:
+        api = TwitterApiClient(client)
+        for account in accounts:
+            try:
+                account: TwitterAccount = await api.get_user_by(user_id=account.user_id)
+            except Exception:
+                logger.exception("Failed to fetch twitter account %s", account)
+            else:
+                async with db.session() as db_session:
+                    await TwitterDbLib(db_session).save_account(account)
 
 
 @register_command

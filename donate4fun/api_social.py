@@ -3,7 +3,7 @@ from uuid import UUID
 import posthog
 from fastapi import APIRouter, Depends, HTTPException
 
-from .models import TransferResponse, Donator, SocialAccountOwned, Donation, SocialProvider
+from .models import TransferResponse, Donator, SocialAccountOwned, Donation, SocialProviderId
 from .types import ValidationError
 from .api_utils import get_db_session, load_donator, get_donator, get_donations_db, get_social_provider_db
 from .db_models import DonationDb
@@ -13,7 +13,7 @@ router = APIRouter(prefix='/social')
 
 @router.post('/{social_provider}/{account_id}/transfer', response_model=TransferResponse)
 async def transfer_social_account_donations(
-    social_provider: SocialProvider, account_id: UUID, db=Depends(get_db_session), donator: Donator = Depends(get_donator),
+    social_provider: SocialProviderId, account_id: UUID, db=Depends(get_db_session), donator: Donator = Depends(get_donator),
 ):
     donator = await load_donator(db, donator.id)
     social_db = get_social_provider_db(social_provider)(db)

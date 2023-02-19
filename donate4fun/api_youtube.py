@@ -10,10 +10,8 @@ from .models import (
     BaseModel, YoutubeVideo, YoutubeChannel, Donator, YoutubeChannelOwned, OAuthState,
     OAuthResponse,
 )
-from .youtube import (
-    find_comment, query_or_fetch_youtube_channel, ChannelInfo, fetch_user_channel,
-)
-from .db_youtube import YoutubeDbLib
+from .youtube import find_comment, ChannelInfo, fetch_user_channel
+from .youtube_provider import YoutubeProvider
 from .settings import settings
 from .types import OAuthError, AccountAlreadyLinked, Satoshi
 from .db import db
@@ -34,7 +32,7 @@ class YoutubeVideoResponse(BaseModel):
 @router.get('/video/{video_id}', response_model=YoutubeVideoResponse)
 async def youtube_video_info(video_id: str, db=Depends(get_db_session)):
     try:
-        video: YoutubeVideo = await YoutubeDbLib(db).query_youtube_video(video_id=video_id)
+        video: YoutubeVideo = await YoutubeProvider().wrap_db(db).query_youtube_video(video_id=video_id)
         return YoutubeVideoResponse(id=video.id, total_donated=video.total_donated)
     except NoResultFound:
         return YoutubeVideoResponse(id=None, total_donated=0)
@@ -57,7 +55,7 @@ async def ownership_check(donator=Depends(get_donator), db=Depends(get_db_sessio
     )
     channels = []
     for channel_id in channel_ids:
-        youtube_channel: YoutubeChannel = await query_or_fetch_youtube_channel(channel_id=channel_id, db=db)
+        youtube_channel: YoutubeChannel = await YoutubeProvider().query_or_fetch_account(channel_id=channel_id, db=db)
         is_new = await db.link_youtube_channel(youtube_channel, donator, via_oauth=False)
         if is_new:
             channels.append(youtube_channel)
@@ -96,8 +94,9 @@ async def finish_youtube_oauth(code: str, donator: Donator) -> tuple[Satoshi, Yo
         raise OAuthError("Failed to fetch user's channel") from exc
     try:
         async with db.session() as db_session:
-            youtube_db = YoutubeDbLib(db_session)
-            channel: YoutubeChannel = await query_or_fetch_youtube_channel(channel_id=channel_info.id, db=youtube_db)
+            provider = YoutubeProvider()
+            youtube_db = provider.wrap_db(db_session)
+            channel: YoutubeChannel = await provider.query_or_fetch_account(channel_id=channel_info.id, db=youtube_db)
             owned_channel: YoutubeChannelOwned = await youtube_db.query_account(id=channel.id)
             if not owned_channel.via_oauth:
                 await youtube_db.link_account(channel, donator, via_oauth=True)

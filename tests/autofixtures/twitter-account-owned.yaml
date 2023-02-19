@@ -1,15 +1,17 @@
 json:
   balance: 0
+  display_name: title
   handle: handle
   id: 00000000-0000-0000-0000-000000000001
-  is_my: false
+  is_my: true
   last_fetched_at: '2022-02-02T22:22:22'
   lightning_address: null
-  name: null
-  owner_id: null
+  name: title
+  owner_id: 00000000-0000-0000-0000-000000000000
   profile_image_url: null
   provider: twitter
   total_donated: 0
+  unique_name: '@handle'
   user_id: 123
-  via_oauth: false
+  via_oauth: true
 status_code: 200

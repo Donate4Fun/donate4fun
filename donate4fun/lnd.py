@@ -17,7 +17,7 @@ from pydantic import Field, AnyUrl
 
 from .settings import LndSettings, settings
 from .types import RequestHash, PaymentRequest
-from .models import Invoice, Donator, PayInvoiceResult, Donation
+from .models import Invoice, Donator, PayInvoiceResult, Donation, SocialAccount
 from .core import as_task, register_command, ContextualObject, from_base64, to_base64
 from .api_utils import track_donation, auto_transfer_donations
 from .db_donations import DonationsDbLib
@@ -91,7 +91,7 @@ class LndClient:
                 url=url,
                 **kwargs,
             ) as resp:
-                logger.debug("response: %s %s %d", method, url, resp.status_code)
+                logger.trace("response: %s %s %d", method, url, resp.status_code)
                 if not resp.is_success:
                     await resp.aread()
                 resp.raise_for_status()
@@ -121,14 +121,14 @@ class LndClient:
             while result := await queue.get():
                 yield result
 
-    async def create_invoice(self, **kwargs) -> Invoice:
+    async def create_invoice(self, expiry: int = None, **kwargs) -> Invoice:
         await self.ensure_ready()
         resp = await self.query(
             'POST',
             '/v1/invoices',
             data=dict(
                 **kwargs,
-                expiry=self.settings.invoice_expiry,
+                expiry=expiry or self.settings.invoice_expiry,
                 private=self.settings.private,
             ),
         )
@@ -254,10 +254,10 @@ def svg_to_png(svg_data: bytes) -> bytes:
     return svg2png(svg_data)
 
 
-def lightning_payment_metadata(receiver: Donator) -> str:
+def lightning_payment_metadata(receiver: Donator | SocialAccount) -> str:
     fields = [
         ("text/identifier", receiver.lightning_address),
-        ("text/plain", f"Tip for {receiver.name} [{receiver.id}]"),
+        ("text/plain", f"Tip for {receiver.unique_name} [{receiver.id}]"),
     ]
     prefix = 'data:image/svg+xml;base64,'
     if receiver.avatar_url.startswith(prefix):

@@ -13,3 +13,4 @@ tags
 /backups/
 /alembic/versions*
 /.coverage
+/media/

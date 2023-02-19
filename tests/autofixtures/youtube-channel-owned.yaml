@@ -2,6 +2,7 @@ json:
   balance: 0
   banner_url: null
   channel_id: UCxxx
+  display_name: title
   handle: null
   id: 00000000-0000-0000-0000-000000000001
   is_my: true
@@ -12,5 +13,6 @@ json:
   thumbnail_url: null
   title: title
   total_donated: 0
+  unique_name: '@None'
   via_oauth: true
 status_code: 200

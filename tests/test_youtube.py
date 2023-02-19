@@ -7,7 +7,8 @@ import sqlalchemy
 from donate4fun.lnd import LndClient, lnd, monitor_invoices_step
 from donate4fun.models import Donation, YoutubeChannel, Donator, YoutubeChannelOwned, OAuthState, DonateRequest, DonateResponse
 from donate4fun.types import PaymentRequest
-from donate4fun.youtube import query_or_fetch_youtube_video, ChannelInfo
+from donate4fun.youtube import ChannelInfo
+from donate4fun.youtube_provider import YoutubeProvider
 from donate4fun.jobs import refetch_youtube_channels
 from donate4fun.db_youtube import YoutubeDbLib
 from donate4fun.db_donations import DonationsDbLib
@@ -388,7 +389,7 @@ async def test_query_or_fetch_youtube_video(db_session, video_id):
     """
     One channel has banner, other not
     """
-    await query_or_fetch_youtube_video(video_id='VOG-fFhq7kk', db=YoutubeDbLib(db_session))
+    await YoutubeProvider().query_or_fetch_video(video_id='VOG-fFhq7kk', db=YoutubeDbLib(db_session))
 
 
 @mark_vcr

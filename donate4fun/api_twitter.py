@@ -8,9 +8,12 @@ from furl import furl
 from .models import TwitterAccount, Donator, TwitterAccountOwned, OAuthState, OAuthResponse, Toast
 from .types import ValidationError, OAuthError, AccountAlreadyLinked, Satoshi
 from .api_utils import get_donator, make_absolute_uri, make_redirect, signin_success_message, oauth_success_messages
-from .twitter import make_prove_message, make_link_oauth2_client, make_oauth1_client, fetch_twitter_me
+from .twitter import make_oauth1_client, make_oauth2_client, TwitterApiClient
+from .twitter_bot import make_prove_message
+from .core import app
 from .db_twitter import TwitterDbLib
 from .db import db
+from .settings import settings
 
 router = APIRouter(prefix='/twitter')
 logger = logging.getLogger(__name__)
@@ -23,7 +26,11 @@ async def twitter_ownership_message(me=Depends(get_donator)):
 
 @router.get('/oauth1', response_model=OAuthResponse)
 async def login_via_twitter_oauth1(request: Request, donator=Depends(get_donator)):
-    async with make_oauth1_client(redirect_uri=make_absolute_uri(request.url_for('oauth1_callback'))) as client:
+    oauth1_ctx = make_oauth1_client(
+        oauth=settings.twitter.linking_oauth,
+        redirect_uri=make_absolute_uri(request.url_for('oauth1_callback')),
+    )
+    async with oauth1_ctx as client:
         await client.fetch_request_token('https://api.twitter.com/oauth/request_token')
         auth_url: str = client.create_authorization_url('https://api.twitter.com/oauth/authorize')
         return OAuthResponse(url=auth_url)
@@ -38,7 +45,8 @@ async def oauth1_callback(
     if oauth_token is None or oauth_verifier is None:
         raise ValidationError("oauth_token and oauth_verifier parameters must be present")
     try:
-        async with make_oauth1_client(token=oauth_token) as client:
+        token = dict(oauth_token=oauth_token, oauth_verifier=oauth_verifier)
+        async with make_oauth1_client(oauth=settings.twitter.linking_oauth, token=token) as client:
             token: dict = await client.fetch_access_token('https://api.twitter.com/oauth/access_token', verifier=oauth_verifier)
             client.token = token
             try:
@@ -92,7 +100,7 @@ async def finish_twitter_oauth(code: str, donator: Donator, code_verifier: str) 
 
 async def login_or_link_twitter_account(client, donator: Donator) -> tuple[Satoshi, TwitterAccountOwned]:
     try:
-        account: TwitterAccount = await fetch_twitter_me(client)
+        account: TwitterAccount = await TwitterApiClient(client).get_me()
     except Exception as exc:
         raise OAuthError("Failed to fetch user's account") from exc
 
@@ -108,3 +116,15 @@ async def login_or_link_twitter_account(client, donator: Donator) -> tuple[Satos
         raise OAuthError("Failed to link account") from exc
     else:
         raise AccountAlreadyLinked(owned_account)
+
+
+def make_link_oauth2_client(token=None):
+    """
+    This client is used to link Twitter account to donator (OAuth2 flow)
+    """
+    return make_oauth2_client(
+        settings.twitter.linking_oauth,
+        scope='tweet.read users.read',
+        token=token,
+        redirect_uri=make_absolute_uri(app.url_path_for('oauth_redirect', provider='twitter')),
+    )

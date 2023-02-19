@@ -198,7 +198,7 @@ async def pubsub(db):
 @pytest.fixture
 async def app(db, settings, pubsub):
     posthog.disabled = True
-    async with create_app(settings) as app, anyio.create_task_group() as tg:
+    async with create_app() as app, anyio.create_task_group() as tg:
         lnd = get_alice_lnd()
         with app_var.assign(app), lnd_var.assign(lnd), pubsub_var.assign(pubsub), task_group.assign(tg):
             yield app

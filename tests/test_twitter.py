@@ -10,14 +10,16 @@ from donate4fun.models import (
     DonateRequest, TwitterAccount, TwitterAccountOwned, Donator, TwitterTweet, DonateResponse, DonationPaidRequest,
     PayInvoiceResult, DonationPaidRouteInfo, Donation,
 )
-from donate4fun.twitter import query_or_fetch_twitter_account
+from donate4fun.twitter_bot import MentionsBot
+from donate4fun.twitter_provider import TwitterProvider
 from donate4fun.lnd import lnd, monitor_invoices_step, PayInvoiceError
 from donate4fun.types import PaymentRequest, LightningAddress
 from donate4fun.db import db as db_var
 from donate4fun.db_twitter import TwitterDbLib
 from donate4fun.db_donations import DonationsDbLib
-from donate4fun.settings import settings
+from donate4fun.settings import settings, TwitterOAuth
 from donate4fun.jobs import refetch_twitter_authors
+from donate4fun import twitter_bot
 from tests.test_util import (
     verify_response, mark_vcr, check_notification, login_to, check_response, freeze_time, follow_oauth_flow,
     load_or_ask, verify_oauth_redirect,
@@ -125,6 +127,8 @@ async def test_donate_tweet_with_lightning_address(
                     ).dict(),
                 )).json())
                 donation = donate_response.donation
+                # Donation should be paid from balance (r_hash is not None) or be requested to be paid from client's wallet
+                # directly to a lightning address (donate_response.payment_request is not None)
                 assert (donation.r_hash is None) != (donate_response.payment_request is None)
                 if donation.r_hash is not None:
                     assert donation.paid_at != None  # noqa
@@ -197,7 +201,7 @@ async def test_link_twitter_account(twitter_db):
 @mark_vcr
 @pytest.mark.parametrize('params', [dict(handle='donate4_fun'), dict(user_id=12345), dict(handle='twiteis')])
 async def test_query_or_fetch_twitter_account(twitter_db, params):
-    await query_or_fetch_twitter_account(db=twitter_db, **params)
+    await TwitterProvider().query_or_fetch_account(db=twitter_db, **params)
 
 
 async def test_transfer_from_twitter(client, db, rich_donator, settings):
@@ -253,12 +257,12 @@ async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids, 
     monkeypatch.setattr('secrets.token_urlsafe', lambda size: urlsafe_b64encode(b'\x00' * size))
     monkeypatch.setattr('secrets.token_bytes', lambda size: b'\x00' * size)
 
-    async def patched_fetch_twitter_me(client) -> TwitterAccount:
+    async def patched_get_me(self) -> TwitterAccount:
         return account
-    monkeypatch.setattr('donate4fun.twitter.fetch_twitter_me', patched_fetch_twitter_me)
+    monkeypatch.setattr('donate4fun.twitter.TwitterApiClient.get_me', patched_get_me)
     account = TwitterAccount(
         user_id=123,
-        title='title',
+        name='title',
         handle='handle',
         description='description',
         last_fetched_at=datetime.utcnow(),
@@ -297,6 +301,7 @@ async def follow_oauth1_flow(client, name: str):
         headers=dict(referer=settings.base_url),
     )).json()
     auth_url: str = response['url']
+    # FIXME: rename .code to .link
     redirect_url: str = load_or_ask(f'{name}.code', f"Open this url {auth_url}, authorize and paste url here:")
     params = dict(furl(redirect_url).query.params)
     response = await client.get(
@@ -311,12 +316,12 @@ async def test_login_via_oauth1(client, settings, monkeypatch, db, freeze_uuids,
     monkeypatch.setattr('secrets.token_urlsafe', lambda size: urlsafe_b64encode(b'\x00' * size))
     monkeypatch.setattr('secrets.token_bytes', lambda size: b'\x00' * size)
 
-    async def patched_fetch_twitter_me(client) -> TwitterAccount:
+    async def patched_get_me(self) -> TwitterAccount:
         return account
-    monkeypatch.setattr('donate4fun.twitter.fetch_twitter_me', patched_fetch_twitter_me)
+    monkeypatch.setattr('donate4fun.twitter.TwitterApiClient.get_me', patched_get_me)
     account = TwitterAccount(
         user_id=123,
-        title='title',
+        name='title',
         handle='handle',
         description='description',
         last_fetched_at=time_of_freeze,
@@ -369,3 +374,68 @@ async def test_unlink_twitter_account(client, db):
         await twitter_db.link_account(account, donator, via_oauth=True)
     login_to(client, settings, donator)
     check_response(await client.post(f'/api/v1/social/twitter/{account.id}/unlink'))
+
+
+@mark_vcr
+@pytest.mark.parametrize('text,balance', [
+    ('100', None),
+    ('200', 100),
+    ('300', 400),
+])
+async def test_handle_twitter_mention(db, app, text: str, balance: int | None, monkeypatch):
+    mention = {
+        'author_id': '1591008723912343553',
+        'created_at': '2023-02-08T12:08:39.000Z',
+        'edit_history_tweet_ids': ['1623292724978896896'],
+        'id': '1623292724978896896',
+        'in_reply_to_user_id': '1616757608299339776',
+        'referenced_tweets': [{'id': '1622708944996114432', 'type': 'replied_to'}],
+        'text': f'@tip4fun @donate4_fun {text}',
+    }
+    if balance is not None:
+        async with db.session() as db_session:
+            twitter_db = TwitterDbLib(db_session)
+            account = TwitterAccount(
+                user_id=int(mention['author_id']),
+                handle='tip4fun',
+            )
+            await twitter_db.save_account(account)
+            donator = Donator(id=UUID(int=0), balance=balance)
+            await db_session.save_donator(donator)
+            await twitter_db.link_account(account, donator, via_oauth=True)
+
+    orig_make_qr_code = twitter_bot.make_qr_code
+    monkeypatch.setattr('donate4fun.twitter_bot.make_qr_code', lambda data: orig_make_qr_code(b'123qwe'))
+    settings.twitter.linking_oauth.bearer_token = 'secret'
+
+    class FixtureTokenLoader:
+        def __init__(self, token: dict):
+            self.token = token
+
+        async def load(self) -> dict:
+            return self.token
+
+    class PatchedMentionsBot(MentionsBot):
+        oauth1_token = FixtureTokenLoader(dict(
+            oauth_token="secret",
+            oauth_token_secret="secret",
+        ))
+        oauth2_token = FixtureTokenLoader(dict(
+            access_token="secret",
+            token_type="bearer",
+            expires_at=1676058441,
+        ))
+
+        @classmethod
+        @property
+        def oauth_settings(cls):
+            return TwitterOAuth(
+                consumer_key='JqyhuOUhGJNO4GLeb3t3PcySP',
+                consumer_secret='secret',
+                # @bryskin2
+                client_id='MWlyTVlGbUdXRkY2Q09ncGxkbzc6MTpjaQ',
+                client_secret='secret',
+            )
+
+    async with PatchedMentionsBot.create() as bot:
+        await bot.handle_mention(mention)

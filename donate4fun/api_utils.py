@@ -12,7 +12,7 @@ from sqlalchemy.orm.exc import NoResultFound  # noqa - imported from other modul
 from jwcrypto.jwt import JWT
 from jwcrypto.jwk import JWK
 
-from .models import Donator, Credentials, Donation, SocialProvider, SocialAccountOwned, SocialAccount, Toast
+from .models import Donator, Credentials, Donation, SocialProviderId, SocialAccountOwned, SocialAccount, Toast
 from .db import DbSession, db
 from .db_libs import TwitterDbLib, YoutubeDbLib, GithubDbLib, DonationsDbLib
 from .core import ContextualObject
@@ -133,7 +133,7 @@ def oauth_success_messages(linked_account: SocialAccount, transferred_amount: Sa
         f"{linked_account.provider.capitalize()} account {linked_account.unique_name} was successefully linked",
     )
     if transferred_amount > 0:
-        yield Toast('success', "Funds claimed", f"{transferred_amount} sats are successefully claimed")
+        yield Toast('success', "Funds claimed", f"{transferred_amount} sats were successefully claimed")
 
 
 def signin_success_message(account: SocialAccount) -> Toast:
@@ -156,9 +156,9 @@ def sha256hash(data: str) -> bytes:
     return hashlib.sha256(data.encode()).digest()
 
 
-def get_social_provider_db(social_provider: SocialProvider):
+def get_social_provider_db(social_provider: SocialProviderId):
     return {
-        SocialProvider.youtube: YoutubeDbLib,
-        SocialProvider.twitter: TwitterDbLib,
-        SocialProvider.github: GithubDbLib,
+        SocialProviderId.youtube: YoutubeDbLib,
+        SocialProviderId.twitter: TwitterDbLib,
+        SocialProviderId.github: GithubDbLib,
     }[social_provider]

@@ -4,24 +4,24 @@ from typing import Any
 from xml.etree import ElementTree as ET
 
 import httpx
+from bech32 import bech32_encode
 from mako.lookup import TemplateLookup
 from fastapi import Request, Response, FastAPI, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.exceptions import RequestValidationError
+from furl import furl
 from sqlalchemy.orm.exc import NoResultFound
 from jwcrypto.jwk import JWK
 
 from .api_utils import get_db_session, make_absolute_uri
-from .models import YoutubeChannel, TwitterAccount, Donation, Donator, GithubUser
-from .youtube import query_or_fetch_youtube_channel
-from .twitter import query_or_fetch_twitter_account
-from .github import query_or_fetch_github_user
+from .models import YoutubeChannel, Donation, Donator, SocialProviderId, SocialAccount
+from .social import SocialProvider
+from .youtube_provider import YoutubeProvider
 from .settings import settings
 from .db import db
 from .db_models import DonatorDb
 from .db_youtube import YoutubeDbLib
 from .db_twitter import TwitterDbLib
-from .db_github import GithubDbLib
 from .db_donations import DonationsDbLib
 from .lnd import lightning_payment_metadata
 
@@ -114,34 +114,48 @@ async def sitemap(request: Request, db_session=Depends(get_db_session)):
 
 @app.get('/d/{channel_id}')
 async def donate_redirect(request: Request, channel_id: str, db=Depends(get_db_session)):
-    youtube_channel: YoutubeChannel = await query_or_fetch_youtube_channel(channel_id=channel_id, db=YoutubeDbLib(db))
+    youtube_channel: YoutubeChannel = await YoutubeProvider().query_or_fetch_account(channel_id=channel_id, db=YoutubeDbLib(db))
     return RedirectResponse(f'{settings.base_url}/donate/{youtube_channel.id}', status_code=302)
 
 
-@app.get('/tw/{handle}')
-async def twitter_account_redirect(request: Request, handle: str, db=Depends(get_db_session)):
-    account: TwitterAccount = await query_or_fetch_twitter_account(handle=handle, db=TwitterDbLib(db))
-    return RedirectResponse(f'{settings.base_url}/twitter/{account.id}', status_code=302)
-
-
-@app.get('/gh/{login}')
-async def github_user_redirect(request: Request, login: str, db=Depends(get_db_session)):
-    user: GithubUser = await query_or_fetch_github_user(login=login, db=GithubDbLib(db))
-    return RedirectResponse(f'{settings.base_url}/github/{user.id}', status_code=302)
+@app.get('/{provider_slug}/{handle}')
+async def social_account_redirect(request: Request, provider_slug: str, handle: str, db=Depends(get_db_session)):
+    provider: SocialProvider = SocialProvider.from_slug(provider_slug)
+    account: SocialAccount = await provider.query_or_fetch_account(handle=handle, db=TwitterDbLib(db))
+    return RedirectResponse(make_absolute_uri(provider.get_account_path(account)), status_code=302)
 
 
 @app.get('/.well-known/lnurlp/{username}', response_class=JSONResponse)
-async def lightning_address(request: Request, username: str, db_session=Depends(get_db_session)):
-    receiver: Donator = await db_session.find_donator(DonatorDb.lightning_address == f'{username}@{request.headers["host"]}')
+@app.get('/.well-known/lnurlp/{provider_id}/{username}', response_class=JSONResponse)
+async def lightning_address(
+    request: Request, username: str, provider_id: SocialProviderId = 'donate4fun', db_session=Depends(get_db_session),
+):
+    if provider_id == 'donate4fun':
+        account: Donator = await db_session.find_donator(DonatorDb.lightning_address == f'{username}@{request.headers["host"]}')
+    else:
+        provider: SocialProvider = SocialProvider.create(provider_id)
+        account: SocialAccount = await provider.query_or_fetch_account(handle=username)
     return dict(
         status='OK',
-        callback=f'{settings.base_url}/api/v1/lnurl/{receiver.id}/payment-callback',
+        callback=make_absolute_uri(f'/api/v1/lnurl/{provider_id}/{account.id}/payment-callback'),
         maxSendable=settings.lnurlp.max_sendable_sats * 1000,
         minSendable=settings.lnurlp.min_sendable_sats * 1000,
-        metadata=lightning_payment_metadata(receiver),
+        metadata=lightning_payment_metadata(account),
         commentAllowed=255,
         tag="payRequest",
     )
+
+
+@app.get('/lnurlp/{provider}/{username}')
+async def lnurlp_redirect(provider: str, username: str):
+    url = furl(make_absolute_uri(f'/.well-known/lnurlp/{provider}/{username}'), scheme='lnurlp').url
+    return RedirectResponse(url, status_code=302)
+
+
+@app.get('/lightning/{provider}/{username}')
+async def lightning_redirect(provider: str, username: str):
+    encoded_url = bech32_encode(make_absolute_uri(f'/.well-known/lnurlp/{provider}/{username}'))
+    return RedirectResponse(f'lightning:{encoded_url}', status_code=302)
 
 
 @app.get("/.well-known/openid-configuration", response_class=JSONResponse)

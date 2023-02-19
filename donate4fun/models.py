@@ -78,10 +78,11 @@ class WithdrawalToken(BaseModel):
     withdrawal_id: UUID
 
 
-class SocialProvider(str, Enum):
+class SocialProviderId(str, Enum):
     youtube = 'youtube'
     twitter = 'twitter'
     github = 'github'
+    donate4fun = 'donate4fun'
 
 
 class DonateRequest(BaseModel):
@@ -91,7 +92,7 @@ class DonateRequest(BaseModel):
     twitter_account_id: UUID | None  # Deprecated
     github_user_id: UUID | None  # Deprecated
     social_account_id: UUID | None
-    social_provider: SocialProvider | None
+    social_provider: SocialProviderId | None
     target: HttpUrl | None
     lightning_address: LightningAddress | None
     donator_twitter_handle: str | None
@@ -141,7 +142,7 @@ class IdModel(BaseModel):
 
 
 class SocialAccount(IdModel):
-    provider: SocialProvider
+    provider: SocialProviderId
     last_fetched_at: datetime | None
     balance: int = 0
     total_donated: int = 0
@@ -157,7 +158,7 @@ class SocialAccount(IdModel):
 
 
 class YoutubeChannel(SocialAccount):
-    provider: SocialProvider = SocialProvider.youtube.value
+    provider: SocialProviderId = SocialProviderId.youtube.value
     title: str
     channel_id: str
     thumbnail_url: Url | None
@@ -202,7 +203,7 @@ class YoutubeVideo(IdModel):
 
 
 class TwitterAccount(SocialAccount):
-    provider: SocialProvider = SocialProvider.twitter.value
+    provider: SocialProviderId = SocialProviderId.twitter.value
     user_id: int
     handle: str
     name: str | None
@@ -232,14 +233,18 @@ class TwitterTweet(IdModel):
 
 
 class GithubUser(SocialAccount):
-    provider: SocialProvider = SocialProvider.github.value
+    provider: SocialProviderId = SocialProviderId.github.value
     user_id: int
     login: str
     name: str
     avatar_url: AnyUrl
 
     @property
-    def unique_name(self):
+    def unique_name(self) -> str:
+        return self.login
+
+    @property
+    def display_name(self) -> str:
         return self.name
 
     class Config:
@@ -257,6 +262,10 @@ class Donator(IdModel):
     balance: int = Field(default=0)
     lightning_address: str | None
     connected: bool | None
+
+    @property
+    def unique_name(self) -> str:
+        return self.name
 
     @validator('name', always=True)
     def generate_name(cls, v, values):

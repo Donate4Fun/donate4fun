@@ -6,7 +6,10 @@ backend:
   config:
     base_url: https://stage.donate4.fun
     twitter:
-      enable_bot: false
+      conversations_bot:
+        enabled: false
+      mentions_bot:
+        enabled: true
     posthog:
       debug: true
     sentry:

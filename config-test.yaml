@@ -6,13 +6,18 @@ youtube:
     client_id: client_id
     client_secret: client_secret
 twitter:
-  bearer_token: bearer_token
-  greeting: ""
-  enable_bot: false
   self_id: "123"
   dm_check_interval: PT30S
   refresh_timeout: P1D
-  oauth:
+  conversations_bot:
+    enabled: false
+    oauth: null
+    greeting: ""
+  mentions_bot:
+    enabled: false
+    oauth: null
+  linking_oauth:
+    bearer_token: bearer_token
     client_id: client_id
     client_secret: client_secret
     consumer_key: consumer_key

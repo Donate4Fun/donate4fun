@@ -2,5 +2,5 @@ aud: http://localhost:3000
 iss: http://localhost:3000
 toasts:
 - icon: success
-  message: You've successfully signed in using Nikolay Bryskin Github account
+  message: You've successfully signed in using nikicat Github account
   title: Successful sign-in

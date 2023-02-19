@@ -23,7 +23,7 @@ from .settings import load_settings, Settings, settings
 from .db import Database, db
 from .lnd import monitor_invoices, LndClient, lnd
 from .pubsub import PubSubBroker, pubsub
-from .twitter import run_twitter_bot_restarting
+from . import twitter_bot
 from .core import app, register_command, commands
 from .screenshot import create_screenshoter_app
 from .api_utils import task_group
@@ -33,13 +33,35 @@ logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def create_app(settings: Settings):
+async def create_common():
+    if settings.rollbar:
+        rollbar.init(**settings.rollbar.dict())
+    if settings.sentry:
+        sentry_sdk.init(
+            dsn=settings.sentry.dsn,
+            traces_sample_rate=settings.sentry.traces_sample_rate,
+            environment=settings.sentry.environment,
+        )
+    if settings.google_cloud_logging:
+        client = google.cloud.logging.Client()
+        client.setup_logging()
+    if settings.bugsnag:
+        bugsnag.configure(**settings.bugsnag.dict(), project_root=os.path.dirname(__file__))
+    if settings.posthog and settings.posthog.enabled:
+        posthog.project_api_key = settings.posthog.project_api_key
+        posthog.host = settings.posthog.host
+        posthog.debug = settings.posthog.debug
+    else:
+        posthog.disabled = True
+    yield
+
+
+@asynccontextmanager
+async def create_app():
     app = FastAPI(
         debug=settings.fastapi.debug,
         root_path=settings.fastapi.root_path,
     )
-    if settings.rollbar:
-        rollbar.init(**settings.rollbar.dict())
     if settings.fastapi.debug:
         api.app.add_middleware(
             DebugToolbarMiddleware,
@@ -47,12 +69,8 @@ async def create_app(settings: Settings):
             profiler_options=dict(interval=.0002, async_mode='enabled'),
         )
     if settings.sentry:
-        sentry_sdk.init(
-            dsn=settings.sentry.dsn,
-            traces_sample_rate=settings.sentry.traces_sample_rate,
-            environment=settings.sentry.environment,
-        )
         app.add_middleware(SentryAsgiMiddleware)
+
     api.app.add_middleware(
         CORSMiddleware,
         allow_origins=[
@@ -114,9 +132,10 @@ async def main(args):
         module, command = command.split('.')
         __import__(f'donate4fun.{module}')
     with load_settings(), db.assign(Database(settings.db)):
-        result = await commands[command](*args[2:])
-        if result is not None:
-            print(result)
+        async with create_common():
+            result = await commands[command](*args[2:])
+            if result is not None:
+                print(result)
 
 
 @register_command
@@ -141,22 +160,13 @@ async def create_table(tablename: str):
 async def serve():
     pubsub_ = PubSubBroker()
     lnd_ = LndClient(settings.lnd)
-    async with create_app(settings) as app_, anyio.create_task_group() as tg:
-        if settings.google_cloud_logging:
-            client = google.cloud.logging.Client()
-            client.setup_logging()
-        if settings.bugsnag:
-            bugsnag.configure(**settings.bugsnag.dict(), project_root=os.path.dirname(__file__))
-        if settings.posthog:
-            posthog.project_api_key = settings.posthog.project_api_key
-            posthog.host = settings.posthog.host
-            posthog.debug = settings.posthog.debug
-        else:
-            posthog.disabled = True
+    async with create_app() as app_, anyio.create_task_group() as tg:
         with app.assign(app_), lnd.assign(lnd_), pubsub.assign(pubsub_), task_group.assign(tg):
             async with pubsub.run(db), monitor_invoices(lnd_, db), AsyncExitStack() as stack:
-                if settings.twitter.enable_bot:
-                    await stack.enter_async_context(run_twitter_bot_restarting(db))
+                if settings.twitter.conversations_bot.enabled:
+                    await stack.enter_async_context(twitter_bot.run_converstaions_bot())
+                if settings.twitter.mentions_bot.enabled:
+                    await stack.enter_async_context(twitter_bot.run_mentions_bot())
                 hyper_config = Config.from_mapping(settings.hypercorn)
                 hyper_config.accesslog = logging.getLogger('hypercorn.accesslog')
                 iface = hyper_config.bind[0].split(':')[0]

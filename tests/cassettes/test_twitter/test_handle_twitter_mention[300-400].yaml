@@ -1,0 +1,210 @@
+interactions:
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - secret
+      connection:
+      - keep-alive
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.2
+    method: GET
+    uri: https://api.twitter.com/2/users/1591008723912343553?user.fields=id%2Cname%2Cprofile_image_url%2Cdescription%2Cverified%2Centities
+  response:
+    content: '{"data": {"username": "Bryskin2", "verified": false, "name": "Nikolay
+      Bryskin", "id": "1591008723912343553", "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+      "description": ""}}'
+    headers:
+      api-version:
+      - '2.61'
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '183'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Sun, 19 Feb 2023 19:44:36 UTC
+      perf:
+      - '7626143928'
+      server:
+      - tsa_o
+      set-cookie:
+      - guest_id=v1%3A167683587631943113; Max-Age=34214400; Expires=Thu, 21 Mar 2024
+        19:44:36 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      strict-transport-security:
+      - max-age=631138519
+      x-access-level:
+      - read
+      x-connection-hash:
+      - 86d563595032705bb7b9e20ea94d84f4f3e6ac461070a53910b980103fe666cc
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '300'
+      x-rate-limit-remaining:
+      - '295'
+      x-rate-limit-reset:
+      - '1676836770'
+      x-response-time:
+      - '139'
+      x-transaction-id:
+      - 86130e0536e5ad20
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - secret
+      connection:
+      - keep-alive
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.2
+    method: GET
+    uri: https://api.twitter.com/2/users/1616757608299339776?user.fields=id%2Cname%2Cprofile_image_url%2Cdescription%2Cverified%2Centities
+  response:
+    content: '{"data": {"verified": false, "id": "1616757608299339776", "description":
+      "Bitcoin Lightning tips - mention me to send a tip. Part of @donate4_fun service.",
+      "profile_image_url": "https://pbs.twimg.com/profile_images/1624461699909574663/ko3M0TUK_normal.jpg",
+      "name": "Tip4Fun", "username": "tip4fun", "entities": {"url": {"urls": [{"start":
+      0, "end": 23, "url": "https://t.co/jkmQZP2YbL", "expanded_url": "https://donate4.fun",
+      "display_url": "donate4.fun"}]}, "description": {"mentions": [{"start": 59,
+      "end": 71, "username": "donate4_fun"}]}}}}'
+    headers:
+      api-version:
+      - '2.61'
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '335'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Sun, 19 Feb 2023 19:44:36 UTC
+      perf:
+      - '7626143928'
+      server:
+      - tsa_o
+      set-cookie:
+      - guest_id=v1%3A167683587659109893; Max-Age=34214400; Expires=Thu, 21 Mar 2024
+        19:44:36 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      strict-transport-security:
+      - max-age=631138519
+      x-access-level:
+      - read
+      x-connection-hash:
+      - bfbd4b3dd08d78ec685d40747332bd5db28a1dc276b8fb253b51d082ed9f7c79
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '300'
+      x-rate-limit-remaining:
+      - '294'
+      x-rate-limit-reset:
+      - '1676836770'
+      x-response-time:
+      - '133'
+      x-transaction-id:
+      - 474ed5eb28caf4d3
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: '{"reply": {"in_reply_to_tweet_id": "1623292724978896896"}, "text": "http://localhost:3000/donation/03d9613c-72af-440e-8ea1-bdc5fb5e8c2d"}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '137'
+      content-type:
+      - application/json
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.2
+    method: POST
+    uri: https://api.twitter.com/2/tweets
+  response:
+    content: '{"data": {"edit_history_tweet_ids": ["1627393736819851264"], "id": "1627393736819851264",
+      "text": "@Bryskin2 @donate4_fun http://localhost:3000/donation/03d9613c-72af-440e-8ea1-bdc5fb5e8c2d"}}'
+    headers:
+      api-version:
+      - '2.61'
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '170'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Sun, 19 Feb 2023 19:44:37 UTC
+      location:
+      - https://api.twitter.com/2/tweets/1627393736819851264
+      perf:
+      - '7626143928'
+      server:
+      - tsa_o
+      set-cookie:
+      - guest_id=v1%3A167683587700387819; Max-Age=34214400; Expires=Thu, 21 Mar 2024
+        19:44:37 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      strict-transport-security:
+      - max-age=631138519
+      x-access-level:
+      - read-write-directmessages
+      x-connection-hash:
+      - 18907e1506e12b4ca4d7e2be0be1002d302022f87eab80a0df68c7171c7cc4ea
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '200'
+      x-rate-limit-remaining:
+      - '197'
+      x-rate-limit-reset:
+      - '1676836772'
+      x-response-time:
+      - '248'
+      x-transaction-id:
+      - 06c1323769d6b3d9
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 201
+version: 1

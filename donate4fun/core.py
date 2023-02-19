@@ -103,8 +103,8 @@ app = ContextualObject("app")
 commands = {}
 
 
-def register_command(func):
-    commands[func.__name__] = func
+def register_command(func, name: str = None):
+    commands[name or func.__name__] = func
     return func
 
 
