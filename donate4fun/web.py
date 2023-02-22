@@ -14,7 +14,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from jwcrypto.jwk import JWK
 
 from .api_utils import get_db_session, make_absolute_uri
-from .models import YoutubeChannel, Donation, Donator, SocialProviderId, SocialAccount
+from .models import YoutubeChannel, Donation, Donator, SocialProviderId, SocialProviderSlug, SocialAccount
 from .social import SocialProvider
 from .youtube_provider import YoutubeProvider
 from .settings import settings
@@ -115,12 +115,17 @@ async def sitemap(request: Request, db_session=Depends(get_db_session)):
 @app.get('/d/{channel_id}')
 async def donate_redirect(request: Request, channel_id: str, db=Depends(get_db_session)):
     youtube_channel: YoutubeChannel = await YoutubeProvider().query_or_fetch_account(channel_id=channel_id, db=YoutubeDbLib(db))
-    return RedirectResponse(f'{settings.base_url}/donate/{youtube_channel.id}', status_code=302)
+    return RedirectResponse(make_absolute_uri(f'/donate/{youtube_channel.id}'), status_code=302)
 
 
-@app.get('/{provider_slug}/{handle}')
-async def social_account_redirect(request: Request, provider_slug: str, handle: str, db=Depends(get_db_session)):
-    provider: SocialProvider = SocialProvider.from_slug(provider_slug)
+# These slugs should match SocialProviderSlug values
+@app.get('/tw/{handle}')
+@app.get('/yt/{handle}')
+@app.get('/gh/{handle}')
+@app.get('/d4f/{handle}')
+async def social_account_redirect(request: Request, handle: str, db=Depends(get_db_session)):
+    provider_slug: str = furl(request.url.path).path.segments[0]
+    provider: SocialProvider = SocialProvider.from_slug(SocialProviderSlug(provider_slug))
     account: SocialAccount = await provider.query_or_fetch_account(handle=handle, db=TwitterDbLib(db))
     return RedirectResponse(make_absolute_uri(provider.get_account_path(account)), status_code=302)
 
@@ -134,7 +139,8 @@ async def lightning_address(
         account: Donator = await db_session.find_donator(DonatorDb.lightning_address == f'{username}@{request.headers["host"]}')
     else:
         provider: SocialProvider = SocialProvider.create(provider_id)
-        account: SocialAccount = await provider.query_or_fetch_account(handle=username)
+        async with db.session() as db_session:
+            account: SocialAccount = await provider.query_or_fetch_account(db=provider.wrap_db(db_session), handle=username)
     return dict(
         status='OK',
         callback=make_absolute_uri(f'/api/v1/lnurl/{provider_id}/{account.id}/payment-callback'),

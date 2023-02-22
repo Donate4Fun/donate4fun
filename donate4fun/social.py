@@ -4,7 +4,7 @@ from furl import furl
 
 from .db import DbSession
 from .db_social import SocialDbWrapper
-from .models import SocialProviderId, Donation, SocialAccount
+from .models import SocialProviderId, SocialProviderSlug, Donation, SocialAccount
 from .types import UnsupportedTarget
 
 
@@ -59,13 +59,15 @@ class SocialProvider(ABC):
                 raise UnsupportedTarget("URL is invalid")
 
     @classmethod
-    def from_slug(cls, slug: str):
+    def from_slug(cls, slug: SocialProviderSlug):
         match slug:
-            case 'tw':
+            case SocialProviderSlug.twitter:
                 return cls.create(SocialProviderId.twitter)
-            case 'gh':
+            case SocialProviderSlug.github:
                 return cls.create(SocialProviderId.github)
-            case 'yt':
+            case SocialProviderSlug.youtube:
                 return cls.create(SocialProviderId.youtube)
+            case SocialProviderSlug.donate4fun:
+                return cls.create(SocialProviderId.donate4fun)
             case _:
                 raise UnsupportedTarget("Slug is invalid")

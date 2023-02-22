@@ -79,10 +79,23 @@ class WithdrawalToken(BaseModel):
 
 
 class SocialProviderId(str, Enum):
+    """
+    Full name - used in API's paths.
+    """
     youtube = 'youtube'
     twitter = 'twitter'
     github = 'github'
     donate4fun = 'donate4fun'
+
+
+class SocialProviderSlug(str, Enum):
+    """
+    Slugs (short names) - used in webpage's paths.
+    """
+    youtube = 'yt'
+    twitter = 'tw'
+    github = 'gh'
+    donate4fun = 'd4f'
 
 
 class DonateRequest(BaseModel):
