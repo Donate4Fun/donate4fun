@@ -132,6 +132,14 @@ async def create_table(tablename: str):
         await db.create_table(tablename)
 
 
+class AccessFilter(logging.Filter):
+    """
+    This filter removes /api/v1/status logs from accesslog
+    """
+    def filter(self, record):
+        return record.args.get('U') != '/api/v1/status'
+
+
 @register_command
 @with_common_libs
 async def serve():
@@ -146,6 +154,7 @@ async def serve():
                     await stack.enter_async_context(twitter_bot.run_mentions_bot())
                 hyper_config = Config.from_mapping(settings.hypercorn)
                 hyper_config.accesslog = logging.getLogger('hypercorn.accesslog')
+                hyper_config.accesslog.addFilter(AccessFilter())
                 iface = hyper_config.bind[0].split(':')[0]
                 hyper_config.bind = f'{iface}:{settings.api_port}'
                 if settings.bugsnag:
