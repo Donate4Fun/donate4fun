@@ -12,4 +12,4 @@ RUN poetry run playwright install chromium
 RUN poetry run playwright install-deps
 COPY donate4fun /app/donate4fun
 COPY frontend /app/frontend
-CMD ["poetry", "run", "python", "-m", "donate4fun"]
+CMD ["poetry", "run", "donate4fun-cli", "serve"]

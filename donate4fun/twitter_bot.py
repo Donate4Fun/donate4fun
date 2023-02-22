@@ -23,9 +23,9 @@ from qrcode.image.styledpil import StyledPilImage
 from lnurl.core import _url_encode as lnurl_encode
 from starlette.datastructures import URL
 
-from .db import NoResultFound, Database, db
+from .db import NoResultFound, db
 from .models import TwitterAccount, Donator, WithdrawalToken, Donation, TwitterAccountOwned, TwitterTweet, PaymentRequest
-from .core import as_task, register_command, catch_exceptions
+from .core import as_task, catch_exceptions
 from .settings import settings
 from .twitter import (
     make_oauth2_client, TwitterHandle,
@@ -33,7 +33,7 @@ from .twitter import (
 )
 from .twitter_provider import TwitterProvider
 from .donation import donate
-from .api_utils import make_absolute_uri
+from .api_utils import make_absolute_uri, register_app_command
 from .lnd import lnd, LndClient
 
 logger = logging.getLogger(__name__)
@@ -266,8 +266,8 @@ class ConversationsBot(BaseTwitterBot):
             yield dm_conversation_id
 
 
-register_command(ConversationsBot.obtain_oauth1_token, 'obtain_conversations_bot_oauth1_token')
-register_command(ConversationsBot.obtain_oauth2_token, 'obtain_conversations_bot_oauth2_token')
+register_app_command(ConversationsBot.obtain_oauth1_token, 'obtain_conversations_bot_oauth1_token')
+register_app_command(ConversationsBot.obtain_oauth2_token, 'obtain_conversations_bot_oauth2_token')
 
 
 class MentionsBot(BaseTwitterBot):
@@ -389,12 +389,12 @@ class MentionsBot(BaseTwitterBot):
         logger.trace("tweeted https://twitter.com/status/%s: %s", tweet['id'], tweet['text'])
 
 
-register_command(MentionsBot.obtain_oauth1_token, 'obtain_mentions_bot_oauth1_token')
-register_command(MentionsBot.obtain_oauth2_token, 'obtain_mentions_bot_oauth2_token')
-register_command(MentionsBot.validate_tokens, 'validate_mentions_bot_tokens')
+register_app_command(MentionsBot.obtain_oauth1_token, 'obtain_mentions_bot_oauth1_token')
+register_app_command(MentionsBot.obtain_oauth2_token, 'obtain_mentions_bot_oauth2_token')
+register_app_command(MentionsBot.validate_tokens, 'validate_mentions_bot_tokens')
 
 
-@register_command
+@register_app_command
 async def test_upload_media():
     async with make_oauth1_client(token=await MentionsBot.oauth1_token.load()) as client:
         try:
@@ -425,16 +425,16 @@ def make_qr_code(data: str) -> bytes:
     return image_data.getvalue()
 
 
-@register_command
+@register_app_command
 async def make_withdrawal_lnurl(author_id):
-    async with Database(settings.db).session() as db_session:
+    async with db.session() as db_session:
         lnurl: str = await create_withdrawal(db_session, twitter_author_id=author_id)
         print(f"lightning:{lnurl.lower()}")
 
 
-@register_command
+@register_app_command
 async def test_make_qr_code(author_id):
-    async with Database(settings.db).session() as db_session:
+    async with db.session() as db_session:
         lnurl: str = await create_withdrawal(db_session, twitter_author_id=author_id)
     qrcode = make_qr_code(lnurl)
     filename = 'tmp-qrcode.png'
@@ -443,7 +443,7 @@ async def test_make_qr_code(author_id):
     os.system(f'xdg-open {filename}')
 
 
-@register_command
+@register_app_command
 async def fetch_twitter_conversations(token: str):
     async with ConversationsBot.create() as bot:
         print([conversation_id async for conversation_id in bot.fetch_conversations()])
@@ -463,7 +463,7 @@ def restarting(func):
 
 
 @as_task
-@register_command
+@register_app_command
 @restarting
 async def run_conversations_bot():
     async with ConversationsBot.create() as bot:
@@ -471,7 +471,7 @@ async def run_conversations_bot():
 
 
 @as_task
-@register_command
+@register_app_command
 @restarting
 async def run_mentions_bot():
     async with MentionsBot.create() as bot:

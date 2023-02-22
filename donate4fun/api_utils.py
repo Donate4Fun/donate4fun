@@ -1,10 +1,17 @@
-import unicodedata
 import hashlib
 import json
+import os
+import unicodedata
+from contextlib import asynccontextmanager
+from functools import wraps
 from uuid import uuid4, UUID
 
-import posthog
 import httpx
+import bugsnag
+import rollbar
+import google.cloud.logging
+import posthog
+import sentry_sdk
 from furl import furl
 from fastapi import Request, Depends, HTTPException
 from fastapi.responses import RedirectResponse
@@ -13,11 +20,11 @@ from jwcrypto.jwt import JWT
 from jwcrypto.jwk import JWK
 
 from .models import Donator, Credentials, Donation, SocialProviderId, SocialAccountOwned, SocialAccount, Toast
-from .db import DbSession, db
+from .db import DbSession, db, Database
 from .db_libs import TwitterDbLib, YoutubeDbLib, GithubDbLib, DonationsDbLib
-from .core import ContextualObject
+from .core import ContextualObject, register_command
 from .types import LightningAddress, Satoshi
-from .settings import settings
+from .settings import settings, load_settings
 
 
 task_group = ContextualObject('task_group')
@@ -162,3 +169,50 @@ def get_social_provider_db(social_provider: SocialProviderId):
         SocialProviderId.twitter: TwitterDbLib,
         SocialProviderId.github: GithubDbLib,
     }[social_provider]
+
+
+def as_decorator(ctxmgr):
+    @wraps(ctxmgr)
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            async with ctxmgr():
+                return await func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
+@as_decorator
+@asynccontextmanager
+async def with_common_libs():
+    with load_settings(), db.assign(Database(settings.db)):
+        async with create_common():
+            yield
+
+
+@asynccontextmanager
+async def create_common():
+    if settings.rollbar:
+        rollbar.init(**settings.rollbar.dict())
+    if settings.sentry:
+        sentry_sdk.init(
+            dsn=settings.sentry.dsn,
+            traces_sample_rate=settings.sentry.traces_sample_rate,
+            environment=settings.sentry.environment,
+        )
+    if settings.google_cloud_logging:
+        client = google.cloud.logging.Client()
+        client.setup_logging()
+    if settings.bugsnag:
+        bugsnag.configure(**settings.bugsnag.dict(), project_root=os.path.dirname(__file__))
+    if settings.posthog and settings.posthog.enabled:
+        posthog.project_api_key = settings.posthog.project_api_key
+        posthog.host = settings.posthog.host
+        posthog.debug = settings.posthog.debug
+    else:
+        posthog.disabled = True
+    yield
+
+
+def register_app_command(func, command_name: str | None = None):
+    return register_command(with_common_libs(func), command_name)

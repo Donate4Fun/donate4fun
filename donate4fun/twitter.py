@@ -10,13 +10,12 @@ from typing import Any
 import httpx
 from authlib.integrations.httpx_client import AsyncOAuth1Client, AsyncOAuth2Client
 
-from .db import Database, db
+from .db import db
 from .db_twitter import TwitterDbLib
 from .models import TwitterAccount
 from .types import ValidationError
 from .settings import settings, TwitterOAuth
-from .core import register_command
-from .api_utils import scrape_lightning_address
+from .api_utils import scrape_lightning_address, register_app_command
 
 logger = logging.getLogger(__name__)
 
@@ -158,7 +157,7 @@ class TwitterApiClient:
         return media_id
 
 
-@register_command
+@register_app_command
 async def fetch_and_save_twitter_account(handle: str):
     async with db.session() as db_session, make_apponly_client(token=settings.twitter.linking_oauth.bearer_token) as client:
         account: TwitterAccount = await TwitterApiClient(client).get_user_by(handle=handle)
@@ -235,12 +234,12 @@ def api_data_to_twitter_account(data: dict):
     )
 
 
-@register_command
+@register_app_command
 async def get_profile_banner():
     """
     Does it work?
     """
-    async with Database(settings.db).session() as db_session:
+    async with db.session() as db_session:
         token: dict = await db_session.query_oauth_token('twitter_oauth1')
     async with make_oauth1_client() as client:
         client.token = token

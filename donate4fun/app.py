@@ -1,13 +1,9 @@
+import asyncio
 import logging
-import os
+import sys
 from contextlib import asynccontextmanager, AsyncExitStack
 
 import anyio
-import bugsnag
-import rollbar
-import google.cloud.logging
-import posthog
-import sentry_sdk
 from bugsnag.asgi import BugsnagMiddleware
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -26,34 +22,10 @@ from .pubsub import PubSubBroker, pubsub
 from . import twitter_bot
 from .core import app, register_command, commands
 from .screenshot import create_screenshoter_app
-from .api_utils import task_group
+from .api_utils import task_group, with_common_libs
 from . import api, web
 
 logger = logging.getLogger(__name__)
-
-
-@asynccontextmanager
-async def create_common():
-    if settings.rollbar:
-        rollbar.init(**settings.rollbar.dict())
-    if settings.sentry:
-        sentry_sdk.init(
-            dsn=settings.sentry.dsn,
-            traces_sample_rate=settings.sentry.traces_sample_rate,
-            environment=settings.sentry.environment,
-        )
-    if settings.google_cloud_logging:
-        client = google.cloud.logging.Client()
-        client.setup_logging()
-    if settings.bugsnag:
-        bugsnag.configure(**settings.bugsnag.dict(), project_root=os.path.dirname(__file__))
-    if settings.posthog and settings.posthog.enabled:
-        posthog.project_api_key = settings.posthog.project_api_key
-        posthog.host = settings.posthog.host
-        posthog.debug = settings.posthog.debug
-    else:
-        posthog.disabled = True
-    yield
 
 
 @asynccontextmanager
@@ -126,16 +98,18 @@ class AuthMiddleware(AuthlibMiddleware):
             self.security_flags = self.security_flags.replace('httponly; ', '')
 
 
+def cli():
+    asyncio.run(main(sys.argv))
+
+
 async def main(args):
     command = args[1] if len(args) > 1 else 'serve'
     if '.' in command:
         module, command = command.split('.')
         __import__(f'donate4fun.{module}')
-    with load_settings(), db.assign(Database(settings.db)):
-        async with create_common():
-            result = await commands[command](*args[2:])
-            if result is not None:
-                print(result)
+    result = await commands[command](*args[2:])
+    if result is not None:
+        print(result)
 
 
 @register_command
@@ -148,15 +122,18 @@ async def help():
 
 @register_command
 async def create_db():
-    await db.create_tables()
+    with load_settings(), db.assign(Database(settings.db)):
+        await db.create_tables()
 
 
 @register_command
 async def create_table(tablename: str):
-    await db.create_table(tablename)
+    with load_settings(), db.assign(Database(settings.db)):
+        await db.create_table(tablename)
 
 
 @register_command
+@with_common_libs
 async def serve():
     pubsub_ = PubSubBroker()
     lnd_ = LndClient(settings.lnd)

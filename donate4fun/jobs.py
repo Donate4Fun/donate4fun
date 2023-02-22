@@ -9,12 +9,12 @@ from .db_libs import TwitterDbLib, YoutubeDbLib
 from .settings import settings
 from .twitter import TwitterApiClient, make_apponly_client
 from .youtube import fetch_youtube_channel
-from .core import register_command
+from .api_utils import register_app_command
 
 logger = logging.getLogger(__name__)
 
 
-@register_command
+@register_app_command
 async def refetch_twitter_authors():
     async with db.session() as db_session:
         accounts: list[TwitterAccount] = await TwitterDbLib(db_session).query_accounts(
@@ -34,7 +34,7 @@ async def refetch_twitter_authors():
                     await TwitterDbLib(db_session).save_account(account)
 
 
-@register_command
+@register_app_command
 async def refetch_youtube_channels():
     async with db.session() as db_session:
         channels: list[YoutubeChannel] = await YoutubeDbLib(db_session).query_accounts(
@@ -52,7 +52,7 @@ async def refetch_youtube_channels():
                 await YoutubeDbLib(db_session).save_account(channel)
 
 
-@register_command
+@register_app_command
 async def notify(topic: str, object_id: str):
     async with db.session() as db_session:
         await db_session.object_changed(topic, object_id)

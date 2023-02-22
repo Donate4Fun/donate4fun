@@ -18,8 +18,8 @@ from pydantic import Field, AnyUrl
 from .settings import LndSettings, settings
 from .types import RequestHash, PaymentRequest
 from .models import Invoice, Donator, PayInvoiceResult, Donation, SocialAccount
-from .core import as_task, register_command, ContextualObject, from_base64, to_base64
-from .api_utils import track_donation, auto_transfer_donations
+from .core import as_task, ContextualObject, from_base64, to_base64
+from .api_utils import track_donation, auto_transfer_donations, register_app_command
 from .db_donations import DonationsDbLib
 
 logger = logging.getLogger(__name__)
@@ -233,7 +233,7 @@ async def monitor_invoices_step(lnd_client, db):
         logger.debug("Stopped monitoring invoices")
 
 
-@register_command
+@register_app_command
 async def pay_withdraw_request(lnurl: str):
     decoded_url = _lnurl_decode(lnurl)
     logger.debug("decoded lnurl: %s", decoded_url)

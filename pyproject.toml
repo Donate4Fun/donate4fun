@@ -84,8 +84,7 @@ format = "colored"
 max_line_length = 130
 
 [tool.poetry.scripts]
-withdraw = 'donate4fun.scripts:withdraw'
-pay = 'donate4fun.scripts:pay'
+donate4fun-cli = 'donate4fun.app:cli'
 
 [tool.pytest.ini_options]
 filterwarnings = [

@@ -9,11 +9,11 @@ from pydantic import BaseModel
 from glom import glom
 
 from .settings import settings
+from .db import db
 from .types import Url, ValidationError
-from .db import Database
 from .models import YoutubeChannel
-from .core import register_command, app
-from .api_utils import scrape_lightning_address, make_absolute_uri
+from .core import app
+from .api_utils import scrape_lightning_address, make_absolute_uri, register_app_command
 
 ChannelId = str
 VideoId = str
@@ -91,10 +91,10 @@ def should_refresh_channel(channel: YoutubeChannel):
     return channel.last_fetched_at is None or channel.last_fetched_at < datetime.utcnow() - settings.youtube.refresh_timeout
 
 
-@register_command
+@register_app_command
 async def fetch_and_save_youtube_channel(channel_id: str):
     channel: YoutubeChannel = await fetch_youtube_channel(channel_id)
-    async with Database(settings.db).session() as db:
+    async with db.session() as db:
         await db.save_youtube_channel(channel)
 
 
@@ -116,7 +116,7 @@ async def search_for_youtube_channel(handle: str, aiogoogle, youtube) -> Youtube
         raise YoutubeChannelNotFound(f"Could not find a YouTube channel for {handle}")
 
 
-@register_command
+@register_app_command
 @withyoutube
 async def fetch_youtube_channel(channel_id: str, aiogoogle, youtube) -> YoutubeChannel:
     req = youtube.channels.list(id=channel_id, part='snippet,brandingSettings')
