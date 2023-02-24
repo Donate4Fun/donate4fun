@@ -28,6 +28,10 @@ class SocialProvider(ABC):
     def get_account_path(self, account: SocialAccount) -> str:
         pass
 
+    @abstractmethod
+    def set_donation_receiver(self, donation: Donation, receiver: SocialAccount):
+        pass
+
     @staticmethod
     def create(provider: SocialProviderId) -> 'SocialProvider':
         match provider:

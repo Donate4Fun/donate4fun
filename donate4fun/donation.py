@@ -7,7 +7,7 @@ from lnpayencode import LnAddr
 from .models import Donation, PaymentRequest, Invoice, PayInvoiceResult
 from .db import DbSession
 from .db_donations import DonationsDbLib
-from .types import LnurlpError, RequestHash
+from .types import LnurlpError, RequestHash, Satoshi
 from .api_utils import load_donator, auto_transfer_donations, track_donation, HttpClient, sha256hash
 
 from .lnd import lnd
@@ -63,11 +63,15 @@ async def donate(donation: Donation, db_session: DbSession, expiry: int = None) 
     return pay_req, donation
 
 
-async def fetch_lightning_address(donation: Donation) -> PaymentRequest:
-    name, host = donation.lightning_address.split('@', 1)
-    async with HttpClient() as client:
+def lightning_address_to_lnurlp(address: str) -> str:
+    name, host = address.split('@', 1)
+    return f'https://{host}/.well-known/lnurlp/{name}'
+
+
+class LnurlpClient(HttpClient):
+    async def fetch_metadata(self, lnurlp: str) -> dict:
         try:
-            response = await client.get(f'https://{host}/.well-known/lnurlp/{name}', follow_redirects=True)
+            response = await self.get(lnurlp, follow_redirects=True)
         except httpx.HTTPStatusError as exc:
             raise LnurlpError(f"{exc.request.url} responded with {exc.response.status_code}: {exc.response.content}") from exc
         except httpx.HTTPError as exc:
@@ -76,37 +80,24 @@ async def fetch_lightning_address(donation: Donation) -> PaymentRequest:
         # https://github.com/lnurl/luds/blob/luds/06.md
         if metadata.get('status', 'OK') != 'OK':
             raise LnurlpError(f"Status is not OK: {metadata}")
-        if not metadata['minSendable'] <= donation.amount * 1000 <= metadata['maxSendable']:
-            raise LnurlpError(f"Amount is out of bounds: {donation.amount} {metadata}")
-        fields = dict(json.loads(metadata['metadata']))
-        if donation.donator_twitter_account:
-            name = '@' + donation.donator_twitter_account.handle
-        else:
-            name = donation.donator.name
-        params = dict(amount=donation.amount * 1000)
+        return metadata
+
+    async def fetch_invoice(self, metadata: dict, amount: Satoshi, name: str, comment: str) -> PaymentRequest:
+        if not metadata['minSendable'] <= amount * 1000 <= metadata['maxSendable']:
+            raise LnurlpError(f"Amount is out of bounds: {amount} {metadata}")
+        params = dict(amount=amount * 1000)
         if payerdata_request := metadata.get('payerData'):
             payerdata = {}
             if 'name' in payerdata_request:
                 payerdata['name'] = f'{name} via Donate4.Fun'
             # Separators are important for hashes to match
             params['payerdata'] = json.dumps(payerdata, separators=(',', ':'))
-        if donation.youtube_video:
-            target = f'https://youtube.com/watch?v={donation.youtube_video.video_id}'
-        elif donation.twitter_tweet:
-            target = f'https://twitter.com/{donation.twitter_account.handle}/status/{donation.twitter_tweet.tweet_id}'
-        elif donation.youtube_channel:
-            target = f'https://youtube.com/channel/{donation.youtube_channel.channel_id}'
-        elif donation.twitter_account:
-            target = f'https://twitter.com/{donation.twitter_account.handle}'
-        elif donation.lightning_address:
-            target = fields.get('text/identifier', donation.lightning_address)
-        comment = f'Tip from {name} via Donate4.Fun for {target}'
         if 'commentAllowed' in metadata:
             params['comment'] = comment[:metadata['commentAllowed']]
         try:
-            response = await client.get(metadata['callback'], params=params)
+            response = await self.get(metadata['callback'], params=params)
         except httpx.HTTPStatusError as exc:
-            raise LnurlpError(f"Callback responded with {exc}: {response.content}") from exc
+            raise LnurlpError(f"Callback responded with {exc}: {exc.response.content}") from exc
         except httpx.HTTPError as exc:
             raise LnurlpError(f"Callback responded with {exc}") from exc
         data = response.json()
@@ -120,8 +111,35 @@ async def fetch_lightning_address(donation: Donation) -> PaymentRequest:
         if sha256hash(full_metadata) != expected_hash:
             raise LnurlpError(f"Metadata hash does not match invoice hash: sha256({full_metadata}) != {expected_hash}")
         invoice_amount = invoice.amount * 10 ** 8
-        if invoice_amount != donation.amount:
-            raise LnurlpError(f"Amount in invoice does not match requested amount: {invoice_amount} != {donation.amount}")
+        if invoice_amount != amount:
+            raise LnurlpError(f"Amount in invoice does not match requested amount: {invoice_amount} != {amount}")
+        return pay_req
+
+
+async def fetch_lightning_address(donation: Donation) -> PaymentRequest:
+    async with LnurlpClient() as client:
+        metadata: dict = await client.fetch_metadata(lightning_address_to_lnurlp(donation.lightning_address))
+        fields = dict(json.loads(metadata['metadata']))
+        if donation.donator_twitter_account:
+            name = '@' + donation.donator_twitter_account.handle
+        else:
+            name = donation.donator.name
+        if donation.youtube_video:
+            target = f'https://youtube.com/watch?v={donation.youtube_video.video_id}'
+        elif donation.twitter_tweet:
+            target = f'https://twitter.com/{donation.twitter_account.handle}/status/{donation.twitter_tweet.tweet_id}'
+        elif donation.youtube_channel:
+            target = f'https://youtube.com/channel/{donation.youtube_channel.channel_id}'
+        elif donation.twitter_account:
+            target = f'https://twitter.com/{donation.twitter_account.handle}'
+        elif donation.lightning_address:
+            target = fields.get('text/identifier', donation.lightning_address)
+        pay_req = await client.fetch_invoice(
+            metadata,
+            amount=donation.amount,
+            name=f'{name} via Donate4.Fun',
+            comment=f'Tip from {name} via Donate4.Fun for {target}'
+        )
         return pay_req
 
 

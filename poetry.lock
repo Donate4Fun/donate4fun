@@ -887,6 +887,20 @@ http2 = ["h2 (>=3,<5)"]
 socks = ["socksio (>=1.0.0,<2.0.0)"]
 
 [[package]]
+name = "httpx-ws"
+version = "0.3.0"
+description = "WebSockets support for HTTPX"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+anyio = "*"
+httpcore = ">=0.16.1"
+httpx = ">=0.23.1"
+wsproto = "*"
+
+[[package]]
 name = "hypercorn"
 version = "0.14.3+dev"
 description = "A ASGI Server based on Hyper libraries and inspired by Gunicorn"
@@ -2033,7 +2047,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "2454c0d91070a869ba1671a332930da4a2b44c0d0f7b398434d078acdbcd9470"
+content-hash = "2b9374d0b162054e28c27b1cba68ed56174c9306e322f4e83afbaaabe85a7c3b"
 
 [metadata.files]
 aiofiles = [
@@ -2716,6 +2730,10 @@ httpcore = [
 httpx = [
     {file = "httpx-0.23.2-py3-none-any.whl", hash = "sha256:106cded342a44e443060fab70ef327139248c61939e77d73964560c8d8b57069"},
     {file = "httpx-0.23.2.tar.gz", hash = "sha256:e824a6fa18ffaa6423c6f3a32d5096fc15bd8dff43663a223f06242fc69451a8"},
+]
+httpx-ws = [
+    {file = "httpx_ws-0.3.0-py3-none-any.whl", hash = "sha256:68c53208076c5414ff7eadbd559ec4a10f1b399865220bb4bbdbc06eb9444b0d"},
+    {file = "httpx_ws-0.3.0.tar.gz", hash = "sha256:694cf6d52622167cfc611c854312039dad03e470abbaf2efcfdbb08a3c29f1eb"},
 ]
 hypercorn = []
 hyperframe = [

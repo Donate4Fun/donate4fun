@@ -241,9 +241,9 @@ async def payment_callback(
         amount=amount,
         donator=None,
         r_hash=invoice.r_hash,  # This hash is needed to find and complete donation after payment succeeds
-        receiver=Donator(id=receiver_id),
         # FIXME: save comment
     )
+    provider.set_donation_receiver(donation, receiver)
     await DonationsDbLib(db_session).create_donation(donation)
     return PaymentCallbackResponse(
         status='OK',

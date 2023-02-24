@@ -88,9 +88,12 @@ class YoutubeProvider(SocialProvider):
         youtube_db = self.wrap_db(db_session)
         if video_id:
             donation.youtube_video = await self.query_or_fetch_video(video_id=video_id, db=youtube_db)
-            donation.youtube_channel = donation.youtube_video.youtube_channel
+            self.set_donation_receiver(donation, donation.youtube_video.youtube_channel)
         elif channel_id:
-            donation.youtube_channel = await self.query_or_fetch_account(channel_id=channel_id, db=youtube_db)
+            self.set_donation_receiver(donation, await self.query_or_fetch_account(channel_id=channel_id, db=youtube_db))
         elif handle:
-            donation.youtube_channel = await self.query_or_fetch_account(handle=handle, db=youtube_db)
+            self.set_donation_receiver(donation, await self.query_or_fetch_account(handle=handle, db=youtube_db))
         donation.lightning_address = donation.youtube_channel.lightning_address
+
+    def set_donation_receiver(self, donation: Donation, receiver: YoutubeChannel):
+        donation.youtube_channel = receiver

@@ -55,6 +55,7 @@ jwcrypto = "^1.4.2"
 cairosvg = "^2.6.0"
 bech32 = "^1.2.0"
 vcrpy = {git = "https://github.com/nikicat/vcrpy", rev = "fix-httpx-stub"}
+httpx-ws = "^0.3.0"
 
 [tool.poetry.dev-dependencies]
 ipython = "^8.3.0"

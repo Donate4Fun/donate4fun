@@ -25,3 +25,6 @@ class Donate4FunProvider(SocialProvider):
 
     async def get_account_path(self, account: Donator):
         raise NotImplementedError
+
+    def set_donation_receiver(self, donation: Donation, receiver: Donator):
+        donation.receiver = receiver

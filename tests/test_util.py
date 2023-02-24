@@ -13,6 +13,7 @@ from io import BytesIO
 import anyio
 import pytest
 import yaml
+from asgi_testclient import TestClient
 from authlib.jose import jwt
 from PIL import Image, ImageChops
 from vcr.filters import replace_query_parameters
@@ -133,14 +134,17 @@ freeze_time = pytest.mark.freeze_time('2022-02-02 22:22:22', ignore=['logging'])
 
 
 @asynccontextmanager
-async def check_notification(client, topic: str, id_: UUID):
-    logger.trace(f"Subscribing to {topic}:{id_}")
-    async with client.ws_session(f"/api/v1/subscribe/{topic}:{id_}") as ws:
-        logger.trace(f"Subscribed to {topic}:{id_}")
+async def check_notification(client: TestClient, topic: str, id_: UUID | None = None):
+    if id_ is not None:
+        topic = f'{topic}:{id_}'
+    logger.trace(f"Subscribing to {topic}")
+    # WORKAROUND: we use asgi_testclient.TestClient because fastapi.TestClient doesn't support websockets
+    async with client.ws_session(f"/api/v1/subscribe/{topic}", client) as ws:
+        logger.trace(f"Subscribed to {topic}")
         yield
         with anyio.fail_after(5):
             notification = Notification.parse_obj(await ws.receive_json())
-            logger.trace(f"Received notification from {topic}:{id_}: {notification}")
+            logger.trace(f"Received notification from {topic}: {notification}")
         assert notification.status == 'OK'
 
 

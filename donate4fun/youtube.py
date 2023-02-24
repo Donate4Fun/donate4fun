@@ -94,8 +94,8 @@ def should_refresh_channel(channel: YoutubeChannel):
 @register_app_command
 async def fetch_and_save_youtube_channel(channel_id: str):
     channel: YoutubeChannel = await fetch_youtube_channel(channel_id)
-    async with db.session() as db:
-        await db.save_youtube_channel(channel)
+    async with db.session() as db_session:
+        await db_session.save_youtube_channel(channel)
 
 
 @withyoutube

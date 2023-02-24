@@ -162,11 +162,11 @@ class SocialAccount(IdModel):
     lightning_address: LightningAddress | None
 
     @property
-    def unique_name(self):
+    def unique_name(self) -> str:
         raise NotImplementedError
 
     @property
-    def display_name(self):
+    def display_name(self) -> str:
         raise NotImplementedError
 
 
@@ -185,6 +185,10 @@ class YoutubeChannel(SocialAccount):
     @property
     def display_name(self):
         return self.title
+
+    @property
+    def avatar_url(self):
+        return self.thumbnail_url
 
     class Config:
         orm_mode = True
@@ -229,6 +233,10 @@ class TwitterAccount(SocialAccount):
     @property
     def display_name(self):
         return self.name
+
+    @property
+    def avatar_url(self):
+        return self.profile_image_url
 
     class Config:
         orm_mode = True

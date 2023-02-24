@@ -151,7 +151,9 @@ def signin_success_message(account: SocialAccount) -> Toast:
 
 
 async def raise_on_4xx_5xx(response):
-    response.raise_for_status()
+    if response.status_code >= 400:
+        await response.aread()
+        response.raise_for_status()
 
 
 class HttpClient(httpx.AsyncClient):
@@ -215,4 +217,7 @@ async def create_common():
 
 
 def register_app_command(func, command_name: str | None = None):
-    return register_command(with_common_libs(func), command_name)
+    register_command(with_common_libs(func), command_name)
+    # WORKAROUND: return original func instead of wrapper with `with_common_libs` to avoid reinitialization of
+    # common libs (settings and database) when we call this func from code.
+    return func

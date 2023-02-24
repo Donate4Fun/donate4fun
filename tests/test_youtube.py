@@ -403,7 +403,7 @@ async def test_refetch_youtube_channels(db, last_fetched_at):
     )
     async with db.session() as db_session:
         await YoutubeDbLib(db_session).save_account(youtube_channel)
-    await refetch_youtube_channels.__wrapped__()
+    await refetch_youtube_channels()
     async with db.session() as db_session:
         refetched_channel = await YoutubeDbLib(db_session).query_account(id=youtube_channel.id)
     assert refetched_channel.last_fetched_at == datetime.utcnow()

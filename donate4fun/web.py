@@ -24,6 +24,7 @@ from .db_youtube import YoutubeDbLib
 from .db_twitter import TwitterDbLib
 from .db_donations import DonationsDbLib
 from .lnd import lightning_payment_metadata
+from .donation import LnurlpClient, lightning_address_to_lnurlp
 
 app = FastAPI()
 
@@ -141,6 +142,11 @@ async def lightning_address(
         provider: SocialProvider = SocialProvider.create(provider_id)
         async with db.session() as db_session:
             account: SocialAccount = await provider.query_or_fetch_account(db=provider.wrap_db(db_session), handle=username)
+            if account.lightning_address:
+                # Pay directly to a lightning address provider
+                async with LnurlpClient() as client:
+                    metadata: dict = await client.fetch_metadata(lightning_address_to_lnurlp(account.lightning_address))
+                    return metadata
     return dict(
         status='OK',
         callback=make_absolute_uri(f'/api/v1/lnurl/{provider_id}/{account.id}/payment-callback'),

@@ -13,7 +13,8 @@ from .twitter import make_apponly_client, TwitterApiClient, UnsupportedTwitterUr
 
 
 class TwitterProvider(SocialProvider):
-    def wrap_db(self, db_session: DbSession) -> TwitterDbLib:
+    @staticmethod
+    def wrap_db(db_session: DbSession) -> TwitterDbLib:
         return TwitterDbLib(db_session)
 
     async def query_or_fetch_account(self, db: TwitterDbLib, **params) -> TwitterAccount:
@@ -47,5 +48,8 @@ class TwitterProvider(SocialProvider):
             # FIXME: we should possibly save link to the tweet author
             await db.get_or_create_tweet(tweet)
             donation.twitter_tweet = tweet
-        donation.twitter_account = await self.query_or_fetch_account(db=db, handle=author_handle)
+        self.set_donation_receiver(donation, await self.query_or_fetch_account(db=db, handle=author_handle))
         donation.lightning_address = donation.twitter_account.lightning_address
+
+    def set_donation_receiver(self, donation: Donation, receiver: TwitterAccount):
+        donation.twitter_account = receiver

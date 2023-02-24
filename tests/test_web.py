@@ -2,11 +2,17 @@ from uuid import UUID
 import pytest
 
 import psutil
+from asgi_testclient import TestClient
+from furl import furl
 
-from donate4fun.models import YoutubeChannel, DonateRequest
+from donate4fun.models import YoutubeChannel, DonateRequest, SocialAccount, SocialProviderId
+from donate4fun.social import SocialProvider
 from donate4fun.db_youtube import YoutubeDbLib
+from donate4fun.donation import LnurlpClient
+from donate4fun.lnd import lnd, monitor_invoices_step
+from donate4fun.types import Satoshi
 
-from tests.test_util import verify_response, check_response, login_to, mark_vcr, freeze_time
+from tests.test_util import verify_response, check_response, login_to, mark_vcr, freeze_time, check_notification
 from tests.fixtures import find_unused_port, app_serve
 
 
@@ -112,3 +118,37 @@ async def test_twitter_donation_image(client, settings, twitter_account, webapp,
 
     response = await client.get(f'/preview/donation/{donate_response.json()["donation"]["id"]}')
     verify_response(response, 'twitter-donation-share-image', 200)
+
+
+class TestLnurlpClient(TestClient, LnurlpClient):
+    """
+    Try to emulate httpx.AsyncClient using TestClient
+    """
+    async def get(self, url: str, **kwargs):
+        return await super().get(url)
+
+
+@mark_vcr
+@pytest.mark.parametrize('social_provider,username', [
+    (SocialProviderId.twitter, 'Bryskin2'),
+    (SocialProviderId.twitter, 'nbryskin'),
+    (SocialProviderId.youtube, '@donate4fun'),
+    # (SocialProviderId.github, 'nikicat'),  # NotImplemented
+])
+async def test_lnurlp(app, db, payer_lnd, client, social_provider: SocialProviderId, username: str):
+    lnurlp_client = LnurlpClient(app=app, base_url="http://test")
+    response = await lnurlp_client.get(f'/lnurlp/{social_provider.value}/{username}')
+    check_response(response, 302)
+    amount: Satoshi = 100
+    metadata = await lnurlp_client.fetch_metadata(str(furl(response.headers['location']).path))
+    if furl(metadata['callback']).host != 'test':
+        # If social account has a lightning address then don't try to pay to it from a regtest network
+        return
+    pay_req = await lnurlp_client.fetch_invoice(metadata, amount=amount, name='some name', comment='some comment')
+    async with monitor_invoices_step(lnd, db), check_notification(client, topic='donations'):
+        await payer_lnd.pay_invoice(pay_req)
+    async with db.session() as db_session:
+        provider = SocialProvider.create(social_provider)
+        db_lib = provider.wrap_db(db_session)
+        account: SocialAccount = await provider.query_or_fetch_account(db_lib, handle=username)
+        assert account.balance == amount

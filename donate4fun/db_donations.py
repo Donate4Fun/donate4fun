@@ -120,6 +120,7 @@ class DonationsDbLib(DbSessionWrapper):
             logger.warning(f"Donation {donation_id} was already handled, skipping")
             return
         await self.update_balance_for_donation(donation, donation.amount)
+        logger.debug("Donation %s paid", donation)
 
     async def update_balance_for_donation(self, donation: DonationDb, amount: int):
         """

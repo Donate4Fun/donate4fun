@@ -355,7 +355,7 @@ async def test_refetch_twitter_authors(db, twitter_account, last_fetched_at):
     twitter_account.last_fetched_at = last_fetched_at
     async with db.session() as db_session:
         await TwitterDbLib(db_session).save_account(twitter_account)
-    await refetch_twitter_authors.__wrapped__()
+    await refetch_twitter_authors()
     async with db.session() as db_session:
         refetched_account = await TwitterDbLib(db_session).query_account(id=twitter_account.id)
     assert refetched_account.last_fetched_at == datetime.utcnow()
