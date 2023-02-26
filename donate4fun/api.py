@@ -229,7 +229,7 @@ async def payment_callback(
     db_session=Depends(get_db_session),
 ):
     """
-    This callback is needed for lightning address support.
+    This callback is needed for lightning address support. It automatically creates a Donation.
     """
     provider = SocialProvider.create(provider_id)
     receiver: SocialAccount | Donator = await provider.wrap_db(db_session).query_account(id=receiver_id)

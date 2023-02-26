@@ -20,6 +20,7 @@ import httpx
 import qrcode
 from furl import furl
 from qrcode.image.styledpil import StyledPilImage
+from qrcode.constants import ERROR_CORRECT_H, ERROR_CORRECT_M
 from lnurl.core import _url_encode as lnurl_encode
 from starlette.datastructures import URL
 
@@ -329,7 +330,7 @@ class MentionsBot(BaseTwitterBot):
                 # Long expiry because this will be posted in Twitter
                 pay_req, donation = await donate(donation, db_session, expiry=3600)
             if pay_req:
-                await self.send_payreq(tweet_id, receiver_account.handle, pay_req)
+                await self.send_payreq(tweet_id, receiver_account.handle, donation, pay_req)
             elif donation.paid_at:
                 await self.share_donation_preview(tweet_id, donation)
             else:
@@ -344,11 +345,11 @@ class MentionsBot(BaseTwitterBot):
     async def share_donation_preview(self, tweet_id: int, donation: Donation):
         await self.send_tweet(reply_to=tweet_id, text=make_absolute_uri(f'/donation/{donation.id}'))
 
-    async def send_payreq(self, tweet_id: int, handle: TwitterHandle, pay_req: PaymentRequest):
-        qrcode: bytes = make_qr_code(pay_req)
+    async def send_payreq(self, tweet_id: int, handle: TwitterHandle, donation: Donation, pay_req: PaymentRequest):
+        qrcode: bytes = make_qr_code(pay_req, ERROR_CORRECT_M)
         media_id: int = await self.client.upload_media(qrcode, 'image/png', category='tweet_image')
-        url: str = make_absolute_uri(f'/lnurlp/twitter/{handle}')
-        await self.send_tweet(text=f"Invoice: {url}", reply_to=tweet_id, media_id=media_id)
+        invoice_url = make_absolute_uri(f'/api/v1/donation/{donation.id}/invoice')
+        await self.send_tweet(text=f"Invoice: {invoice_url}", reply_to=tweet_id, media_id=media_id)
 
     async def fetch_mentions(self, handle: TwitterHandle) -> AsyncIterator[dict]:
         logger.info("fetching new mentions for @%s", handle)
@@ -370,7 +371,11 @@ class MentionsBot(BaseTwitterBot):
             'expansions': 'author_id,referenced_tweets.id,in_reply_to_user_id,referenced_tweets.id.author_id',
         }
         async with self.apponly_client.stream('GET', '/tweets/search/stream', params=params, timeout=3600) as response:
-            response.raise_for_status()
+            try:
+                response.raise_for_status()
+            except httpx.HTTPStatusError:
+                await response.aread()
+                raise
             async for chunk in response.aiter_text():
                 chunk = chunk.strip()
                 if chunk:
@@ -416,8 +421,14 @@ async def create_withdrawal(db_session, twitter_account):
     return lnurl_encode(str(withdraw_url))
 
 
-def make_qr_code(data: str) -> bytes:
-    qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H)
+def make_qr_code(data: str, error_correction: int = ERROR_CORRECT_H) -> bytes:
+    """
+    L - 7%
+    M - 15%
+    Q - 25%
+    H - 30%
+    """
+    qr = qrcode.QRCode(error_correction=error_correction)
     qr.add_data(data)
     image: StyledPilImage = qr.make_image()
     image_data = io.BytesIO()

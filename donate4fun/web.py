@@ -4,7 +4,6 @@ from typing import Any
 from xml.etree import ElementTree as ET
 
 import httpx
-from bech32 import bech32_encode
 from mako.lookup import TemplateLookup
 from fastapi import Request, Response, FastAPI, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
@@ -162,12 +161,6 @@ async def lightning_address(
 async def lnurlp_redirect(provider: str, username: str):
     url = furl(make_absolute_uri(f'/.well-known/lnurlp/{provider}/{username}'), scheme='lnurlp').url
     return RedirectResponse(url, status_code=302)
-
-
-@app.get('/lightning/{provider}/{username}')
-async def lightning_redirect(provider: str, username: str):
-    encoded_url = bech32_encode(make_absolute_uri(f'/.well-known/lnurlp/{provider}/{username}'))
-    return RedirectResponse(f'lightning:{encoded_url}', status_code=302)
 
 
 @app.get("/.well-known/openid-configuration", response_class=JSONResponse)

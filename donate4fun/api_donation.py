@@ -4,6 +4,7 @@ from uuid import UUID
 from datetime import datetime
 
 from fastapi import Request, Depends, HTTPException, APIRouter
+from fastapi.responses import RedirectResponse
 from furl import furl
 from sqlalchemy import select
 
@@ -94,6 +95,20 @@ async def get_donation(donation_id: UUID, db_session=Depends(get_donations_db)):
     else:
         payment_request = None
     return DonateResponse(donation=donation, payment_request=payment_request)
+
+
+@router.get("/donation/{donation_id}/invoice")
+async def get_invoice(donation_id: UUID, db_session=Depends(get_donations_db)):
+    donation: Donation = await db_session.query_donation(id=donation_id)
+    if donation.paid_at is None:
+        invoice: Invoice = await lnd.lookup_invoice(donation.r_hash)
+        if invoice is None or invoice.state == 'CANCELED':
+            logger.debug(f"Invoice {invoice} cancelled, recreating")
+            invoice = await lnd.create_invoice(memo=make_memo(donation), value=donation.amount)
+            await db_session.update_donation(donation_id=donation_id, r_hash=invoice.r_hash)
+        return RedirectResponse(f'lightning:{invoice.payment_request}', status_code=307)
+    else:
+        return RedirectResponse(f'/donation/{donation.id}', status_code=303)
 
 
 @router.post("/donation/{donation_id}/paid", response_model=Donation)
