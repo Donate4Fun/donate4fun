@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select, desc, union, literal_column
@@ -6,12 +7,12 @@ from sqlalchemy.dialects.postgresql import insert
 
 from .models import Donatee
 from .db import DbSessionWrapper
-from .db_models import EmailNotificationDb
-from .db_libs import YoutubeDbLib, TwitterDbLib, GithubDbLib
+from .db_models import EmailNotificationDb, OAuthTokenDb
 
 
 class OtherDbLib(DbSessionWrapper):
     def donatees_subquery(self):
+        from .db_libs import YoutubeDbLib, TwitterDbLib, GithubDbLib
         return union(*[
             select(
                 db_lib.db_model.id,
@@ -53,3 +54,23 @@ class OtherDbLib(DbSessionWrapper):
             .returning(EmailNotificationDb.id)
         )
         return resp.scalar()
+
+
+class OAuthDbLib(DbSessionWrapper):
+    async def query_oauth_token(self, name: str) -> dict[str, Any]:
+        result = await self.execute(
+            select(OAuthTokenDb.token)
+            .where(OAuthTokenDb.name == name)
+        )
+        return result.scalars().one()
+
+    async def save_oauth_token(self, name: str, token: dict[str, Any]):
+        await self.execute(
+            insert(OAuthTokenDb)
+            .values(name=name, token=token)
+            .on_conflict_do_update(
+                index_elements=[OAuthTokenDb.name],
+                set_=dict(token=token),
+                where=OAuthTokenDb.name == name,
+            )
+        )

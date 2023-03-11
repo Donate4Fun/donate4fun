@@ -1,0 +1,129 @@
+interactions:
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      grpc-metadata-macaroon:
+      - secret
+      host:
+      - localhost:8081
+      user-agent:
+      - python-httpx/0.23.2
+    method: GET
+    uri: https://localhost:8081/v1/getinfo
+  response:
+    content: '{"version": "0.15.1-beta commit=v0.15.1-beta", "commit_hash": "fd1a95bf322cdd1c743a1554f8e470fbf9a5e564",
+      "identity_pubkey": "03e803ff6eb04880c8c9644bb0acc78e4aceba87b3e4c6db9b6f57bb3f797f29d8",
+      "alias": "alice", "color": "#3399ff", "num_pending_channels": 0, "num_active_channels":
+      2, "num_inactive_channels": 0, "num_peers": 1, "block_height": 148, "block_hash":
+      "0f3709aa5097d670f3de9766bc69bf7f879a159299e5f1a9f6405ebe6aeea3ed", "best_header_timestamp":
+      "1678355465", "synced_to_chain": true, "synced_to_graph": true, "testnet": false,
+      "chains": [{"chain": "bitcoin", "network": "regtest"}], "uris": ["03e803ff6eb04880c8c9644bb0acc78e4aceba87b3e4c6db9b6f57bb3f797f29d8@172.28.0.2:9735"],
+      "features": {"0": {"name": "data-loss-protect", "is_required": true, "is_known":
+      true}, "5": {"name": "upfront-shutdown-script", "is_required": false, "is_known":
+      true}, "7": {"name": "gossip-queries", "is_required": false, "is_known": true},
+      "9": {"name": "tlv-onion", "is_required": false, "is_known": true}, "12": {"name":
+      "static-remote-key", "is_required": true, "is_known": true}, "14": {"name":
+      "payment-addr", "is_required": true, "is_known": true}, "17": {"name": "multi-path-payments",
+      "is_required": false, "is_known": true}, "23": {"name": "anchors-zero-fee-htlc-tx",
+      "is_required": false, "is_known": true}, "27": {"name": "shutdown-any-segwit",
+      "is_required": false, "is_known": true}, "30": {"name": "amp", "is_required":
+      true, "is_known": true}, "31": {"name": "amp", "is_required": false, "is_known":
+      true}, "45": {"name": "explicit-commitment-type", "is_required": false, "is_known":
+      true}, "2023": {"name": "script-enforced-lease", "is_required": false, "is_known":
+      true}}, "require_htlc_interceptor": false}'
+    headers:
+      Content-Length:
+      - '1589'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 09 Mar 2023 10:05:50 GMT
+      Grpc-Metadata-Content-Type:
+      - application/grpc
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: '{"memo": "Donate4.fun to asdzxc", "value": 100, "expiry": 3600, "private":
+      true}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '80'
+      content-type:
+      - application/json
+      grpc-metadata-macaroon:
+      - secret
+      host:
+      - localhost:8081
+      user-agent:
+      - python-httpx/0.23.2
+    method: POST
+    uri: https://localhost:8081/v1/invoices
+  response:
+    content: '{"r_hash": "vweYet1l4nWO9U6XvSlAqksCiwcSibvJZ5MAPc9jqN8=", "payment_request":
+      "lnbcrt1u1pjqntm7pp5hures7kavh38trh4f6tm622q4f9s9zc8z2ymhjt8jvqrmnmr4r0sdpzg3hkuct5v56zuen4dcs8gmeqv9ekg7ncvvcqzpgxqrrsssp57ktsneen7pfeenq2s8sqyg2gdwwruxqfzzsywgvupcq0a324c4vs9qyyssqtdkgurvf9uqdfulydenxglcnl6tqpp4qvljel68kx7zm6jmutj7sqjzay4z33rfjlhxa07slg2ptx2ua39nwynj04rv9n46778azhucqs59wmu",
+      "add_index": "268", "payment_addr": "9ZcJ5zPwU5zMCoHgAiFIa5w+GAkQoEchnA4A/sVVxVk="}'
+    headers:
+      Content-Length:
+      - '449'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 09 Mar 2023 10:05:50 GMT
+      Grpc-Metadata-Content-Type:
+      - application/grpc
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      grpc-metadata-macaroon:
+      - secret
+      host:
+      - localhost:8081
+      user-agent:
+      - python-httpx/0.23.2
+    method: GET
+    uri: https://localhost:8081/v1/invoice/bf07987add65e2758ef54e97bd2940aa4b028b071289bbc96793003dcf63a8df
+  response:
+    content: '{"memo": "Donate4.fun to asdzxc", "r_preimage": "adLJyOGyRa9w6iX2pXw90HhT5ppzQ3B/nuY7n3c6gp4=",
+      "r_hash": "vweYet1l4nWO9U6XvSlAqksCiwcSibvJZ5MAPc9jqN8=", "value": "100", "value_msat":
+      "100000", "settled": false, "creation_date": "1678356350", "settle_date": "0",
+      "payment_request": "lnbcrt1u1pjqntm7pp5hures7kavh38trh4f6tm622q4f9s9zc8z2ymhjt8jvqrmnmr4r0sdpzg3hkuct5v56zuen4dcs8gmeqv9ekg7ncvvcqzpgxqrrsssp57ktsneen7pfeenq2s8sqyg2gdwwruxqfzzsywgvupcq0a324c4vs9qyyssqtdkgurvf9uqdfulydenxglcnl6tqpp4qvljel68kx7zm6jmutj7sqjzay4z33rfjlhxa07slg2ptx2ua39nwynj04rv9n46778azhucqs59wmu",
+      "description_hash": "", "expiry": "3600", "fallback_addr": "", "cltv_expiry":
+      "40", "route_hints": [], "private": false, "add_index": "268", "settle_index":
+      "0", "amt_paid": "0", "amt_paid_sat": "0", "amt_paid_msat": "0", "state": "OPEN",
+      "htlcs": [], "features": {"9": {"name": "tlv-onion", "is_required": false, "is_known":
+      true}, "14": {"name": "payment-addr", "is_required": true, "is_known": true},
+      "17": {"name": "multi-path-payments", "is_required": false, "is_known": true}},
+      "is_keysend": false, "payment_addr": "9ZcJ5zPwU5zMCoHgAiFIa5w+GAkQoEchnA4A/sVVxVk=",
+      "is_amp": false, "amp_invoice_state": {}}'
+    headers:
+      Content-Length:
+      - '1114'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 09 Mar 2023 10:05:50 GMT
+      Grpc-Metadata-Content-Type:
+      - application/grpc
+    http_version: HTTP/1.1
+    status_code: 200
+version: 1

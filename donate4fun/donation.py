@@ -4,16 +4,23 @@ from datetime import datetime
 import httpx
 from lnpayencode import LnAddr
 
-from .models import Donation, PaymentRequest, Invoice, PayInvoiceResult
+from .models import Donation, PaymentRequest
 from .db import DbSession
 from .db_donations import DonationsDbLib
 from .types import LnurlpError, RequestHash, Satoshi
 from .api_utils import load_donator, auto_transfer_donations, track_donation, HttpClient, sha256hash
-
-from .lnd import lnd
+from .lnd import lnd, Invoice, PayInvoiceResult
 
 
 async def donate(donation: Donation, db_session: DbSession, expiry: int = None) -> (PaymentRequest, Donation):
+    """
+    Takes pre-filled Donation object and do one of the following:
+         - if receiver is a Donate4.Fun account and sender has enough balance then just transfers money without lightning
+         - if receievr has a lightning address and sender has enough money then pays from balance to a lightning address
+         - if receiver has no lightning address (just a social account) then transfers money from sender balance
+           or create a payment request to send money from a lightning wallet
+    In the end money from social accounts are automatically transferred to linked Donate4.Fun account if they exist.
+    """
     donator = await load_donator(db_session, donation.donator.id)
     # If donator has enough money (and not fulfilling his own balance) - try to pay donation instantly
     use_balance = (

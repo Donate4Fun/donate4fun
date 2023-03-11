@@ -34,6 +34,7 @@ json:
       provider: twitter
       total_donated: 0
       user_id: '1572908920485576704'
+    twitter_invoice_tweet_id: null
     twitter_tweet: null
     youtube_channel: null
     youtube_video: null

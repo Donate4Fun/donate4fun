@@ -1,0 +1,29 @@
+donator_oauth2: !!python/object/new:authlib.oauth2.rfc6749.wrappers.OAuth2Token
+  dictitems:
+    access_token: YUFXNnVUQ2MzNU1ZUE5rYXNuQmZmdXUwcnc5TWNaalRTa3E0NGJfcUh6dldYOjE2Nzg1MzA0MzA2MDk6MToxOmF0OjE
+    expires_at: 1678537627
+    expires_in: 7200
+    refresh_token: SDl1N1EzdUN3YXBEd0g1bzlDeVNSQVRaRGdwM3RLMDdhckZhSDZjWHFqZlJnOjE2Nzg1MzA0MzA2MDk6MTowOnJ0OjE
+    scope: tweet.write users.read tweet.read offline.access
+    token_type: bearer
+receiver_oauth2: !!python/object/new:authlib.oauth2.rfc6749.wrappers.OAuth2Token
+  dictitems:
+    access_token: cWFGb2NlWnp3d3U2RE5uMF8wZ1NjX0NSOEdzeXk1ck5yRzNIcS1SYXhGRW9VOjE2Nzg1MzA0MjkzMTU6MTowOmF0OjE
+    expires_at: 1678537627
+    expires_in: 7200
+    refresh_token: eVBqdmdIdGJTUTBIeTJqMnMwU2xxdW4xSHkyaFRfMHpNSThtaEVpY0pUSGhEOjE2Nzg1MzA0MjkzMTU6MToxOnJ0OjE
+    scope: tweet.write users.read tweet.read offline.access
+    token_type: bearer
+twitter_mentions_bot_oauth1:
+  oauth_token: 1616757608299339776-W7WY8bQlKNegG8DrkzKOtLQWtzQTWs
+  oauth_token_secret: f0WVIUG4VDUXlkI6HlD3OYvyWNg5hP4vQjpSuZCzNJ2ut
+  screen_name: tip4fun
+  user_id: '1616757608299339776'
+twitter_mentions_bot_oauth2: !!python/object/new:authlib.oauth2.rfc6749.wrappers.OAuth2Token
+  dictitems:
+    access_token: YlR0dFk3bkVSUHFRbnhDT1BnSnhTNE5XNXVMekVmVVlvUkF2S3V4NGw4cVBYOjE2Nzg1MzA0Mjk4ODk6MToxOmF0OjE
+    expires_at: 1678537627
+    expires_in: 7200
+    refresh_token: cTZWSE9mcGVrY01iWm5QbjY1SnBYVzZsb3cxOFFQZGsxRlBPYTVPOEZxeG5TOjE2Nzg1MzA0Mjk4ODk6MTowOnJ0OjE
+    scope: offline.access dm.read tweet.write users.read dm.write tweet.read
+    token_type: bearer

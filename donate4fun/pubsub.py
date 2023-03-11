@@ -31,7 +31,7 @@ class PubSubBroker:
         return f'{type(self).__name__}<{hex(id(self))}>'
 
     @asynccontextmanager
-    async def subscribe(self, channel: str, callback: Callable):
+    async def subscribe(self, channel: str, callback: Callable[list[str], None]):
         wrapped_callback = partial(callback_wrapper, callback)
         async with self.lock, self.asyncpg_connection.transaction():
             await self.asyncpg_connection.add_listener(channel, wrapped_callback)

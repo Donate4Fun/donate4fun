@@ -1,12 +1,12 @@
-from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
 
-from .models import TwitterAccount, TwitterTweet, TwitterAccountOwned
-from .db_models import TwitterAuthorDb, TwitterTweetDb, OAuthTokenDb, TwitterAuthorLink
+from .models import TwitterAccount, TwitterTweet, TwitterAccountOwned, Donation
+from .db_models import TwitterAuthorDb, TwitterTweetDb, TwitterAuthorLink, DonationDb
 from .db_social import SocialDbWrapper
+from .twitter_models import Tweet
 
 
 class TwitterDbLib(SocialDbWrapper):
@@ -35,20 +35,9 @@ class TwitterDbLib(SocialDbWrapper):
             id_ = resp.scalar()
         tweet.id = id_
 
-    async def query_oauth_token(self, name: str) -> dict[str, Any]:
-        result = await self.execute(
-            select(OAuthTokenDb.token)
-            .where(OAuthTokenDb.name == name)
-        )
-        return result.scalars().one()
-
-    async def save_oauth_token(self, name: str, token: dict[str, Any]):
+    async def add_invoice_tweet_to_donation(self, donation: Donation, tweet: Tweet):
         await self.execute(
-            insert(OAuthTokenDb)
-            .values(name=name, token=token)
-            .on_conflict_do_update(
-                index_elements=[OAuthTokenDb.name],
-                set_=dict(token=token),
-                where=OAuthTokenDb.name == name,
-            )
+            update(DonationDb)
+            .values(twitter_invoice_tweet_id=tweet.id)
+            .where(DonationDb.id == donation.id)
         )

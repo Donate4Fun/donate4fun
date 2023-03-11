@@ -9,7 +9,7 @@ from furl import furl
 from sqlalchemy import select
 
 from .models import (
-    Donation, Donator, Invoice, DonateResponse, DonateRequest, DonationPaidRequest, RequestHash
+    Donation, Donator, DonateResponse, DonateRequest, DonationPaidRequest, RequestHash
 )
 from .types import ValidationError
 from .social import SocialProviderId, SocialProvider
@@ -20,7 +20,7 @@ from .db_libs import GithubDbLib, TwitterDbLib, YoutubeDbLib, DonationsDbLib
 from .db_donations import sent_donations_subquery, received_donations_subquery
 from .db_models import DonationDb
 from .db_social import SocialDbWrapper
-from .lnd import lnd
+from .lnd import lnd, Invoice
 from .settings import settings
 from .donation import donate, make_memo
 

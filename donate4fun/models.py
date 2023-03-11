@@ -4,12 +4,11 @@ import time
 from enum import Enum
 from uuid import uuid4, UUID
 from datetime import datetime
-from typing import Any
+from typing import Any, TypeVar, Type
 from functools import lru_cache
 
 import jwt
 from pydantic import BaseModel as PydanticBaseModel, validator, HttpUrl, Field, root_validator, EmailStr, AnyUrl
-from pydantic.datetime_parse import parse_datetime
 from funkybob import UniqueRandomNameGenerator
 from multiavatar.multiavatar import multiavatar
 from jwskate import Jwk, Jwt
@@ -19,6 +18,10 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from .settings import settings
 from .core import to_datauri, from_base64, to_base64
 from .types import Url, RequestHash, PaymentRequest, LightningAddress
+from .twitter_models import TweetId
+
+
+Model = TypeVar('Model', bound='BaseModel')
 
 
 class BaseModel(PydanticBaseModel):
@@ -39,9 +42,13 @@ class BaseModel(PydanticBaseModel):
         return jwt.encode(self.to_jwt_payload(), settings.jwt_secret, algorithm="HS256")
 
     @classmethod
-    def from_jwt(cls, token: str) -> BaseModel:
+    def from_jwt(cls: Type[Model], token: str) -> Model:
         data: dict = jwt.decode(token, settings.jwt_secret, algorithms=["HS256"])
         return cls(**data)
+
+    @classmethod
+    def from_json(cls: Type[Model], data: str) -> Model:
+        return cls(**json.loads(data))
 
     def to_encrypted_jwt(self) -> str:
         """
@@ -110,44 +117,6 @@ class DonateRequest(BaseModel):
     lightning_address: LightningAddress | None
     donator_twitter_handle: str | None
     message: str | None
-
-
-class NaiveDatetime(datetime):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-
-    @classmethod
-    def validate(cls, v: Any) -> str:
-        return parse_datetime(int(v)).replace(tzinfo=None)
-
-
-class Invoice(BaseModel):
-    """
-    This model is replica of lnd's Invoice message
-    https://github.com/lightningnetwork/lnd/blob/master/lnrpc/lightning.proto#L3314
-    """
-    r_hash: RequestHash
-    payment_request: PaymentRequest
-    value: int | None
-    memo: str | None
-    settle_date: NaiveDatetime | None
-    amt_paid_sat: int | None
-    state: str | None
-
-
-class PayInvoiceResult(BaseModel):
-    creation_date: NaiveDatetime
-    fee: float
-    fee_msat: int
-    fee_sat: float
-    payment_hash: RequestHash
-    payment_preimage: RequestHash
-    status: str
-    failure_reason: str
-    value: float
-    value_msat: int
-    value_sat: float
 
 
 class IdModel(BaseModel):
@@ -332,6 +301,7 @@ class Donation(IdModel):
     youtube_video: YoutubeVideo | None
     twitter_account: TwitterAccount | None
     twitter_tweet: TwitterTweet | None
+    twitter_invoice_tweet_id: TweetId | None
     github_user: GithubUser | None
     lightning_address: LightningAddress | None
 

@@ -8,8 +8,9 @@ from furl import furl
 from .models import TwitterAccount, Donator, TwitterAccountOwned, OAuthState, OAuthResponse, Toast
 from .types import ValidationError, OAuthError, AccountAlreadyLinked, Satoshi
 from .api_utils import get_donator, make_absolute_uri, make_redirect, signin_success_message, oauth_success_messages
-from .twitter import make_oauth1_client, make_oauth2_client, TwitterApiClient
+from .twitter import TwitterApiClient
 from .twitter_bot import make_prove_message
+from .twitter_models import OAuth1Token
 from .core import app
 from .db_twitter import TwitterDbLib
 from .db import db
@@ -26,13 +27,13 @@ async def twitter_ownership_message(me=Depends(get_donator)):
 
 @router.get('/oauth1', response_model=OAuthResponse)
 async def login_via_twitter_oauth1(request: Request, donator=Depends(get_donator)):
-    oauth1_ctx = make_oauth1_client(
+    oauth1_ctx = TwitterApiClient.create_oauth1(
         oauth=settings.twitter.linking_oauth,
         redirect_uri=make_absolute_uri(request.url_for('oauth1_callback')),
     )
     async with oauth1_ctx as client:
-        await client.fetch_request_token('https://api.twitter.com/oauth/request_token')
-        auth_url: str = client.create_authorization_url('https://api.twitter.com/oauth/authorize')
+        await client.client.fetch_request_token('https://api.twitter.com/oauth/request_token')
+        auth_url: str = client.client.create_authorization_url('https://api.twitter.com/oauth/authorize')
         return OAuthResponse(url=auth_url)
 
 
@@ -46,22 +47,22 @@ async def oauth1_callback(
         raise ValidationError("oauth_token and oauth_verifier parameters must be present")
     try:
         token = dict(oauth_token=oauth_token, oauth_verifier=oauth_verifier)
-        async with make_oauth1_client(oauth=settings.twitter.linking_oauth, token=token) as client:
-            token: dict = await client.fetch_access_token('https://api.twitter.com/oauth/access_token', verifier=oauth_verifier)
-            client.token = token
-            try:
+        logger.debug("authorizing using oauth1. token: %s", token)
+        token: OAuth1Token = await TwitterApiClient.fetch_access_token(oauth_token=oauth_token, oauth_verifier=oauth_verifier)
+        try:
+            async with TwitterApiClient.create_oauth1(oauth=settings.twitter.linking_oauth, token=token) as client:
                 transferred_amount, linked_account = await login_or_link_twitter_account(client, donator)
-            except AccountAlreadyLinked as exc:
-                if not donator.connected:
-                    linked_account = exc.args[0]
-                    request.session['donator'] = str(linked_account.owner_id)
-                    request.session['connected'] = True
-                    return make_redirect('donator/me', [signin_success_message(linked_account)])
-                else:
-                    raise OAuthError("Could not link an already linked account") from exc
-            else:
+        except AccountAlreadyLinked as exc:
+            if not donator.connected:
+                linked_account = exc.args[0]
+                request.session['donator'] = str(linked_account.owner_id)
                 request.session['connected'] = True
-                return make_redirect('donator/me', oauth_success_messages(linked_account, transferred_amount))
+                return make_redirect('donator/me', [signin_success_message(linked_account)])
+            else:
+                raise OAuthError("Could not link an already linked account") from exc
+        else:
+            request.session['connected'] = True
+            return make_redirect('donator/me', oauth_success_messages(linked_account, transferred_amount))
     except OAuthError as exc:
         logger.exception("OAuth error")
         return make_redirect('settings', [Toast("error", exc.args[0], exc.__cause__)])
@@ -81,26 +82,22 @@ async def login_via_twitter(request: Request, return_to: str, expected_account: 
     if len(encrypted_state) > 500:
         raise ValidationError(f"State is too long for Twitter: {len(encrypted_state)} chars")
     async with make_link_oauth2_client() as client:
-        url, state = client.create_authorization_url(
-            url='https://twitter.com/i/oauth2/authorize', code_verifier=code_verifier,
-            state=encrypted_state,
-        )
+        url = client.create_authorization_url(code_verifier=code_verifier, state=encrypted_state)
         return OAuthResponse(url=url)
 
 
 async def finish_twitter_oauth(code: str, donator: Donator, code_verifier: str) -> tuple[Satoshi, TwitterAccountOwned]:
     async with make_link_oauth2_client() as client:
         try:
-            token: dict = await client.fetch_token(code=code, code_verifier=code_verifier)
+            await client.fetch_token(code=code, code_verifier=code_verifier)
         except Exception as exc:
             raise OAuthError("Failed to fetch OAuth token") from exc
-        client.token = token
         return await login_or_link_twitter_account(client, donator)
 
 
-async def login_or_link_twitter_account(client, donator: Donator) -> tuple[Satoshi, TwitterAccountOwned]:
+async def login_or_link_twitter_account(client: TwitterApiClient, donator: Donator) -> tuple[Satoshi, TwitterAccountOwned]:
     try:
-        account: TwitterAccount = await TwitterApiClient(client).get_me()
+        account: TwitterAccount = await client.get_me()
     except Exception as exc:
         raise OAuthError("Failed to fetch user's account") from exc
 
@@ -118,13 +115,12 @@ async def login_or_link_twitter_account(client, donator: Donator) -> tuple[Satos
         raise AccountAlreadyLinked(owned_account)
 
 
-def make_link_oauth2_client(token=None):
+def make_link_oauth2_client():
     """
     This client is used to link Twitter account to donator (OAuth2 flow)
     """
-    return make_oauth2_client(
+    return TwitterApiClient.create_oauth2(
         settings.twitter.linking_oauth,
         scope='tweet.read users.read',
-        token=token,
         redirect_uri=make_absolute_uri(app.url_path_for('oauth_redirect', provider='twitter')),
     )

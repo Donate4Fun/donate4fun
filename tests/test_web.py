@@ -31,6 +31,7 @@ async def test_sitemap(client, db):
 
 
 @mark_vcr
+@pytest.mark.freezed_vcr
 async def test_donate_redirect(client):
     response = await client.get('/d/UCk2OzObixhe_mbMfMQGLuJw')
     check_response(response, 302)

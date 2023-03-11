@@ -56,6 +56,7 @@ cairosvg = "^2.6.0"
 bech32 = "^1.2.0"
 vcrpy = {git = "https://github.com/nikicat/vcrpy", rev = "fix-httpx-stub"}
 httpx-ws = "^0.3.0"
+shellous = "^0.22.0"
 
 [tool.poetry.dev-dependencies]
 ipython = "^8.3.0"
@@ -98,6 +99,11 @@ filterwarnings = [
     "ignore:distutils Version classes are deprecated. Use packaging.version instead:DeprecationWarning",
 # Rollbar triggers warning in httpx
     "ignore:Use 'content=<...>' to upload raw bytes/text content.:DeprecationWarning",
+# From shellous (remove after updating Python)
+    "ignore:Python 3.10.9 and Python 3.11.1 are unreliable with respect to asyncio subprocesses. Consider a newer Python release.*:RuntimeWarning",
 ]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+markers = [
+    "freezed_vcr",
+]

@@ -44,6 +44,7 @@ json:
       provider: twitter
       total_donated: 0
       user_id: '1572908920485576704'
+    twitter_invoice_tweet_id: null
     twitter_tweet:
       id: 00000000-0000-0000-0000-000000000001
       tweet_id: '1583074363787444225'

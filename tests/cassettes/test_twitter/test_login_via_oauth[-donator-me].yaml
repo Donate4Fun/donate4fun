@@ -1,6 +1,19 @@
 interactions:
 - request:
-    body: grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fv1%2Foauth-redirect%2Ftwitter&code=cnlyVlpwZ3EyejlISEtVVUo5dENRU1BmS1VMcHQzemNGVmhFQlljaFJMMXl6OjE2NzUyNTQzNzc5NzE6MToxOmFjOjE&code_verifier=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA%3D
+    body: ''
+    headers:
+      name:
+      - twitter-login-via-oauth
+      prompt:
+      - 'Open this url, authorize and paste url after redirect here:'
+    method: GET
+    uri: https://twitter.com/i/oauth2/authorize?client_id=MWlyTVlGbUdXRkY2Q09ncGxkbzc6MTpjaQ&code_challenge=UWQ-rJd3tjp7JoF00f1Cdtrt7JvJ6gvG5av2kEe8VPY&code_challenge_method=S256&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fv1%2Foauth-redirect%2Ftwitter&response_type=code&scope=tweet.read+users.read&state=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWNjZXNzX3BhdGgiOiIvZG9uYXRvci9tZSIsImVycm9yX3BhdGgiOiIiLCJkb25hdG9yX2lkIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwIiwiYWxsb3dfc2lnbl9pbiI6dHJ1ZSwiY29kZV92ZXJpZmllciI6IkFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE9IiwiZXhwZWN0ZWRfYWNjb3VudCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMSIsImlhdCI6MTY0Mzg0MDU0MiwibmJmIjoxNjQzODQwNTQyLCJleHAiOjE2NDM4NDExNDJ9.KKR7D2R-MBYTYyJCEQFWg9qFLQFHVdG61N5qZrNe7B4
+  response:
+    headers:
+      location: http://localhost:3000/api/v1/oauth-redirect/twitter?state=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWNjZXNzX3BhdGgiOiIvZG9uYXRvci9tZSIsImVycm9yX3BhdGgiOiIiLCJkb25hdG9yX2lkIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwIiwiYWxsb3dfc2lnbl9pbiI6dHJ1ZSwiY29kZV92ZXJpZmllciI6IkFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE9IiwiZXhwZWN0ZWRfYWNjb3VudCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMSIsImlhdCI6MTY0Mzg0MDU0MiwibmJmIjoxNjQzODQwNTQyLCJleHAiOjE2NDM4NDExNDJ9.KKR7D2R-MBYTYyJCEQFWg9qFLQFHVdG61N5qZrNe7B4&code=d3M3TzVnNjMwQUVOS0F2WmE3QzdzdVNwSHBHcVJjbWtIak1fLXg0Sm9VTjJsOjE2Nzg1NTQ1OTc5NDI6MToxOmFjOjE
+    status_code: 307
+- request:
+    body: grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fv1%2Foauth-redirect%2Ftwitter&code=d3M3TzVnNjMwQUVOS0F2WmE3QzdzdVNwSHBHcVJjbWtIak1fLXg0Sm9VTjJsOjE2Nzg1NTQ1OTc5NDI6MToxOmFjOjE&code_verifier=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA%3D
     headers:
       accept:
       - application/json
@@ -33,11 +46,11 @@ interactions:
       content-type:
       - application/json; charset=utf-8
       date:
-      - Wed, 01 Feb 2023 12:26:24 GMT
+      - Sat, 11 Mar 2023 17:10:01 GMT
       expires:
       - Tue, 31 Mar 1981 05:00:00 GMT
       last-modified:
-      - Wed, 01 Feb 2023 12:26:25 GMT
+      - Sat, 11 Mar 2023 17:10:01 GMT
       perf:
       - '7626143928'
       pragma:
@@ -45,20 +58,20 @@ interactions:
       server:
       - tsa_o
       set-cookie:
-      - guest_id=v1%3A167525438526745783; Max-Age=34214400; Expires=Sun, 03 Mar 2024
-        12:26:25 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      - guest_id=v1%3A167855460161768913; Max-Age=34214400; Expires=Wed, 10 Apr 2024
+        17:10:01 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
       strict-transport-security:
       - max-age=631138519
       x-connection-hash:
-      - 166353c1a46ce02a504de23e85919d54c90971c184886921c245f31ebc67c8f9
+      - 1ecd61797f56d0e43cb0d3cd7aef710b2edd0b420193647c8ee9d035ef4d56a3
       x-content-type-options:
       - nosniff
       x-frame-options:
       - SAMEORIGIN
       x-response-time:
-      - '399'
+      - '400'
       x-transaction-id:
-      - 121a54341f9f5b10
+      - 4fcc06adfa89c997
       x-twitter-response-tags:
       - BouncerCompliant
       x-xss-protection:
@@ -68,75 +81,18 @@ interactions:
 - request:
     body: ''
     headers:
-      accept:
-      - '*/*'
-      accept-encoding:
-      - gzip, deflate
-      connection:
-      - keep-alive
-      cookie:
-      - guest_id=v1%3A167525438526745783
-      host:
-      - api.twitter.com
-      user-agent:
-      - python-httpx/0.23.2
+      name:
+      - twitter-login-via-oauth-relogin
+      prompt:
+      - 'Open this url, authorize and paste url after redirect here:'
     method: GET
-    uri: https://api.twitter.com/2/users/me?user.fields=id%2Cname%2Cprofile_image_url%2Cdescription%2Cverified%2Centities
+    uri: https://twitter.com/i/oauth2/authorize?client_id=MWlyTVlGbUdXRkY2Q09ncGxkbzc6MTpjaQ&code_challenge=UWQ-rJd3tjp7JoF00f1Cdtrt7JvJ6gvG5av2kEe8VPY&code_challenge_method=S256&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fv1%2Foauth-redirect%2Ftwitter&response_type=code&scope=tweet.read+users.read&state=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWNjZXNzX3BhdGgiOiIvZG9uYXRvci9tZSIsImVycm9yX3BhdGgiOiIiLCJkb25hdG9yX2lkIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAxIiwiYWxsb3dfc2lnbl9pbiI6dHJ1ZSwiY29kZV92ZXJpZmllciI6IkFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE9IiwiZXhwZWN0ZWRfYWNjb3VudCI6bnVsbCwiaWF0IjoxNjQzODQwNTQyLCJuYmYiOjE2NDM4NDA1NDIsImV4cCI6MTY0Mzg0MTE0Mn0.KoRkbnLcmSmMMm5UfS4Sh8z823OcLiayx0U43YPu2Z8
   response:
-    content: '{"data": {"id": "1572908920485576704", "name": "Donate4.Fun \u26a1",
-      "description": "Donations with #Bitcoin #LightningNetwork on Twitter and Youtube.
-      \nCreated by @Novaklim1 and @nbryskin.", "entities": {"url": {"urls": [{"start":
-      0, "end": 23, "url": "https://t.co/xu5wqhAwa7", "expanded_url": "https://donate4.fun/",
-      "display_url": "donate4.fun"}]}, "description": {"hashtags": [{"start": 15,
-      "end": 23, "tag": "Bitcoin"}, {"start": 24, "end": 41, "tag": "LightningNetwork"}],
-      "mentions": [{"start": 78, "end": 88, "username": "Novaklim1"}, {"start": 93,
-      "end": 102, "username": "nbryskin"}]}}, "profile_image_url": "https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_normal.png",
-      "verified": false, "username": "donate4_fun"}}'
     headers:
-      api-version:
-      - '2.61'
-      cache-control:
-      - no-cache, no-store, max-age=0
-      content-disposition:
-      - attachment; filename=json.json
-      content-encoding:
-      - gzip
-      content-length:
-      - '415'
-      content-type:
-      - application/json; charset=utf-8
-      date:
-      - Wed, 01 Feb 2023 12:26:25 UTC
-      perf:
-      - '7626143928'
-      server:
-      - tsa_o
-      strict-transport-security:
-      - max-age=631138519
-      x-access-level:
-      - read
-      x-connection-hash:
-      - 166353c1a46ce02a504de23e85919d54c90971c184886921c245f31ebc67c8f9
-      x-content-type-options:
-      - nosniff
-      x-frame-options:
-      - SAMEORIGIN
-      x-rate-limit-limit:
-      - '75'
-      x-rate-limit-remaining:
-      - '66'
-      x-rate-limit-reset:
-      - '1675254581'
-      x-response-time:
-      - '150'
-      x-transaction-id:
-      - 3d0264e5e5626523
-      x-xss-protection:
-      - '0'
-    http_version: HTTP/1.1
-    status_code: 200
+      location: http://localhost:3000/api/v1/oauth-redirect/twitter?state=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWNjZXNzX3BhdGgiOiIvZG9uYXRvci9tZSIsImVycm9yX3BhdGgiOiIiLCJkb25hdG9yX2lkIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAxIiwiYWxsb3dfc2lnbl9pbiI6dHJ1ZSwiY29kZV92ZXJpZmllciI6IkFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE9IiwiZXhwZWN0ZWRfYWNjb3VudCI6bnVsbCwiaWF0IjoxNjQzODQwNTQyLCJuYmYiOjE2NDM4NDA1NDIsImV4cCI6MTY0Mzg0MTE0Mn0.KoRkbnLcmSmMMm5UfS4Sh8z823OcLiayx0U43YPu2Z8&code=aHQwbkktcl8zNm50VmlKRC16YXJ4blJHbUJrMVgyZGlEQmZnMUJOVTRJZ0w4OjE2Nzg1NTQ2MDM2NDA6MToxOmFjOjE
+    status_code: 307
 - request:
-    body: grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fv1%2Foauth-redirect%2Ftwitter&code=aEpQYVpPSy0yTUI1YTE5Y0NPbUQ2dGZvTUZKZDlYYjRFNDV3STZfdDdYaE9oOjE2NzUyNTQzODkxOTc6MTowOmFjOjE&code_verifier=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA%3D
+    body: grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fv1%2Foauth-redirect%2Ftwitter&code=aHQwbkktcl8zNm50VmlKRC16YXJ4blJHbUJrMVgyZGlEQmZnMUJOVTRJZ0w4OjE2Nzg1NTQ2MDM2NDA6MToxOmFjOjE&code_verifier=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA%3D
     headers:
       accept:
       - application/json
@@ -165,15 +121,15 @@ interactions:
       content-encoding:
       - gzip
       content-length:
-      - '187'
+      - '186'
       content-type:
       - application/json; charset=utf-8
       date:
-      - Wed, 01 Feb 2023 12:26:36 GMT
+      - Sat, 11 Mar 2023 17:10:06 GMT
       expires:
       - Tue, 31 Mar 1981 05:00:00 GMT
       last-modified:
-      - Wed, 01 Feb 2023 12:26:36 GMT
+      - Sat, 11 Mar 2023 17:10:07 GMT
       perf:
       - '7626143928'
       pragma:
@@ -181,92 +137,22 @@ interactions:
       server:
       - tsa_o
       set-cookie:
-      - guest_id=v1%3A167525439664878317; Max-Age=34214400; Expires=Sun, 03 Mar 2024
-        12:26:36 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      - guest_id=v1%3A167855460755166973; Max-Age=34214400; Expires=Wed, 10 Apr 2024
+        17:10:07 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
       strict-transport-security:
       - max-age=631138519
       x-connection-hash:
-      - b1277f89470f3bfc2240bf1758119d445c0ee2a6d50f2f3ee6f387d71e2da466
+      - 052a916b5a9a496cc9abb68e4d6b1323f11daccb8731f30e8f908d07d1edfffe
       x-content-type-options:
       - nosniff
       x-frame-options:
       - SAMEORIGIN
       x-response-time:
-      - '405'
+      - '418'
       x-transaction-id:
-      - 7a4f2e7f6d47ee7a
+      - 8b6a464b331df3e6
       x-twitter-response-tags:
       - BouncerCompliant
-      x-xss-protection:
-      - '0'
-    http_version: HTTP/1.1
-    status_code: 200
-- request:
-    body: ''
-    headers:
-      accept:
-      - '*/*'
-      accept-encoding:
-      - gzip, deflate
-      connection:
-      - keep-alive
-      cookie:
-      - guest_id=v1%3A167525439664878317
-      host:
-      - api.twitter.com
-      user-agent:
-      - python-httpx/0.23.2
-    method: GET
-    uri: https://api.twitter.com/2/users/me?user.fields=id%2Cname%2Cprofile_image_url%2Cdescription%2Cverified%2Centities
-  response:
-    content: '{"data": {"verified": false, "profile_image_url": "https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_normal.png",
-      "id": "1572908920485576704", "username": "donate4_fun", "entities": {"url":
-      {"urls": [{"start": 0, "end": 23, "url": "https://t.co/xu5wqhAwa7", "expanded_url":
-      "https://donate4.fun/", "display_url": "donate4.fun"}]}, "description": {"hashtags":
-      [{"start": 15, "end": 23, "tag": "Bitcoin"}, {"start": 24, "end": 41, "tag":
-      "LightningNetwork"}], "mentions": [{"start": 78, "end": 88, "username": "Novaklim1"},
-      {"start": 93, "end": 102, "username": "nbryskin"}]}}, "name": "Donate4.Fun \u26a1",
-      "description": "Donations with #Bitcoin #LightningNetwork on Twitter and Youtube.
-      \nCreated by @Novaklim1 and @nbryskin."}}'
-    headers:
-      api-version:
-      - '2.61'
-      cache-control:
-      - no-cache, no-store, max-age=0
-      content-disposition:
-      - attachment; filename=json.json
-      content-encoding:
-      - gzip
-      content-length:
-      - '414'
-      content-type:
-      - application/json; charset=utf-8
-      date:
-      - Wed, 01 Feb 2023 12:26:37 UTC
-      perf:
-      - '7626143928'
-      server:
-      - tsa_o
-      strict-transport-security:
-      - max-age=631138519
-      x-access-level:
-      - read
-      x-connection-hash:
-      - b1277f89470f3bfc2240bf1758119d445c0ee2a6d50f2f3ee6f387d71e2da466
-      x-content-type-options:
-      - nosniff
-      x-frame-options:
-      - SAMEORIGIN
-      x-rate-limit-limit:
-      - '75'
-      x-rate-limit-remaining:
-      - '65'
-      x-rate-limit-reset:
-      - '1675254581'
-      x-response-time:
-      - '142'
-      x-transaction-id:
-      - 8975e05e6d242cab
       x-xss-protection:
       - '0'
     http_version: HTTP/1.1

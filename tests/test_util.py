@@ -1,12 +1,13 @@
 import logging
 import time
 import json
+import sys
+import webbrowser
 from contextvars import ContextVar
 from contextlib import asynccontextmanager
 from uuid import UUID
-from typing import Any
+from functools import cache
 from hashlib import md5
-from pathlib import Path
 from urllib.parse import parse_qs, urlencode
 from io import BytesIO
 
@@ -18,6 +19,8 @@ from authlib.jose import jwt
 from PIL import Image, ImageChops
 from vcr.filters import replace_query_parameters
 from furl import furl
+from vcr.request import Request as VcrRequest
+from vcr.errors import CannotOverwriteExistingCassetteException
 
 from donate4fun.models import Donator, Credentials
 from donate4fun.social import SocialProvider
@@ -25,6 +28,7 @@ from donate4fun.db import Notification
 from donate4fun.settings import Settings, settings
 from donate4fun.core import to_base64
 from donate4fun.api_utils import decode_jwt
+from donate4fun.dev_helpers import get_carol_lnd, get_alice_lnd
 
 logger = logging.getLogger(__name__)
 # This file is needed because pytest modifies "assert" only in test_*.py files
@@ -46,15 +50,27 @@ yaml.add_representer(str, str_presenter)
 yaml.representer.SafeRepresenter.add_representer(str, str_presenter)  # to use with safe_dump
 
 
-def verify_fixture(data: dict[str, Any], name: str):
+def fixture_filename(name: str) -> str:
+    return f'tests/autofixtures/{name}.yaml'
+
+
+def load_fixture(name: str) -> dict:
+    with open(fixture_filename(name)) as f:
+        return yaml.unsafe_load(f)
+
+
+def save_fixture(name: str, data: dict):
+    with open(fixture_filename(name), 'w') as f:
+        yaml.dump(data, f)
+
+
+def verify_fixture(data: dict, name: str):
     filename = f'tests/autofixtures/{name}.yaml'
     try:
-        with open(filename) as f:
-            original = yaml.unsafe_load(f)
+        original = load_fixture(name)
         assert data == original, f"Response for {filename} differs"
     except FileNotFoundError:
-        with open(filename, 'w') as f:
-            yaml.dump(data, f)
+        save_fixture(name, data)
 
 
 def verify_image_fixture(data: dict, image: Image, name: str):
@@ -166,13 +182,44 @@ def login_to(client, settings: Settings, donator: Donator):
 
 
 def is_json(headers: dict[str, list[str]]) -> bool:
-    content_types = headers.get('content-type', [])
+    content_types = {key.lower(): value for key, value in headers.items()}.get('content-type', [])
     if isinstance(content_types, str):
         content_types = [content_types]
     return any(content_type.startswith('application/json') for content_type in content_types)
 
 
-def remove_credentials_and_testclient(request):
+def enabler(var):
+    @asynccontextmanager
+    async def enable():
+        """
+        This function should be async for context var to work
+        because pytest uses different contexts for sync/async functions
+        """
+        token = var.set(True)
+        try:
+            yield
+        finally:
+            var.reset(token)
+    return enable
+
+
+disable_vcr_var = ContextVar("disable-vcr", default=False)
+disable_vcr = enabler(disable_vcr_var)
+lnd_vcr_enabled = ContextVar('enable-lnd-vcr', default=False)
+enable_lnd_vcr = enabler(lnd_vcr_enabled)
+
+
+@cache
+def lnd_origins() -> list[str]:
+    return [lnd.settings.url for lnd in [get_alice_lnd(), get_carol_lnd()]]
+
+
+SECRET_OAUTH_PARAMS = ['oauth_token_secret']
+
+
+def sanitize_request(request: VcrRequest):
+    if disable_vcr_var.get():
+        return None
     if 'grpc-metadata-macaroon' in request.headers:
         request.headers['grpc-metadata-macaroon'] = 'secret'
     if 'authorization' in request.headers:
@@ -189,62 +236,112 @@ def remove_credentials_and_testclient(request):
     if request.host == 'test':
         # Ignore testclient requests
         return None
-    if request.host.startswith('localhost'):
+    if not lnd_vcr_enabled.get() and furl(request.url).origin in lnd_origins():
         # Ignore requests to lnd
         return None
+    if request.query:
+        request.uri = furl(
+            url=request.uri,
+            query=[(key, 'secret' if key in SECRET_OAUTH_PARAMS else value) for key, value in request.query],
+        ).url
     return request
 
 
-def remove_url_and_sanitize(response):
+def sanitize_response(response):
     # WORKAROUND: this is a fix for vcrpy async handler
     if 'url' in response:
         response['url'] = ''
-    if is_json(response['headers']):
-        body = json.loads(response['content'])
-        if 'access_token' in body:
-            body['access_token'] = 'secret'
-        if 'refresh_token' in body:
-            body['refresh_token'] = 'secret'
-        response['content'] = json.dumps(body)
+    if is_json(response.get('headers', {})) and response.get('content'):
+        try:
+            body = json.loads(response['content'])
+        except json.decoder.JSONDecodeError:
+            pass
+        else:
+            if 'access_token' in body:
+                body['access_token'] = 'secret'
+            if 'refresh_token' in body:
+                body['refresh_token'] = 'secret'
+            response['content'] = json.dumps(body)
     else:
         query = parse_qs(response.get('content', ''))
         if query:
-            if 'oauth_token' in query:
-                query['oauth_token'] = ['secret']
-            if 'oauth_token_secret' in query:
-                query['oauth_token_secret'] = ['secret']
+            for param in SECRET_OAUTH_PARAMS:
+                if param in query:
+                    query[param] = ['secret']
             response['content'] = urlencode(query, doseq=True)
     return response
 
 
 def mark_vcr(func):
-    return pytest.mark.vcr(
-        before_record_request=remove_credentials_and_testclient,
-        before_record_response=remove_url_and_sanitize,
-    )(pytest.mark.block_network(allowed_hosts=['localhost', '::1', '127.0.0.1'])(func))
+    markers = [
+        pytest.mark.block_network(allowed_hosts=['localhost', '::1', '127.0.0.1']),
+        pytest.mark.vcr(
+            before_record_request=sanitize_request,
+            before_record_response=sanitize_response,
+            sequential=True,
+            custom_patches=((sys.modules['tests.test_util'], 'InputAsker', InputAskerPatched),),
+        ),
+    ]
+    for marker in markers:
+        func = marker(func)
+    return func
 
 
-def load_or_ask(path: str, prompt: str) -> str:
-    full_path = Path(__file__).parent / 'autofixtures' / path
-    if full_path.exists():
-        with open(full_path, 'r') as f:
-            data = f.read()
-    else:
-        data = input(prompt + '\n')
-        with open(full_path, 'w+') as f:
-            f.write(data)
-    return data
+async def ask_user_browser(name: str, url: str, prompt: str) -> str:
+    response = await InputAsker().ask(name, url, prompt)
+    return response['headers']['location']
+
+
+class InputAsker:
+    async def ask(self, name: str, url: str, prompt: str) -> dict:
+        """
+        name is a unique name to identify this input in cassette
+        """
+        try:
+            webbrowser.open(url)
+        except webbrowser.Error:
+            prompt += '\n' + url
+        # TODO: use local webserver to automatize process more
+        # TODO: user async input here
+        response_url = input(prompt + '\n')
+        return dict(
+            status_code=307,
+            headers=dict(location=response_url),
+        )
+
+
+class InputAskerPatched(InputAsker):
+    cassette = None  # This will be set by pyvcr
+
+    async def ask(self, name: str, url: str, prompt: str):
+        vcr_request = VcrRequest(method='GET', uri=url, headers=dict(
+            name=name,
+            prompt=prompt,
+        ), body=b'')
+        if self.cassette.can_play_response_for(vcr_request):
+            return self.cassette.play_response(vcr_request)
+        if self.cassette.write_protected and self.cassette.filter_request(vcr_request):
+            raise CannotOverwriteExistingCassetteException(cassette=self.cassette, failed_request=vcr_request)
+        track = self.cassette.forward()
+        response: dict = await super().ask(name, url, prompt)
+        self.cassette.record(track, vcr_request, response)
+        return response
 
 
 async def follow_oauth_flow(client, provider: SocialProvider, name: str, return_to: str, **params):
     response = check_response(await client.get(
-        f'/api/v1/{provider}/oauth',
+        f'/api/v1/{provider.value}/oauth',
         params=dict(return_to=return_to, **params),
         headers=dict(referer=settings.base_url),
     )).json()
     auth_url: str = response['url']
     encrypted_state: str = furl(auth_url).query.params['state']
-    code: str = load_or_ask(f'oauth-flow-{name}.code', f"Open this url {auth_url}, authorize and paste code here:")
+    redirect_url: str = await ask_user_browser(
+        name,
+        url=auth_url,
+        prompt="Open this url, authorize and paste url after redirect here:",
+    )
+    code: str = furl(redirect_url).query.params['code']
     response = await client.get(
         f'/api/v1/oauth-redirect/{provider}',
         params=dict(state=encrypted_state, code=code),

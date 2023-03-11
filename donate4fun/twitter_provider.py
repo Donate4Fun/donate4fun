@@ -9,7 +9,8 @@ from .settings import settings
 from .social import SocialProvider
 from .models import TwitterAccount, Donation, TwitterTweet
 from .types import EntityTooOld
-from .twitter import make_apponly_client, TwitterApiClient, UnsupportedTwitterUrl
+from .twitter import TwitterApiClient
+from .twitter_models import UnsupportedTwitterUrl
 
 
 class TwitterProvider(SocialProvider):
@@ -23,8 +24,8 @@ class TwitterProvider(SocialProvider):
             if account.last_fetched_at is None or account.last_fetched_at < datetime.utcnow() - settings.twitter.refresh_timeout:
                 raise EntityTooOld
         except (NoResultFound, EntityTooOld):
-            async with make_apponly_client(token=settings.twitter.linking_oauth.bearer_token) as client:
-                account: TwitterAccount = await TwitterApiClient(client).get_user_by(**params)
+            async with TwitterApiClient.create_apponly(token=settings.twitter.linking_oauth.bearer_token) as client:
+                account: TwitterAccount = await client.get_user_by(**params)
             await db.save_account(account)
         return account
 
@@ -53,3 +54,8 @@ class TwitterProvider(SocialProvider):
 
     def set_donation_receiver(self, donation: Donation, receiver: TwitterAccount):
         donation.twitter_account = receiver
+
+    async def notify(self, donation: Donation):
+        if donation.twitter_tweet is not None and donation.twitter_invoice_tweet:
+            from .twitter_bot import MentionsBot
+            MentionsBot.donation_paid(donation)

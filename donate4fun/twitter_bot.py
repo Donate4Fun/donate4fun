@@ -1,16 +1,15 @@
 import asyncio
 import logging
 import time
-import json
 import re
 import io
 import os
-import secrets
+from abc import abstractmethod
+from collections import defaultdict
 from contextlib import asynccontextmanager, AsyncExitStack
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from functools import wraps
-from itertools import groupby
+from functools import wraps, cache
 from typing import AsyncIterator
 from urllib.parse import quote_plus, urljoin
 from uuid import UUID
@@ -25,17 +24,18 @@ from lnurl.core import _url_encode as lnurl_encode
 from starlette.datastructures import URL
 
 from .db import NoResultFound, db
-from .models import TwitterAccount, Donator, WithdrawalToken, Donation, TwitterAccountOwned, TwitterTweet, PaymentRequest
+from .db_donations import DonationsDbLib
+from .models import (
+    TwitterAccount, Donator, WithdrawalToken, Donation, TwitterAccountOwned, TwitterTweet, PaymentRequest, Notification,
+)
 from .core import as_task, catch_exceptions
 from .settings import settings
-from .twitter import (
-    make_oauth2_client, TwitterHandle,
-    make_oauth1_client, OAuthTokenLoader, TwitterApiClient, make_apponly_client,
-)
+from .twitter import TwitterHandle, OAuthManager, TwitterApiClient, Tweet
 from .twitter_provider import TwitterProvider
 from .donation import donate
 from .api_utils import make_absolute_uri, register_app_command
 from .lnd import lnd, LndClient
+from .pubsub import pubsub
 
 logger = logging.getLogger(__name__)
 
@@ -50,47 +50,20 @@ class DirectMessage:
 class BaseTwitterBot:
     provider = TwitterProvider()
 
+    @property
+    @abstractmethod
+    def oauth_manager(self):
+        ...
+
     @classmethod
     @asynccontextmanager
     async def create(cls) -> AsyncIterator['BaseTwitterBot']:
         async with AsyncExitStack() as stack:
-            obj = cls()
-            if cls.oauth1_token:
-                oauth1_token: dict = await cls.oauth1_token.load()
-                oauth1_ctx = make_oauth1_client(oauth=cls.oauth_settings, token=oauth1_token)
-                obj.client = TwitterApiClient(await stack.enter_async_context(oauth1_ctx))
-            if cls.oauth2_token:
-                oauth2_token: dict = await cls.oauth2_token.load()
-                oauth2_ctx = make_oauth2_client(scope=cls.oauth2_scope, oauth=cls.oauth_settings, token=oauth2_token)
-                obj.oauth2_client = TwitterApiClient(await stack.enter_async_context(oauth2_ctx))
-            if cls.oauth_settings.bearer_token:
-                apponly_ctx = make_apponly_client(token=cls.oauth_settings.bearer_token)
-                obj.apponly_client = TwitterApiClient(await stack.enter_async_context(apponly_ctx))
-            yield obj
-
-    @classmethod
-    async def obtain_oauth1_token(cls):
-        async with make_oauth1_client(oauth=cls.oauth_settings, redirect_uri='oob') as client:
-            await client.fetch_request_token('https://api.twitter.com/oauth/request_token')
-            auth_url = client.create_authorization_url('https://api.twitter.com/oauth/authorize')
-            pin: str = input(f"Open this url {auth_url} and paste here PIN:\n")
-            data: dict = await client.fetch_access_token('https://api.twitter.com/oauth/access_token', verifier=pin)
-            await cls.oauth1_token.save(data)
-
-    @classmethod
-    async def obtain_oauth2_token(cls):
-        client_ctx = make_oauth2_client(scope=cls.oauth2_scope, oauth=cls.oauth_settings, redirect_uri='http://localhost')
-        async with client_ctx as client:
-            code_verifier = secrets.token_urlsafe(43)
-            url, state = client.create_authorization_url(
-                url='https://twitter.com/i/oauth2/authorize', code_verifier=code_verifier,
-            )
-            authorization_response = input(f"Follow this url and enter resulting url after redirect: {url}\n")
-            token: dict = await client.fetch_token(
-                authorization_response=authorization_response,
-                code_verifier=code_verifier,
-            )
-            await cls.oauth2_token.save(token)
+            self_ = cls()
+            self_.oauth1_client = await stack.enter_async_context(self_.oauth_manager.create_oauth1_client())
+            self_.oauth2_client = await stack.enter_async_context(self_.oauth_manager.create_oauth2_client())
+            self_.apponly_client = await stack.enter_async_context(self_.oauth_manager.create_apponly_client())
+            yield self_
 
     @classmethod
     async def validate_tokens(cls):
@@ -220,14 +193,15 @@ class Conversation:
 
 
 class ConversationsBot(BaseTwitterBot):
-    oauth1_token = OAuthTokenLoader('twitter_converstaions_oauth1')
-    oauth2_token = OAuthTokenLoader('twitter_converstaions_oauth2')
-    oauth2_scope = "tweet.read users.read dm.read dm.write offline.access"
-
     @classmethod
     @property
-    def oauth_settings(cls):
-        return settings.twitter.conversations_bot.oauth
+    @cache
+    def oauth_manager(cls):
+        return OAuthManager(
+            name_prefix='twitter_converstaions',
+            settings=settings.twitter.conversations_bot.oauth,
+            scope="tweet.read users.read dm.read dm.write offline.access",
+        )
 
     async def run_loop(self):
         conversations = {}
@@ -251,13 +225,13 @@ class ConversationsBot(BaseTwitterBot):
             'dm_event.fields': 'sender_id,created_at,dm_conversation_id',
             'max_results': 100,
         }
-        events: list[dict] = await self.oauth2_client.get_pages('dm_events', limit=100, params=params)
-        logger.trace("Fetched direct messages %s", events)
+        conversations = defaultdict(list)
+        async for event in self.oauth2_client.get_pages('dm_events', params=params):
+            conversations[event['dm_conversation_id']].append(event)
+        logger.trace("Fetched direct messages: %s", conversations)
         self_id = settings.twitter.self_id
 
-        def keyfunc(event):
-            return event['dm_conversation_id']
-        for dm_conversation_id, conversation_events in groupby(sorted(events, key=keyfunc), keyfunc):
+        for dm_conversation_id, conversation_events in conversations:
             sorted_events = sorted(conversation_events, key=lambda event: event['created_at'])
             last_message = sorted_events[-1]
             created_at = datetime.fromisoformat(last_message['created_at'][:-1])  # Remove trailing Z
@@ -267,57 +241,63 @@ class ConversationsBot(BaseTwitterBot):
             yield dm_conversation_id
 
 
-register_app_command(ConversationsBot.obtain_oauth1_token, 'obtain_conversations_bot_oauth1_token')
-register_app_command(ConversationsBot.obtain_oauth2_token, 'obtain_conversations_bot_oauth2_token')
-
-
 class MentionsBot(BaseTwitterBot):
-    oauth1_token = OAuthTokenLoader('twitter_mentions_bot_oauth1')
-    oauth2_token = OAuthTokenLoader('twitter_mentions_bot_oauth2')
-    oauth2_scope = "tweet.read tweet.write users.read dm.read dm.write offline.access"
-
     @classmethod
     @property
-    def oauth_settings(cls):
-        return settings.twitter.mentions_bot.oauth
+    @cache
+    def oauth_manager(self):
+        return OAuthManager(
+            name_prefix='twitter_mentions_bot',
+            scope="tweet.read tweet.write users.read dm.read dm.write offline.access",
+            settings=settings.twitter.mentions_bot.oauth,
+            suggested_account='tip4fun',
+        )
 
-    async def run_loop(self, handle: TwitterHandle):
+    @classmethod
+    @asynccontextmanager
+    async def create(cls):
+        async with super().create() as self_:
+            me: TwitterAccount = await self_.oauth2_client.get_me()
+            self_.handle = me.handle
+            yield self_
+
+    async def run_loop(self):
         try:
             async with anyio.create_task_group() as tg:
-                async for mention in self.fetch_mentions(handle):
-                    tg.start_soon(self.handle_mention, mention)
+                async with self.fetch_mentions() as mentions:
+                    async for mention in mentions:
+                        tg.start_soon(self.handle_mention, mention)
         except httpx.HTTPStatusError as exc:
             print(exc.response.json())
             raise
 
-    async def handle_mention(self, mention: dict):
+    async def handle_mention(self, mention: Tweet) -> Donation:
         logger.trace("handling mention %s", mention)
-        receiver_user_id: int = int(mention['in_reply_to_user_id'])
-        donator_user_id: int = int(mention['author_id'])
-        referenced_tweet_id: int = int(mention['referenced_tweets'][0]['id'])
-        tweet_id: int = int(mention['id'])
-        text: str = mention['text']
         async with db.session() as db_session:
             twitter_db = self.provider.wrap_db(db_session)
-            donator_account_: TwitterAccount = await self.provider.query_or_fetch_account(db=twitter_db, user_id=donator_user_id)
+            donator_account_: TwitterAccount = await self.provider.query_or_fetch_account(
+                db=twitter_db, user_id=mention.author_id,
+            )
             donator_account: TwitterAccountOwned = await twitter_db.query_account(id=donator_account_.id)
             if donator_account.owner_id is None:
                 donator = Donator()
             else:
                 donator = Donator(id=donator_account.owner_id)
-            receiver_account: TwitterAccount = await self.provider.query_or_fetch_account(db=twitter_db, user_id=receiver_user_id)
-            if match := re.search(r' (?P<amount>\d+) ?(?P<has_k>[kK])?', text):
+            receiver_account: TwitterAccount = await self.provider.query_or_fetch_account(
+                db=twitter_db, user_id=mention.in_reply_to_user_id,
+            )
+            if match := re.search(r' (?P<amount>\d+) ?(?P<has_k>[kK])?', mention.text):
                 amount = int(match['amount'])
                 if match['has_k']:
                     amount *= 1000
             else:
-                await self.do_not_understand(tweet_id)
+                await self.do_not_understand(mention.id)
                 return
             logger.debug(
                 "handling donation from @%s to @%s for %d sats via tweet %d",
-                donator_account.handle, receiver_account.handle, amount, tweet_id,
+                donator_account.handle, receiver_account.handle, amount, mention.id,
             )
-            tweet: TwitterTweet = TwitterTweet(tweet_id=referenced_tweet_id)
+            tweet: TwitterTweet = TwitterTweet(tweet_id=mention.referenced_tweets[0].id)
             await twitter_db.get_or_create_tweet(tweet)
             donation = Donation(
                 donator=donator,
@@ -325,16 +305,21 @@ class MentionsBot(BaseTwitterBot):
                 twitter_tweet=tweet,
                 donator_twitter_account=donator_account,
                 amount=amount,
+                lightning_address=receiver_account.lightning_address,
             )
             with lnd.assign(LndClient(settings.lnd)):
-                # Long expiry because this will be posted in Twitter
-                pay_req, donation = await donate(donation, db_session, expiry=3600)
-            if pay_req:
-                await self.send_payreq(tweet_id, receiver_account.handle, donation, pay_req)
-            elif donation.paid_at:
-                await self.share_donation_preview(tweet_id, donation)
-            else:
-                raise RuntimeError("invalid state")
+                # Long expiry because this will be posted on Twitter
+                pay_req, donation = await donate(donation, db_session, expiry=3600 * 24)
+        if pay_req:
+            invoice_tweet = await self.send_payreq(mention.id, receiver_account.handle, donation, pay_req)
+            async with db.session() as db_session:
+                twitter_db = self.provider.wrap_db(db_session)
+                await twitter_db.add_invoice_tweet_to_donation(donation=donation, tweet=invoice_tweet)
+        elif donation.paid_at:
+            await self.share_donation_preview(mention.id, donation)
+        else:
+            raise RuntimeError("invalid state")
+        return donation
 
     async def invite_new_user(self, tweet_id: int):
         print("inviting new user")
@@ -343,65 +328,42 @@ class MentionsBot(BaseTwitterBot):
         print("i do not understand")
 
     async def share_donation_preview(self, tweet_id: int, donation: Donation):
-        await self.send_tweet(reply_to=tweet_id, text=make_absolute_uri(f'/donation/{donation.id}'))
+        await self.oauth2_client.send_tweet(reply_to=tweet_id, text=make_absolute_uri(f'/donation/{donation.id}'))
 
-    async def send_payreq(self, tweet_id: int, handle: TwitterHandle, donation: Donation, pay_req: PaymentRequest):
+    async def send_payreq(self, tweet_id: int, handle: TwitterHandle, donation: Donation, pay_req: PaymentRequest) -> Tweet:
         qrcode: bytes = make_qr_code(pay_req, ERROR_CORRECT_M)
-        media_id: int = await self.client.upload_media(qrcode, 'image/png', category='tweet_image')
+        media_id: int = await self.oauth1_client.upload_media(qrcode, 'image/png', category='tweet_image')
         invoice_url = make_absolute_uri(f'/api/v1/donation/{donation.id}/invoice')
-        await self.send_tweet(text=f"Invoice: {invoice_url}", reply_to=tweet_id, media_id=media_id)
+        return await self.oauth2_client.send_tweet(text=f"Invoice: {invoice_url}", reply_to=tweet_id, media_id=media_id)
 
-    async def fetch_mentions(self, handle: TwitterHandle) -> AsyncIterator[dict]:
-        logger.info("fetching new mentions for @%s", handle)
-        current_rules: list = (await self.apponly_client.get('/tweets/search/stream/rules')).get('data', [])
-        logger.debug("current rules: %s", current_rules)
-        expected_rules = [dict(value=f'@{handle} is:reply -from:{handle}')]
-        if [dict(value=rule['value']) for rule in current_rules] != expected_rules:
-            logger.debug("current rules differ with expected, overriding with %s", expected_rules)
-            if current_rules:
-                current_rule_ids = [rule['id'] for rule in current_rules]
-                await self.apponly_client.post('/tweets/search/stream/rules', json=dict(
-                    delete=dict(ids=current_rule_ids)
-                ))
-            await self.apponly_client.post('/tweets/search/stream/rules', json=dict(
-                add=expected_rules,
-            ))
-        params = {
-            'tweet.fields': 'created_at',
-            'expansions': 'author_id,referenced_tweets.id,in_reply_to_user_id,referenced_tweets.id.author_id',
-        }
-        async with self.apponly_client.stream('GET', '/tweets/search/stream', params=params, timeout=3600) as response:
-            try:
-                response.raise_for_status()
-            except httpx.HTTPStatusError:
-                await response.aread()
-                raise
-            async for chunk in response.aiter_text():
-                chunk = chunk.strip()
-                if chunk:
-                    data: dict = json.loads(chunk)
-                    yield data['data']
+    def fetch_mentions(self) -> AsyncIterator[AsyncIterator[Tweet]]:
+        logger.info("fetching new mentions for @%s", self.handle)
+        return self.apponly_client.stream_tweets(query=f'@{self.handle} is:reply -from:{self.handle}')
 
-    async def send_tweet(self, reply_to: int = None, text: str = None, media_id: int = None):
-        body = {}
-        if reply_to is not None:
-            body['reply'] = dict(in_reply_to_tweet_id=str(reply_to))
-        if text is not None:
-            body['text'] = text
-        if media_id is not None:
-            body['media'] = dict(media_ids=[str(media_id)])
-        tweet = (await self.client.post('/tweets', json=body))['data']
-        logger.trace("tweeted https://twitter.com/status/%s: %s", tweet['id'], tweet['text'])
+    @asynccontextmanager
+    async def monitor_invoices(self) -> AsyncIterator[AsyncIterator[Donation]]:
+        queue = asyncio.Queue()
+        async with pubsub.subscribe('donations', queue.put):
+            yield self.process_invoices(queue)
 
-
-register_app_command(MentionsBot.obtain_oauth1_token, 'obtain_mentions_bot_oauth1_token')
-register_app_command(MentionsBot.obtain_oauth2_token, 'obtain_mentions_bot_oauth2_token')
-register_app_command(MentionsBot.validate_tokens, 'validate_mentions_bot_tokens')
+    async def process_invoices(self, queue: asyncio.Queue) -> AsyncIterator[Donation]:
+        while True:
+            data: str = await queue.get()
+            notification = Notification.from_json(data)
+            async with db.session() as db_session:
+                donation: Donation = await DonationsDbLib(db_session).query_donation(id=notification.id)
+                logger.trace("received notifiaction about %s", donation)
+                if donation.twitter_invoice_tweet_id is not None:
+                    # TODO: use task group
+                    invoice_tweet: Tweet = await self.oauth2_client.get_tweet(donation.twitter_invoice_tweet_id)
+                    await self.oauth2_client.delete_tweet(donation.twitter_invoice_tweet_id)
+                    await self.share_donation_preview(tweet_id=invoice_tweet.replied_to, donation=donation)
+                    yield donation
 
 
 @register_app_command
 async def test_upload_media():
-    async with make_oauth1_client(token=await MentionsBot.oauth1_token.load()) as client:
+    async with TwitterApiClient.create_oauth1(token=await MentionsBot.oauth1_token.load()) as client:
         try:
             with open('frontend/public/static/D-16.png', 'rb') as f:
                 await client.upload_media(f.read(), 'image/png', category='tweet_image')
@@ -486,5 +448,4 @@ async def run_conversations_bot():
 @restarting
 async def run_mentions_bot():
     async with MentionsBot.create() as bot:
-        me: TwitterAccount = await bot.client.get_me()
-        await bot.run_loop(me.handle)
+        await bot.run_loop()
