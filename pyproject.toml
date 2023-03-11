@@ -11,7 +11,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.11"
 httpx = "^0.23.0"
 fastapi = "^0.77.1"
 qrcode = {extras = ["pil"], version = "^7.3.1"}
@@ -24,14 +24,13 @@ PyYAML = "^6.0"
 itsdangerous = "^2.1.2"
 aiogoogle = "^4.1.0"
 databases = {extras = ["asyncpg"], version = "^0.5.5"}
-asyncpg = "^0.25.0"
 hypercorn = {git = "https://github.com/nikicat/hypercorn"}
 email-validator = "^1.2.1"
 fastapi-debug-toolbar = "^0.2.1"
 PyJWT = "^2.4.0"
 Mako = "^1.2.0"
 starlette-authlib = "^0.1.9"
-multiavatar = "^1.0.3"
+multiavatar = {git = "https://github.com/nikicat/multiavatar-python"}
 funkybob = {git = "https://github.com/nikicat/funkybob"}
 setuptools = "^65.5.1"
 lnurl = "^0.3.6"
@@ -43,7 +42,7 @@ pyinstrument = "^4.3.0"
 alembic = "^1.8.1"
 furl = "^2.1.3"
 authlib = {git = "https://github.com/nikicat/authlib"}
-glom = "^22.1.0"
+glom = {git = "https://github.com/nikicat/glom"}
 playwright = "^1.28.0"
 async-lru = "^1.0.3"
 google-cloud-logging = "^3.3.0"
@@ -57,6 +56,7 @@ bech32 = "^1.2.0"
 vcrpy = {git = "https://github.com/nikicat/vcrpy", rev = "fix-httpx-stub"}
 httpx-ws = "^0.3.0"
 shellous = "^0.22.0"
+asyncpg = "v0.27.0"
 
 [tool.poetry.dev-dependencies]
 ipython = "^8.3.0"
@@ -97,10 +97,14 @@ filterwarnings = [
     "ignore:datetime.date size changed, may indicate binary incompatibility. Expected 32 from C header, got 48 from PyObject:RuntimeWarning",
 # https://github.com/ktosiek/pytest-freezegun/issues/35
     "ignore:distutils Version classes are deprecated. Use packaging.version instead:DeprecationWarning",
-# Rollbar triggers warning in httpx
+# Rollbar triggers warning in httpx and webob
     "ignore:Use 'content=<...>' to upload raw bytes/text content.:DeprecationWarning",
-# From shellous (remove after updating Python)
-    "ignore:Python 3.10.9 and Python 3.11.1 are unreliable with respect to asyncio subprocesses. Consider a newer Python release.*:RuntimeWarning",
+    "ignore:'cgi' is deprecated and slated for removal in Python 3.13:DeprecationWarning",
+# These errors occured in asyncpg after upgrading to 3.11
+    "ignore:datetime.date size changed, may indicate binary incompatibility. Expected 32 from C header, got 40 from PyObject:RuntimeWarning",
+    "ignore:datetime.datetime size changed, may indicate binary incompatibility. Expected 48 from C header, got 56 from PyObject:RuntimeWarning",
+    # Nasty SQLAlchemy uber-warning. Remove after upgrading to 2.0
+    "ignore:.*Deprecated API features detected! These feature\\(s\\) are not compatible with SQLAlchemy 2.0. To prevent incompatible upgrades prior to updating applications, ensure requirements files are pinned to .*. Set environment variable SQLALCHEMY_WARN_20=1 to show all deprecation warnings.  Set environment variable SQLALCHEMY_SILENCE_UBER_WARNING=1 to silence this message.*",
 ]
 asyncio_mode = "auto"
 testpaths = ["tests"]

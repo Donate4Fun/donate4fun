@@ -343,7 +343,7 @@ async def follow_oauth_flow(client, provider: SocialProvider, name: str, return_
     )
     code: str = furl(redirect_url).query.params['code']
     response = await client.get(
-        f'/api/v1/oauth-redirect/{provider}',
+        f'/api/v1/oauth-redirect/{provider.value}',
         params=dict(state=encrypted_state, code=code),
     )
     verify_oauth_redirect(response, return_to, name)

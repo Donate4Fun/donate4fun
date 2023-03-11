@@ -1,4 +1,4 @@
-FROM python:3.10.8
+FROM python:3.11.2
 
 #RUN apk --update --no-cache add alpine-sdk libffi-dev rust cargo openssl-dev
 ENV DEBIAN_FRONTEND=noninteractive
