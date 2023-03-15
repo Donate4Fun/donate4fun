@@ -9,7 +9,7 @@ from collections import defaultdict
 from contextlib import asynccontextmanager, AsyncExitStack
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from functools import wraps, cache
+from functools import cache
 from typing import AsyncIterator
 from urllib.parse import quote_plus, urljoin
 from uuid import UUID
@@ -28,14 +28,14 @@ from .db_donations import DonationsDbLib
 from .models import (
     TwitterAccount, Donator, WithdrawalToken, Donation, TwitterAccountOwned, TwitterTweet, PaymentRequest, Notification,
 )
-from .core import as_task, catch_exceptions
+from .core import as_task, catch_exceptions, restarting
 from .settings import settings
 from .twitter import TwitterHandle, OAuthManager, TwitterApiClient, Tweet
 from .twitter_provider import TwitterProvider
 from .donation import donate
 from .api_utils import make_absolute_uri, register_app_command
 from .lnd import lnd, LndClient
-from .pubsub import pubsub
+from .pubsub import pubsub, create_pubsub
 
 logger = logging.getLogger(__name__)
 
@@ -263,10 +263,10 @@ class MentionsBot(BaseTwitterBot):
 
     async def run_loop(self):
         try:
-            async with anyio.create_task_group() as tg:
+            async with asyncio.TaskGroup() as tg, self.monitor_invoices_loop():
                 async with self.fetch_mentions() as mentions:
                     async for mention in mentions:
-                        tg.start_soon(self.handle_mention, mention)
+                        tg.create_task(self.handle_mention(mention))
         except httpx.HTTPStatusError as exc:
             print(exc.response.json())
             raise
@@ -328,7 +328,8 @@ class MentionsBot(BaseTwitterBot):
         print("i do not understand")
 
     async def share_donation_preview(self, tweet_id: int, donation: Donation):
-        await self.oauth2_client.send_tweet(reply_to=tweet_id, text=make_absolute_uri(f'/donation/{donation.id}'))
+        donation_uri = make_absolute_uri(f'/donation/{donation.id}')
+        await self.oauth2_client.send_tweet(reply_to=tweet_id, text=f'🔥⚡Paid! {donation_uri}')
 
     async def send_payreq(self, tweet_id: int, handle: TwitterHandle, donation: Donation, pay_req: PaymentRequest) -> Tweet:
         qrcode: bytes = make_qr_code(pay_req, ERROR_CORRECT_M)
@@ -339,6 +340,13 @@ class MentionsBot(BaseTwitterBot):
     def fetch_mentions(self) -> AsyncIterator[AsyncIterator[Tweet]]:
         logger.info("fetching new mentions for @%s", self.handle)
         return self.apponly_client.stream_tweets(query=f'@{self.handle} is:reply -from:{self.handle}')
+
+    @as_task
+    @restarting
+    async def monitor_invoices_loop(self):
+        async with self.monitor_invoices() as invoices:
+            async for donation in invoices:
+                logger.debug("donation handled: %s", donation)
 
     @asynccontextmanager
     async def monitor_invoices(self) -> AsyncIterator[AsyncIterator[Donation]]:
@@ -422,19 +430,6 @@ async def fetch_twitter_conversations(token: str):
         print([conversation_id async for conversation_id in bot.fetch_conversations()])
 
 
-def restarting(func):
-    @wraps(func)
-    async def wrapper(*args, **kwargs):
-        while True:
-            try:
-                await func(*args, **kwargs)
-            except Exception:
-                delay = 15
-                logger.exception("Exception in %s, restarting in %d seconds", func, delay)
-                await asyncio.sleep(delay)
-    return wrapper
-
-
 @as_task
 @register_app_command
 @restarting
@@ -447,5 +442,5 @@ async def run_conversations_bot():
 @register_app_command
 @restarting
 async def run_mentions_bot():
-    async with MentionsBot.create() as bot:
+    async with create_pubsub(), MentionsBot.create() as bot:
         await bot.run_loop()

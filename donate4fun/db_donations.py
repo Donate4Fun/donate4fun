@@ -114,11 +114,7 @@ class DonationsDbLib(DbSessionWrapper):
             )
             .returning(*DonationDb.__table__.columns)
         )
-        donation: DonationDb = resp.fetchone()
-        if donation is None:
-            # Row could be already updated in another replica
-            logger.warning(f"Donation {donation_id} was already handled, skipping")
-            return
+        donation: DonationDb = resp.one()
         await self.update_balance_for_donation(donation, donation.amount)
         logger.debug("Donation %s paid", donation)
 

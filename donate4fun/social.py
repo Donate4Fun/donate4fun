@@ -75,6 +75,3 @@ class SocialProvider(ABC):
                 return cls.create(SocialProviderId.donate4fun)
             case _:
                 raise UnsupportedTarget("Slug is invalid")
-
-    async def notify(self, donation: Donation):
-        pass

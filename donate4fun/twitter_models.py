@@ -55,7 +55,7 @@ class UrlEntity(BaseEntity):
     display_url: str  # It actually lacks a scheme
     url: AnyUrl
     expanded_url: AnyUrl
-    media_key: MediaKey
+    media_key: MediaKey | None = None
 
 
 class TweetEntities(BaseModel):

@@ -293,6 +293,7 @@ class TwitterApiClient:
             chunk = chunk.strip()
             if chunk:
                 data: dict = json.loads(chunk)
+                logger.trace("deserializing tweet %s", data)
                 yield Tweet(**data['data'])
 
     async def get_tweet(self, tweet_id: TweetId):
@@ -367,11 +368,11 @@ class OAuthManager:
 
     async def load(self, kind: OAuthTokenKind) -> OAuthToken:
         async with db.session() as db_session:
-            return await OAuthDbLib(db_session).query_oauth_token(self._get_db_key(kind.value))
+            return await OAuthDbLib(db_session).query_oauth_token(self._get_db_key(kind))
 
     async def save(self, kind: OAuthTokenKind, token: OAuthToken):
         async with db.session() as db_session:
-            await OAuthDbLib(db_session).save_oauth_token(self._get_db_key(kind.value), token)
+            await OAuthDbLib(db_session).save_oauth_token(self._get_db_key(kind), token)
 
     @asynccontextmanager
     async def create_oauth1_client(self):

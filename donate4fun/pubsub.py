@@ -5,7 +5,7 @@ from typing import Callable
 from contextlib import asynccontextmanager
 
 from .core import ContextualObject
-from .db import Database
+from .db import Database, db
 
 logger = logging.getLogger(__name__)
 
@@ -58,3 +58,11 @@ class PubSubBroker:
 
 
 pubsub = ContextualObject('pubsub')
+
+
+@asynccontextmanager
+async def create_pubsub():
+    pubsub_ = PubSubBroker()
+    with pubsub.assign(pubsub_):
+        async with pubsub.run(db):
+            yield

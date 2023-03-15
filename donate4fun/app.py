@@ -17,7 +17,7 @@ from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from .settings import load_settings, Settings, settings
 from .db import Database, db
 from .lnd import monitor_invoices, LndClient, lnd
-from .pubsub import PubSubBroker, pubsub
+from .pubsub import create_pubsub
 from . import twitter_bot
 from .core import app, register_command, commands
 from .screenshot import create_screenshoter_app
@@ -142,11 +142,10 @@ class AccessFilter(logging.Filter):
 @register_command
 @with_common_libs
 async def serve():
-    pubsub_ = PubSubBroker()
     lnd_ = LndClient(settings.lnd)
     async with create_app() as app_, anyio.create_task_group() as tg:
-        with app.assign(app_), lnd.assign(lnd_), pubsub.assign(pubsub_), task_group.assign(tg):
-            async with pubsub.run(db), monitor_invoices(lnd_, db), AsyncExitStack() as stack:
+        with app.assign(app_), lnd.assign(lnd_), task_group.assign(tg):
+            async with create_pubsub(), monitor_invoices(lnd_, db), AsyncExitStack() as stack:
                 if settings.twitter.conversations_bot.enabled:
                     await stack.enter_async_context(twitter_bot.run_converstaions_bot())
                 if settings.twitter.mentions_bot.enabled:
