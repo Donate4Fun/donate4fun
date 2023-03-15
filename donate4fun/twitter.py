@@ -3,6 +3,7 @@ import json
 import logging
 import re
 import secrets
+import importlib
 from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
 from datetime import datetime
@@ -399,9 +400,9 @@ class OAuthManager:
 async def obtain_token(path: str, token_kind: OAuthTokenKind):
     parts = path.split('.')
     module = parts[0]
-    obj = __import__(f'donate4fun.{module}')
+    obj = importlib.import_module(f'donate4fun.{module}')
     for part in parts[1:]:
-        obj = obj[part]
+        obj = getattr(obj, part)
     await obj.obtain_token(token_kind)
 
 
