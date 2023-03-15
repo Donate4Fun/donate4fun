@@ -4,14 +4,16 @@ import os.path
 import json
 import logging
 import math
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from datetime import datetime
 from functools import cached_property
-from typing import Literal
-from contextlib import asynccontextmanager
-from collections.abc import AsyncIterator
 from typing import Any
+from typing import Literal
 
+import asyncpg
 import httpx
+import sqlalchemy
 from lnpayencode import LnAddr
 from lnurl.helpers import _lnurl_decode
 from lnurl.models import LnurlResponseModel
@@ -23,7 +25,7 @@ from .settings import LndSettings, settings
 from .types import RequestHash, PaymentRequest
 from .models import Donator, Donation, SocialAccount
 from .core import as_task, ContextualObject, from_base64, to_base64
-from .api_utils import track_donation, auto_transfer_donations, register_app_command
+from .api_utils import donation_paid, register_app_command
 from .db_donations import DonationsDbLib
 
 logger = logging.getLogger(__name__)
@@ -264,16 +266,29 @@ async def monitor_invoices_step(lnd_client, db):
                 if invoice.state == 'SETTLED':
                     logger.debug("donation paid %s", invoice)
                     try:
-                        async with db.session() as db_session:
-                            donations_db = DonationsDbLib(db_session)
-                            donation: Donation = await donations_db.lock_donation(r_hash=invoice.r_hash)
-                            await donations_db.donation_paid(
-                                donation_id=donation.id,
-                                paid_at=invoice.settle_date,
-                                amount=invoice.amt_paid_sat,
-                            )
-                            track_donation(donation)
-                            await auto_transfer_donations(db_session, donation)
+                        # Try to lock donation multiple times
+                        while True:
+                            async with db.session() as db_session:
+                                donations_db = DonationsDbLib(db_session)
+                                try:
+                                    donation: Donation = await donations_db.lock_donation(r_hash=invoice.r_hash)
+                                except sqlalchemy.exc.DBAPIError as exc:
+                                    # could not serialize access due to concurrent update
+                                    if isinstance(exc.__cause__.__cause__, asyncpg.exceptions.SerializationError):
+                                        # Just try again
+                                        continue
+                                    else:
+                                        raise
+                                if donation.paid_at is not None:
+                                    logger.warning("Donation %s was already paid, skipping", donation)
+                                else:
+                                    await donation_paid(
+                                        db_session,
+                                        donation=donation,
+                                        paid_at=invoice.settle_date,
+                                        amount=invoice.amt_paid_sat,
+                                    )
+                                break
                     except Exception:
                         logger.exception("Error while handling donation notification from lnd")
     finally:

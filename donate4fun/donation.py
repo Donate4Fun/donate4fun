@@ -8,7 +8,7 @@ from .models import Donation, PaymentRequest
 from .db import DbSession
 from .db_donations import DonationsDbLib
 from .types import LnurlpError, RequestHash, Satoshi
-from .api_utils import load_donator, auto_transfer_donations, track_donation, HttpClient, sha256hash
+from .api_utils import load_donator, donation_paid, HttpClient, sha256hash
 from .lnd import lnd, Invoice, PayInvoiceResult
 
 
@@ -60,13 +60,9 @@ async def donate(donation: Donation, db_session: DbSession, expiry: int = None) 
             paid_at = datetime.utcnow()
             fee_msat = None
             claimed_at = None
-        await donations_db.donation_paid(
-            donation_id=donation.id, amount=amount, paid_at=paid_at, fee_msat=fee_msat, claimed_at=claimed_at,
+        donation = await donation_paid(
+            db_session, donation=donation, amount=amount, paid_at=paid_at, fee_msat=fee_msat, claimed_at=claimed_at,
         )
-        await auto_transfer_donations(db_session, donation)
-        # Reload donation with a fresh state
-        donation = await donations_db.query_donation(id=donation.id)
-        track_donation(donation)
     return pay_req, donation
 
 

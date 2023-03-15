@@ -54,8 +54,3 @@ class TwitterProvider(SocialProvider):
 
     def set_donation_receiver(self, donation: Donation, receiver: TwitterAccount):
         donation.twitter_account = receiver
-
-    async def notify(self, donation: Donation):
-        if donation.twitter_tweet is not None and donation.twitter_invoice_tweet:
-            from .twitter_bot import MentionsBot
-            MentionsBot.donation_paid(donation)

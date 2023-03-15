@@ -8,6 +8,7 @@ from lnpayencode import lndecode, LnAddr
 
 Url = str
 Satoshi = int
+MilliSatoshi = int
 
 
 class LightningAddress(str):

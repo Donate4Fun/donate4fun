@@ -2,6 +2,7 @@ import hashlib
 import json
 import unicodedata
 from contextlib import asynccontextmanager
+from datetime import datetime
 from functools import wraps
 from uuid import uuid4, UUID
 
@@ -21,7 +22,7 @@ from .models import Donator, Credentials, Donation, SocialProviderId, SocialAcco
 from .db import DbSession, db, Database
 from .db_libs import TwitterDbLib, YoutubeDbLib, GithubDbLib, DonationsDbLib
 from .core import ContextualObject, register_command
-from .types import LightningAddress, Satoshi
+from .types import LightningAddress, Satoshi, MilliSatoshi
 from .settings import settings, load_settings
 
 
@@ -108,6 +109,21 @@ async def auto_transfer_donations(db: DbSession, donation: Donation) -> int:
         if account.owner_id is not None:
             return await social_db.transfer_donations(account, Donator(id=account.owner_id))
     return 0
+
+
+async def donation_paid(
+    db_session: DbSession, donation: Donation, amount: Satoshi, paid_at: datetime,
+    fee_msat: MilliSatoshi = 0, claimed_at: datetime = None,
+) -> Donation:
+    donations_db = DonationsDbLib(db_session)
+    await donations_db.donation_paid(
+        donation_id=donation.id, amount=amount, paid_at=paid_at, fee_msat=fee_msat, claimed_at=claimed_at,
+    )
+    await auto_transfer_donations(db_session, donation)
+    # Reload donation with a fresh state
+    donation = await donations_db.query_donation(id=donation.id)
+    track_donation(donation)
+    return donation
 
 
 def encode_jwt(**claims) -> str:

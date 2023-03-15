@@ -11,11 +11,9 @@ from sqlalchemy import select
 from .models import (
     Donation, Donator, DonateResponse, DonateRequest, DonationPaidRequest, RequestHash
 )
-from .types import ValidationError
+from .types import ValidationError, PaymentRequest
 from .social import SocialProviderId, SocialProvider
-from .api_utils import (
-    get_donator, get_db_session, load_donator, track_donation, get_donations_db, only_me,
-)
+from .api_utils import get_donator, get_db_session, load_donator, get_donations_db, only_me, donation_paid
 from .db_libs import GithubDbLib, TwitterDbLib, YoutubeDbLib, DonationsDbLib
 from .db_donations import sent_donations_subquery, received_donations_subquery
 from .db_models import DonationDb
@@ -112,7 +110,7 @@ async def get_invoice(donation_id: UUID, db_session=Depends(get_donations_db)):
 
 
 @router.post("/donation/{donation_id}/paid", response_model=Donation)
-async def donation_paid(donation_id: UUID, request: DonationPaidRequest, db=Depends(get_donations_db)):
+async def donation_paid_api(donation_id: UUID, request: DonationPaidRequest, db=Depends(get_donations_db)):
     donation: Donation = await db.query_donation(id=donation_id)
     if donation.lightning_address is None:
         # Do nothing for all other cases
@@ -123,10 +121,10 @@ async def donation_paid(donation_id: UUID, request: DonationPaidRequest, db=Depe
     if request.route.total_amt != donation.amount:
         raise ValidationError(f"Donation amount do not match {request.route.total_amt}")
     now = datetime.utcnow()
-    await db.donation_paid(donation.id, donation.amount, paid_at=now, fee_msat=request.route.total_fees * 1000, claimed_at=now)
-    donation = await db.query_donation(id=donation.id)
-    track_donation(donation)
-    return donation
+    return await donation_paid(
+        db.session, donation=donation, amount=donation.amount, paid_at=now,
+        fee_msat=request.route.total_fees * 1000, claimed_at=now,
+    )
 
 
 @router.post("/donation/{donation_id}/cancel")
