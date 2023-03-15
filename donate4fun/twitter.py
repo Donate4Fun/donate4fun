@@ -62,6 +62,7 @@ class TwitterApiClient:
             token=token,
             update_token=update_token,
             base_url='https://api.twitter.com/2',
+            client_kwargs=dict(transport=httpx.HTTPTransport(retries=3)),
         ) as client:
             yield cls(client)
 
@@ -72,6 +73,7 @@ class TwitterApiClient:
             client_id=oauth.consumer_key,
             client_secret=oauth.consumer_secret,
             base_url='https://api.twitter.com/2',
+            client_kwargs=dict(transport=httpx.HTTPTransport(retries=3)),
             **kwargs,
         ) as client:
             if token:
