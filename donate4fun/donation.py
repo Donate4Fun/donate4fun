@@ -148,7 +148,7 @@ async def fetch_lightning_address(donation: Donation) -> PaymentRequest:
 
 def make_memo(donation: Donation) -> str:
     if account := donation.receiver_social_account:
-        return f"Donate4.Fun donation to {account.unique_name}"
+        return f"Tip for {account.unique_name} via Donate4.Fun"
     elif donation.receiver:
         if donation.receiver.id == donation.donator.id:
             return f"[Donate4.fun] fulfillment for {donation.receiver.name}"

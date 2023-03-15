@@ -25,6 +25,7 @@ from hypercorn.config import Config
 from furl import furl
 from shellous import sh
 from vcr.cassette import Cassette
+from authlib.integrations.base_client.errors import OAuthError
 
 from donate4fun.core import as_task
 from donate4fun.app import create_app, app as app_var
@@ -391,10 +392,15 @@ class FixtureOAuthManager(OAuthManager):
 
     @asynccontextmanager
     async def create_oauth2_client(self):
-        async with super().create_oauth2_client() as client:
-            async with disable_vcr():
-                await client.client.ensure_active_token(client.client.token)
-            yield client
+        try:
+            async with super().create_oauth2_client() as client:
+                async with disable_vcr():
+                    await client.client.ensure_active_token(client.client.token)
+                yield client
+        except OAuthError:
+            await self.obtain_token(OAuthTokenKind.oauth2)
+            async with super().create_oauth2_client() as client:
+                yield client
 
 
 class TimestampedSerializer:

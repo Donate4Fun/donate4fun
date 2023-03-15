@@ -423,12 +423,14 @@ async def test_handle_twitter_mention(db, app, text: str, balance: int | None, f
 
 @mark_vcr
 @pytest.mark.freezed_vcr
-async def test_donate_via_mention(payer_lnd, receiver_lnd, db, monkeypatch, client, freeze_invoice_qrcode, freeze_uuids):
-    receiver_handle = 'Bryskin2'
+@pytest.mark.parametrize('receiver_handle', ['Bryskin2', 'btclntipbot'])
+async def test_donate_via_mention(
+    payer_lnd, receiver_lnd, db, monkeypatch, client, freeze_invoice_qrcode, freeze_uuids, receiver_handle,
+):
     donator_handle = 'btclntip'
     amount: Satoshi = 100
     receiver_manager = FixtureOAuthManager(
-        name_prefix='receiver',
+        name_prefix=f'receiver_{receiver_handle}',
         settings=settings.twitter.mentions_bot.oauth,
         scope='tweet.write tweet.read users.read offline.access',
         suggested_account=receiver_handle,
@@ -447,7 +449,7 @@ async def test_donate_via_mention(payer_lnd, receiver_lnd, db, monkeypatch, clie
             break
         else:
             # We user time.time() to avoid "duplicate content 403" error
-            receiver_tweet = await client.send_tweet(text=f'some tweet {time.time()}')
+            receiver_tweet = await receiver_client.send_tweet(text=f'some tweet {time.time()}')
     async with MentionsBot.create() as bot, enable_lnd_vcr():
         async with donator_manager.create_oauth2_client() as donator_client:
             async with bot.fetch_mentions() as mentions:
@@ -492,7 +494,7 @@ async def test_donate_via_mention(payer_lnd, receiver_lnd, db, monkeypatch, clie
                     assert donation.paid_at != None  # noqa
                 # First reply now should be a donation confirmation
                 donation_url = make_absolute_uri(f'/donation/{donation.id}')
-                assert confirmation.text == f'@{donator_handle} @{receiver_handle} {donation_url}'
+                assert confirmation.text == f'@{donator_handle} @{receiver_handle} 🔥⚡Paid! {donation_url}'
                 # assert len(confirmation.entities.urls) == 1  # doesn't work with localhost urls - Twitter ignores them
                 # donation_url = confirmation.entities.urls[0].url
                 # donation_id = furl(donation_url).path[1]

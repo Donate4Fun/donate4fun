@@ -1,0 +1,1589 @@
+interactions:
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.3
+    method: GET
+    uri: https://api.twitter.com/2/tweets/search/recent?query=from%3ABryskin2
+  response:
+    content: '{"data": [{"edit_history_tweet_ids": ["1635799811759775746"], "id":
+      "1635799811759775746", "text": "some tweet 1678840040.07402"}, {"edit_history_tweet_ids":
+      ["1635798807383269378"], "id": "1635798807383269378", "text": "some tweet 1678839800.600693"},
+      {"edit_history_tweet_ids": ["1635753769517416454"], "id": "1635753769517416454",
+      "text": "some tweet 1678829063.341233"}], "meta": {"newest_id": "1635799811759775746",
+      "oldest_id": "1635753769517416454", "result_count": 3}}'
+    headers:
+      api-version:
+      - '2.61'
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '207'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Wed, 15 Mar 2023 00:36:35 UTC
+      perf:
+      - '7626143928'
+      server:
+      - tsa_o
+      set-cookie:
+      - guest_id=v1%3A167884059587663116; Max-Age=34214400; Expires=Sun, 14 Apr 2024
+        00:36:35 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      strict-transport-security:
+      - max-age=631138519
+      x-access-level:
+      - read-write
+      x-connection-hash:
+      - 29b29ed77a0a581e487756ceb32cf1ee2965053a62a5af1056324b3ffc7b6828
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '180'
+      x-rate-limit-remaining:
+      - '176'
+      x-rate-limit-reset:
+      - '1678840701'
+      x-response-time:
+      - '191'
+      x-transaction-id:
+      - 85ad6319dfe2afd6
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.3
+    method: GET
+    uri: https://api.twitter.com/2/users/me?user.fields=id%2Cname%2Cprofile_image_url%2Cdescription%2Cverified%2Centities
+  response:
+    content: '{"data": {"entities": {"url": {"urls": [{"start": 0, "end": 23, "url":
+      "https://t.co/jkmQZP2YbL", "expanded_url": "https://donate4.fun", "display_url":
+      "donate4.fun"}]}, "description": {"mentions": [{"start": 59, "end": 71, "username":
+      "donate4_fun"}]}}, "profile_image_url": "https://pbs.twimg.com/profile_images/1624461699909574663/ko3M0TUK_normal.jpg",
+      "verified": false, "id": "1616757608299339776", "description": "Bitcoin Lightning
+      tips - mention me to send a tip. Part of @donate4_fun service.", "name": "Tip4Fun",
+      "username": "tip4fun"}}'
+    headers:
+      api-version:
+      - '2.61'
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '332'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Wed, 15 Mar 2023 00:36:36 UTC
+      perf:
+      - '7626143928'
+      server:
+      - tsa_o
+      set-cookie:
+      - guest_id=v1%3A167884059644761410; Max-Age=34214400; Expires=Sun, 14 Apr 2024
+        00:36:36 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      strict-transport-security:
+      - max-age=631138519
+      x-access-level:
+      - read-write-directmessages
+      x-connection-hash:
+      - a402bdbea3fc4c325049428c06660baadacc9d4d76f83e31a2b692ffd4ba1393
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '75'
+      x-rate-limit-remaining:
+      - '69'
+      x-rate-limit-reset:
+      - '1678840702'
+      x-response-time:
+      - '171'
+      x-transaction-id:
+      - 6a26c6a2006d3133
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - secret
+      connection:
+      - keep-alive
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.3
+    method: GET
+    uri: https://api.twitter.com/2/tweets/search/stream/rules
+  response:
+    content: '{"data": [{"id": "1632814729667268614", "value": "@tip4fun is:reply
+      -from:tip4fun"}], "meta": {"sent": "2023-03-15T00:36:37.062Z", "result_count":
+      1}}'
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '149'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Wed, 15 Mar 2023 00:36:37 UTC
+      perf:
+      - '7626143928'
+      server:
+      - tsa_o
+      set-cookie:
+      - guest_id=v1%3A167884059704570513; Max-Age=34214400; Expires=Sun, 14 Apr 2024
+        00:36:37 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      strict-transport-security:
+      - max-age=631138519
+      x-access-level:
+      - read
+      x-connection-hash:
+      - a819a1260bd2489f46aff9f2ac37d35d1bd23d341e46d7b355e85010d5537dd1
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '450'
+      x-rate-limit-remaining:
+      - '444'
+      x-rate-limit-reset:
+      - '1678840703'
+      x-response-time:
+      - '128'
+      x-transaction-id:
+      - e5b04587dc6872ad
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - secret
+      connection:
+      - keep-alive
+      cookie:
+      - guest_id=v1%3A167884059704570513
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.3
+    method: GET
+    uri: https://api.twitter.com/2/tweets/search/stream?expansions=author_id%2Creferenced_tweets.id%2Cin_reply_to_user_id%2Creferenced_tweets.id.author_id&tweet.fields=created_at%2Cattachments%2Cauthor_id%2Ccontext_annotations%2Cconversation_id%2Centities%2Csource%2Ctext%2Creferenced_tweets%2Cid%2Cin_reply_to_user_id
+  response:
+    content: "{\"data\":{\"attachments\":{},\"author_id\":\"1616845331353993217\",\"conversation_id\":\"1635799811759775746\",\"created_at\":\"2023-03-15T00:36:37.000Z\",\"edit_history_tweet_ids\":[\"1635802144317005824\"],\"entities\":{\"mentions\":[{\"start\":0,\"end\":9,\"username\":\"Bryskin2\",\"id\":\"1591008723912343553\"},{\"start\":10,\"end\":18,\"username\":\"tip4fun\",\"id\":\"1616757608299339776\"}]},\"id\":\"1635802144317005824\",\"in_reply_to_user_id\":\"1591008723912343553\",\"referenced_tweets\":[{\"type\":\"replied_to\",\"id\":\"1635799811759775746\"}],\"text\":\"@Bryskin2
+      @tip4fun 100 sats for this sir 1678840594.840498\"},\"includes\":{\"users\":[{\"id\":\"1616845331353993217\",\"name\":\"lntip\",\"username\":\"btclntip\"},{\"id\":\"1591008723912343553\",\"name\":\"Nikolay
+      Bryskin\",\"username\":\"Bryskin2\"},{\"id\":\"1616757608299339776\",\"name\":\"Tip4Fun\",\"username\":\"tip4fun\"}],\"tweets\":[{\"attachments\":{},\"author_id\":\"1616845331353993217\",\"conversation_id\":\"1635799811759775746\",\"created_at\":\"2023-03-15T00:36:37.000Z\",\"edit_history_tweet_ids\":[\"1635802144317005824\"],\"entities\":{\"mentions\":[{\"start\":0,\"end\":9,\"username\":\"Bryskin2\",\"id\":\"1591008723912343553\"},{\"start\":10,\"end\":18,\"username\":\"tip4fun\",\"id\":\"1616757608299339776\"}]},\"id\":\"1635802144317005824\",\"in_reply_to_user_id\":\"1591008723912343553\",\"referenced_tweets\":[{\"type\":\"replied_to\",\"id\":\"1635799811759775746\"}],\"text\":\"@Bryskin2
+      @tip4fun 100 sats for this sir 1678840594.840498\"},{\"attachments\":{},\"author_id\":\"1591008723912343553\",\"context_annotations\":[{\"domain\":{\"id\":\"47\",\"name\":\"Brand\",\"description\":\"Brands
+      and Companies\"},\"entity\":{\"id\":\"10045225402\",\"name\":\"Twitter\"}}],\"conversation_id\":\"1635799811759775746\",\"created_at\":\"2023-03-15T00:27:21.000Z\",\"edit_history_tweet_ids\":[\"1635799811759775746\"],\"entities\":{},\"id\":\"1635799811759775746\",\"text\":\"some
+      tweet 1678840040.07402\"}]},\"matching_rules\":[{\"id\":\"1632814729667268614\",\"tag\":\"\"}]}\r\n"
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-encoding:
+      - gzip
+      date:
+      - Wed, 15 Mar 2023 00:36:37 UTC
+      perf:
+      - '7626143928'
+      server:
+      - tsa_o
+      strict-transport-security:
+      - max-age=631138519
+      transfer-encoding:
+      - chunked
+      x-access-level:
+      - read
+      x-connection-hash:
+      - a819a1260bd2489f46aff9f2ac37d35d1bd23d341e46d7b355e85010d5537dd1
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '50'
+      x-rate-limit-remaining:
+      - '44'
+      x-rate-limit-reset:
+      - '1678840703'
+      x-response-time:
+      - '184'
+      x-transaction-id:
+      - 67fde864d60144ca
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: '{"reply": {"in_reply_to_tweet_id": "1635799811759775746"}, "text": "@tip4fun
+      100 sats for this sir 1678840594.840498"}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '118'
+      content-type:
+      - application/json
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.3
+    method: POST
+    uri: https://api.twitter.com/2/tweets
+  response:
+    content: '{"data": {"edit_history_tweet_ids": ["1635802144317005824"], "id": "1635802144317005824",
+      "text": "@Bryskin2 @tip4fun 100 sats for this sir 1678840594.840498"}}'
+    headers:
+      api-version:
+      - '2.61'
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '148'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Wed, 15 Mar 2023 00:36:37 UTC
+      location:
+      - https://api.twitter.com/2/tweets/1635802144317005824
+      perf:
+      - '7626143928'
+      server:
+      - tsa_o
+      set-cookie:
+      - guest_id=v1%3A167884059756411766; Max-Age=34214400; Expires=Sun, 14 Apr 2024
+        00:36:37 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      strict-transport-security:
+      - max-age=631138519
+      x-access-level:
+      - read-write
+      x-connection-hash:
+      - a575c0572a531dd73daacfbb43537ca441d0047ab6394aebd60c1c3b07229100
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '200'
+      x-rate-limit-remaining:
+      - '194'
+      x-rate-limit-reset:
+      - '1678840704'
+      x-response-time:
+      - '241'
+      x-transaction-id:
+      - 08c8ce34357d5c50
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 201
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - secret
+      connection:
+      - keep-alive
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.3
+    method: GET
+    uri: https://api.twitter.com/2/tweets/search/stream/rules
+  response:
+    content: '{"data": [{"id": "1635802049395695625", "value": "in_reply_to_tweet_id:1635802016994738180"}],
+      "meta": {"sent": "2023-03-15T00:36:43.746Z", "result_count": 1}}'
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '152'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Wed, 15 Mar 2023 00:36:43 UTC
+      perf:
+      - '7626143928'
+      server:
+      - tsa_o
+      set-cookie:
+      - guest_id=v1%3A167884060373038552; Max-Age=34214400; Expires=Sun, 14 Apr 2024
+        00:36:43 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      strict-transport-security:
+      - max-age=631138519
+      x-access-level:
+      - read
+      x-connection-hash:
+      - 8eea668caf73a0109028614628dc5251c96b2a6d595caa2edc9406b31826c817
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '450'
+      x-rate-limit-remaining:
+      - '444'
+      x-rate-limit-reset:
+      - '1678840710'
+      x-response-time:
+      - '127'
+      x-transaction-id:
+      - d71ca21ae6194a26
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: '{"delete": {"ids": ["1635802049395695625"]}}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - secret
+      connection:
+      - keep-alive
+      content-length:
+      - '44'
+      content-type:
+      - application/json
+      cookie:
+      - guest_id=v1%3A167884060373038552
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.3
+    method: POST
+    uri: https://api.twitter.com/2/tweets/search/stream/rules
+  response:
+    content: '{"meta": {"sent": "2023-03-15T00:36:45.348Z", "summary": {"deleted":
+      1, "not_deleted": 0}}}'
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '101'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Wed, 15 Mar 2023 00:36:45 UTC
+      perf:
+      - '7626143928'
+      server:
+      - tsa_o
+      strict-transport-security:
+      - max-age=631138519
+      x-access-level:
+      - read
+      x-connection-hash:
+      - 8eea668caf73a0109028614628dc5251c96b2a6d595caa2edc9406b31826c817
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '25'
+      x-rate-limit-remaining:
+      - '14'
+      x-rate-limit-reset:
+      - '1678840710'
+      x-response-time:
+      - '1439'
+      x-transaction-id:
+      - 1d6413909dccb1bf
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: '{"add": [{"value": "in_reply_to_tweet_id:1635802144317005824"}]}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - secret
+      connection:
+      - keep-alive
+      content-length:
+      - '64'
+      content-type:
+      - application/json
+      cookie:
+      - guest_id=v1%3A167884060373038552
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.3
+    method: POST
+    uri: https://api.twitter.com/2/tweets/search/stream/rules
+  response:
+    content: '{"data": [{"value": "in_reply_to_tweet_id:1635802144317005824", "id":
+      "1635802177556946950"}], "meta": {"sent": "2023-03-15T00:36:47.265Z", "summary":
+      {"created": 1, "not_created": 0, "valid": 1, "invalid": 0}}}'
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '171'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Wed, 15 Mar 2023 00:36:47 UTC
+      perf:
+      - '7626143928'
+      server:
+      - tsa_o
+      strict-transport-security:
+      - max-age=631138519
+      x-access-level:
+      - read
+      x-connection-hash:
+      - 8eea668caf73a0109028614628dc5251c96b2a6d595caa2edc9406b31826c817
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '25'
+      x-rate-limit-remaining:
+      - '13'
+      x-rate-limit-reset:
+      - '1678840710'
+      x-response-time:
+      - '1877'
+      x-transaction-id:
+      - 9979242a98113727
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 201
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - secret
+      connection:
+      - keep-alive
+      cookie:
+      - guest_id=v1%3A167884060373038552
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.3
+    method: GET
+    uri: https://api.twitter.com/2/tweets/search/stream?expansions=author_id%2Creferenced_tweets.id%2Cin_reply_to_user_id%2Creferenced_tweets.id.author_id&tweet.fields=created_at%2Cattachments%2Cauthor_id%2Ccontext_annotations%2Cconversation_id%2Centities%2Csource%2Ctext%2Creferenced_tweets%2Cid%2Cin_reply_to_user_id
+  response:
+    content: "{\"data\":{\"attachments\":{\"media_keys\":[\"3_1635802191762948096\"]},\"author_id\":\"1616757608299339776\",\"conversation_id\":\"1635799811759775746\",\"created_at\":\"2023-03-15T00:36:49.000Z\",\"edit_history_tweet_ids\":[\"1635802195491692544\"],\"entities\":{\"mentions\":[{\"start\":0,\"end\":9,\"username\":\"btclntip\",\"id\":\"1616845331353993217\"},{\"start\":10,\"end\":19,\"username\":\"Bryskin2\",\"id\":\"1591008723912343553\"}],\"urls\":[{\"start\":112,\"end\":135,\"url\":\"https://t.co/wcpeEp2uwM\",\"expanded_url\":\"https://twitter.com/tip4fun/status/1635802195491692544/photo/1\",\"display_url\":\"pic.twitter.com/wcpeEp2uwM\",\"media_key\":\"3_1635802191762948096\"}]},\"id\":\"1635802195491692544\",\"in_reply_to_user_id\":\"1616845331353993217\",\"referenced_tweets\":[{\"type\":\"replied_to\",\"id\":\"1635802144317005824\"}],\"text\":\"@btclntip
+      @Bryskin2 Invoice: http://localhost:3000/api/v1/donation/00000000-0000-0000-0000-000000000001/invoice
+      https://t.co/wcpeEp2uwM\"},\"includes\":{\"users\":[{\"id\":\"1616757608299339776\",\"name\":\"Tip4Fun\",\"username\":\"tip4fun\"},{\"id\":\"1616845331353993217\",\"name\":\"lntip\",\"username\":\"btclntip\"},{\"id\":\"1591008723912343553\",\"name\":\"Nikolay
+      Bryskin\",\"username\":\"Bryskin2\"}],\"tweets\":[{\"attachments\":{\"media_keys\":[\"3_1635802191762948096\"]},\"author_id\":\"1616757608299339776\",\"conversation_id\":\"1635799811759775746\",\"created_at\":\"2023-03-15T00:36:49.000Z\",\"edit_history_tweet_ids\":[\"1635802195491692544\"],\"entities\":{\"mentions\":[{\"start\":0,\"end\":9,\"username\":\"btclntip\",\"id\":\"1616845331353993217\"},{\"start\":10,\"end\":19,\"username\":\"Bryskin2\",\"id\":\"1591008723912343553\"}],\"urls\":[{\"start\":112,\"end\":135,\"url\":\"https://t.co/wcpeEp2uwM\",\"expanded_url\":\"https://twitter.com/tip4fun/status/1635802195491692544/photo/1\",\"display_url\":\"pic.twitter.com/wcpeEp2uwM\",\"media_key\":\"3_1635802191762948096\"}]},\"id\":\"1635802195491692544\",\"in_reply_to_user_id\":\"1616845331353993217\",\"referenced_tweets\":[{\"type\":\"replied_to\",\"id\":\"1635802144317005824\"}],\"text\":\"@btclntip
+      @Bryskin2 Invoice: http://localhost:3000/api/v1/donation/00000000-0000-0000-0000-000000000001/invoice
+      https://t.co/wcpeEp2uwM\"},{\"attachments\":{},\"author_id\":\"1616845331353993217\",\"conversation_id\":\"1635799811759775746\",\"created_at\":\"2023-03-15T00:36:37.000Z\",\"edit_history_tweet_ids\":[\"1635802144317005824\"],\"entities\":{\"mentions\":[{\"start\":0,\"end\":9,\"username\":\"Bryskin2\",\"id\":\"1591008723912343553\"},{\"start\":10,\"end\":18,\"username\":\"tip4fun\",\"id\":\"1616757608299339776\"}]},\"id\":\"1635802144317005824\",\"in_reply_to_user_id\":\"1591008723912343553\",\"referenced_tweets\":[{\"type\":\"replied_to\",\"id\":\"1635799811759775746\"}],\"text\":\"@Bryskin2
+      @tip4fun 100 sats for this sir 1678840594.840498\"}]},\"matching_rules\":[{\"id\":\"1635802177556946950\",\"tag\":\"\"}]}\r\n{\"data\":{\"attachments\":{},\"author_id\":\"1616757608299339776\",\"conversation_id\":\"1635799811759775746\",\"created_at\":\"2023-03-15T00:36:57.000Z\",\"edit_history_tweet_ids\":[\"1635802226412208130\"],\"entities\":{\"mentions\":[{\"start\":0,\"end\":9,\"username\":\"btclntip\",\"id\":\"1616845331353993217\"},{\"start\":10,\"end\":19,\"username\":\"Bryskin2\",\"id\":\"1591008723912343553\"}]},\"id\":\"1635802226412208130\",\"in_reply_to_user_id\":\"1616845331353993217\",\"referenced_tweets\":[{\"type\":\"replied_to\",\"id\":\"1635802144317005824\"}],\"text\":\"@btclntip
+      @Bryskin2 \U0001F525\u26A1Paid! http://localhost:3000/donation/00000000-0000-0000-0000-000000000001\"},\"includes\":{\"users\":[{\"id\":\"1616757608299339776\",\"name\":\"Tip4Fun\",\"username\":\"tip4fun\"},{\"id\":\"1616845331353993217\",\"name\":\"lntip\",\"username\":\"btclntip\"},{\"id\":\"1591008723912343553\",\"name\":\"Nikolay
+      Bryskin\",\"username\":\"Bryskin2\"}],\"tweets\":[{\"attachments\":{},\"author_id\":\"1616757608299339776\",\"conversation_id\":\"1635799811759775746\",\"created_at\":\"2023-03-15T00:36:57.000Z\",\"edit_history_tweet_ids\":[\"1635802226412208130\"],\"entities\":{\"mentions\":[{\"start\":0,\"end\":9,\"username\":\"btclntip\",\"id\":\"1616845331353993217\"},{\"start\":10,\"end\":19,\"username\":\"Bryskin2\",\"id\":\"1591008723912343553\"}]},\"id\":\"1635802226412208130\",\"in_reply_to_user_id\":\"1616845331353993217\",\"referenced_tweets\":[{\"type\":\"replied_to\",\"id\":\"1635802144317005824\"}],\"text\":\"@btclntip
+      @Bryskin2 \U0001F525\u26A1Paid! http://localhost:3000/donation/00000000-0000-0000-0000-000000000001\"},{\"attachments\":{},\"author_id\":\"1616845331353993217\",\"conversation_id\":\"1635799811759775746\",\"created_at\":\"2023-03-15T00:36:37.000Z\",\"edit_history_tweet_ids\":[\"1635802144317005824\"],\"entities\":{\"mentions\":[{\"start\":0,\"end\":9,\"username\":\"Bryskin2\",\"id\":\"1591008723912343553\"},{\"start\":10,\"end\":18,\"username\":\"tip4fun\",\"id\":\"1616757608299339776\"}]},\"id\":\"1635802144317005824\",\"in_reply_to_user_id\":\"1591008723912343553\",\"referenced_tweets\":[{\"type\":\"replied_to\",\"id\":\"1635799811759775746\"}],\"text\":\"@Bryskin2
+      @tip4fun 100 sats for this sir 1678840594.840498\"}]},\"matching_rules\":[{\"id\":\"1635802177556946950\",\"tag\":\"\"}]}\r\n"
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-encoding:
+      - gzip
+      date:
+      - Wed, 15 Mar 2023 00:36:47 UTC
+      perf:
+      - '7626143928'
+      server:
+      - tsa_o
+      strict-transport-security:
+      - max-age=631138519
+      transfer-encoding:
+      - chunked
+      x-access-level:
+      - read
+      x-connection-hash:
+      - 8eea668caf73a0109028614628dc5251c96b2a6d595caa2edc9406b31826c817
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '50'
+      x-rate-limit-remaining:
+      - '44'
+      x-rate-limit-reset:
+      - '1678840713'
+      x-response-time:
+      - '181'
+      x-transaction-id:
+      - 2db87befc37dbe74
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - secret
+      connection:
+      - keep-alive
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.3
+    method: GET
+    uri: https://api.twitter.com/2/users/1616845331353993217?user.fields=id%2Cname%2Cprofile_image_url%2Cdescription%2Cverified%2Centities
+  response:
+    content: '{"data": {"name": "lntip", "description": "", "id": "1616845331353993217",
+      "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+      "username": "btclntip", "verified": false}}'
+    headers:
+      api-version:
+      - '2.61'
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '172'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Wed, 15 Mar 2023 00:36:48 UTC
+      perf:
+      - '7626143928'
+      server:
+      - tsa_o
+      set-cookie:
+      - guest_id=v1%3A167884060808578130; Max-Age=34214400; Expires=Sun, 14 Apr 2024
+        00:36:48 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      strict-transport-security:
+      - max-age=631138519
+      x-access-level:
+      - read
+      x-connection-hash:
+      - 60a54b2bb4411e029f0541585dad9b99a02c8e21b1eb910befd4db000b74d4e1
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '300'
+      x-rate-limit-remaining:
+      - '289'
+      x-rate-limit-reset:
+      - '1678840713'
+      x-response-time:
+      - '120'
+      x-transaction-id:
+      - 519b95cc34fbb569
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - secret
+      connection:
+      - keep-alive
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.3
+    method: GET
+    uri: https://api.twitter.com/2/users/1591008723912343553?user.fields=id%2Cname%2Cprofile_image_url%2Cdescription%2Cverified%2Centities
+  response:
+    content: '{"data": {"profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+      "verified": false, "id": "1591008723912343553", "description": "", "name": "Nikolay
+      Bryskin", "username": "Bryskin2"}}'
+    headers:
+      api-version:
+      - '2.61'
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '181'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Wed, 15 Mar 2023 00:36:48 UTC
+      perf:
+      - '7626143928'
+      server:
+      - tsa_o
+      set-cookie:
+      - guest_id=v1%3A167884060838185584; Max-Age=34214400; Expires=Sun, 14 Apr 2024
+        00:36:48 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      strict-transport-security:
+      - max-age=631138519
+      x-access-level:
+      - read
+      x-connection-hash:
+      - 501199a2d888db2f813baaf2bf353aa56cfdb701728b3e2d14f2fcee80c643aa
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '300'
+      x-rate-limit-remaining:
+      - '288'
+      x-rate-limit-reset:
+      - '1678840713'
+      x-response-time:
+      - '125'
+      x-transaction-id:
+      - 4fcb770796d7d20f
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      grpc-metadata-macaroon:
+      - secret
+      host:
+      - localhost:8081
+      user-agent:
+      - python-httpx/0.23.3
+    method: GET
+    uri: https://localhost:8081/v1/getinfo
+  response:
+    content: '{"version": "0.15.1-beta commit=v0.15.1-beta", "commit_hash": "fd1a95bf322cdd1c743a1554f8e470fbf9a5e564",
+      "identity_pubkey": "03e803ff6eb04880c8c9644bb0acc78e4aceba87b3e4c6db9b6f57bb3f797f29d8",
+      "alias": "alice", "color": "#3399ff", "num_pending_channels": 0, "num_active_channels":
+      2, "num_inactive_channels": 0, "num_peers": 1, "block_height": 148, "block_hash":
+      "7cb13ddb70442d0fb1c08a987256034bc13dcd3adffaa4aa39c3a634b7d53039", "best_header_timestamp":
+      "1678837728", "synced_to_chain": true, "synced_to_graph": true, "testnet": false,
+      "chains": [{"chain": "bitcoin", "network": "regtest"}], "uris": ["03e803ff6eb04880c8c9644bb0acc78e4aceba87b3e4c6db9b6f57bb3f797f29d8@172.23.0.4:9735"],
+      "features": {"0": {"name": "data-loss-protect", "is_required": true, "is_known":
+      true}, "5": {"name": "upfront-shutdown-script", "is_required": false, "is_known":
+      true}, "7": {"name": "gossip-queries", "is_required": false, "is_known": true},
+      "9": {"name": "tlv-onion", "is_required": false, "is_known": true}, "12": {"name":
+      "static-remote-key", "is_required": true, "is_known": true}, "14": {"name":
+      "payment-addr", "is_required": true, "is_known": true}, "17": {"name": "multi-path-payments",
+      "is_required": false, "is_known": true}, "23": {"name": "anchors-zero-fee-htlc-tx",
+      "is_required": false, "is_known": true}, "27": {"name": "shutdown-any-segwit",
+      "is_required": false, "is_known": true}, "30": {"name": "amp", "is_required":
+      true, "is_known": true}, "31": {"name": "amp", "is_required": false, "is_known":
+      true}, "45": {"name": "explicit-commitment-type", "is_required": false, "is_known":
+      true}, "2023": {"name": "script-enforced-lease", "is_required": false, "is_known":
+      true}}, "require_htlc_interceptor": false}'
+    headers:
+      Content-Length:
+      - '1589'
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 15 Mar 2023 00:36:48 GMT
+      Grpc-Metadata-Content-Type:
+      - application/grpc
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: '{"memo": "Tip for @Bryskin2 via Donate4.Fun", "value": 100, "expiry": 86400,
+      "private": true}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '93'
+      content-type:
+      - application/json
+      grpc-metadata-macaroon:
+      - secret
+      host:
+      - localhost:8081
+      user-agent:
+      - python-httpx/0.23.3
+    method: POST
+    uri: https://localhost:8081/v1/invoices
+  response:
+    content: '{"r_hash": "EWGoU0yM5ZOxZjeD27n0zNo+Rk4nsTbZhmwqQTcAQ8c=", "payment_request":
+      "lnbcrt1u1pjpzyeqpp5z9s6s56v3nje8vtxx7pahw05endru3jwy7cndkvxds4yzdcqg0rsdp4235hqgrxdaezqszzwfuhx6mfdcezqanfvysygmmwv96x2dpwge6kucqzpgxqyz5vqsp5z3nl3w2mhv8c8yp9glwnjcgr0xwrf3lggfc3dm7yyws4jvmqtfjs9qyyssq5m6hpeufu96d09y67s6dea0yhlp9d50ea5rcajjyhj094l2dvfdhj667tauqluwdcyj6gng7563qqx9amn6jkdeyut6z9wm5kxlp39qq2ywrpj",
+      "add_index": "264", "payment_addr": "FGf4uVu7D4OQJUfdOWEDeZw0x+hCcRbvxCOhWTNgWmU="}'
+    headers:
+      Content-Length:
+      - '469'
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 15 Mar 2023 00:36:48 GMT
+      Grpc-Metadata-Content-Type:
+      - application/grpc
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '0'
+      host:
+      - upload.twitter.com
+      user-agent:
+      - python-httpx/0.23.3
+    method: POST
+    uri: https://upload.twitter.com/1.1/media/upload.json?command=INIT&media_category=tweet_image&media_type=image%2Fpng&total_bytes=440
+  response:
+    content: '{"media_id": 1635802191762948096, "media_id_string": "1635802191762948096",
+      "expires_after_secs": 86399, "media_key": "3_1635802191762948096"}'
+    headers:
+      cache-control:
+      - no-cache, no-store, must-revalidate, pre-check=0, post-check=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '111'
+      content-type:
+      - application/json;charset=utf-8
+      date:
+      - Wed, 15 Mar 2023 00:36:48 GMT
+      expires:
+      - Tue, 31 Mar 1981 05:00:00 GMT
+      last-modified:
+      - Wed, 15 Mar 2023 00:36:48 GMT
+      perf:
+      - '7626143928'
+      pragma:
+      - no-cache
+      server:
+      - tsa_o
+      set-cookie:
+      - lang=en; Path=/
+      - guest_id=v1%3A167884060889658712; Max-Age=34214400; Expires=Sun, 14 Apr 2024
+        00:36:48 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      status:
+      - 202 Accepted
+      strict-transport-security:
+      - max-age=631138519
+      vary:
+      - Origin
+      x-access-level:
+      - read-write-directmessages
+      x-connection-hash:
+      - a24bf16bbe05bed6008690d921431ae828274325b60f3d705756e7f2e26a3f52
+      x-frame-options:
+      - SAMEORIGIN
+      x-mediaid:
+      - '1635802191762948096'
+      x-rate-limit-limit:
+      - '415'
+      x-rate-limit-remaining:
+      - '406'
+      x-rate-limit-reset:
+      - '1678841345'
+      x-response-time:
+      - '131'
+      x-transaction:
+      - 8ec6e9deb46a4cad
+      x-transaction-id:
+      - 8ec6e9deb46a4cad
+      x-twitter-response-tags:
+      - BouncerCompliant
+      x-xss-protection:
+      - 1; mode=block
+    http_version: HTTP/1.1
+    status_code: 202
+- request:
+    body: !!binary |
+      LS03NGM4ZjA3ZjJjZmExNTkwMzEwZjg3NzY0MDgwY2U4Nw0KQ29udGVudC1EaXNwb3NpdGlvbjog
+      Zm9ybS1kYXRhOyBuYW1lPSJjb21tYW5kIg0KDQpBUFBFTkQNCi0tNzRjOGYwN2YyY2ZhMTU5MDMx
+      MGY4Nzc2NDA4MGNlODcNCkNvbnRlbnQtRGlzcG9zaXRpb246IGZvcm0tZGF0YTsgbmFtZT0ibWVk
+      aWFfaWQiDQoNCjE2MzU4MDIxOTE3NjI5NDgwOTYNCi0tNzRjOGYwN2YyY2ZhMTU5MDMxMGY4Nzc2
+      NDA4MGNlODcNCkNvbnRlbnQtRGlzcG9zaXRpb246IGZvcm0tZGF0YTsgbmFtZT0ic2VnbWVudF9p
+      bmRleCINCg0KMA0KLS03NGM4ZjA3ZjJjZmExNTkwMzEwZjg3NzY0MDgwY2U4Nw0KQ29udGVudC1E
+      aXNwb3NpdGlvbjogZm9ybS1kYXRhOyBuYW1lPSJtZWRpYSI7IGZpbGVuYW1lPSJpbWFnZSINCkNv
+      bnRlbnQtVHlwZTogaW1hZ2UvcG5nDQoNColQTkcNChoKAAAADUlIRFIAAAEiAAABIgEAAAAAdcXi
+      GwAAAX9JREFUeJztmUFuhDAMRZ8LEktGmgPB1XqzcJTeAJYjBf0uEmboqFK7YTIi9i7Rk/Jlm8Q2
+      Jv626eMfEDjllFNOOfXulGVrsZHVYNl2xqK6qqAGSdIMQCMbaSRJ+km9XlcV1LLl+HRZTQEws7a8
+      rpoohaXFxheeWC/VPq0NmmhHnujUZpvvewELCNbk+n3T9a7qT0FNZmZ2ARuXTsCaypzSuk5Npbx/
+      5LjgZvkzKKmrBopUSg6K951G0EsMM7n4DO+q/gyUPq3LAUge/8rvgEJRXeemUt4rANIMCjRSeCS/
+      5/1h1O7OUegjOQqPeLjvD6Oyd+/jhJT3mhtJin7fH0ltvt9s98LmALjvj6LSm7rV8U0EmmiTAfQ3
+      UyldFVG7OWZ/M+gjkLqsorqqoB5zTGth+Ook6ebz+5dSqcvqI0zWyev7A6nnOaZYroLlGm2YL8YQ
+      yuiqgXqeYyabRozpUlBXDRT7X4Opm43bXi+vMY+kfplj5pXP751yyimnzkR9A2+26v3Xfi9QAAAA
+      AElFTkSuQmCCDQotLTc0YzhmMDdmMmNmYTE1OTAzMTBmODc3NjQwODBjZTg3LS0NCg==
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '904'
+      content-type:
+      - multipart/form-data; boundary=74c8f07f2cfa1590310f87764080ce87
+      cookie:
+      - lang=en; guest_id=v1%3A167884060889658712
+      host:
+      - upload.twitter.com
+      user-agent:
+      - python-httpx/0.23.3
+    method: POST
+    uri: https://upload.twitter.com/1.1/media/upload.json
+  response:
+    content: ''
+    headers:
+      cache-control:
+      - no-cache, no-store, must-revalidate, pre-check=0, post-check=0
+      content-security-policy:
+      - default-src 'self'; connect-src 'self'; font-src 'self' https://*.twimg.com
+        https://twitter.com https://ton.twitter.com data:; frame-src 'self' https://*.twimg.com
+        https://twitter.com https://ton.twitter.com; img-src 'self' https://*.twimg.com
+        https://twitter.com https://ton.twitter.com data:; media-src 'self' https://*.twimg.com
+        https://twitter.com https://ton.twitter.com; object-src 'none'; script-src
+        'self' https://*.twimg.com https://twitter.com https://ton.twitter.com; style-src
+        'self' https://*.twimg.com https://twitter.com https://ton.twitter.com; report-uri
+        https://twitter.com/i/csp_report?a=OBZG6ZTJNRSWE2LSMQ%3D%3D%3D%3D%3D%3D&ro=false;
+      content-type:
+      - text/html;charset=utf-8
+      date:
+      - Wed, 15 Mar 2023 00:36:49 GMT
+      expires:
+      - Tue, 31 Mar 1981 05:00:00 GMT
+      last-modified:
+      - Wed, 15 Mar 2023 00:36:49 GMT
+      perf:
+      - '7626143928'
+      pragma:
+      - no-cache
+      server:
+      - tsa_o
+      status:
+      - 204 No Content
+      strict-transport-security:
+      - max-age=631138519
+      vary:
+      - Origin
+      x-access-level:
+      - read-write-directmessages
+      x-connection-hash:
+      - a24bf16bbe05bed6008690d921431ae828274325b60f3d705756e7f2e26a3f52
+      x-frame-options:
+      - SAMEORIGIN
+      x-mediaid:
+      - '1635802191762948096'
+      x-rate-limit-limit:
+      - '20000'
+      x-rate-limit-remaining:
+      - '19991'
+      x-rate-limit-reset:
+      - '1678841346'
+      x-response-time:
+      - '129'
+      x-segmentcount:
+      - '0'
+      x-totalbytes:
+      - '0'
+      x-transaction:
+      - c69e64c6126ac23c
+      x-transaction-id:
+      - c69e64c6126ac23c
+      x-twitter-response-tags:
+      - BouncerCompliant
+      x-xss-protection:
+      - 1; mode=block
+    http_version: HTTP/1.1
+    status_code: 204
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '0'
+      cookie:
+      - lang=en; guest_id=v1%3A167884060889658712
+      host:
+      - upload.twitter.com
+      user-agent:
+      - python-httpx/0.23.3
+    method: POST
+    uri: https://upload.twitter.com/1.1/media/upload.json?command=FINALIZE&media_id=1635802191762948096
+  response:
+    content: '{"media_id": 1635802191762948096, "media_id_string": "1635802191762948096",
+      "media_key": "3_1635802191762948096", "size": 440, "expires_after_secs": 86400,
+      "image": {"image_type": "image/png", "w": 290, "h": 290}}'
+    headers:
+      cache-control:
+      - no-cache, no-store, must-revalidate, pre-check=0, post-check=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '150'
+      content-type:
+      - application/json;charset=utf-8
+      date:
+      - Wed, 15 Mar 2023 00:36:49 GMT
+      expires:
+      - Tue, 31 Mar 1981 05:00:00 GMT
+      last-modified:
+      - Wed, 15 Mar 2023 00:36:49 GMT
+      perf:
+      - '7626143928'
+      pragma:
+      - no-cache
+      server:
+      - tsa_o
+      status:
+      - 201 Created
+      strict-transport-security:
+      - max-age=631138519
+      vary:
+      - Origin
+      x-access-level:
+      - read-write-directmessages
+      x-connection-hash:
+      - a24bf16bbe05bed6008690d921431ae828274325b60f3d705756e7f2e26a3f52
+      x-frame-options:
+      - SAMEORIGIN
+      x-mediaid:
+      - '1635802191762948096'
+      x-rate-limit-limit:
+      - '615'
+      x-rate-limit-remaining:
+      - '606'
+      x-rate-limit-reset:
+      - '1678841346'
+      x-response-time:
+      - '256'
+      x-transaction:
+      - 94d087d62abca66d
+      x-transaction-id:
+      - 94d087d62abca66d
+      x-twitter-response-tags:
+      - BouncerCompliant
+      x-xss-protection:
+      - 1; mode=block
+    http_version: HTTP/1.1
+    status_code: 201
+- request:
+    body: '{"reply": {"in_reply_to_tweet_id": "1635802144317005824"}, "text": "Invoice:
+      http://localhost:3000/api/v1/donation/00000000-0000-0000-0000-000000000001/invoice",
+      "media": {"media_ids": ["1635802191762948096"]}}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '210'
+      content-type:
+      - application/json
+      cookie:
+      - guest_id=v1%3A167884059644761410
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.3
+    method: POST
+    uri: https://api.twitter.com/2/tweets
+  response:
+    content: '{"data": {"edit_history_tweet_ids": ["1635802195491692544"], "id": "1635802195491692544",
+      "text": "@btclntip @Bryskin2 Invoice: http://localhost:3000/api/v1/donation/00000000-0000-0000-0000-000000000001/invoice
+      https://t.co/wcpeEp2uwM"}}'
+    headers:
+      api-version:
+      - '2.61'
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '185'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Wed, 15 Mar 2023 00:36:49 UTC
+      location:
+      - https://api.twitter.com/2/tweets/1635802195491692544
+      perf:
+      - '7626143928'
+      server:
+      - tsa_o
+      strict-transport-security:
+      - max-age=631138519
+      x-access-level:
+      - read-write-directmessages
+      x-connection-hash:
+      - a402bdbea3fc4c325049428c06660baadacc9d4d76f83e31a2b692ffd4ba1393
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '200'
+      x-rate-limit-remaining:
+      - '191'
+      x-rate-limit-reset:
+      - '1678840715'
+      x-response-time:
+      - '331'
+      x-transaction-id:
+      - e1dbf6d93cefb4b7
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 201
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      grpc-metadata-macaroon:
+      - secret
+      host:
+      - localhost:8081
+      user-agent:
+      - python-httpx/0.23.3
+    method: GET
+    uri: https://localhost:8081/v1/invoice/1161a8534c8ce593b1663783dbb9f4ccda3e464e27b136d9866c2a41370043c7
+  response:
+    content: '{"memo": "Tip for @Bryskin2 via Donate4.Fun", "r_preimage": "WNok2611C3GuWuB2XpNSwDA8sX3jtQUxOsvvKhlmxDo=",
+      "r_hash": "EWGoU0yM5ZOxZjeD27n0zNo+Rk4nsTbZhmwqQTcAQ8c=", "value": "100", "value_msat":
+      "100000", "settled": false, "creation_date": "1678840608", "settle_date": "0",
+      "payment_request": "lnbcrt1u1pjpzyeqpp5z9s6s56v3nje8vtxx7pahw05endru3jwy7cndkvxds4yzdcqg0rsdp4235hqgrxdaezqszzwfuhx6mfdcezqanfvysygmmwv96x2dpwge6kucqzpgxqyz5vqsp5z3nl3w2mhv8c8yp9glwnjcgr0xwrf3lggfc3dm7yyws4jvmqtfjs9qyyssq5m6hpeufu96d09y67s6dea0yhlp9d50ea5rcajjyhj094l2dvfdhj667tauqluwdcyj6gng7563qqx9amn6jkdeyut6z9wm5kxlp39qq2ywrpj",
+      "description_hash": "", "expiry": "86400", "fallback_addr": "", "cltv_expiry":
+      "40", "route_hints": [], "private": false, "add_index": "264", "settle_index":
+      "0", "amt_paid": "0", "amt_paid_sat": "0", "amt_paid_msat": "0", "state": "OPEN",
+      "htlcs": [], "features": {"9": {"name": "tlv-onion", "is_required": false, "is_known":
+      true}, "14": {"name": "payment-addr", "is_required": true, "is_known": true},
+      "17": {"name": "multi-path-payments", "is_required": false, "is_known": true}},
+      "is_keysend": false, "payment_addr": "FGf4uVu7D4OQJUfdOWEDeZw0x+hCcRbvxCOhWTNgWmU=",
+      "is_amp": false, "amp_invoice_state": {}}'
+    headers:
+      Content-Length:
+      - '1147'
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 15 Mar 2023 00:36:56 GMT
+      Grpc-Metadata-Content-Type:
+      - application/grpc
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      grpc-metadata-macaroon:
+      - secret
+      host:
+      - localhost:8081
+      user-agent:
+      - python-httpx/0.23.3
+    method: GET
+    uri: https://localhost:8081/v1/getinfo
+  response:
+    content: '{"version": "0.15.1-beta commit=v0.15.1-beta", "commit_hash": "fd1a95bf322cdd1c743a1554f8e470fbf9a5e564",
+      "identity_pubkey": "03e803ff6eb04880c8c9644bb0acc78e4aceba87b3e4c6db9b6f57bb3f797f29d8",
+      "alias": "alice", "color": "#3399ff", "num_pending_channels": 0, "num_active_channels":
+      2, "num_inactive_channels": 0, "num_peers": 1, "block_height": 148, "block_hash":
+      "7cb13ddb70442d0fb1c08a987256034bc13dcd3adffaa4aa39c3a634b7d53039", "best_header_timestamp":
+      "1678837728", "synced_to_chain": true, "synced_to_graph": true, "testnet": false,
+      "chains": [{"chain": "bitcoin", "network": "regtest"}], "uris": ["03e803ff6eb04880c8c9644bb0acc78e4aceba87b3e4c6db9b6f57bb3f797f29d8@172.23.0.4:9735"],
+      "features": {"0": {"name": "data-loss-protect", "is_required": true, "is_known":
+      true}, "5": {"name": "upfront-shutdown-script", "is_required": false, "is_known":
+      true}, "7": {"name": "gossip-queries", "is_required": false, "is_known": true},
+      "9": {"name": "tlv-onion", "is_required": false, "is_known": true}, "12": {"name":
+      "static-remote-key", "is_required": true, "is_known": true}, "14": {"name":
+      "payment-addr", "is_required": true, "is_known": true}, "17": {"name": "multi-path-payments",
+      "is_required": false, "is_known": true}, "23": {"name": "anchors-zero-fee-htlc-tx",
+      "is_required": false, "is_known": true}, "27": {"name": "shutdown-any-segwit",
+      "is_required": false, "is_known": true}, "30": {"name": "amp", "is_required":
+      true, "is_known": true}, "31": {"name": "amp", "is_required": false, "is_known":
+      true}, "45": {"name": "explicit-commitment-type", "is_required": false, "is_known":
+      true}, "2023": {"name": "script-enforced-lease", "is_required": false, "is_known":
+      true}}, "require_htlc_interceptor": false}'
+    headers:
+      Content-Length:
+      - '1589'
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 15 Mar 2023 00:36:56 GMT
+      Grpc-Metadata-Content-Type:
+      - application/grpc
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: '{}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '2'
+      content-type:
+      - application/json
+      grpc-metadata-macaroon:
+      - secret
+      host:
+      - localhost:8081
+      user-agent:
+      - python-httpx/0.23.3
+    method: GET
+    uri: https://localhost:8081/v1/invoices/subscribe
+  response:
+    content: '{"result": {"memo": "Tip for @Bryskin2 via Donate4.Fun", "r_preimage":
+      "WNok2611C3GuWuB2XpNSwDA8sX3jtQUxOsvvKhlmxDo=", "r_hash": "EWGoU0yM5ZOxZjeD27n0zNo+Rk4nsTbZhmwqQTcAQ8c=",
+      "value": "100", "value_msat": "100000", "settled": true, "creation_date": "1678840608",
+      "settle_date": "1678840616", "payment_request": "lnbcrt1u1pjpzyeqpp5z9s6s56v3nje8vtxx7pahw05endru3jwy7cndkvxds4yzdcqg0rsdp4235hqgrxdaezqszzwfuhx6mfdcezqanfvysygmmwv96x2dpwge6kucqzpgxqyz5vqsp5z3nl3w2mhv8c8yp9glwnjcgr0xwrf3lggfc3dm7yyws4jvmqtfjs9qyyssq5m6hpeufu96d09y67s6dea0yhlp9d50ea5rcajjyhj094l2dvfdhj667tauqluwdcyj6gng7563qqx9amn6jkdeyut6z9wm5kxlp39qq2ywrpj",
+      "description_hash": "", "expiry": "86400", "fallback_addr": "", "cltv_expiry":
+      "40", "route_hints": [], "private": false, "add_index": "264", "settle_index":
+      "41", "amt_paid": "100000", "amt_paid_sat": "100", "amt_paid_msat": "100000",
+      "state": "SETTLED", "htlcs": [{"chan_id": "131941395398656", "htlc_index": "16",
+      "amt_msat": "100000", "accept_height": 148, "accept_time": "1678840616", "resolve_time":
+      "1678840616", "expiry_height": 191, "state": "SETTLED", "custom_records": {},
+      "mpp_total_amt_msat": "100000", "amp": null}], "features": {"9": {"name": "tlv-onion",
+      "is_required": false, "is_known": true}, "14": {"name": "payment-addr", "is_required":
+      true, "is_known": true}, "17": {"name": "multi-path-payments", "is_required":
+      false, "is_known": true}}, "is_keysend": false, "payment_addr": "FGf4uVu7D4OQJUfdOWEDeZw0x+hCcRbvxCOhWTNgWmU=",
+      "is_amp": false, "amp_invoice_state": {}}}'
+    headers:
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 15 Mar 2023 00:36:56 GMT
+      Grpc-Metadata-Content-Type:
+      - application/grpc
+      Transfer-Encoding:
+      - chunked
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      grpc-metadata-macaroon:
+      - secret
+      host:
+      - localhost:8083
+      user-agent:
+      - python-httpx/0.23.3
+    method: GET
+    uri: https://localhost:8083/v1/getinfo
+  response:
+    content: '{"version": "0.15.1-beta commit=v0.15.1-beta", "commit_hash": "fd1a95bf322cdd1c743a1554f8e470fbf9a5e564",
+      "identity_pubkey": "031815bada9500dd9fc6aa3b3d3c58c9a1d10b3d9b40d7f1159a17410e915c3789",
+      "alias": "carol", "color": "#3399ff", "num_pending_channels": 0, "num_active_channels":
+      2, "num_inactive_channels": 0, "num_peers": 1, "block_height": 148, "block_hash":
+      "7cb13ddb70442d0fb1c08a987256034bc13dcd3adffaa4aa39c3a634b7d53039", "best_header_timestamp":
+      "1678837728", "synced_to_chain": true, "synced_to_graph": true, "testnet": false,
+      "chains": [{"chain": "bitcoin", "network": "regtest"}], "uris": ["031815bada9500dd9fc6aa3b3d3c58c9a1d10b3d9b40d7f1159a17410e915c3789@172.23.0.5:9735"],
+      "features": {"0": {"name": "data-loss-protect", "is_required": true, "is_known":
+      true}, "5": {"name": "upfront-shutdown-script", "is_required": false, "is_known":
+      true}, "7": {"name": "gossip-queries", "is_required": false, "is_known": true},
+      "9": {"name": "tlv-onion", "is_required": false, "is_known": true}, "12": {"name":
+      "static-remote-key", "is_required": true, "is_known": true}, "14": {"name":
+      "payment-addr", "is_required": true, "is_known": true}, "17": {"name": "multi-path-payments",
+      "is_required": false, "is_known": true}, "23": {"name": "anchors-zero-fee-htlc-tx",
+      "is_required": false, "is_known": true}, "27": {"name": "shutdown-any-segwit",
+      "is_required": false, "is_known": true}, "30": {"name": "amp", "is_required":
+      true, "is_known": true}, "31": {"name": "amp", "is_required": false, "is_known":
+      true}, "45": {"name": "explicit-commitment-type", "is_required": false, "is_known":
+      true}, "2023": {"name": "script-enforced-lease", "is_required": false, "is_known":
+      true}}, "require_htlc_interceptor": false}'
+    headers:
+      Content-Length:
+      - '1589'
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 15 Mar 2023 00:36:56 GMT
+      Grpc-Metadata-Content-Type:
+      - application/grpc
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: '{"payment_request": "lnbcrt1u1pjpzyeqpp5z9s6s56v3nje8vtxx7pahw05endru3jwy7cndkvxds4yzdcqg0rsdp4235hqgrxdaezqszzwfuhx6mfdcezqanfvysygmmwv96x2dpwge6kucqzpgxqyz5vqsp5z3nl3w2mhv8c8yp9glwnjcgr0xwrf3lggfc3dm7yyws4jvmqtfjs9qyyssq5m6hpeufu96d09y67s6dea0yhlp9d50ea5rcajjyhj094l2dvfdhj667tauqluwdcyj6gng7563qqx9amn6jkdeyut6z9wm5kxlp39qq2ywrpj",
+      "timeout_seconds": 10, "fee_limit_sat": 10}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '378'
+      content-type:
+      - application/json
+      grpc-metadata-macaroon:
+      - secret
+      host:
+      - localhost:8083
+      user-agent:
+      - python-httpx/0.23.3
+    method: POST
+    uri: https://localhost:8083/v2/router/send
+  response:
+    content: '{"result":{"payment_hash":"1161a8534c8ce593b1663783dbb9f4ccda3e464e27b136d9866c2a41370043c7","value":"100","creation_date":"1678840616","fee":"0","payment_preimage":"0000000000000000000000000000000000000000000000000000000000000000","value_sat":"100","value_msat":"100000","payment_request":"lnbcrt1u1pjpzyeqpp5z9s6s56v3nje8vtxx7pahw05endru3jwy7cndkvxds4yzdcqg0rsdp4235hqgrxdaezqszzwfuhx6mfdcezqanfvysygmmwv96x2dpwge6kucqzpgxqyz5vqsp5z3nl3w2mhv8c8yp9glwnjcgr0xwrf3lggfc3dm7yyws4jvmqtfjs9qyyssq5m6hpeufu96d09y67s6dea0yhlp9d50ea5rcajjyhj094l2dvfdhj667tauqluwdcyj6gng7563qqx9amn6jkdeyut6z9wm5kxlp39qq2ywrpj","status":"IN_FLIGHT","fee_sat":"0","fee_msat":"0","creation_time_ns":"1678840616362697355","htlcs":[],"payment_index":"3004","failure_reason":"FAILURE_REASON_NONE"}}
+
+      {"result":{"payment_hash":"1161a8534c8ce593b1663783dbb9f4ccda3e464e27b136d9866c2a41370043c7","value":"100","creation_date":"1678840616","fee":"0","payment_preimage":"0000000000000000000000000000000000000000000000000000000000000000","value_sat":"100","value_msat":"100000","payment_request":"lnbcrt1u1pjpzyeqpp5z9s6s56v3nje8vtxx7pahw05endru3jwy7cndkvxds4yzdcqg0rsdp4235hqgrxdaezqszzwfuhx6mfdcezqanfvysygmmwv96x2dpwge6kucqzpgxqyz5vqsp5z3nl3w2mhv8c8yp9glwnjcgr0xwrf3lggfc3dm7yyws4jvmqtfjs9qyyssq5m6hpeufu96d09y67s6dea0yhlp9d50ea5rcajjyhj094l2dvfdhj667tauqluwdcyj6gng7563qqx9amn6jkdeyut6z9wm5kxlp39qq2ywrpj","status":"IN_FLIGHT","fee_sat":"0","fee_msat":"0","creation_time_ns":"1678840616362697355","htlcs":[{"attempt_id":"3003","status":"IN_FLIGHT","route":{"total_time_lock":231,"total_fees":"1","total_amt":"101","hops":[{"chan_id":"145135534931968","chan_capacity":"250000","amt_to_forward":"100","fee":"1","expiry":191,"amt_to_forward_msat":"100000","fee_msat":"1000","pub_key":"034d3ccf73171473dcade1af4e9ce6bada4ff53d688404ef2ac5926362422a1a11","tlv_payload":true,"mpp_record":null,"amp_record":null,"custom_records":{},"metadata":""},{"chan_id":"151732604698624","chan_capacity":"250000","amt_to_forward":"100","fee":"0","expiry":191,"amt_to_forward_msat":"100000","fee_msat":"0","pub_key":"03e803ff6eb04880c8c9644bb0acc78e4aceba87b3e4c6db9b6f57bb3f797f29d8","tlv_payload":true,"mpp_record":{"payment_addr":"FGf4uVu7D4OQJUfdOWEDeZw0x+hCcRbvxCOhWTNgWmU=","total_amt_msat":"100000"},"amp_record":null,"custom_records":{},"metadata":""}],"total_fees_msat":"1000","total_amt_msat":"101000"},"attempt_time_ns":"1678840616383039627","resolve_time_ns":"0","failure":null,"preimage":""}],"payment_index":"3004","failure_reason":"FAILURE_REASON_NONE"}}
+
+      {"result":{"payment_hash":"1161a8534c8ce593b1663783dbb9f4ccda3e464e27b136d9866c2a41370043c7","value":"100","creation_date":"1678840616","fee":"1","payment_preimage":"58da24dbad750b71ae5ae0765e9352c0303cb17de3b505313acbef2a1966c43a","value_sat":"100","value_msat":"100000","payment_request":"lnbcrt1u1pjpzyeqpp5z9s6s56v3nje8vtxx7pahw05endru3jwy7cndkvxds4yzdcqg0rsdp4235hqgrxdaezqszzwfuhx6mfdcezqanfvysygmmwv96x2dpwge6kucqzpgxqyz5vqsp5z3nl3w2mhv8c8yp9glwnjcgr0xwrf3lggfc3dm7yyws4jvmqtfjs9qyyssq5m6hpeufu96d09y67s6dea0yhlp9d50ea5rcajjyhj094l2dvfdhj667tauqluwdcyj6gng7563qqx9amn6jkdeyut6z9wm5kxlp39qq2ywrpj","status":"SUCCEEDED","fee_sat":"1","fee_msat":"1000","creation_time_ns":"1678840616362697355","htlcs":[{"attempt_id":"3003","status":"SUCCEEDED","route":{"total_time_lock":231,"total_fees":"1","total_amt":"101","hops":[{"chan_id":"145135534931968","chan_capacity":"250000","amt_to_forward":"100","fee":"1","expiry":191,"amt_to_forward_msat":"100000","fee_msat":"1000","pub_key":"034d3ccf73171473dcade1af4e9ce6bada4ff53d688404ef2ac5926362422a1a11","tlv_payload":true,"mpp_record":null,"amp_record":null,"custom_records":{},"metadata":""},{"chan_id":"151732604698624","chan_capacity":"250000","amt_to_forward":"100","fee":"0","expiry":191,"amt_to_forward_msat":"100000","fee_msat":"0","pub_key":"03e803ff6eb04880c8c9644bb0acc78e4aceba87b3e4c6db9b6f57bb3f797f29d8","tlv_payload":true,"mpp_record":{"payment_addr":"FGf4uVu7D4OQJUfdOWEDeZw0x+hCcRbvxCOhWTNgWmU=","total_amt_msat":"100000"},"amp_record":null,"custom_records":{},"metadata":""}],"total_fees_msat":"1000","total_amt_msat":"101000"},"attempt_time_ns":"1678840616383039627","resolve_time_ns":"1678840616579791960","failure":null,"preimage":"WNok2611C3GuWuB2XpNSwDA8sX3jtQUxOsvvKhlmxDo="}],"payment_index":"3004","failure_reason":"FAILURE_REASON_NONE"}}
+
+      '
+    headers:
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 15 Mar 2023 00:36:56 GMT
+      Grpc-Metadata-Content-Type:
+      - application/grpc
+      Transfer-Encoding:
+      - chunked
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      cookie:
+      - guest_id=v1%3A167884059644761410
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.3
+    method: GET
+    uri: https://api.twitter.com/2/tweets/1635802195491692544?tweet.fields=created_at%2Cattachments%2Cauthor_id%2Ccontext_annotations%2Cconversation_id%2Centities%2Csource%2Ctext%2Creferenced_tweets%2Cid%2Cin_reply_to_user_id
+  response:
+    content: '{"data": {"entities": {"urls": [{"start": 112, "end": 135, "url": "https://t.co/wcpeEp2uwM",
+      "expanded_url": "https://twitter.com/tip4fun/status/1635802195491692544/photo/1",
+      "display_url": "pic.twitter.com/wcpeEp2uwM", "media_key": "3_1635802191762948096"}],
+      "mentions": [{"start": 0, "end": 9, "username": "btclntip", "id": "1616845331353993217"},
+      {"start": 10, "end": 19, "username": "Bryskin2", "id": "1591008723912343553"}]},
+      "in_reply_to_user_id": "1616845331353993217", "edit_history_tweet_ids": ["1635802195491692544"],
+      "created_at": "2023-03-15T00:36:49.000Z", "text": "@btclntip @Bryskin2 Invoice:
+      http://localhost:3000/api/v1/donation/00000000-0000-0000-0000-000000000001/invoice
+      https://t.co/wcpeEp2uwM", "referenced_tweets": [{"type": "replied_to", "id":
+      "1635802144317005824"}], "conversation_id": "1635799811759775746", "attachments":
+      {"media_keys": ["3_1635802191762948096"]}, "author_id": "1616757608299339776",
+      "id": "1635802195491692544"}}'
+    headers:
+      api-version:
+      - '2.61'
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '490'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Wed, 15 Mar 2023 00:36:56 UTC
+      perf:
+      - '7626143928'
+      server:
+      - tsa_o
+      strict-transport-security:
+      - max-age=631138519
+      x-access-level:
+      - read-write-directmessages
+      x-connection-hash:
+      - a402bdbea3fc4c325049428c06660baadacc9d4d76f83e31a2b692ffd4ba1393
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '900'
+      x-rate-limit-remaining:
+      - '896'
+      x-rate-limit-reset:
+      - '1678841234'
+      x-response-time:
+      - '166'
+      x-transaction-id:
+      - 9b9800cec8a4521f
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      cookie:
+      - guest_id=v1%3A167884059644761410
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.3
+    method: DELETE
+    uri: https://api.twitter.com/2/tweets/1635802195491692544
+  response:
+    content: '{"data": {"deleted": true}}'
+    headers:
+      api-version:
+      - '2.61'
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '51'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Wed, 15 Mar 2023 00:36:56 UTC
+      perf:
+      - '7626143928'
+      server:
+      - tsa_o
+      strict-transport-security:
+      - max-age=631138519
+      x-access-level:
+      - read-write-directmessages
+      x-connection-hash:
+      - a402bdbea3fc4c325049428c06660baadacc9d4d76f83e31a2b692ffd4ba1393
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '50'
+      x-rate-limit-remaining:
+      - '46'
+      x-rate-limit-reset:
+      - '1678841235'
+      x-response-time:
+      - '155'
+      x-transaction-id:
+      - 90984683fe5cd4a3
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: '{"reply": {"in_reply_to_tweet_id": "1635802144317005824"}, "text": "\ud83d\udd25\u26a1Paid!
+      http://localhost:3000/donation/00000000-0000-0000-0000-000000000001"}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '161'
+      content-type:
+      - application/json
+      cookie:
+      - guest_id=v1%3A167884059644761410
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.3
+    method: POST
+    uri: https://api.twitter.com/2/tweets
+  response:
+    content: '{"data": {"edit_history_tweet_ids": ["1635802226412208130"], "id": "1635802226412208130",
+      "text": "@btclntip @Bryskin2 \ud83d\udd25\u26a1Paid! http://localhost:3000/donation/00000000-0000-0000-0000-000000000001"}}'
+    headers:
+      api-version:
+      - '2.61'
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '172'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Wed, 15 Mar 2023 00:36:57 UTC
+      location:
+      - https://api.twitter.com/2/tweets/1635802226412208130
+      perf:
+      - '7626143928'
+      server:
+      - tsa_o
+      strict-transport-security:
+      - max-age=631138519
+      x-access-level:
+      - read-write-directmessages
+      x-connection-hash:
+      - a402bdbea3fc4c325049428c06660baadacc9d4d76f83e31a2b692ffd4ba1393
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '200'
+      x-rate-limit-remaining:
+      - '190'
+      x-rate-limit-reset:
+      - '1678840715'
+      x-response-time:
+      - '258'
+      x-transaction-id:
+      - eb758463715a1ed2
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 201
+recorded_at: '2023-03-15T00:36:34.840498'
+version: 1
