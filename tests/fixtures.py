@@ -124,7 +124,6 @@ async def settings(monkeypatch):
     with load_settings() as settings:
         settings.fastapi.debug = False  # We need to disable Debug Toolbar to avoid zero-division error (because of freezegun)
         settings.rollbar = None
-        settings.bugsnag = None
         settings.posthog = None
         settings.sentry = None
         settings.base_url = 'http://localhost:3000'

@@ -34,7 +34,6 @@ multiavatar = {git = "https://github.com/nikicat/multiavatar-python"}
 funkybob = {git = "https://github.com/nikicat/funkybob"}
 setuptools = "^65.5.1"
 lnurl = "^0.3.6"
-bugsnag = "^4.2.1"
 lightning-payencode = {git = "https://github.com/donate4fun/lightning-payencode"}
 ecdsa = "^0.17.0"
 rollbar = "^0.16.3"

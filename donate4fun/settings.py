@@ -111,12 +111,6 @@ class FastApiSettings(BaseModel):
     root_path: str
 
 
-class BugsnagSettings(BaseModel):
-    api_key: str | None
-    release_stage: str | None
-    app_version: str | None
-
-
 class RollbarSettings(BaseModel):
     access_token: str
     environment: str
@@ -165,7 +159,6 @@ class Settings(BaseSettings):
     log: LoggingConfig
     jwt: JwtSettings
     fastapi: FastApiSettings
-    bugsnag: BugsnagSettings | None = None
     rollbar: RollbarSettings | None = None
     google_cloud_logging: bool | None = None
     posthog: PostHogSettings | None = None

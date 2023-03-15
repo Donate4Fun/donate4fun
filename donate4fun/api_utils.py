@@ -1,13 +1,11 @@
 import hashlib
 import json
-import os
 import unicodedata
 from contextlib import asynccontextmanager
 from functools import wraps
 from uuid import uuid4, UUID
 
 import httpx
-import bugsnag
 import rollbar
 import google.cloud.logging
 import posthog
@@ -205,8 +203,6 @@ async def create_common():
     if settings.google_cloud_logging:
         client = google.cloud.logging.Client()
         client.setup_logging()
-    if settings.bugsnag:
-        bugsnag.configure(**settings.bugsnag.dict(), project_root=os.path.dirname(__file__))
     if settings.posthog and settings.posthog.enabled:
         posthog.project_api_key = settings.posthog.project_api_key
         posthog.host = settings.posthog.host

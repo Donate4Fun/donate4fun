@@ -4,7 +4,6 @@ import sys
 from contextlib import asynccontextmanager, AsyncExitStack
 
 import anyio
-from bugsnag.asgi import BugsnagMiddleware
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -157,6 +156,4 @@ async def serve():
                 hyper_config.accesslog.addFilter(AccessFilter())
                 iface = hyper_config.bind[0].split(':')[0]
                 hyper_config.bind = f'{iface}:{settings.api_port}'
-                if settings.bugsnag:
-                    app_ = BugsnagMiddleware(app_)
                 await hypercorn_serve(app_, hyper_config)
