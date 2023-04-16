@@ -115,7 +115,7 @@ async def sitemap(request: Request, db_session=Depends(get_db_session)):
 @app.get('/d/{channel_id}')
 async def donate_redirect(request: Request, channel_id: str, db=Depends(get_db_session)):
     youtube_channel: YoutubeChannel = await query_or_fetch_youtube_channel(channel_id=channel_id, db=YoutubeDbLib(db))
-    return RedirectResponse(f'{settings.base_url}/donate/{youtube_channel.id}', status_code=302)
+    return RedirectResponse(f'{settings.base_url}/youtube/{youtube_channel.id}', status_code=302)
 
 
 @app.get('/tw/{handle}')
