@@ -1,0 +1,101 @@
+version: '3'
+
+configs:
+  tor-config:
+    file: ./configs/torrc
+  lnd-config:
+    file: ./configs/lnd.conf
+  rtl-config:
+    file: ./configs/RTL-Config.json
+  donate4fun-config:
+    file: ./configs/donate4fun.yaml
+  donate4fun-googleaccount:
+    file: ./configs/service-account.json
+
+volumes:
+  db:
+  tor-data:
+  lnd-data:
+  rtl-backup:
+
+services:
+  tor:
+    image: nikicat/tor@sha256:f63e08b9f287e78301655904036bb73c4067773afbe3ff082797291a14119cdc
+    ports:
+    - "9051"
+    - "9050"
+    user: tor
+    configs:
+    - source: tor-config
+      target: /tor-config/torrc
+    volumes:
+    - type: volume
+      source: tor-data
+      target: /var/lib/tor
+    environment:
+      TOR_PASSWORD: 123qweasd
+  postgresql:
+    image: docker.io/bitnami/postgresql:14.3.0-debian-11-r3
+    ports:
+    - 5432
+    environment:
+      BITNAMI_DEBUG: false
+      POSTGRESQL_PORT_NUMBER: 5432
+      POSTGRESQL_VOLUME_DIR: /bitnami/postgresql
+      PGDATA: /bitnami/postgresql/data
+      POSTGRES_PASSWORD: 123qwe
+      POSTGRESQL_ENABLE_LDAP: no
+      POSTGRESQL_ENABLE_TLS: no
+      POSTGRESQL_LOG_HOSTNAME: false
+      POSTGRESQL_LOG_CONNECTIONS: false
+      POSTGRESQL_LOG_DISCONNECTIONS: false
+      POSTGRESQL_PGAUDIT_LOG_CATALOG: off
+      POSTGRESQL_CLIENT_MIN_MESSAGES: error
+      POSTGRESQL_SHARED_PRELOAD_LIBRARIES: pgaudit
+    volumes:
+    - type: volume
+      source: db
+      target: /bitnami/postgresql
+  lnd:
+    image: nikicat/lnd@sha256:f6de291ff6f063b9b2c2f08aa8abef1910141b17230d04ba87f70779f66ccea5
+    command:
+    - /entrypoint.sh
+    - --configfile=/lnd-config/lnd.conf
+    ports:
+    - 10009
+    - 8080
+    - 9735
+    environment:
+      TOR_TARGET_HOST: lnd
+    configs:
+    - source: lnd-config
+      target: /lnd-config/lnd.conf
+    volumes:
+    - type: volume
+      source: lnd-data
+      target: /lnd
+  donate4fun-backend:
+    build: .
+    ports:
+    - 8080
+    environment:
+      sentry_release: xxx
+      server_name: v0.21.0-68-g46bc58c-dirty
+    configs:
+    - source: donate4fun-config
+      target: /app/config.yaml
+    - source: donate4fun-googleaccount
+      target: /app/service-account.json
+  rtl:
+    image: nikicat/rtl@sha256:db28b36888c3e992b4d08d5f26ba32f52a66848c3d6af92b02d46a6b732797d2
+    ports:
+    - 80
+    environment:
+      RTL_CONFIG_PATH: /rtl-config
+    volumes:
+    - type: volume
+      source: rtl-backup
+      target: /rtl-backup
+    configs:
+    - source: rtl-config
+      target: /rtl-config/RTL-Config.json

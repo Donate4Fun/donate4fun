@@ -1,0 +1,48 @@
+{
+	"SSO": {
+		"logoutRedirectLink": "",
+		"rtlCookiePath": "",
+		"rtlSSO": 0
+	},
+	"defaultNodeIndex": 1,
+	"multiPassHashed": "ENC[AES256_GCM,data:6Ucuhf4X9UGl3ZwDp4AnBBzUzhe9HkODoUbuGSk3OvUv/lCUXDQIXEmSVkwbZZZOOotUnoGA/bwxnnwxTCwYAA==,iv:BGJ3iJhfbCvO/cPrIR55wFunz5PUMCWb2RVwWPtIGko=,tag:+OdMG+NTGSUTC0k1gdiXtA==,type:str]",
+	"nodes": [
+		{
+			"Authentication": {
+				"macaroonPath": "/fake-macaroon"
+			},
+			"Settings": {
+				"channelBackupPath": "/rtl-backup",
+				"currencyUnit": "EUR",
+				"fiatConversion": true,
+				"lnServerUrl": "http://lnd:8080",
+				"logLevel": "ERROR",
+				"themeColor": "PURPLE",
+				"themeMode": "NIGHT",
+				"userPersona": "MERCHANT"
+			},
+			"index": 1,
+			"lnImplementation": "LND",
+			"lnNode": "mainnet"
+		}
+	],
+	"port": 80,
+	"sops": {
+		"kms": null,
+		"gcp_kms": null,
+		"azure_kv": null,
+		"hc_vault": null,
+		"age": null,
+		"lastmodified": "2023-09-01T18:28:21Z",
+		"mac": "ENC[AES256_GCM,data:zOWUJ+HOEPKE/6qy8EwU75iQhUF/h2vNOxiaRchQnhCsoy8Yvm3zp6euzmxysvTahaugXIeqNL3OuyACJsS+HCX3R41nDg1fvHnaktzPLVy0xhubNvElsNYHfAu+N+8NYuzS9OU1fNxcZRHFhPyhaymeC3v1aW+Hg1WJWD/4E8Y=,iv:eBhDP4bKCUad4b9LZzoOg2/fts8yYKa4I8e7DxbHMqA=,tag:Eknqi0h30U5JdrgZCG8+Lw==,type:str]",
+		"pgp": [
+			{
+				"created_at": "2023-09-01T18:28:21Z",
+				"enc": "-----BEGIN PGP MESSAGE-----\n\nhF4DNqNIbivFYBESAQdAH4v058umMA3Tn0b8M/DN9UWSBzGPPqiwR3bnqDgRmnAw\n2p6zA/4WOkc6YGGiMcd291/uKIdi/kQCJBb47f9Va7PMYspe/eY5ZkfjOx7XkiiE\n0l4BQSfJDHSrldOwp7oXBKA6CQ/v6Y2PzKgtAdFruygoaP1z1Yts4Fj/CbR6TBfN\n0eUWxKGkG03Xg2QyjDPV13BvkgOVK8ObgqfxKef8yw2+jg8AQ6nm/IXwI+AEdful\n=h+Zt\n-----END PGP MESSAGE-----\n",
+				"fp": "AED0C93CCCA016E7F1615FEE36A3486E2BC56011"
+			}
+		],
+		"encrypted_regex": "multiPassHashed",
+		"version": "3.7.3"
+	}
+}
