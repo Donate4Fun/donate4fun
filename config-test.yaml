@@ -53,6 +53,7 @@ fee_limit: 10
 withdraw_timeout: 10
 cookie_secure: true
 cookie_http_only: false
+cookie_same_site: Lax
 release: false
 base_url: http://localhost:5173
 frontend_port: 5173
@@ -106,7 +107,7 @@ log:
     asyncio:
       level: INFO
     posthog:
-      level: DEBUG
+      level: INFO
     PIL.PngImagePlugin:
       level: INFO
   root:

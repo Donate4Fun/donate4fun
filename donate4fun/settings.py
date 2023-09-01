@@ -121,9 +121,10 @@ class LnurlpSettings(BaseModel):
 
 
 class PostHogSettings(BaseModel):
-    project_api_key: str
-    host: str
+    project_api_key: str = 'fake'
+    host: str = ''
     debug: bool = False
+    disabled: bool = True
 
 
 class SentrySettings(BaseModel):
@@ -158,7 +159,7 @@ class Settings(BaseSettings):
     bugsnag: BugsnagSettings | None = None
     rollbar: RollbarSettings | None = None
     google_cloud_logging: bool | None = None
-    posthog: PostHogSettings | None = None
+    posthog: PostHogSettings = PostHogSettings()
     sentry: SentrySettings | None = None
     lnurlp: LnurlpSettings
     hypercorn: dict[str, Any]
