@@ -22,10 +22,10 @@ volumes:
 
 services:
   tor:
-    image: nikicat/tor@sha256:f63e08b9f287e78301655904036bb73c4067773afbe3ff082797291a14119cdc
+    build: ./docker/tor
     ports:
-    - "9051"
-    - "9050"
+    - "127.0.0.1:19051:9051"
+    - "127.0.0.1:19050:9050"
     user: tor
     configs:
     - source: tor-config
@@ -37,9 +37,9 @@ services:
     environment:
       TOR_PASSWORD: 123qweasd
   postgresql:
-    image: docker.io/bitnami/postgresql:14.3.0-debian-11-r3
+    image: docker.io/bitnami/postgresql:14
     ports:
-    - 5432
+    - "127.0.0.1:15432:5432"
     environment:
       BITNAMI_DEBUG: false
       POSTGRESQL_PORT_NUMBER: 5432
@@ -59,14 +59,14 @@ services:
       source: db
       target: /bitnami/postgresql
   lnd:
-    image: nikicat/lnd@sha256:f6de291ff6f063b9b2c2f08aa8abef1910141b17230d04ba87f70779f66ccea5
+    build: ./docker/lnd
     command:
     - /entrypoint.sh
     - --configfile=/lnd-config/lnd.conf
     ports:
-    - 10009
-    - 8080
-    - 9735
+    - "127.0.0.1:10009:10009"
+    - "127.0.0.1:8070:8080"
+    - "9735:9735"
     environment:
       TOR_TARGET_HOST: lnd
     configs:
@@ -79,9 +79,9 @@ services:
       source: ./configs/lnd-data
       target: /lnd
   rtl:
-    image: nikicat/rtl@sha256:db28b36888c3e992b4d08d5f26ba32f52a66848c3d6af92b02d46a6b732797d2
+    build: ./docker/rtl
     ports:
-    - 80
+    - "127.0.0.1:8082:80"
     environment:
       RTL_CONFIG_PATH: /rtl-config
     volumes:
@@ -94,7 +94,7 @@ services:
   donate4fun-backend:
     build: .
     ports:
-    - 8080
+    - "127.0.0.1:18080:8080"
     environment:
       sentry_release: xxx
       server_name: v0.21.0-68-g46bc58c-dirty
@@ -106,6 +106,6 @@ services:
   donate4fun-frontend:
     build: ./frontend/
     ports:
-    - 80
+    - "127.0.0.1:18090:80"
     environment:
       HOST: donate4.fun
