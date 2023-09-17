@@ -5,6 +5,8 @@ configs:
     file: ./configs/torrc
   lnd-config:
     file: ./configs/lnd.conf
+  lnd-wallet-password:
+    file: ./configs/lnd.wallet.pw
   rtl-config:
     file: ./configs/RTL-Config.json
   donate4fun-config:
@@ -70,22 +72,12 @@ services:
     configs:
     - source: lnd-config
       target: /lnd-config/lnd.conf
+    - source: lnd-wallet-password
+      target: /lnd-secret/wallet.pw
     volumes:
-    - type: volume
-      source: lnd-data
+    - type: bind
+      source: ./configs/lnd-data
       target: /lnd
-  donate4fun-backend:
-    build: .
-    ports:
-    - 8080
-    environment:
-      sentry_release: xxx
-      server_name: v0.21.0-68-g46bc58c-dirty
-    configs:
-    - source: donate4fun-config
-      target: /app/config.yaml
-    - source: donate4fun-googleaccount
-      target: /app/service-account.json
   rtl:
     image: nikicat/rtl@sha256:db28b36888c3e992b4d08d5f26ba32f52a66848c3d6af92b02d46a6b732797d2
     ports:
@@ -99,3 +91,21 @@ services:
     configs:
     - source: rtl-config
       target: /rtl-config/RTL-Config.json
+  donate4fun-backend:
+    build: .
+    ports:
+    - 8080
+    environment:
+      sentry_release: xxx
+      server_name: v0.21.0-68-g46bc58c-dirty
+    configs:
+    - source: donate4fun-config
+      target: /app/config.yaml
+    - source: donate4fun-googleaccount
+      target: /app/service-account.json
+  donate4fun-frontend:
+    build: ./frontend/
+    ports:
+    - 80
+    environment:
+      HOST: donate4.fun

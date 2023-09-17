@@ -4,3 +4,4 @@ encrypted_files:
 - configs/service-account.json
 - configs/donate4fun.yaml
 - configs/RTL-Config.json
+- configs/lnd.wallet.pw
