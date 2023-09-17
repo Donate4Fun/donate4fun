@@ -1,4 +1,4 @@
-FROM python:3.10.8
+FROM python:3.11.2
 
 #RUN apk --update --no-cache add alpine-sdk libffi-dev rust cargo openssl-dev
 ENV DEBIAN_FRONTEND=noninteractive
@@ -12,4 +12,4 @@ RUN poetry run playwright install chromium
 RUN poetry run playwright install-deps
 COPY donate4fun /app/donate4fun
 COPY frontend /app/frontend
-CMD ["poetry", "run", "python", "-m", "donate4fun"]
+CMD ["poetry", "run", "donate4fun-cli", "serve"]

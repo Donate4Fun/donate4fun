@@ -145,6 +145,7 @@ class DonationDb(Base):
     r_hash = Column(String, unique=True)
     # For transient donations (look at models.py for description)
     transient_r_hash = Column(String, unique=True)
+    transient_payment_request = Column(String)
     amount = Column(BigInteger, nullable=False)
     fee_msat = Column(BigInteger)
     donator_id = Column(Uuid(as_uuid=True))
@@ -155,6 +156,7 @@ class DonationDb(Base):
     cancelled_at = Column(TIMESTAMP)
     claimed_at = Column(TIMESTAMP)
 
+    # FIXME: split this table to multiple tables one for each social provider
     receiver_id = Column(Uuid(as_uuid=True), ForeignKey(DonatorDb.id))
     receiver = relationship(DonatorDb, lazy='joined', foreign_keys=[receiver_id])
 
@@ -168,7 +170,9 @@ class DonationDb(Base):
     twitter_account = relationship(TwitterAuthorDb, lazy='joined', foreign_keys=[twitter_account_id])
 
     twitter_tweet_id = Column(Uuid(as_uuid=True), ForeignKey(TwitterTweetDb.id))
-    twitter_tweet = relationship(TwitterTweetDb, lazy='joined')
+    twitter_tweet = relationship(TwitterTweetDb, lazy='joined', foreign_keys=[twitter_tweet_id])
+
+    twitter_invoice_tweet_id = Column(BigInteger)
 
     github_user_id = Column(Uuid(as_uuid=True), ForeignKey(GithubUserDb.id))
     github_user = relationship(GithubUserDb, lazy='joined')

@@ -4,27 +4,32 @@ import os.path
 import json
 import logging
 import math
-from functools import cached_property
-from typing import Literal
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from datetime import datetime
+from functools import cached_property
+from typing import Any
+from typing import Literal
 
+import asyncpg
 import httpx
+import sqlalchemy
 from lnpayencode import LnAddr
 from lnurl.helpers import _lnurl_decode
 from lnurl.models import LnurlResponseModel
 from lnurl.types import MilliSatoshi
-from pydantic import Field, AnyUrl
+from pydantic import Field, AnyUrl, BaseModel
+from pydantic.datetime_parse import parse_datetime
 
 from .settings import LndSettings, settings
 from .types import RequestHash, PaymentRequest
-from .models import Invoice, Donator, PayInvoiceResult, Donation
-from .core import as_task, register_command, ContextualObject, from_base64, to_base64
-from .api_utils import track_donation, auto_transfer_donations
+from .models import Donator, Donation, SocialAccount
+from .core import as_task, ContextualObject, from_base64, to_base64
+from .api_utils import register_app_command
 from .db_donations import DonationsDbLib
+from .donation import finish_donation
 
 logger = logging.getLogger(__name__)
-
-
 State = str
 
 
@@ -34,6 +39,44 @@ class PayInvoiceError(Exception):
 
 class LndIsNotReady(Exception):
     pass
+
+
+class NaiveDatetime(datetime):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v: Any) -> str:
+        return parse_datetime(int(v)).replace(tzinfo=None)
+
+
+class Invoice(BaseModel):
+    """
+    This model is replica of lnd's Invoice message
+    https://github.com/lightningnetwork/lnd/blob/master/lnrpc/lightning.proto#L3314
+    """
+    r_hash: RequestHash
+    payment_request: PaymentRequest
+    value: int | None
+    memo: str | None
+    settle_date: NaiveDatetime | None
+    amt_paid_sat: int | None
+    state: str | None
+
+
+class PayInvoiceResult(BaseModel):
+    creation_date: NaiveDatetime
+    fee: float
+    fee_msat: int
+    fee_sat: float
+    payment_hash: RequestHash
+    payment_preimage: RequestHash
+    status: str
+    failure_reason: str
+    value: float
+    value_msat: int
+    value_sat: float
 
 
 class LnurlWithdrawResponse(LnurlResponseModel):
@@ -91,44 +134,49 @@ class LndClient:
                 url=url,
                 **kwargs,
             ) as resp:
-                logger.debug("response: %s %s %d", method, url, resp.status_code)
+                logger.trace("response: %s %s %d", method, url, resp.status_code)
                 if not resp.is_success:
                     await resp.aread()
                 resp.raise_for_status()
                 yield resp
 
-    async def subscribe(self, api: str, **request: dict):
-        # WORKAROUND: This should be after the request but
-        # lnd does not return headers until the first event, so it deadlocks
+    @asynccontextmanager
+    async def subscribe_to_invoices(self):
+        async with self.subscribe('/v1/invoices/subscribe') as subscription:
+            yield self.generate_invoices(subscription)
+
+    @asynccontextmanager
+    async def subscribe_to_invoice(self, r_hash: RequestHash):
+        async with self.subscribe(f'/v2/invoices/subscribe/{r_hash.as_base64}') as subscription:
+            yield self.generate_invoices(subscription)
+
+    @asynccontextmanager
+    async def subscribe(self, api: str, **request: dict) -> AsyncIterator[AsyncIterator[Invoice]]:
         logger.trace("subscribe %s %s", api, request)
+        # FIXME: instead of this we should wait for a connection to be established, but httpx has no such event
+        await self.check_ready()
+        yield self.generate_events(api, request)
 
-        @as_task
-        @asynccontextmanager
-        async def request_impl(queue):
-            # FIXME: instead of this we should wait for a connection to be established, but httpx has no such event
-            await self.query_info()
-            yield
-            async with self.request(api, method='GET', json=request, timeout=None) as resp:
-                async for line in resp.aiter_lines():
-                    logger.trace("subscribe line %s", line)
-                    await queue.put(json.loads(line))
+    async def generate_events(self, api: str, request: dict) -> AsyncIterator[Invoice]:
+        # WORKAROUND: self.request(...) should be called inside subscribe() but
+        # lnd does not return headers until the first event, so it deadlocks
+        async with self.request(api, method='GET', json=request, timeout=None) as resp:
+            async for line in resp.aiter_lines():
+                logger.trace("subscribe line %s", line)
+                yield json.loads(line)
 
-        queue = asyncio.Queue()
-        async with request_impl(queue):
-            # FIXME: instead of this we should wait for a connection to be established, but httpx has no such event
-            await asyncio.sleep(0.2)
-            yield
-            while result := await queue.get():
-                yield result
+    async def generate_invoices(self, event_generator):
+        async for event in event_generator:
+            yield Invoice(**event['result'])
 
-    async def create_invoice(self, **kwargs) -> Invoice:
-        await self.ensure_ready()
+    async def create_invoice(self, expiry: int = None, **kwargs) -> Invoice:
+        await self.check_ready()
         resp = await self.query(
             'POST',
             '/v1/invoices',
             data=dict(
                 **kwargs,
-                expiry=self.settings.invoice_expiry,
+                expiry=expiry or self.settings.invoice_expiry,
                 private=self.settings.private,
             ),
         )
@@ -151,7 +199,7 @@ class LndClient:
         await self.query("POST", "/v2/invoices/cancel", data=dict(payment_hash=r_hash.as_base64))
 
     async def pay_invoice(self, payment_request: PaymentRequest) -> PayInvoiceResult:
-        await self.ensure_ready()
+        await self.check_ready()
         try:
             decoded: LnAddr = payment_request.decode()
             logger.debug(f"Sending payment to {decoded}")
@@ -180,11 +228,15 @@ class LndClient:
     async def query_info(self) -> dict:
         return await self.query('GET', '/v1/getinfo')
 
-    async def ensure_ready(self):
-        info: dict = await self.query_info()
-        is_ready = info['synced_to_chain'] is True and info['synced_to_graph'] is True and info['num_active_channels'] > 0
-        if not is_ready:
-            raise LndIsNotReady(info)
+    async def check_ready(self):
+        try:
+            info: dict = await self.query_info()
+        except httpx.HTTPStatusError as exc:
+            raise LndIsNotReady(str(exc)) from exc
+        else:
+            is_ready = info['synced_to_chain'] is True and info['synced_to_graph'] is True and info['num_active_channels'] > 0
+            if not is_ready:
+                raise LndIsNotReady(info)
 
 
 lnd = ContextualObject('lnd')
@@ -207,33 +259,44 @@ async def monitor_invoices_step(lnd_client, db):
     logger.debug("Start monitoring invoices")
     # FIXME: monitor only invoices created by this web worker to avoid conflicts between workers
     try:
-        async for data in lnd_client.subscribe("/v1/invoices/subscribe"):
-            if data is None:
-                logger.debug("Connected to LND")
-                yield
-                continue
-            logger.debug("monitor_invoices %s", data)
-            invoice: Invoice = Invoice(**data['result'])
-            if invoice.state == 'SETTLED':
-                logger.debug(f"donation paid {data}")
-                try:
-                    async with db.session() as db_session:
-                        donations_db = DonationsDbLib(db_session)
-                        donation: Donation = await donations_db.lock_donation(r_hash=invoice.r_hash)
-                        await donations_db.donation_paid(
-                            donation_id=donation.id,
-                            paid_at=invoice.settle_date,
-                            amount=invoice.amt_paid_sat,
-                        )
-                        track_donation(donation)
-                        await auto_transfer_donations(db_session, donation)
-                except Exception:
-                    logger.exception("Error while handling donation notification from lnd")
+        async with lnd_client.subscribe_to_invoices() as subscription:
+            logger.debug("Connected to LND")
+            yield
+            async for invoice in subscription:
+                logger.trace("monitor_invoices %s", invoice)
+                if invoice.state == 'SETTLED':
+                    logger.debug("donation paid %s", invoice)
+                    try:
+                        # Try to lock donation multiple times
+                        while True:
+                            async with db.session() as db_session:
+                                donations_db = DonationsDbLib(db_session)
+                                try:
+                                    donation: Donation = await donations_db.lock_donation(r_hash=invoice.r_hash)
+                                except sqlalchemy.exc.DBAPIError as exc:
+                                    # could not serialize access due to concurrent update
+                                    if isinstance(exc.__cause__.__cause__, asyncpg.exceptions.SerializationError):
+                                        # Just try again
+                                        continue
+                                    else:
+                                        raise
+                                if donation.paid_at is not None:
+                                    logger.warning("Donation %s was already paid, skipping", donation)
+                                else:
+                                    await finish_donation(
+                                        db_session,
+                                        donation=donation,
+                                        paid_at=invoice.settle_date,
+                                        amount=invoice.amt_paid_sat,
+                                    )
+                                break
+                    except Exception:
+                        logger.exception("Error while handling donation notification from lnd")
     finally:
         logger.debug("Stopped monitoring invoices")
 
 
-@register_command
+@register_app_command
 async def pay_withdraw_request(lnurl: str):
     decoded_url = _lnurl_decode(lnurl)
     logger.debug("decoded lnurl: %s", decoded_url)
@@ -254,10 +317,10 @@ def svg_to_png(svg_data: bytes) -> bytes:
     return svg2png(svg_data)
 
 
-def lightning_payment_metadata(receiver: Donator) -> str:
+def lightning_payment_metadata(receiver: Donator | SocialAccount) -> str:
     fields = [
         ("text/identifier", receiver.lightning_address),
-        ("text/plain", f"Tip for {receiver.name} [{receiver.id}]"),
+        ("text/plain", f"Tip for {receiver.unique_name} [{receiver.id}]"),
     ]
     prefix = 'data:image/svg+xml;base64,'
     if receiver.avatar_url.startswith(prefix):

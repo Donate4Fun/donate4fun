@@ -10,7 +10,9 @@
   import SocialSigninButton from "$lib/SocialSigninButton.svelte";
   import api from "$lib/api.js";
   import { capitalize } from "$lib/utils.js";
-  import { me } from "$lib/session.js";
+  import { syncMe as me } from "$lib/session.js";
+  import { cLog, cError } from "$lib/log.js";
+  import { notify } from "$lib/notifications.js";
 
   export let socialProvider = null;
   export let name;
@@ -20,18 +22,25 @@
     await api.post(`social/${socialProvider}/${item.id}/transfer`);
   }
 
-  const itemsStore = derived(me, async ($me, set) => {
-    if (socialProvider === null)
+  const itemsStore = derived(me, ($me, set) => {
+    if (socialProvider === null || $me === null)
       return;
-    const me_ = await $me;
-    const ws = api.subscribe(`donator:${me_.donator.id}`, { autoReconnect: false });
+    const ws = api.subscribe(`donator:${$me.donator.id}`);
     ws.on("notification", async (notification) => {
       if (notification.status === 'OK') {
         set(await api.get(`social/${socialProvider}/linked`));
       }
     });
-    await ws.ready();
-    set(await api.get(`social/${socialProvider}/linked`));
+    (async () => {
+      try {
+        await ws.ready();
+        set(await api.get(`social/${socialProvider}/linked`));
+      } catch (err) {
+        cError("Failed to load linked items", err);
+        if (err.target instanceof WebSocket && err.type === 'error')
+          notify("Network error", "WebSocket error in linked items store", "error");
+      }
+    })();
     return () => {
       ws.close();
     };

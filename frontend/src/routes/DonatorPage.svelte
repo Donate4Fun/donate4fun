@@ -16,12 +16,12 @@
 
   export let donator_id;
 
-  const donator = apiStore(`donator/${donator_id}`, `donator:${donator_id}`);
+  $: donator = apiStore(`donator/${donator_id}`, `donator:${donator_id}`);
   $: itsMe = donator_id === $me?.donator?.id;
 </script>
 
 {#if $donator}
-  <Title title="Donator profile for {$donator.name}" />
+  <Title title="{$donator.name} profile" />
   <Section>
     <div class="main">
       {#if itsMe}

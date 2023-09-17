@@ -14,6 +14,7 @@ backend:
     repository: europe-central2-docker.pkg.dev/donate4fun-prod/docker/donate4fun-backend
   config:
     posthog:
+      enabled: true
       project_api_key: 'phc_2CphDSfOn61NrqYZnloxHWpwFFjd4mHxUtZwcwrogC0'
       host: 'https://eu.posthog.com'
     sentry:
@@ -34,8 +35,11 @@ backend:
     youtube:
       refresh_timeout: P1D
     twitter:
-      greeting: "Hey! I'm a Donate4Fun Twitter bot. I'll check if you have any tips or donations."
-      enable_bot: false
+      conversations_bot:
+        greeting: "Hey! I'm a Donate4Fun Twitter bot. I'll check if you have any tips or donations."
+        enabled: false
+      mentions_bot:
+        enabled: false
       dm_check_interval: PT20S
       self_id: "1572908920485576704"
       refresh_timeout: P1D
@@ -80,6 +84,8 @@ backend:
       loggers:
         donate4fun:
           level: DEBUG
+        donate4fun.twitter_bot:
+          level: TRACE
         sqlalchemy.engine.Engine:
           level: WARNING
         hypercorn:

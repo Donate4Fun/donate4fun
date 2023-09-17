@@ -18,20 +18,23 @@ from sqlalchemy.orm.exc import NoResultFound
 from jwt import InvalidTokenError
 
 from .models import (
-    Donation, Donator, Invoice,
+    Donation, Donator, SocialAccount,
     WithdrawalToken, BaseModel, Notification, Credentials, SubscribeEmailRequest,
-    DonatorStats, PayInvoiceResult, Donatee, OAuthState, SocialProvider, Toast,
+    DonatorStats, Donatee, OAuthState, Toast, SocialProviderId,
 )
 from .types import ValidationError, PaymentRequest, OAuthError, LnurlpError, AccountAlreadyLinked
 from .core import to_base64
 from .db_models import WithdrawalDb
 from .db_libs import WithdrawalDbLib, DonationsDbLib, OtherDbLib
 from .settings import settings
+from .social import SocialProvider
 from .api_utils import (
     get_donator, load_donator, get_db_session, task_group, only_me, make_redirect, get_donations_db, sha256hash,
     oauth_success_messages, signin_success_message,
 )
-from .lnd import PayInvoiceError, LnurlWithdrawResponse, lnd, lightning_payment_metadata, LndIsNotReady
+from .lnd import (
+    Invoice, PayInvoiceResult, PayInvoiceError, LnurlWithdrawResponse, lnd, lightning_payment_metadata, LndIsNotReady,
+)
 from .pubsub import pubsub
 from . import api_twitter, api_youtube, api_github, api_social, api_donation
 
@@ -222,14 +225,16 @@ class PaymentCallbackResponse(BaseModel):
     pr: PaymentRequest
 
 
-@router.get('/lnurl/{receiver_id}/payment-callback', response_model=PaymentCallbackResponse)
+@router.get('/lnurl/{provider_id}/{receiver_id}/payment-callback', response_model=PaymentCallbackResponse)
 async def payment_callback(
-    request: Request, receiver_id: UUID, amount: int = Query(...), comment: str = Query(...), db_session=Depends(get_db_session),
+    request: Request, provider_id: SocialProviderId, receiver_id: UUID, amount: int = Query(...), comment: str = Query(...),
+    db_session=Depends(get_db_session),
 ):
     """
-    This callback is needed for lightning address support. Currently it's used for internal testing only.
+    This callback is needed for lightning address support. It automatically creates a Donation.
     """
-    receiver: Donator = await db_session.query_donator(id=receiver_id)
+    provider = SocialProvider.create(provider_id)
+    receiver: SocialAccount | Donator = await provider.wrap_db(db_session).query_account(id=receiver_id)
     amount = amount // 1000  # FIXME: handle msats correctly
     invoice: Invoice = await lnd.create_invoice(
         memo=comment, value=amount, description_hash=to_base64(sha256hash(lightning_payment_metadata(receiver))),
@@ -238,9 +243,9 @@ async def payment_callback(
         amount=amount,
         donator=None,
         r_hash=invoice.r_hash,  # This hash is needed to find and complete donation after payment succeeds
-        receiver=Donator(id=receiver_id),
         # FIXME: save comment
     )
+    provider.set_donation_receiver(donation, receiver)
     await DonationsDbLib(db_session).create_donation(donation)
     return PaymentCallbackResponse(
         status='OK',
@@ -397,7 +402,7 @@ async def withdraw(request: Request, db=Depends(get_db_session), me: Donator = D
 
 @router.get('/oauth-redirect/{provider}')
 async def oauth_redirect(
-    request: Request, provider: SocialProvider, state: str, error: str = None, error_description: str = None, code: str = None,
+    request: Request, provider: SocialProviderId, state: str, error: str = None, error_description: str = None, code: str = None,
     donator=Depends(get_donator),
 ):
     try:

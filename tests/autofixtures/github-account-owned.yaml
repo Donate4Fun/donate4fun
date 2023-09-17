@@ -1,6 +1,7 @@
 json:
   avatar_url: http://url.com
   balance: 0
+  display_name: title
   id: 00000000-0000-0000-0000-000000000001
   is_my: false
   last_fetched_at: '2022-02-02T22:22:22'
@@ -10,6 +11,7 @@ json:
   owner_id: null
   provider: github
   total_donated: 0
+  unique_name: handle
   user_id: 123
   via_oauth: false
 status_code: 200

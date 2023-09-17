@@ -28,20 +28,29 @@ class YoutubeSettings(BaseModel):
 
 
 class TwitterOAuth(BaseModel):
+    bearer_token: str | None
     client_id: str
     client_secret: str
     consumer_key: str
     consumer_secret: str
 
 
-class TwitterSettings(BaseModel):
-    bearer_token: str
+class TwitterBotSettings(BaseModel):
+    enabled: bool
+    oauth: TwitterOAuth | None
+
+
+class TwitterConversationsBotSettings(TwitterBotSettings):
     greeting: str
-    enable_bot: bool
+
+
+class TwitterSettings(BaseModel):
     self_id: int
     dm_check_interval: timedelta
     refresh_timeout: timedelta
-    oauth: TwitterOAuth
+    linking_oauth: TwitterOAuth
+    conversations_bot: TwitterConversationsBotSettings
+    mentions_bot: TwitterBotSettings
 
 
 class GithubSettings(BaseModel):
@@ -102,12 +111,6 @@ class FastApiSettings(BaseModel):
     root_path: str
 
 
-class BugsnagSettings(BaseModel):
-    api_key: str | None
-    release_stage: str | None
-    app_version: str | None
-
-
 class RollbarSettings(BaseModel):
     access_token: str
     environment: str
@@ -121,6 +124,7 @@ class LnurlpSettings(BaseModel):
 
 
 class PostHogSettings(BaseModel):
+    enabled: bool
     project_api_key: str
     host: str
     debug: bool = False
@@ -155,7 +159,6 @@ class Settings(BaseSettings):
     log: LoggingConfig
     jwt: JwtSettings
     fastapi: FastApiSettings
-    bugsnag: BugsnagSettings | None = None
     rollbar: RollbarSettings | None = None
     google_cloud_logging: bool | None = None
     posthog: PostHogSettings | None = None

@@ -1,7 +1,20 @@
 interactions:
 - request:
+    body: ''
+    headers:
+      name:
+      - github-login-via-oauth
+      prompt:
+      - 'Open this url, authorize and paste url after redirect here:'
+    method: GET
+    uri: https://github.com/login/oauth/authorize?allow_signup=False&client_id=Iv1.47885cc7f2eb65ae&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fv1%2Foauth-redirect%2Fgithub&state=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWNjZXNzX3BhdGgiOiIvZG9uYXRvci9tZSIsImVycm9yX3BhdGgiOiIiLCJkb25hdG9yX2lkIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwIiwiYWxsb3dfc2lnbl9pbiI6dHJ1ZSwiY29kZV92ZXJpZmllciI6bnVsbCwiZXhwZWN0ZWRfYWNjb3VudCI6bnVsbCwiaWF0IjoxNjQzODQwNTQyLCJuYmYiOjE2NDM4NDA1NDIsImV4cCI6MTY0Mzg0MTE0Mn0.KpamaqgTwhRLGtU6d7G33t3Nq2y2Q-25HM4n_dj45kU
+  response:
+    headers:
+      location: http://localhost:3000/api/v1/oauth-redirect/github?code=8cddbd0eab2916876df5&state=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWNjZXNzX3BhdGgiOiIvZG9uYXRvci9tZSIsImVycm9yX3BhdGgiOiIiLCJkb25hdG9yX2lkIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwIiwiYWxsb3dfc2lnbl9pbiI6dHJ1ZSwiY29kZV92ZXJpZmllciI6bnVsbCwiZXhwZWN0ZWRfYWNjb3VudCI6bnVsbCwiaWF0IjoxNjQzODQwNTQyLCJuYmYiOjE2NDM4NDA1NDIsImV4cCI6MTY0Mzg0MTE0Mn0.KpamaqgTwhRLGtU6d7G33t3Nq2y2Q-25HM4n_dj45kU
+    status_code: 307
+- request:
     body: '{"client_id": "Iv1.47885cc7f2eb65ae", "client_secret": "secret", "code":
-      "d9cdafdcbd3ddc046351", "redirect_uri": "http://localhost:3000/api/v1/oauth-redirect/github"}'
+      "8cddbd0eab2916876df5", "redirect_uri": "http://localhost:3000/api/v1/oauth-redirect/github"}'
     headers:
       accept:
       - application/json
@@ -21,7 +34,7 @@ interactions:
     uri: https://github.com/login/oauth/access_token
   response:
     content: '{"access_token": "secret", "expires_in": 28800, "refresh_token": "secret",
-      "refresh_token_expires_in": 15638399, "token_type": "bearer", "scope": ""}'
+      "refresh_token_expires_in": 15897600, "token_type": "bearer", "scope": ""}'
     headers:
       cache-control:
       - max-age=0, private, must-revalidate
@@ -34,7 +47,10 @@ interactions:
         collector.github.com raw.githubusercontent.com api.github.com github-cloud.s3.amazonaws.com
         github-production-repository-file-5c1aeb.s3.amazonaws.com github-production-upload-manifest-file-7fdce7.s3.amazonaws.com
         github-production-user-asset-6210df.s3.amazonaws.com cdn.optimizely.com logx.optimizely.com/v1/events
-        *.actions.githubusercontent.com wss://*.actions.githubusercontent.com online.visualstudio.com/api/v1/locations
+        *.actions.githubusercontent.com productionresultssa0.blob.core.windows.net/
+        productionresultssa1.blob.core.windows.net/ productionresultssa2.blob.core.windows.net/
+        productionresultssa3.blob.core.windows.net/ productionresultssa4.blob.core.windows.net/
+        wss://*.actions.githubusercontent.com online.visualstudio.com/api/v1/locations
         github-production-repository-image-32fea6.s3.amazonaws.com github-production-release-asset-2e65be.s3.amazonaws.com
         insights.github.com wss://alive.github.com; font-src github.githubassets.com;
         form-action ''self'' github.com gist.github.com objects-origin.githubusercontent.com;
@@ -42,18 +58,19 @@ interactions:
         img-src ''self'' data: github.githubassets.com media.githubusercontent.com
         camo.githubusercontent.com identicons.github.com avatars.githubusercontent.com
         github-cloud.s3.amazonaws.com objects.githubusercontent.com objects-origin.githubusercontent.com
-        secured-user-images.githubusercontent.com/ opengraph.githubassets.com github-production-user-asset-6210df.s3.amazonaws.com
+        secured-user-images.githubusercontent.com/ user-images.githubusercontent.com/
+        private-user-images.githubusercontent.com opengraph.githubassets.com github-production-user-asset-6210df.s3.amazonaws.com
         customer-stories-feed.github.com spotlights-feed.github.com *.githubusercontent.com;
         manifest-src ''self''; media-src github.com user-images.githubusercontent.com/
-        secured-user-images.githubusercontent.com/; script-src github.githubassets.com;
-        style-src ''unsafe-inline'' github.githubassets.com; worker-src github.com/assets-cdn/worker/
-        gist.github.com/assets-cdn/worker/'
+        secured-user-images.githubusercontent.com/ private-user-images.githubusercontent.com;
+        script-src github.githubassets.com; style-src ''unsafe-inline'' github.githubassets.com;
+        worker-src github.com/assets-cdn/worker/ gist.github.com/assets-cdn/worker/'
       content-type:
       - application/json; charset=utf-8
       date:
-      - Wed, 01 Feb 2023 12:10:04 GMT
+      - Sat, 11 Mar 2023 17:21:04 GMT
       etag:
-      - W/"09a8f0a82d6c0d1565be0cdbe49f0c1b"
+      - W/"14294b495460f1e8e41ed23bc68b1190"
       referrer-policy:
       - origin-when-cross-origin, strict-origin-when-cross-origin
       server:
@@ -68,7 +85,7 @@ interactions:
       x-frame-options:
       - deny
       x-github-request-id:
-      - E572:ECA6:53E9A70:56CD7B1:63DA569B
+      - BE22:0F84:A0302C4:A568500:640CB880
       x-xss-protection:
       - '0'
     http_version: HTTP/2
@@ -104,8 +121,8 @@ interactions:
       false, "name": "Nikolay Bryskin", "company": "Donate4.Fun", "blog": "https://donate4.fun",
       "location": "Vilnius", "email": "nbryskin@gmail.com", "hireable": true, "bio":
       "Full-stack developer, CTO, Donate4.Fun founder.", "twitter_username": "nbryskin",
-      "public_repos": 144, "public_gists": 17, "followers": 142, "following": 155,
-      "created_at": "2010-07-12T06:33:15Z", "updated_at": "2023-01-23T12:50:25Z"}'
+      "public_repos": 147, "public_gists": 17, "followers": 145, "following": 172,
+      "created_at": "2010-07-12T06:33:15Z", "updated_at": "2023-02-24T12:49:38Z"}'
     headers:
       access-control-allow-origin:
       - '*'
@@ -123,13 +140,13 @@ interactions:
       content-type:
       - application/json; charset=utf-8
       date:
-      - Wed, 01 Feb 2023 12:10:04 GMT
+      - Sat, 11 Mar 2023 17:21:05 GMT
       etag:
-      - W/"5604e7bdff1891945b3ef0dec1efa13faf6383fedae86c5687de7edc5fbc540f"
+      - W/"215e5c63e587e014c5439db83d62fef7eee01c6a74daa258e00f2230223383e9"
       github-authentication-token-expiration:
-      - 2023-02-01 20:10:03 UTC
+      - 2023-03-12 01:21:04 UTC
       last-modified:
-      - Mon, 23 Jan 2023 12:50:25 GMT
+      - Fri, 24 Feb 2023 12:49:38 GMT
       referrer-policy:
       - origin-when-cross-origin, strict-origin-when-cross-origin
       server:
@@ -150,7 +167,7 @@ interactions:
       x-github-media-type:
       - github.v3
       x-github-request-id:
-      - BA34:7D39:10E4C55:112DD16:63DA569C
+      - 8D8E:85CC:63EE8BD:657CA3E:640CB880
       x-oauth-client-id:
       - Iv1.47885cc7f2eb65ae
       x-oauth-scopes:
@@ -158,20 +175,33 @@ interactions:
       x-ratelimit-limit:
       - '5000'
       x-ratelimit-remaining:
-      - '4993'
+      - '4999'
       x-ratelimit-reset:
-      - '1675256086'
+      - '1678558865'
       x-ratelimit-resource:
       - core
       x-ratelimit-used:
-      - '7'
+      - '1'
       x-xss-protection:
       - '0'
     http_version: HTTP/2
     status_code: 200
 - request:
+    body: ''
+    headers:
+      name:
+      - github-login-via-oauth-relogin
+      prompt:
+      - 'Open this url, authorize and paste url after redirect here:'
+    method: GET
+    uri: https://github.com/login/oauth/authorize?allow_signup=False&client_id=Iv1.47885cc7f2eb65ae&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fv1%2Foauth-redirect%2Fgithub&state=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWNjZXNzX3BhdGgiOiIvZG9uYXRvci9tZSIsImVycm9yX3BhdGgiOiIiLCJkb25hdG9yX2lkIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAxIiwiYWxsb3dfc2lnbl9pbiI6dHJ1ZSwiY29kZV92ZXJpZmllciI6bnVsbCwiZXhwZWN0ZWRfYWNjb3VudCI6bnVsbCwiaWF0IjoxNjQzODQwNTQyLCJuYmYiOjE2NDM4NDA1NDIsImV4cCI6MTY0Mzg0MTE0Mn0.mSOtmjAsoxrsI5KNeUqU0l97MUa43mIUn0od12Upqz0
+  response:
+    headers:
+      location: http://localhost:3000/api/v1/oauth-redirect/github?code=b8b79ceafd3d0093655d&state=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWNjZXNzX3BhdGgiOiIvZG9uYXRvci9tZSIsImVycm9yX3BhdGgiOiIiLCJkb25hdG9yX2lkIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAxIiwiYWxsb3dfc2lnbl9pbiI6dHJ1ZSwiY29kZV92ZXJpZmllciI6bnVsbCwiZXhwZWN0ZWRfYWNjb3VudCI6bnVsbCwiaWF0IjoxNjQzODQwNTQyLCJuYmYiOjE2NDM4NDA1NDIsImV4cCI6MTY0Mzg0MTE0Mn0.mSOtmjAsoxrsI5KNeUqU0l97MUa43mIUn0od12Upqz0
+    status_code: 307
+- request:
     body: '{"client_id": "Iv1.47885cc7f2eb65ae", "client_secret": "secret", "code":
-      "d6991aa5e47c4128492c", "redirect_uri": "http://localhost:3000/api/v1/oauth-redirect/github"}'
+      "b8b79ceafd3d0093655d", "redirect_uri": "http://localhost:3000/api/v1/oauth-redirect/github"}'
     headers:
       accept:
       - application/json
@@ -191,7 +221,7 @@ interactions:
     uri: https://github.com/login/oauth/access_token
   response:
     content: '{"access_token": "secret", "expires_in": 28800, "refresh_token": "secret",
-      "refresh_token_expires_in": 15638400, "token_type": "bearer", "scope": ""}'
+      "refresh_token_expires_in": 15897600, "token_type": "bearer", "scope": ""}'
     headers:
       cache-control:
       - max-age=0, private, must-revalidate
@@ -204,7 +234,10 @@ interactions:
         collector.github.com raw.githubusercontent.com api.github.com github-cloud.s3.amazonaws.com
         github-production-repository-file-5c1aeb.s3.amazonaws.com github-production-upload-manifest-file-7fdce7.s3.amazonaws.com
         github-production-user-asset-6210df.s3.amazonaws.com cdn.optimizely.com logx.optimizely.com/v1/events
-        *.actions.githubusercontent.com wss://*.actions.githubusercontent.com online.visualstudio.com/api/v1/locations
+        *.actions.githubusercontent.com productionresultssa0.blob.core.windows.net/
+        productionresultssa1.blob.core.windows.net/ productionresultssa2.blob.core.windows.net/
+        productionresultssa3.blob.core.windows.net/ productionresultssa4.blob.core.windows.net/
+        wss://*.actions.githubusercontent.com online.visualstudio.com/api/v1/locations
         github-production-repository-image-32fea6.s3.amazonaws.com github-production-release-asset-2e65be.s3.amazonaws.com
         insights.github.com wss://alive.github.com; font-src github.githubassets.com;
         form-action ''self'' github.com gist.github.com objects-origin.githubusercontent.com;
@@ -212,18 +245,19 @@ interactions:
         img-src ''self'' data: github.githubassets.com media.githubusercontent.com
         camo.githubusercontent.com identicons.github.com avatars.githubusercontent.com
         github-cloud.s3.amazonaws.com objects.githubusercontent.com objects-origin.githubusercontent.com
-        secured-user-images.githubusercontent.com/ opengraph.githubassets.com github-production-user-asset-6210df.s3.amazonaws.com
+        secured-user-images.githubusercontent.com/ user-images.githubusercontent.com/
+        private-user-images.githubusercontent.com opengraph.githubassets.com github-production-user-asset-6210df.s3.amazonaws.com
         customer-stories-feed.github.com spotlights-feed.github.com *.githubusercontent.com;
         manifest-src ''self''; media-src github.com user-images.githubusercontent.com/
-        secured-user-images.githubusercontent.com/; script-src github.githubassets.com;
-        style-src ''unsafe-inline'' github.githubassets.com; worker-src github.com/assets-cdn/worker/
-        gist.github.com/assets-cdn/worker/'
+        secured-user-images.githubusercontent.com/ private-user-images.githubusercontent.com;
+        script-src github.githubassets.com; style-src ''unsafe-inline'' github.githubassets.com;
+        worker-src github.com/assets-cdn/worker/ gist.github.com/assets-cdn/worker/'
       content-type:
       - application/json; charset=utf-8
       date:
-      - Wed, 01 Feb 2023 12:10:09 GMT
+      - Sat, 11 Mar 2023 17:21:10 GMT
       etag:
-      - W/"b5f271eaa3b91e65bce39350fca95434"
+      - W/"0cc23541331c9ef0928591691b3bd10d"
       referrer-policy:
       - origin-when-cross-origin, strict-origin-when-cross-origin
       server:
@@ -238,7 +272,7 @@ interactions:
       x-frame-options:
       - deny
       x-github-request-id:
-      - E57E:7909:5402EAA:56E6B78:63DA56A1
+      - BE26:12398:4BE114F:4EAB556:640CB886
       x-xss-protection:
       - '0'
     http_version: HTTP/2
@@ -274,8 +308,8 @@ interactions:
       false, "name": "Nikolay Bryskin", "company": "Donate4.Fun", "blog": "https://donate4.fun",
       "location": "Vilnius", "email": "nbryskin@gmail.com", "hireable": true, "bio":
       "Full-stack developer, CTO, Donate4.Fun founder.", "twitter_username": "nbryskin",
-      "public_repos": 144, "public_gists": 17, "followers": 142, "following": 155,
-      "created_at": "2010-07-12T06:33:15Z", "updated_at": "2023-01-23T12:50:25Z"}'
+      "public_repos": 147, "public_gists": 17, "followers": 145, "following": 172,
+      "created_at": "2010-07-12T06:33:15Z", "updated_at": "2023-02-24T12:49:38Z"}'
     headers:
       access-control-allow-origin:
       - '*'
@@ -293,13 +327,13 @@ interactions:
       content-type:
       - application/json; charset=utf-8
       date:
-      - Wed, 01 Feb 2023 12:10:09 GMT
+      - Sat, 11 Mar 2023 17:21:10 GMT
       etag:
-      - W/"8335c28629cc0d13df81568b82a8a00b2579e59ef36bf48d110cec5eaf3d4b4a"
+      - W/"4db0c2a966ccaa0770ed090ce93dbc4b60516317ad53cdb6100d97734576e359"
       github-authentication-token-expiration:
-      - 2023-02-01 20:10:09 UTC
+      - 2023-03-12 01:21:10 UTC
       last-modified:
-      - Mon, 23 Jan 2023 12:50:25 GMT
+      - Fri, 24 Feb 2023 12:49:38 GMT
       referrer-policy:
       - origin-when-cross-origin, strict-origin-when-cross-origin
       server:
@@ -320,7 +354,7 @@ interactions:
       x-github-media-type:
       - github.v3
       x-github-request-id:
-      - BA3A:DA0E:22D38CC:237EA22:63DA56A1
+      - 8D9E:E4F4:FFE4E7C:103CE12A:640CB886
       x-oauth-client-id:
       - Iv1.47885cc7f2eb65ae
       x-oauth-scopes:
@@ -328,13 +362,13 @@ interactions:
       x-ratelimit-limit:
       - '5000'
       x-ratelimit-remaining:
-      - '4992'
+      - '4998'
       x-ratelimit-reset:
-      - '1675256086'
+      - '1678558865'
       x-ratelimit-resource:
       - core
       x-ratelimit-used:
-      - '8'
+      - '2'
       x-xss-protection:
       - '0'
     http_version: HTTP/2

@@ -7,14 +7,14 @@ from .models import TwitterAccount, YoutubeChannel
 from .db_models import TwitterAuthorDb, YoutubeChannelDb
 from .db_libs import TwitterDbLib, YoutubeDbLib
 from .settings import settings
-from .twitter import fetch_twitter_author
+from .twitter import TwitterApiClient
 from .youtube import fetch_youtube_channel
-from .core import register_command
+from .api_utils import register_app_command
 
 logger = logging.getLogger(__name__)
 
 
-@register_command
+@register_app_command
 async def refetch_twitter_authors():
     async with db.session() as db_session:
         accounts: list[TwitterAccount] = await TwitterDbLib(db_session).query_accounts(
@@ -22,17 +22,18 @@ async def refetch_twitter_authors():
             | TwitterAuthorDb.last_fetched_at.is_(None)
         )
     logger.info("refetching %d authors", len(accounts))
-    for account in accounts:
-        try:
-            account: TwitterAccount = await fetch_twitter_author(user_id=account.user_id)
-        except Exception:
-            logger.exception("Failed to fetch twitter account %s", account)
-        else:
-            async with db.session() as db_session:
-                await TwitterDbLib(db_session).save_account(account)
+    async with TwitterApiClient.create_apponly(token=settings.twitter.linking_oauth.bearer_token) as client:
+        for account in accounts:
+            try:
+                account: TwitterAccount = await client.get_user_by(user_id=account.user_id)
+            except Exception:
+                logger.exception("Failed to fetch twitter account %s", account)
+            else:
+                async with db.session() as db_session:
+                    await TwitterDbLib(db_session).save_account(account)
 
 
-@register_command
+@register_app_command
 async def refetch_youtube_channels():
     async with db.session() as db_session:
         channels: list[YoutubeChannel] = await YoutubeDbLib(db_session).query_accounts(
@@ -50,7 +51,7 @@ async def refetch_youtube_channels():
                 await YoutubeDbLib(db_session).save_account(channel)
 
 
-@register_command
+@register_app_command
 async def notify(topic: str, object_id: str):
     async with db.session() as db_session:
         await db_session.object_changed(topic, object_id)

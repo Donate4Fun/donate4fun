@@ -5,7 +5,7 @@ from typing import Callable
 from contextlib import asynccontextmanager
 
 from .core import ContextualObject
-from .db import Database
+from .db import Database, db
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ class PubSubBroker:
         return f'{type(self).__name__}<{hex(id(self))}>'
 
     @asynccontextmanager
-    async def subscribe(self, channel: str, callback: Callable):
+    async def subscribe(self, channel: str, callback: Callable[list[str], None]):
         wrapped_callback = partial(callback_wrapper, callback)
         async with self.lock, self.asyncpg_connection.transaction():
             await self.asyncpg_connection.add_listener(channel, wrapped_callback)
@@ -58,3 +58,11 @@ class PubSubBroker:
 
 
 pubsub = ContextualObject('pubsub')
+
+
+@asynccontextmanager
+async def create_pubsub():
+    pubsub_ = PubSubBroker()
+    with pubsub.assign(pubsub_):
+        async with pubsub.run(db):
+            yield

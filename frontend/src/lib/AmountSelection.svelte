@@ -42,6 +42,7 @@
 
 <style>
 .container {
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 32px;

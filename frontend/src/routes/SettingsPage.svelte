@@ -11,7 +11,8 @@
   import TwitterAccount from "$lib/TwitterAccount.svelte";
   import YoutubeChannel from "$lib/YoutubeChannel.svelte";
   import GithubUser from "$lib/GithubUser.svelte";
-  import { me, resetMe, reloadMe } from "$lib/session.js";
+  import Title from "$lib/Title.svelte";
+  import { syncMe as me, resetMe, reloadMe } from "$lib/session.js";
   import api from "$lib/api.js";
 
   const navigate = useNavigate();
@@ -27,6 +28,9 @@
   }
 </script>
 
+{#if $me}
+  <Title title="{$me.donator.name} settings" />
+{/if}
 <Section>
   <div class="outer">
     <div class="profile-button">
@@ -43,30 +47,30 @@
     </div>
     <div class="content">
       <div class="image-and-name">
-        {#await $me then me}
-          <Userpic user={me.donator} class="userpic" --width=88px/>
+        {#if $me}
+          <Userpic user={$me.donator} class="userpic" --width=88px/>
           <MeNamePubkey align="center" />
-        {/await}
+        {/if}
       </div>
       <div class="controls">
         <div class="linked">
-          {#await $me then me}
-            <LinkedItems items={me.shortkey ? [{via_oauth: true}] : []} onUnlink={disconnect}>
+          {#if $me}
+            <LinkedItems items={$me.shortkey ? [{via_oauth: true}] : []} onUnlink={disconnect}>
               <div slot="header">
                 Linked <b>Lightning</b> wallet:
               </div>
               <div class="linked-item" slot="item">
-                <img alt='bolt' width=24px src="/static/bolt.svg"><span class="pubkey">{me.shortkey}</span>
+                <img alt='bolt' width=24px src="/static/bolt.svg"><span class="pubkey">{$me.shortkey}</span>
               </div>
               <SocialSigninButton slot="add" height=48px width=min-content padding="0 20px" link="/login?return=/settings" idp="bolt">
-                {#if me.shortkey}
+                {#if $me.shortkey}
                   Change Lightning wallet
                 {:else}
                   Link Lightning wallet
                 {/if}
               </SocialSigninButton>
             </LinkedItems>
-          {/await}
+          {/if}
           <LinkedItems let:item={channel} socialProvider="youtube" name="YouTube">
             <div class="linked-item" slot="item">
               <YoutubeChannel linkto="withdraw" channel={channel} logo --gap=16px />
@@ -86,8 +90,8 @@
             <SocialSigninButton idp=github height=48px width=min-content padding="0 20px" slot=add returnTo="/settings">Link GitHub</SocialSigninButton>
           </LinkedItems>
         </div>
-        {#await $me then me}
-          {#if me.connected}
+        {#if $me}
+          {#if $me.connected}
             <HoldButton
               on:click={logout}
               --border-width=1px
@@ -98,7 +102,7 @@
               tooltipText="Hold to logout"
             >Logout</HoldButton>
           {/if}
-        {/await}
+        {/if}
       </div>
     </div>
   </div>

@@ -22,11 +22,10 @@ interactions:
       "donate4.fun"}]}, "description": {"hashtags": [{"start": 15, "end": 23, "tag":
       "Bitcoin"}, {"start": 24, "end": 41, "tag": "LightningNetwork"}], "mentions":
       [{"start": 78, "end": 88, "username": "Novaklim1"}, {"start": 93, "end": 102,
-      "username": "nbryskin"}]}}, "id": "1572908920485576704", "profile_image_url":
-      "https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_normal.png",
+      "username": "nbryskin"}]}}, "verified": false, "profile_image_url": "https://pbs.twimg.com/profile_images/1574697734535348224/dzdW0yfs_normal.png",
+      "username": "donate4_fun", "name": "Donate4.Fun \u26a1", "id": "1572908920485576704",
       "description": "Donations with #Bitcoin #LightningNetwork on Twitter and Youtube.
-      \nCreated by @Novaklim1 and @nbryskin.", "username": "donate4_fun", "verified":
-      false, "name": "Donate4.Fun \u26a1"}}'
+      \nCreated by @Novaklim1 and @nbryskin."}}'
     headers:
       api-version:
       - '2.61'
@@ -37,24 +36,24 @@ interactions:
       content-encoding:
       - gzip
       content-length:
-      - '416'
+      - '415'
       content-type:
       - application/json; charset=utf-8
       date:
-      - Wed, 01 Feb 2023 12:26:06 UTC
+      - Mon, 06 Mar 2023 19:58:50 UTC
       perf:
       - '7626143928'
       server:
       - tsa_o
       set-cookie:
-      - guest_id=v1%3A167525436694755865; Max-Age=34214400; Expires=Sun, 03 Mar 2024
-        12:26:06 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      - guest_id=v1%3A167813273057705755; Max-Age=34214400; Expires=Fri, 05 Apr 2024
+        19:58:50 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
       strict-transport-security:
       - max-age=631138519
       x-access-level:
       - read
       x-connection-hash:
-      - 27e1982a2f86f1a30c4f6899c62fb8b5b112007ca1e9e6e78bd8f772b4db1ef6
+      - c3fa7871efd712ef1daff55a3122d429e44b4c85d90a2ffa002851eabf74dc67
       x-content-type-options:
       - nosniff
       x-frame-options:
@@ -62,13 +61,13 @@ interactions:
       x-rate-limit-limit:
       - '300'
       x-rate-limit-remaining:
-      - '278'
+      - '298'
       x-rate-limit-reset:
-      - '1675254515'
+      - '1678133629'
       x-response-time:
-      - '134'
+      - '135'
       x-transaction-id:
-      - e640170dac4f8b1a
+      - 201c822870d8c057
       x-xss-protection:
       - '0'
     http_version: HTTP/1.1

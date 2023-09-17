@@ -17,11 +17,11 @@ interactions:
     method: GET
     uri: https://api.twitter.com/2/users/12345?user.fields=id%2Cname%2Cprofile_image_url%2Cdescription%2Cverified%2Centities
   response:
-    content: '{"data": {"verified": false, "username": "harperreed", "description":
-      "ID 12345", "entities": {"url": {"urls": [{"start": 0, "end": 22, "url": "http://t.co/2H67IeuXKZ",
-      "expanded_url": "http://www.harperrules.com", "display_url": "harperrules.com"}]}},
-      "name": "ID 12345", "profile_image_url": "https://pbs.twimg.com/profile_images/58849851/harper_4_normal.jpg",
-      "id": "12345"}}'
+    content: '{"data": {"profile_image_url": "https://pbs.twimg.com/profile_images/58849851/harper_4_normal.jpg",
+      "description": "ID 12345", "username": "harperreed", "id": "12345", "entities":
+      {"url": {"urls": [{"start": 0, "end": 22, "url": "http://t.co/2H67IeuXKZ", "expanded_url":
+      "http://www.harperrules.com", "display_url": "harperrules.com"}]}}, "name":
+      "ID 12345", "verified": false}}'
     headers:
       api-version:
       - '2.61'
@@ -32,24 +32,24 @@ interactions:
       content-encoding:
       - gzip
       content-length:
-      - '248'
+      - '249'
       content-type:
       - application/json; charset=utf-8
       date:
-      - Wed, 01 Feb 2023 12:26:11 UTC
+      - Mon, 06 Mar 2023 19:58:59 UTC
       perf:
       - '7626143928'
       server:
       - tsa_o
       set-cookie:
-      - guest_id=v1%3A167525437190362595; Max-Age=34214400; Expires=Sun, 03 Mar 2024
-        12:26:11 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      - guest_id=v1%3A167813273951931395; Max-Age=34214400; Expires=Fri, 05 Apr 2024
+        19:58:59 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
       strict-transport-security:
       - max-age=631138519
       x-access-level:
       - read
       x-connection-hash:
-      - a0c7ec48b887f6e7e1935eaf24811e5c8afeb77003f008fb4d8b7220a89b90b5
+      - 40148d08e7675efa8c4b824b6ae26331625c952434385f654405bac128bd0f99
       x-content-type-options:
       - nosniff
       x-frame-options:
@@ -57,13 +57,13 @@ interactions:
       x-rate-limit-limit:
       - '300'
       x-rate-limit-remaining:
-      - '287'
+      - '299'
       x-rate-limit-reset:
-      - '1675254521'
+      - '1678133639'
       x-response-time:
-      - '130'
+      - '133'
       x-transaction-id:
-      - a8f918e36ba9b9e0
+      - c7c2a77e21456c6f
       x-xss-protection:
       - '0'
     http_version: HTTP/1.1

@@ -1,4 +1,6 @@
+import time
 from datetime import datetime
+from dataclasses import asdict
 from uuid import UUID
 from base64 import urlsafe_b64encode
 
@@ -8,21 +10,25 @@ from furl import furl
 
 from donate4fun.models import (
     DonateRequest, TwitterAccount, TwitterAccountOwned, Donator, TwitterTweet, DonateResponse, DonationPaidRequest,
-    PayInvoiceResult, DonationPaidRouteInfo, Donation,
+    DonationPaidRouteInfo, Donation,
 )
-from donate4fun.twitter import query_or_fetch_twitter_account
-from donate4fun.lnd import lnd, monitor_invoices_step, PayInvoiceError
-from donate4fun.types import PaymentRequest, LightningAddress
+from donate4fun.twitter import Tweet
+from donate4fun.twitter_bot import MentionsBot
+from donate4fun.twitter_provider import TwitterProvider
+from donate4fun.lnd import lnd, monitor_invoices_step, PayInvoiceError, PayInvoiceResult
+from donate4fun.types import PaymentRequest, LightningAddress, Satoshi
 from donate4fun.db import db as db_var
 from donate4fun.db_twitter import TwitterDbLib
 from donate4fun.db_donations import DonationsDbLib
 from donate4fun.settings import settings
 from donate4fun.jobs import refetch_twitter_authors
+from donate4fun.social import SocialProviderId
+from donate4fun.api_utils import make_absolute_uri
 from tests.test_util import (
     verify_response, mark_vcr, check_notification, login_to, check_response, freeze_time, follow_oauth_flow,
-    load_or_ask, verify_oauth_redirect,
+    ask_user_browser, verify_oauth_redirect, enable_lnd_vcr,
 )
-from tests.fixtures import find_unused_port, app_serve, make_registered_donator, create_db
+from tests.fixtures import find_unused_port, app_serve, make_registered_donator, create_db, FixtureOAuthManager
 
 
 @mark_vcr
@@ -125,6 +131,8 @@ async def test_donate_tweet_with_lightning_address(
                     ).dict(),
                 )).json())
                 donation = donate_response.donation
+                # Donation should be paid from balance (r_hash is not None) or be requested to be paid from client's wallet
+                # directly to a lightning address (donate_response.payment_request is not None)
                 assert (donation.r_hash is None) != (donate_response.payment_request is None)
                 if donation.r_hash is not None:
                     assert donation.paid_at != None  # noqa
@@ -197,7 +205,7 @@ async def test_link_twitter_account(twitter_db):
 @mark_vcr
 @pytest.mark.parametrize('params', [dict(handle='donate4_fun'), dict(user_id=12345), dict(handle='twiteis')])
 async def test_query_or_fetch_twitter_account(twitter_db, params):
-    await query_or_fetch_twitter_account(db=twitter_db, **params)
+    await TwitterProvider().query_or_fetch_account(db=twitter_db, **params)
 
 
 async def test_transfer_from_twitter(client, db, rich_donator, settings):
@@ -253,12 +261,12 @@ async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids, 
     monkeypatch.setattr('secrets.token_urlsafe', lambda size: urlsafe_b64encode(b'\x00' * size))
     monkeypatch.setattr('secrets.token_bytes', lambda size: b'\x00' * size)
 
-    async def patched_fetch_twitter_me(client) -> TwitterAccount:
+    async def patched_get_me(self) -> TwitterAccount:
         return account
-    monkeypatch.setattr('donate4fun.twitter.fetch_twitter_me', patched_fetch_twitter_me)
+    monkeypatch.setattr('donate4fun.twitter.TwitterApiClient.get_me', patched_get_me)
     account = TwitterAccount(
         user_id=123,
-        title='title',
+        name='title',
         handle='handle',
         description='description',
         last_fetched_at=datetime.utcnow(),
@@ -269,7 +277,7 @@ async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids, 
     donator = Donator(id=UUID(int=0))
     login_to(client, settings, donator)
     await follow_oauth_flow(
-        client, 'twitter', name='twitter-login-via-oauth',
+        client, SocialProviderId.twitter, name='twitter-login-via-oauth',
         return_to=return_to, expected_account=account.id,
     )
     me = Donator(**check_response(await client.get('/api/v1/me')).json())
@@ -280,7 +288,7 @@ async def test_login_via_oauth(client, settings, monkeypatch, db, freeze_uuids, 
     other_donator = Donator(id=UUID(int=1))
     login_to(client, settings, other_donator)
     await follow_oauth_flow(
-        client, 'twitter', name='twitter-login-via-oauth-relogin',
+        client, SocialProviderId.twitter, name='twitter-login-via-oauth-relogin',
         return_to=return_to,
     )
     me = Donator(**check_response(await client.get('/api/v1/me')).json())
@@ -297,7 +305,10 @@ async def follow_oauth1_flow(client, name: str):
         headers=dict(referer=settings.base_url),
     )).json()
     auth_url: str = response['url']
-    redirect_url: str = load_or_ask(f'{name}.code', f"Open this url {auth_url}, authorize and paste url here:")
+    # FIXME: rename .code to .link
+    redirect_url: str = await ask_user_browser(
+        name, url=auth_url, prompt="Open this url, authorize and paste resulting url here:",
+    )
     params = dict(furl(redirect_url).query.params)
     response = await client.get(
         '/api/v1/twitter/oauth1-callback',
@@ -311,12 +322,12 @@ async def test_login_via_oauth1(client, settings, monkeypatch, db, freeze_uuids,
     monkeypatch.setattr('secrets.token_urlsafe', lambda size: urlsafe_b64encode(b'\x00' * size))
     monkeypatch.setattr('secrets.token_bytes', lambda size: b'\x00' * size)
 
-    async def patched_fetch_twitter_me(client) -> TwitterAccount:
+    async def patched_get_me(self) -> TwitterAccount:
         return account
-    monkeypatch.setattr('donate4fun.twitter.fetch_twitter_me', patched_fetch_twitter_me)
+    monkeypatch.setattr('donate4fun.twitter.TwitterApiClient.get_me', patched_get_me)
     account = TwitterAccount(
         user_id=123,
-        title='title',
+        name='title',
         handle='handle',
         description='description',
         last_fetched_at=time_of_freeze,
@@ -369,3 +380,122 @@ async def test_unlink_twitter_account(client, db):
         await twitter_db.link_account(account, donator, via_oauth=True)
     login_to(client, settings, donator)
     check_response(await client.post(f'/api/v1/social/twitter/{account.id}/unlink'))
+
+
+@mark_vcr
+@pytest.mark.freezed_vcr
+@pytest.mark.parametrize('text,balance', [
+    ('100', None),
+    ('200', 100),
+    ('300', 400),
+])
+async def test_handle_twitter_mention(db, app, text: str, balance: int | None, freeze_invoice_qrcode):
+    bot_handle = 'tip4fun'
+    mention = Tweet(
+        author_id=1591008723912343553,
+        created_at='2023-02-08T12:08:39.000Z',
+        edit_history_tweet_ids=[1623292724978896896],
+        id=1623292724978896896,
+        in_reply_to_user_id=1616757608299339776,
+        referenced_tweets=[{'id': 1622708944996114432, 'type': 'replied_to'}],
+        text=f'@{bot_handle} @donate4_fun {text}',
+    )
+    if balance is not None:
+        async with db.session() as db_session:
+            twitter_db = TwitterDbLib(db_session)
+            account = TwitterAccount(
+                user_id=mention.author_id,
+                handle='tip4fun',
+            )
+            await twitter_db.save_account(account)
+            donator = Donator(id=UUID(int=0), balance=balance)
+            await db_session.save_donator(donator)
+            await twitter_db.link_account(account, donator, via_oauth=True)
+
+    class PatchedMentionsBot(MentionsBot):
+        @property
+        def oauth_manager(self):
+            return FixtureOAuthManager(**asdict(super().oauth_manager))
+
+    async with PatchedMentionsBot.create() as bot:
+        await bot.handle_mention(mention)
+
+
+@mark_vcr
+@pytest.mark.freezed_vcr
+@pytest.mark.parametrize('receiver_handle', ['Bryskin2', 'btclntipbot'])
+async def test_donate_via_mention(
+    payer_lnd, receiver_lnd, db, monkeypatch, client, freeze_invoice_qrcode, freeze_uuids, receiver_handle,
+):
+    donator_handle = 'btclntip'
+    amount: Satoshi = 100
+    receiver_manager = FixtureOAuthManager(
+        name_prefix=f'receiver_{receiver_handle}',
+        settings=settings.twitter.mentions_bot.oauth,
+        scope='tweet.write tweet.read users.read offline.access',
+        suggested_account=receiver_handle,
+    )
+    donator_manager = FixtureOAuthManager(
+        name_prefix='donator',
+        settings=settings.twitter.linking_oauth,
+        scope='tweet.write tweet.read users.read offline.access',
+        suggested_account=donator_handle,
+    )
+    monkeypatch.setattr(MentionsBot, 'oauth_manager', FixtureOAuthManager(**asdict(MentionsBot.oauth_manager)))
+    # Create initial tweet
+    async with receiver_manager.create_oauth2_client() as receiver_client:
+        # First try to take recent tweet to avoid creating a lot of similar tweets
+        async for receiver_tweet in receiver_client.get_tweets_by_user(handle=receiver_handle):
+            break
+        else:
+            # We user time.time() to avoid "duplicate content 403" error
+            receiver_tweet = await receiver_client.send_tweet(text=f'some tweet {time.time()}')
+    async with MentionsBot.create() as bot, enable_lnd_vcr():
+        async with donator_manager.create_oauth2_client() as donator_client:
+            async with bot.fetch_mentions() as mentions:
+                # Create a "donation" tweet
+                # We use time.time() to avoid "duplicate content 403" error
+                donation_tweet: Tweet = await donator_client.send_tweet(
+                    text=f'@{bot.handle} {amount} sats for this sir {time.time()}',
+                    reply_to=receiver_tweet.id,
+                )
+                # Wait for mention to arrive in search API
+                mention: Tweet = await anext(mentions)
+                assert mention.id == donation_tweet.id
+        async with donator_manager.create_apponly_client() as donator_client:
+            async with donator_client.stream_tweets(query=f'in_reply_to_tweet_id:{donation_tweet.id}') as reply_stream:
+                async with enable_lnd_vcr():
+                    # This creates a donation and sends an invoice in a tweet
+                    donation: Donation = await bot.handle_mention(mention)
+                assert donation.twitter_account.handle == receiver_handle
+                assert donation.donator_twitter_account.handle == donator_handle
+                assert donation.amount == amount
+                reply: Tweet = await anext(reply_stream)
+                invoice_url: str = make_absolute_uri(f'/api/v1/donation/{donation.id}/invoice')
+                # First reply must have a link to an invoice
+                assert invoice_url in reply.text
+                # TODO: check invoice QR
+                # Get an invoice from reply
+                response = await client.get(invoice_url)
+                assert response.status_code == 307
+                location = response.headers['location']
+                assert location.startswith('lightning:')
+                invoice = PaymentRequest.validate(location.split(':')[1])
+                async with enable_lnd_vcr(), bot.monitor_invoices() as invoices, monitor_invoices_step(receiver_lnd, db):
+                    # Pay invoice
+                    await payer_lnd.pay_invoice(invoice)
+                    # wait for invoice and donation to be processed
+                    # Important: this should be awaited before a tweet because vcr yields all chunks at start
+                    await anext(invoices)
+                    # And wait for a confirmation tweet
+                    confirmation: Tweet = await anext(reply_stream)
+                async with db.session() as db_session:
+                    donation = await DonationsDbLib(db_session).query_donation(id=donation.id)
+                    assert donation.paid_at != None  # noqa
+                # First reply now should be a donation confirmation
+                donation_url = make_absolute_uri(f'/donation/{donation.id}')
+                assert confirmation.text == f'@{donator_handle} @{receiver_handle} 🔥⚡Paid! {donation_url}'
+                # assert len(confirmation.entities.urls) == 1  # doesn't work with localhost urls - Twitter ignores them
+                # donation_url = confirmation.entities.urls[0].url
+                # donation_id = furl(donation_url).path[1]
+                # TODO: check sharing image

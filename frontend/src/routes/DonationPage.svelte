@@ -57,7 +57,6 @@
     }
     title.set(`${donation_.amount} sats donated to ${targetName}`);
   }
-
 </script>
 
 <Section>

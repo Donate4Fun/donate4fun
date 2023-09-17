@@ -8,7 +8,7 @@ from sqlalchemy.sql import functions
 from .db_models import DonatorDb, DonationDb, TransferDb, DonateeDb, Base as BaseDbModel, BaseLink
 from .db_utils import insert_on_conflict_update
 from .db import DbSessionWrapper
-from .models import BaseModel, Donator, SocialAccount
+from .models import BaseModel, Donator, SocialAccount, SocialAccountOwned
 from .types import InvalidDbState, Satoshi, NotEnoughBalance
 
 
@@ -84,7 +84,7 @@ class SocialDbWrapper(DbSessionWrapper, ABC):
         # FIXME: this could be made simpler by unifying link table column names
         return getattr(cls.link_db_model, list(cls.link_db_model.__table__.foreign_keys)[0].parent.name)
 
-    async def query_account(self, *, owner_id: UUID | None = None, **filter_by):
+    async def query_account(self, *, owner_id: UUID | None = None, **filter_by) -> SocialAccountOwned:
         """
         This is a generic function to get specified by `link_table` social accoutnt for donator (`owner_id`)
         It assumes that first foreign key is linked to a social account table
@@ -108,7 +108,7 @@ class SocialDbWrapper(DbSessionWrapper, ABC):
         )
         return self.owned_model.from_orm(resp.one())
 
-    async def link_account(self, account: BaseModel, donator: Donator, via_oauth: bool) -> bool:
+    async def link_account(self, account: SocialAccount, donator: Donator, via_oauth: bool) -> bool:
         """
         Links a social account to the donator account.
         Returns True if new link is created, False otherwise

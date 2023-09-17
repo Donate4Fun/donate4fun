@@ -12,36 +12,40 @@ from datetime import datetime
 from base64 import urlsafe_b64encode
 from itertools import count
 from uuid import UUID
+from typing import Callable
 
 import anyio
 import pytest
 import ecdsa
-import posthog
 from asgi_testclient import TestClient
 from sqlalchemy import update
 from hypercorn.asyncio import serve as hypercorn_serve
 from hypercorn.config import Config
 from furl import furl
+from shellous import sh
+from vcr.cassette import Cassette
+from authlib.integrations.base_client.errors import OAuthError
 
 from donate4fun.core import as_task
 from donate4fun.app import create_app, app as app_var
-from donate4fun.api_utils import task_group
-from donate4fun.lnd import LndClient, lnd as lnd_var
+from donate4fun.api_utils import task_group, create_common
+from donate4fun.lnd import lnd as lnd_var, LndIsNotReady, Invoice
 from donate4fun.settings import load_settings, Settings, DbSettings
-from donate4fun.twitter import api_data_to_twitter_account
+from donate4fun.twitter import api_data_to_twitter_account, OAuthManager, OAuthTokenKind, OAuthToken
 from donate4fun.db import DbSession, Database, db as db_var
 from donate4fun.db_models import DonatorDb
 from donate4fun.db_youtube import YoutubeDbLib
 from donate4fun.db_twitter import TwitterDbLib
 from donate4fun.db_donations import DonationsDbLib
 from donate4fun.models import (
-    Invoice, Donation, OAuthState, IdModel,
+    Donation, OAuthState, IdModel,
     RequestHash, PaymentRequest, YoutubeChannel, Donator, TwitterAccount,
 )
 from donate4fun.pubsub import PubSubBroker, pubsub as pubsub_var
 from donate4fun.dev_helpers import get_carol_lnd, get_alice_lnd
+from donate4fun import twitter_bot
 
-from tests.test_util import login_to
+from tests.test_util import login_to, load_fixture, save_fixture, disable_vcr, enable_lnd_vcr
 
 
 logger = logging.getLogger(__name__)
@@ -120,11 +124,11 @@ async def settings(monkeypatch):
     with load_settings() as settings:
         settings.fastapi.debug = False  # We need to disable Debug Toolbar to avoid zero-division error (because of freezegun)
         settings.rollbar = None
-        settings.bugsnag = None
         settings.posthog = None
         settings.sentry = None
         settings.base_url = 'http://localhost:3000'
         settings.frontend_port = 3000
+        settings.jwt_secret = 'secret'  # Force key to be the same when we generate cassettes with production config
         yield settings
 
 
@@ -143,7 +147,13 @@ async def freeze_last_fetched_at(monkeypatch, time_of_freeze):
 
 
 @pytest.fixture
-async def db(settings: Settings):
+async def common_libs():
+    async with create_common():
+        yield
+
+
+@pytest.fixture
+async def db(settings: Settings, common_libs):
     async with create_db("donate4fun-test") as db:
         with db_var.assign(db):
             yield db
@@ -196,11 +206,9 @@ async def pubsub(db):
 
 
 @pytest.fixture
-async def app(db, settings, pubsub):
-    posthog.disabled = True
-    async with create_app(settings) as app, anyio.create_task_group() as tg:
-        lnd = get_alice_lnd()
-        with app_var.assign(app), lnd_var.assign(lnd), pubsub_var.assign(pubsub), task_group.assign(tg):
+async def app(db, settings, pubsub, receiver_lnd):
+    async with create_app() as app, anyio.create_task_group() as tg:
+        with app_var.assign(app), lnd_var.assign(receiver_lnd), pubsub_var.assign(pubsub), task_group.assign(tg):
             yield app
 
 
@@ -244,14 +252,14 @@ def freeze_uuids(monkeypatch):
 
 
 @pytest.fixture
-async def unpaid_donation_fixture(app, db, donator_id, freeze_uuids, settings):
+async def unpaid_donation_fixture(app, db, donator_id, freeze_uuids, settings, receiver_lnd):
     async with db.session() as db_session:
         youtube_db = YoutubeDbLib(db_session)
         youtube_channel = YoutubeChannel(
             channel_id='q2dsaf', title='asdzxc', thumbnail_url='http://example.com/thumbnail',
         )
         await youtube_db.save_account(youtube_channel)
-        invoice: Invoice = await LndClient(settings.lnd).create_invoice(memo="Donate4.fun to asdzxc", value=100)
+        invoice: Invoice = await receiver_lnd.create_invoice(memo="Donate4.fun to asdzxc", value=100)
         donation: Donation = Donation(
             donator=Donator(id=donator_id),
             amount=20,
@@ -305,8 +313,24 @@ async def rich_donator(db, registered_donator):
         return await db_session.query_donator(id=registered_donator.id)
 
 
+@pytest.fixture(scope='session')
+async def ensure_polar_working():
+    lnds = [get_alice_lnd(), get_carol_lnd()]
+    try:
+        for lnd in lnds:
+            await lnd.check_ready()
+    except LndIsNotReady:
+        await sh('./scripts/restart-polar.sh')
+        await lnd.check_ready()
+
+
 @pytest.fixture
-async def payer_lnd():
+async def receiver_lnd(ensure_polar_working):
+    return get_alice_lnd()
+
+
+@pytest.fixture
+async def payer_lnd(ensure_polar_working):
     return get_carol_lnd()
 
 
@@ -350,3 +374,82 @@ async def youtube_db(db_session):
 @pytest.fixture
 def oauth_state():
     return OAuthState(success_path='/success', error_path='/error', donator_id=UUID(int=0), code_verifier=b'\x00' * 43)
+
+
+class FixtureOAuthManager(OAuthManager):
+    fixture_name = 'twitter_oauth_tokens'
+
+    async def load(self, token_kind: OAuthTokenKind) -> OAuthToken:
+        try:
+            data = load_fixture(self.fixture_name)
+            return data[f'{self.name_prefix}_{token_kind.value}']
+        except (FileNotFoundError, KeyError):
+            return await self.obtain_token(token_kind)
+
+    async def save(self, token_kind: OAuthTokenKind, token: OAuthToken):
+        try:
+            data = load_fixture(self.fixture_name)
+        except FileNotFoundError:
+            data = {}
+        data[f'{self.name_prefix}_{token_kind.value}'] = token
+        save_fixture(self.fixture_name, data)
+
+    @asynccontextmanager
+    async def create_oauth2_client(self):
+        try:
+            async with super().create_oauth2_client() as client:
+                async with disable_vcr():
+                    await client.client.ensure_active_token(client.client.token)
+                yield client
+        except OAuthError:
+            await self.obtain_token(OAuthTokenKind.oauth2)
+            async with super().create_oauth2_client() as client:
+                yield client
+
+
+class TimestampedSerializer:
+    def __init__(self, recorded_at: datetime, serializer: Callable[list[dict], None]):
+        self.recorded_at = recorded_at
+        self.serializer = serializer
+
+    def serialize(self, cassette_dict: dict) -> str:
+        cassette_dict['recorded_at'] = self.recorded_at.isoformat()
+        return self.serializer.serialize(cassette_dict)
+
+
+@pytest.fixture(autouse=True)
+def freezed_vcr_fixture(request, vcr: Cassette):
+    """
+    On playback this fixture freezes time to a moment from recorded_at field in cassette.
+    On record this fixture freezes at a current time and writes recorded_at field to cassette.
+    """
+    marker = request.node.get_closest_marker('freezed_vcr')
+    if marker is None:
+        return
+    if vcr.write_protected:
+        with open(vcr._path) as f:
+            cassette_dict = vcr._serializer.deserialize(f.read())
+            freeze_at = cassette_dict.get('recorded_at')
+    else:
+        # This serializer writes recorded_at to cassette
+        freeze_at = datetime.utcnow()
+        vcr._serializer = TimestampedSerializer(freeze_at, vcr._serializer)
+    if freeze_at is not None:
+        request.node.add_marker(pytest.mark.freeze_time(freeze_at, ignore=['logging']))
+        request.getfixturevalue('freezer')
+
+
+@pytest.fixture
+def freeze_invoice_qrcode(monkeypatch):
+    orig_make_qr_code = twitter_bot.make_qr_code
+
+    def patched_make_qr_code(data, error_correction):
+        # Override because payment request is always different
+        return orig_make_qr_code(b'123qwe', error_correction)
+    monkeypatch.setattr('donate4fun.twitter_bot.make_qr_code', patched_make_qr_code)
+
+
+@pytest.fixture
+async def lnd_vcr_enabler():
+    async with enable_lnd_vcr():
+        yield

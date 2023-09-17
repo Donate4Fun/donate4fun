@@ -62,6 +62,7 @@ class DonationsDbLib(DbSessionWrapper):
                 lightning_address=donation.lightning_address,
                 r_hash=donation.r_hash and donation.r_hash.as_base64,
                 transient_r_hash=donation.transient_r_hash and donation.transient_r_hash.as_base64,
+                transient_payment_request=donation.transient_payment_request and donation.transient_payment_request,
                 receiver_id=donation.receiver and donation.receiver.id,
                 youtube_channel_id=donation.youtube_channel and donation.youtube_channel.id,
                 youtube_video_id=donation.youtube_video and donation.youtube_video.id,
@@ -114,12 +115,9 @@ class DonationsDbLib(DbSessionWrapper):
             )
             .returning(*DonationDb.__table__.columns)
         )
-        donation: DonationDb = resp.fetchone()
-        if donation is None:
-            # Row could be already updated in another replica
-            logger.warning(f"Donation {donation_id} was already handled, skipping")
-            return
+        donation: DonationDb = resp.one()
         await self.update_balance_for_donation(donation, donation.amount)
+        logger.debug("Donation %s paid", donation)
 
     async def update_balance_for_donation(self, donation: DonationDb, amount: int):
         """

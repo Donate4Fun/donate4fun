@@ -23,7 +23,7 @@ from donate4fun.db_twitter import TwitterDbLib
 from donate4fun.db_donations import DonationsDbLib
 from donate4fun.types import PaymentRequest
 
-from tests.test_util import verify_fixture, verify_response, check_response, freeze_time, check_notification, login_to
+from tests.test_util import verify_fixture, verify_response, check_response, freeze_time, check_notification, login_to, mark_vcr
 from tests.fixtures import Settings
 
 
@@ -106,7 +106,7 @@ async def test_fulfill(
     assert me_response.json()['donator']['balance'] == amount
 
 
-@pytest.mark.freeze_time('2022-02-02 22:22:22')
+@freeze_time
 async def test_websocket(client, unpaid_donation_fixture, db, freeze_request_hash_json):
     messages = []
     # Test with two concurrent websockets (there were bugs with it)
@@ -261,14 +261,12 @@ async def test_withdraw(
 
 
 async def wait_for_payment(lnd_client, r_hash, *, task_status: TaskStatus):
-    async for data in lnd_client.subscribe("/v1/invoices/subscribe"):
-        if data is None:
-            task_status.started()
-            continue
-        invoice: Invoice = Invoice(**data['result'])
-        assert invoice.r_hash == r_hash
-        assert invoice.state == 'SETTLED'
-        break
+    async with lnd_client.subscribe_to_invoices() as invoices:
+        task_status.started()
+        async for invoice in invoices:
+            assert invoice.r_hash == r_hash
+            assert invoice.state == 'SETTLED'
+            break
 
 
 async def wait_for_withdrawal(
@@ -340,3 +338,11 @@ async def test_top_unclaimed_donatees(db, client):
         ))
 
     verify_response(check_response(await client.get('/api/v1/donatees/top-unclaimed')), 'top-unclaimed-donatees')
+
+
+@mark_vcr
+async def test_donation_invoice_api(db, client, lnd_vcr_enabler, unpaid_donation_fixture):
+    """
+    lnd_vcr_enabler is needed to freeze lnd invoice created in unpaid_donation_fixture in cassette
+    """
+    verify_response(await client.get(f'/api/v1/donation/{unpaid_donation_fixture.id}/invoice'), 'donation-invoice')

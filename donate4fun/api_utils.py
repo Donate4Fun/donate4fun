@@ -1,10 +1,16 @@
-import unicodedata
 import hashlib
 import json
+import logging
+import unicodedata
+from contextlib import asynccontextmanager
+from functools import wraps
 from uuid import uuid4, UUID
 
-import posthog
 import httpx
+import rollbar
+import google.cloud.logging
+import posthog
+import sentry_sdk
 from furl import furl
 from fastapi import Request, Depends, HTTPException
 from fastapi.responses import RedirectResponse
@@ -12,15 +18,16 @@ from sqlalchemy.orm.exc import NoResultFound  # noqa - imported from other modul
 from jwcrypto.jwt import JWT
 from jwcrypto.jwk import JWK
 
-from .models import Donator, Credentials, Donation, SocialProvider, SocialAccountOwned, SocialAccount, Toast
-from .db import DbSession, db
+from .models import Donator, Credentials, SocialProviderId, SocialAccount, Toast
+from .db import DbSession, db, Database
 from .db_libs import TwitterDbLib, YoutubeDbLib, GithubDbLib, DonationsDbLib
-from .core import ContextualObject
+from .core import ContextualObject, register_command
 from .types import LightningAddress, Satoshi
-from .settings import settings
+from .settings import settings, load_settings
 
 
 task_group = ContextualObject('task_group')
+logger = logging.getLogger(__name__)
 
 
 def get_donator(request: Request):
@@ -62,47 +69,8 @@ def scrape_lightning_address(text: str):
     return LightningAddress.parse(text)
 
 
-def track_donation(donation: Donation):
-    if donation.twitter_account:
-        target_type = 'twitter'
-    elif donation.youtube_channel:
-        target_type = 'youtube'
-    elif donation.receiver:
-        target_type = 'donate4fun'
-    else:
-        target_type = 'unknown'
-    if donation.lightning_address:
-        via = 'lightning-address'
-    else:
-        via = 'donate4fun'
-    donator_id = donation.donator and donation.donator.id
-    posthog.capture(donator_id, 'donation-paid', dict(amount=donation.amount, target_type=target_type, via=via))
-
-
 def make_absolute_uri(path: str) -> str:
     return str(furl(url=settings.base_url, path=furl(path).path))
-
-
-async def auto_transfer_donations(db: DbSession, donation: Donation) -> int:
-    """
-    Returns sats amount transferred
-    """
-    if donation.youtube_channel:
-        social_db = YoutubeDbLib(db)
-    elif donation.twitter_account:
-        social_db = TwitterDbLib(db)
-    elif donation.github_user:
-        social_db = GithubDbLib(db)
-    else:
-        social_db = None
-
-    if social_db:
-        account = getattr(donation, social_db.donation_field)
-        if not isinstance(account, social_db.owned_model):
-            account: SocialAccountOwned = await social_db.query_account(id=account.id)
-        if account.owner_id is not None:
-            return await social_db.transfer_donations(account, Donator(id=account.owner_id))
-    return 0
 
 
 def encode_jwt(**claims) -> str:
@@ -133,7 +101,7 @@ def oauth_success_messages(linked_account: SocialAccount, transferred_amount: Sa
         f"{linked_account.provider.capitalize()} account {linked_account.unique_name} was successefully linked",
     )
     if transferred_amount > 0:
-        yield Toast('success', "Funds claimed", f"{transferred_amount} sats are successefully claimed")
+        yield Toast('success', "Funds claimed", f"{transferred_amount} sats were successefully claimed")
 
 
 def signin_success_message(account: SocialAccount) -> Toast:
@@ -144,7 +112,9 @@ def signin_success_message(account: SocialAccount) -> Toast:
 
 
 async def raise_on_4xx_5xx(response):
-    response.raise_for_status()
+    if response.status_code >= 400:
+        await response.aread()
+        response.raise_for_status()
 
 
 class HttpClient(httpx.AsyncClient):
@@ -156,9 +126,58 @@ def sha256hash(data: str) -> bytes:
     return hashlib.sha256(data.encode()).digest()
 
 
-def get_social_provider_db(social_provider: SocialProvider):
+def get_social_provider_db(social_provider: SocialProviderId):
     return {
-        SocialProvider.youtube: YoutubeDbLib,
-        SocialProvider.twitter: TwitterDbLib,
-        SocialProvider.github: GithubDbLib,
+        SocialProviderId.youtube: YoutubeDbLib,
+        SocialProviderId.twitter: TwitterDbLib,
+        SocialProviderId.github: GithubDbLib,
     }[social_provider]
+
+
+def as_decorator(ctxmgr):
+    @wraps(ctxmgr)
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            async with ctxmgr():
+                return await func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
+@as_decorator
+@asynccontextmanager
+async def with_common_libs():
+    with load_settings(), db.assign(Database(settings.db)):
+        async with create_common():
+            yield
+
+
+@asynccontextmanager
+async def create_common():
+    if settings.rollbar:
+        rollbar.init(**settings.rollbar.dict())
+    if settings.sentry:
+        sentry_sdk.init(
+            dsn=settings.sentry.dsn,
+            traces_sample_rate=settings.sentry.traces_sample_rate,
+            environment=settings.sentry.environment,
+        )
+    if settings.google_cloud_logging:
+        client = google.cloud.logging.Client()
+        client.setup_logging()
+    if settings.posthog and settings.posthog.enabled:
+        posthog.project_api_key = settings.posthog.project_api_key
+        posthog.host = settings.posthog.host
+        posthog.debug = settings.posthog.debug
+    else:
+        posthog.disabled = True
+    logger.warning("create_common: posthog.disabled=%s", posthog.disabled)
+    yield
+
+
+def register_app_command(func, command_name: str | None = None):
+    register_command(with_common_libs(func), command_name)
+    # WORKAROUND: return original func instead of wrapper with `with_common_libs` to avoid reinitialization of
+    # common libs (settings and database) when we call this func from code.
+    return func

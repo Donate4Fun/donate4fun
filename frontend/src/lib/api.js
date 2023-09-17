@@ -4,7 +4,7 @@ import { notify } from "$lib/notifications.js";
 import { readable, writable, get as store_get } from 'svelte/store';
 import { sleep } from "$lib/utils.js";
 import { analytics } from "$lib/analytics.js";
-import { cLog } from "$lib/log.js";
+import { cLog, cError } from "$lib/log.js";
 
 export const apiOrigin = writable(window.location.origin);
 
@@ -100,8 +100,14 @@ export function apiStore(getPath, topic) {
         set(await get(getPath));
     });
     (async () => {
-      await ws.ready();
-      set(await get(getPath));
+      try {
+        await ws.ready();
+        set(await get(getPath));
+      } catch (err) {
+        cError("apiStore error", err);
+        if (err.target instanceof WebSocket && err.target === 'error')
+          notify("Network error", `WebSocket error while fetching ${topic}`, "error");
+      }
     })();
     return () => ws.close();
   });
@@ -117,7 +123,7 @@ export function apiListStore(listPath, itemGetter, topic) {
         const item = await itemGetter(notification.id);
         items = [item, ...items];
         set(items);
-}
+      }
     });
     (async () => {
       await ws.ready();

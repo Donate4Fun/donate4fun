@@ -6,14 +6,25 @@ youtube:
     client_id: client_id
     client_secret: client_secret
 twitter:
-  bearer_token: bearer_token
-  greeting: ""
-  enable_bot: false
   self_id: "123"
   dm_check_interval: PT30S
   refresh_timeout: P1D
-  oauth:
-    client_id: client_id
+  conversations_bot:
+    enabled: false
+    oauth: null
+    greeting: ""
+  mentions_bot:
+    enabled: false
+    oauth:
+      consumer_key: JqyhuOUhGJNO4GLeb3t3PcySP
+      consumer_secret: secret
+      # @bryskin2
+      client_id: MWlyTVlGbUdXRkY2Q09ncGxkbzc6MTpjaQ
+      client_secret: secret
+  linking_oauth:
+    # @bryskin2
+    bearer_token: bearer_token
+    client_id: MWlyTVlGbUdXRkY2Q09ncGxkbzc6MTpjaQ
     client_secret: client_secret
     consumer_key: consumer_key
     consumer_secret: consumer_secret
@@ -31,7 +42,7 @@ lnd:
   macaroon_by_path: polar/volumes/lnd/alice/data/chain/bitcoin/regtest/admin.macaroon
   lnurl_base_url: http://localhost:5173
 github:
-  client_id: xxx
+  client_id: Iv1.47885cc7f2eb65ae
   client_secret: yyy
 db:
   url: postgresql+asyncpg://donate4fun@localhost/donate4fun
@@ -96,7 +107,7 @@ log:
     asgi_testclient:
       level: DEBUG
     vcr:
-      level: WARNING
+      level: DEBUG
     sqlalchemy.engine.Engine:
       level: WARNING
     sqlalchemy.pool:

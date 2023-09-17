@@ -24,6 +24,7 @@ json:
     receiver: null
     transient_r_hash: null
     twitter_account: null
+    twitter_invoice_tweet_id: null
     twitter_tweet: null
     youtube_channel:
       balance: 100

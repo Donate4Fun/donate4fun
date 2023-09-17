@@ -103,8 +103,8 @@ app = ContextualObject("app")
 commands = {}
 
 
-def register_command(func):
-    commands[func.__name__] = func
+def register_command(func, name: str = None):
+    commands[name or func.__name__] = func
     return func
 
 
@@ -182,3 +182,16 @@ def to_base64(data: bytes) -> str:
 
 def from_base64(data: str) -> bytes:
     return b64decode(data)
+
+
+def restarting(func):
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        while True:
+            try:
+                await func(*args, **kwargs)
+            except Exception:
+                delay = 15
+                logger.exception("Exception in %s, restarting in %d seconds", func, delay)
+                await asyncio.sleep(delay)
+    return wrapper

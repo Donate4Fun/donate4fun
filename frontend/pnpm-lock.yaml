@@ -55,7 +55,7 @@ devDependencies:
   '@rollup/plugin-alias': 3.1.9_rollup@2.79.1
   analytics: 0.8.1
   analytics-plugin-plausible: 0.0.6
-  async-ws: github.com/nikicat/async-ws/527067dc6da4fcf355b80576250baaa914dac6b7
+  async-ws: github.com/nikicat/async-ws/594997fed5fa6848e2ce81271e4b6f6f9394110e
   rollup: 2.79.1
   rollup-plugin-output-manifest: 2.0.0
   svelte-confetti: 1.2.2
@@ -1231,8 +1231,8 @@ packages:
     version: 1.0.3
     dev: true
 
-  github.com/nikicat/async-ws/527067dc6da4fcf355b80576250baaa914dac6b7:
-    resolution: {tarball: https://codeload.github.com/nikicat/async-ws/tar.gz/527067dc6da4fcf355b80576250baaa914dac6b7}
+  github.com/nikicat/async-ws/594997fed5fa6848e2ce81271e4b6f6f9394110e:
+    resolution: {tarball: https://codeload.github.com/nikicat/async-ws/tar.gz/594997fed5fa6848e2ce81271e4b6f6f9394110e}
     name: async-ws
     version: 0.1.1
     dependencies:

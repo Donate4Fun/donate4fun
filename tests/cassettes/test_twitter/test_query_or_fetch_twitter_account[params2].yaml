@@ -17,9 +17,9 @@ interactions:
     method: GET
     uri: https://api.twitter.com/2/users/by/username/twiteis?user.fields=id%2Cname%2Cprofile_image_url%2Cdescription%2Cverified%2Centities
   response:
-    content: '{"data": {"name": "twiteis", "id": "180438388", "profile_image_url":
-      "https://pbs.twimg.com/profile_images/1261863462591959040/3KXJQfH__normal.jpg",
-      "verified": false, "username": "twiteis", "description": "\u26a1\ufe0f flashypotato55@walletofsatoshi.com"}}'
+    content: '{"data": {"username": "twiteis", "description": "\u26a1\ufe0f flashypotato55@walletofsatoshi.com",
+      "id": "180438388", "profile_image_url": "https://pbs.twimg.com/profile_images/1261863462591959040/3KXJQfH__normal.jpg",
+      "verified": false, "name": "twiteis"}}'
     headers:
       api-version:
       - '2.61'
@@ -30,24 +30,24 @@ interactions:
       content-encoding:
       - gzip
       content-length:
-      - '218'
+      - '220'
       content-type:
       - application/json; charset=utf-8
       date:
-      - Wed, 01 Feb 2023 12:26:12 UTC
+      - Mon, 06 Mar 2023 19:59:00 UTC
       perf:
       - '7626143928'
       server:
       - tsa_o
       set-cookie:
-      - guest_id=v1%3A167525437244301150; Max-Age=34214400; Expires=Sun, 03 Mar 2024
-        12:26:12 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      - guest_id=v1%3A167813274000986546; Max-Age=34214400; Expires=Fri, 05 Apr 2024
+        19:59:00 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
       strict-transport-security:
       - max-age=631138519
       x-access-level:
       - read
       x-connection-hash:
-      - 4bf38cb94e4636797e7fa38d7a438e860377e7896cc359b56adedbfd38985779
+      - ad35b770c789c6630fc01031266cb0a3cd5cbcb75e85713d0cb79a4af38f2658
       x-content-type-options:
       - nosniff
       x-frame-options:
@@ -55,13 +55,13 @@ interactions:
       x-rate-limit-limit:
       - '300'
       x-rate-limit-remaining:
-      - '276'
+      - '296'
       x-rate-limit-reset:
-      - '1675254515'
+      - '1678133629'
       x-response-time:
-      - '133'
+      - '139'
       x-transaction-id:
-      - a4eb1c4355ba054d
+      - 3639d760b7c33a8a
       x-xss-protection:
       - '0'
     http_version: HTTP/1.1

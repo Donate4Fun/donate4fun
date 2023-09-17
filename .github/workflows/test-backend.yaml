@@ -75,13 +75,11 @@ jobs:
         with:
           compose-file: "polar/docker-compose.yml"
           down-flags: "--volumes"
-      - name: init-polar
-        run: scripts/init-polar.sh
       - name: Set up python
         id: setup-python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.11'
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
@@ -108,6 +106,8 @@ jobs:
         run: |
           source .venv/bin/activate
           playwright install
+      - name: init-polar
+        run: scripts/init-polar.sh
       - name: Run tests
         # Set to false to regenerate caches regardless of test results
         if: true

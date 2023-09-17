@@ -3,7 +3,9 @@ import json
 from datetime import datetime
 from uuid import UUID
 
+import asyncpg
 import pytest
+import sqlalchemy
 from donate4fun.models import Donation, Donator, YoutubeChannel
 from donate4fun.types import RequestHash
 from donate4fun.db_models import DonationDb
@@ -81,3 +83,21 @@ async def test_listen_notify(db, pubsub):
 async def test_db(db_session):
     db_status = await db_session.query_status()
     assert db_status == 'ok'
+
+
+async def test_concurrent_update(db, unpaid_donation_fixture):
+    async with db.session() as db_session_b:
+        db_b = DonationsDbLib(db_session_b)
+        async with db.session() as db_session_a:
+            db_a = DonationsDbLib(db_session_a)
+            donation_a = await db_a.lock_donation(unpaid_donation_fixture.r_hash)
+            assert not donation_a.paid_at
+            await db_a.donation_paid(donation_id=donation_a.id, amount=donation_a.amount, paid_at=datetime.utcnow())
+            # this call should hang on donation lock
+            lock_b = asyncio.create_task(db_b.lock_donation(unpaid_donation_fixture.r_hash))
+            # Ensure that db_b waits on select for update
+            await asyncio.sleep(0.1)
+        with pytest.raises(sqlalchemy.exc.DBAPIError) as exc:
+            await lock_b
+        assert exc.value.__cause__.__cause__.message == 'could not serialize access due to concurrent update'
+        assert isinstance(exc.value.__cause__.__cause__, asyncpg.exceptions.SerializationError)

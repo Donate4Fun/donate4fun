@@ -1,26 +1,14 @@
-import sys
-import asyncio
-from functools import wraps
-
 import httpx
 import yaml
 from lnurl.helpers import _lnurl_decode
 
 from .lnd import LnurlWithdrawResponse, Invoice
 from .types import PaymentRequest
-from .settings import load_settings
 from .dev_helpers import get_carol_lnd
+from .api_utils import register_app_command
 
 
-def command(func):
-    @wraps(func)
-    def wrapper():
-        with load_settings():
-            asyncio.run(func(*sys.argv[1:]))
-    return wrapper
-
-
-@command
+@register_app_command
 async def withdraw(lnurl: str):
     payer_lnd = get_carol_lnd()
     decoded_url = _lnurl_decode(lnurl)
@@ -37,7 +25,7 @@ async def withdraw(lnurl: str):
         print(yaml.dump(callback_response.json()))
 
 
-@command
+@register_app_command
 async def pay(lnurl: str):
     payer_lnd = get_carol_lnd()
     result = await payer_lnd.pay_invoice(PaymentRequest(lnurl))
