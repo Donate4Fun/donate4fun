@@ -52,7 +52,7 @@ async def exception_handler(request, exc, status_code):
 
 async def fetch_manifest() -> dict[str, Any]:
     async with httpx.AsyncClient() as client:
-        resp = await client.get(f'http://localhost:{settings.frontend_port}/manifest.json')
+        resp = await client.get(f'http://{settings.frontend_host}/manifest.json')
         return resp.json()
 
 

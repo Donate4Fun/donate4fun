@@ -106,7 +106,7 @@ router = APIRouter()
 
 
 def get_static_url(filename):
-    return f'//localhost:{settings.frontend_port}/static/{filename}'
+    return f'//{settings.frontend_host}/static/{filename}'
 
 
 def parse(data):

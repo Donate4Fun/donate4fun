@@ -122,7 +122,7 @@ async def settings(monkeypatch):
         settings.bugsnag = None
         settings.sentry = None
         settings.base_url = 'http://localhost:3000'
-        settings.frontend_port = 3000
+        settings.frontend_host = 'localhost:3000'
         init_posthog()
         yield settings
 

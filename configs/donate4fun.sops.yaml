@@ -12,7 +12,7 @@ fastapi:
     debug: ENC[AES256_GCM,data:QKtAQMg=,iv:rtepPWtglbIgbIlQYVWu10YUG19KnXkwQ5kcLRBVCW8=,tag:J1hPyjFRdLq7TycHEwrkcg==,type:bool]
     root_path: ""
 fee_limit: ENC[AES256_GCM,data:MRk=,iv:oks6Zhkhu3ASb86gHABEOh8j6aRw+aNg+f0HRaYrS8Y=,tag:pqp7an2/qCXxRAS7cQi/gw==,type:int]
-frontend_port: ENC[AES256_GCM,data:AFc=,iv:KbMOOo19s5Yc4cg0zvqlIGkNXvUlkOLcgFROZzQdt10=,tag:v9SCOy9lFX+yKLA8vk/AMg==,type:int]
+frontend_host: ENC[AES256_GCM,data:3y+/gD7EAcI=,iv:fnKzRS8t0jQ2KvQF0z08RKTY/kIUZAuU17l702Js/BY=,tag:JjsswQ0Nt43YBawbpOsplA==,type:str]
 github:
     client_id: ENC[AES256_GCM,data:SA22keDxCf6FXE1BQC95Em7YJjI=,iv:krV3XGqWGJY60g4xJTwQTNE6g8cD8gB2THxPeqkLZ5k=,tag:/618hrZhmxlXHrqVo/Qnng==,type:str]
     client_secret: ENC[AES256_GCM,data:atlNNemHLuNWoS6d7sHNuLjz05nnxOtgZXG4XqpiuV28AuqgDIeKvg==,iv:qJqf2oZghQVLDvhqIA2OhEkcNOooh6O1kawXPTd19YQ=,tag:nxNUMn8phA8WTUZ6R44N6g==,type:str]
@@ -99,8 +99,8 @@ sops:
     azure_kv: []
     hc_vault: []
     age: []
-    lastmodified: "2023-09-01T19:31:07Z"
-    mac: ENC[AES256_GCM,data:ZCq0fTTInW8mdJwCKBn0umlwOvVQ0Kj/oL+YLfzZHjVMmdRMrTuiTRB6kJy9CFXLnk6IWlTUkKPRI3md6PP1CEfbNY0m2RMEoEbylZgz1fZpEdV4Pjw5G5YQmH45kWOx8GogDtqxoKtw0m9u1MTgxYFZS6U562gDSnsWYSvn9Mg=,iv:GCsZltwvewSmKcb1qXMe8+244mcOVrquUYgDvQG14iA=,tag:+HC32FN1H8NFmLdNH0z2PA==,type:str]
+    lastmodified: "2023-09-17T15:50:27Z"
+    mac: ENC[AES256_GCM,data:qfKwbsxcO+0yYddryVK5X7v/r6gf0oQ9HoQJ2oI3HncX8yuOBzPsSbjQU3JhKEEYsQ8h11seqSk/ojQUhTHh8ZYNTfS9eKDgzZ1WwtX9kEv0haKC9EasIRA5e2c76sEx0ks7vwjUBXvjAHcfoqAZRbB1m79tKRLIfdZQfOgdXs0=,iv:r8/FQErJG1Dx0kJQbZbE1QuHdeiINylx7GhZC15s6FU=,tag:jEuXQLYkZaZUyMp3UX+xDg==,type:str]
     pgp:
         - created_at: "2023-09-01T19:31:07Z"
           enc: |
