@@ -6,6 +6,8 @@ env:
   lnd_version: "v0.15.5-beta"
   bitcoin_version: "22.0"
   DEBIAN_FRONTEND: noninteractive
+  # Set empty to regenerate caches regardless of test results
+  run_test: 1
 
 jobs:
   test:
@@ -81,7 +83,7 @@ jobs:
         id: setup-python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.11'
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
@@ -109,18 +111,20 @@ jobs:
           source .venv/bin/activate
           playwright install
       - name: Run tests
-        # Set to false to regenerate caches regardless of test results
-        if: true
+        if: ${{ env.run_test }}
         run: |
           source .venv/bin/activate
-          coverage run --source=donate4fun --concurrency greenlet,thread --branch -m pytest
+          coverage run --source=donate4fun --concurrency greenlet,thread --branch -m pytest -sxv
         env:
           DONATE4FUN_TEST_DB_URL: "postgresql+asyncpg://postgres:postgres@localhost/postgres"
+          SQLALCHEMY_SILENCE_UBER_WARNING: "1"
       - name: Generate coverage report
+        if: ${{ env.run_test }}
         run: |
           source .venv/bin/activate
           coverage xml
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
+        if: ${{ env.run_test }}
         with:
           files: coverage.xml

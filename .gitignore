@@ -13,3 +13,8 @@ tags
 /backups/
 /alembic/versions*
 /.coverage
+configs/service-account.json
+configs/donate4fun.yaml
+configs/RTL-Config.json
+configs/lnd.wallet.pw
+/configs/lnd-data/

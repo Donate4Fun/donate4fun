@@ -1,0 +1,111 @@
+version: '3'
+
+configs:
+  tor-config:
+    file: ./configs/torrc
+  lnd-config:
+    file: ./configs/lnd.conf
+  lnd-wallet-password:
+    file: ./configs/lnd.wallet.pw
+  rtl-config:
+    file: ./configs/RTL-Config.json
+  donate4fun-config:
+    file: ./configs/donate4fun.yaml
+  donate4fun-googleaccount:
+    file: ./configs/service-account.json
+
+volumes:
+  db:
+  tor-data:
+  lnd-data:
+  rtl-backup:
+
+services:
+  tor:
+    build: ./docker/tor
+    ports:
+    - "127.0.0.1:19051:9051"
+    - "127.0.0.1:19050:9050"
+    user: tor
+    configs:
+    - source: tor-config
+      target: /tor-config/torrc
+    volumes:
+    - type: volume
+      source: tor-data
+      target: /var/lib/tor
+    environment:
+      TOR_PASSWORD: 123qweasd
+  postgresql:
+    image: docker.io/bitnami/postgresql:14
+    ports:
+    - "127.0.0.1:15432:5432"
+    environment:
+      BITNAMI_DEBUG: false
+      POSTGRESQL_PORT_NUMBER: 5432
+      POSTGRESQL_VOLUME_DIR: /bitnami/postgresql
+      PGDATA: /bitnami/postgresql/data
+      POSTGRES_PASSWORD: 123qwe
+      POSTGRESQL_ENABLE_LDAP: no
+      POSTGRESQL_ENABLE_TLS: no
+      POSTGRESQL_LOG_HOSTNAME: false
+      POSTGRESQL_LOG_CONNECTIONS: false
+      POSTGRESQL_LOG_DISCONNECTIONS: false
+      POSTGRESQL_PGAUDIT_LOG_CATALOG: off
+      POSTGRESQL_CLIENT_MIN_MESSAGES: error
+      POSTGRESQL_SHARED_PRELOAD_LIBRARIES: pgaudit
+    volumes:
+    - type: volume
+      source: db
+      target: /bitnami/postgresql
+  lnd:
+    build: ./docker/lnd
+    command:
+    - /entrypoint.sh
+    - --configfile=/lnd-config/lnd.conf
+    ports:
+    - "127.0.0.1:10009:10009"
+    - "127.0.0.1:8070:8080"
+    - "9735:9735"
+    environment:
+      TOR_TARGET_HOST: lnd
+    configs:
+    - source: lnd-config
+      target: /lnd-config/lnd.conf
+    - source: lnd-wallet-password
+      target: /lnd-secret/wallet.pw
+    volumes:
+    - type: bind
+      source: ./configs/lnd-data
+      target: /lnd
+  rtl:
+    build: ./docker/rtl
+    ports:
+    - "127.0.0.1:8082:80"
+    environment:
+      RTL_CONFIG_PATH: /rtl-config
+    volumes:
+    - type: volume
+      source: rtl-backup
+      target: /rtl-backup
+    configs:
+    - source: rtl-config
+      target: /rtl-config/RTL-Config.json
+  backend:
+    build: .
+    ports:
+    - "127.0.0.1:18080:8080"
+    environment:
+      sentry_release: xxx
+      server_name: v0.21.0-68-g46bc58c-dirty
+    configs:
+    - source: donate4fun-config
+      target: /app/config.yaml
+    - source: donate4fun-googleaccount
+      target: /app/service-account.json
+  frontend:
+    build: ./frontend/
+    ports:
+    - "127.0.0.1:18090:80"
+    environment:
+      HOST: donate4.fun

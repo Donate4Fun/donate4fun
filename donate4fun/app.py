@@ -4,7 +4,6 @@ from contextlib import asynccontextmanager, AsyncExitStack
 
 import anyio
 import bugsnag
-import rollbar
 import google.cloud.logging
 import posthog
 import sentry_sdk
@@ -39,6 +38,7 @@ async def create_app(settings: Settings):
         root_path=settings.fastapi.root_path,
     )
     if settings.rollbar:
+        import rollbar
         rollbar.init(**settings.rollbar.dict())
     if settings.fastapi.debug:
         api.app.add_middleware(
@@ -137,6 +137,13 @@ async def create_table(tablename: str):
     await db.create_table(tablename)
 
 
+def init_posthog():
+    posthog.disabled = settings.posthog.disabled
+    posthog.project_api_key = settings.posthog.project_api_key
+    posthog.host = settings.posthog.host
+    posthog.debug = settings.posthog.debug
+
+
 @register_command
 async def serve():
     pubsub_ = PubSubBroker()
@@ -147,12 +154,7 @@ async def serve():
             client.setup_logging()
         if settings.bugsnag:
             bugsnag.configure(**settings.bugsnag.dict(), project_root=os.path.dirname(__file__))
-        if settings.posthog:
-            posthog.project_api_key = settings.posthog.project_api_key
-            posthog.host = settings.posthog.host
-            posthog.debug = settings.posthog.debug
-        else:
-            posthog.disabled = True
+        init_posthog()
         with app.assign(app_), lnd.assign(lnd_), pubsub.assign(pubsub_), task_group.assign(tg):
             async with pubsub.run(db), monitor_invoices(lnd_, db), AsyncExitStack() as stack:
                 if settings.twitter.enable_bot:

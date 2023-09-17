@@ -42,8 +42,8 @@ async def test_twitter_page(client, twitter_account):
 
 @pytest.fixture
 async def webapp(app, settings):
-    port = find_unused_port()
-    settings.frontend_port = port
+    port: int = find_unused_port()
+    settings.frontend_host = f'localhost:{port}'
     settings.api_port = port
     async with app_serve(app, port):
         yield

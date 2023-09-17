@@ -103,7 +103,7 @@ async def test_donate_tweet_with_lightning_address(
             await twitter_db.save_account(account)
             await twitter_db.get_or_create_tweet(tweet)
 
-        settings.frontend_port = port
+        settings.frontend_host = f'localhost:{port}'
         settings.base_url = f'http://localhost:{port}'
 
         async def app_wrapper(*args):

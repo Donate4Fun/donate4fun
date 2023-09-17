@@ -16,7 +16,6 @@ from uuid import UUID
 import anyio
 import pytest
 import ecdsa
-import posthog
 from asgi_testclient import TestClient
 from sqlalchemy import update
 from hypercorn.asyncio import serve as hypercorn_serve
@@ -24,7 +23,7 @@ from hypercorn.config import Config
 from furl import furl
 
 from donate4fun.core import as_task
-from donate4fun.app import create_app, app as app_var
+from donate4fun.app import create_app, app as app_var, init_posthog
 from donate4fun.api_utils import task_group
 from donate4fun.lnd import LndClient, lnd as lnd_var
 from donate4fun.settings import load_settings, Settings, DbSettings
@@ -121,10 +120,10 @@ async def settings(monkeypatch):
         settings.fastapi.debug = False  # We need to disable Debug Toolbar to avoid zero-division error (because of freezegun)
         settings.rollbar = None
         settings.bugsnag = None
-        settings.posthog = None
         settings.sentry = None
         settings.base_url = 'http://localhost:3000'
-        settings.frontend_port = 3000
+        settings.frontend_host = 'localhost:3000'
+        init_posthog()
         yield settings
 
 
@@ -197,7 +196,6 @@ async def pubsub(db):
 
 @pytest.fixture
 async def app(db, settings, pubsub):
-    posthog.disabled = True
     async with create_app(settings) as app, anyio.create_task_group() as tg:
         lnd = get_alice_lnd()
         with app_var.assign(app), lnd_var.assign(lnd), pubsub_var.assign(pubsub), task_group.assign(tg):

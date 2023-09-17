@@ -75,8 +75,8 @@ def track_donation(donation: Donation):
         via = 'lightning-address'
     else:
         via = 'donate4fun'
-    donator_id = donation.donator and donation.donator.id
-    posthog.capture(donator_id, 'donation-paid', dict(amount=donation.amount, target_type=target_type, via=via))
+    if donation.donator:
+        posthog.capture(donation.donator.id, 'donation-paid', dict(amount=donation.amount, target_type=target_type, via=via))
 
 
 def make_absolute_uri(path: str) -> str:

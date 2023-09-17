@@ -11,7 +11,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.11"
 httpx = "^0.23.0"
 fastapi = "^0.77.1"
 qrcode = {extras = ["pil"], version = "^7.3.1"}
@@ -24,7 +24,7 @@ PyYAML = "^6.0"
 itsdangerous = "^2.1.2"
 aiogoogle = "^4.1.0"
 databases = {extras = ["asyncpg"], version = "^0.5.5"}
-asyncpg = "^0.25.0"
+asyncpg = "0.28"
 hypercorn = {git = "https://github.com/nikicat/hypercorn"}
 email-validator = "^1.2.1"
 fastapi-debug-toolbar = "^0.2.1"
@@ -90,12 +90,15 @@ filterwarnings = [
     "error",
     "ignore:Inheritance class AiohttpSession from ClientSession is discouraged:DeprecationWarning",
 # freezegun related
-    "ignore:datetime.datetime size changed, may indicate binary incompatibility. Expected 48 from C header, got 64 from PyObject:RuntimeWarning",
+    "ignore:datetime.datetime size changed, may indicate binary incompatibility. Expected 48 from C header, got 56 from PyObject:RuntimeWarning",
+    "ignore:datetime.date size changed, may indicate binary incompatibility. Expected 32 from C header, got 40 from PyObject:RuntimeWarning",
     "ignore:datetime.date size changed, may indicate binary incompatibility. Expected 32 from C header, got 48 from PyObject:RuntimeWarning",
 # https://github.com/ktosiek/pytest-freezegun/issues/35
     "ignore:distutils Version classes are deprecated. Use packaging.version instead:DeprecationWarning",
 # Rollbar triggers warning in httpx
     "ignore:Use 'content=<...>' to upload raw bytes/text content.:DeprecationWarning",
+    "ignore:invalid escape sequence:DeprecationWarning",
+    "ignore:.*Deprecated API features detected! These feature\\(s\\) are not compatible with SQLAlchemy 2.0. To prevent incompatible upgrades prior to updating applications, ensure requirements files are pinned to .*. Set environment variable SQLALCHEMY_WARN_20=1 to show all deprecation warnings.  Set environment variable SQLALCHEMY_SILENCE_UBER_WARNING=1 to silence this message.*",
 ]
 asyncio_mode = "auto"
 testpaths = ["tests"]

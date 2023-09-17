@@ -10,7 +10,6 @@ from fastapi.responses import JSONResponse
 from lnurl.core import _url_encode as lnurl_encode
 from lnpayencode import LnAddr
 from anyio.abc import TaskStatus
-from rollbar.contrib.fastapi.routing import RollbarLoggingRoute
 from starlette.datastructures import URL
 from httpx import HTTPStatusError
 from pydantic import ValidationError as PydanticValidationError
@@ -38,7 +37,6 @@ from . import api_twitter, api_youtube, api_github, api_social, api_donation
 
 logger = logging.getLogger(__name__)
 router = app = FastAPI()
-router.route_class = RollbarLoggingRoute
 app.include_router(api_twitter.router)
 app.include_router(api_youtube.router)
 app.include_router(api_youtube.legacy_router)
@@ -310,7 +308,7 @@ async def lnauth_callback(
         posthog.capture(credentials.donator, 'connect-wallet')
         posthog.identify(credentials.donator, dict(pubkey=credentials.lnauth_pubkey))
     except Exception as exc:
-        logger.exception("Error in lnuath callback")
+        logger.exception("Error in lnauth callback")
         return dict(status="ERROR", reason=str(exc))
     else:
         return dict(status="OK")
