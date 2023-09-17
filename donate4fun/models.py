@@ -285,6 +285,7 @@ class Donation(IdModel):
     r_hash: RequestHash | None
     # This field is for transient payment, e.g. when donation is done from external wallet to an external lightning address
     transient_r_hash: RequestHash | None
+    transient_payment_request: PaymentRequest | None
     # Amount in sats
     amount: int
     # Fee amount in msats. Only for outgoing and transient payments

@@ -17,7 +17,6 @@ from typing import Callable
 import anyio
 import pytest
 import ecdsa
-import posthog
 from asgi_testclient import TestClient
 from sqlalchemy import update
 from hypercorn.asyncio import serve as hypercorn_serve
@@ -29,7 +28,7 @@ from authlib.integrations.base_client.errors import OAuthError
 
 from donate4fun.core import as_task
 from donate4fun.app import create_app, app as app_var
-from donate4fun.api_utils import task_group
+from donate4fun.api_utils import task_group, create_common
 from donate4fun.lnd import lnd as lnd_var, LndIsNotReady, Invoice
 from donate4fun.settings import load_settings, Settings, DbSettings
 from donate4fun.twitter import api_data_to_twitter_account, OAuthManager, OAuthTokenKind, OAuthToken
@@ -148,7 +147,13 @@ async def freeze_last_fetched_at(monkeypatch, time_of_freeze):
 
 
 @pytest.fixture
-async def db(settings: Settings):
+async def common_libs():
+    async with create_common():
+        yield
+
+
+@pytest.fixture
+async def db(settings: Settings, common_libs):
     async with create_db("donate4fun-test") as db:
         with db_var.assign(db):
             yield db
@@ -202,7 +207,6 @@ async def pubsub(db):
 
 @pytest.fixture
 async def app(db, settings, pubsub, receiver_lnd):
-    posthog.disabled = True
     async with create_app() as app, anyio.create_task_group() as tg:
         with app_var.assign(app), lnd_var.assign(receiver_lnd), pubsub_var.assign(pubsub), task_group.assign(tg):
             yield app

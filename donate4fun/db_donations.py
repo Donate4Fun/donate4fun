@@ -62,6 +62,7 @@ class DonationsDbLib(DbSessionWrapper):
                 lightning_address=donation.lightning_address,
                 r_hash=donation.r_hash and donation.r_hash.as_base64,
                 transient_r_hash=donation.transient_r_hash and donation.transient_r_hash.as_base64,
+                transient_payment_request=donation.transient_payment_request and donation.transient_payment_request,
                 receiver_id=donation.receiver and donation.receiver.id,
                 youtube_channel_id=donation.youtube_channel and donation.youtube_channel.id,
                 youtube_video_id=donation.youtube_video and donation.youtube_video.id,

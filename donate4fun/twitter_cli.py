@@ -34,3 +34,12 @@ async def get_profile_banner():
             logger.exception("Failed to get banner image:\n%s\n%s\n%s", auth_header, exc.request.headers, exc.response.json())
         else:
             print(data)
+
+
+@register_app_command
+async def follow_volume_stream():
+    token = settings.twitter.linking_oauth.bearer_token
+    async with TwitterApiClient.create_apponly(token=token) as client:
+        async with client.stream_sample_tweets() as stream:
+            async for tweet in stream:
+                print(tweet)

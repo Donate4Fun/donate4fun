@@ -305,6 +305,11 @@ class TwitterApiClient:
     async def delete_tweet(self, tweet_id: TweetId):
         await self.delete(f'/tweets/{tweet_id}')
 
+    @asynccontextmanager
+    async def stream_sample_tweets(self):
+        async with self.stream('GET', '/tweets/sample/stream', timeout=3600) as response:
+            yield self.generate_tweets(response)
+
 
 # TODO: make class derived from pydantic.BaseModel
 OAuthToken = dict

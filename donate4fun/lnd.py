@@ -25,8 +25,9 @@ from .settings import LndSettings, settings
 from .types import RequestHash, PaymentRequest
 from .models import Donator, Donation, SocialAccount
 from .core import as_task, ContextualObject, from_base64, to_base64
-from .api_utils import donation_paid, register_app_command
+from .api_utils import register_app_command
 from .db_donations import DonationsDbLib
+from .donation import finish_donation
 
 logger = logging.getLogger(__name__)
 State = str
@@ -282,7 +283,7 @@ async def monitor_invoices_step(lnd_client, db):
                                 if donation.paid_at is not None:
                                     logger.warning("Donation %s was already paid, skipping", donation)
                                 else:
-                                    await donation_paid(
+                                    await finish_donation(
                                         db_session,
                                         donation=donation,
                                         paid_at=invoice.settle_date,

@@ -32,7 +32,7 @@ from .core import as_task, catch_exceptions, restarting
 from .settings import settings
 from .twitter import TwitterHandle, OAuthManager, TwitterApiClient, Tweet
 from .twitter_provider import TwitterProvider
-from .donation import donate
+from .donation import init_donation
 from .api_utils import make_absolute_uri, register_app_command
 from .lnd import lnd, LndClient
 from .pubsub import pubsub, create_pubsub
@@ -309,7 +309,7 @@ class MentionsBot(BaseTwitterBot):
             )
             with lnd.assign(LndClient(settings.lnd)):
                 # Long expiry because this will be posted on Twitter
-                pay_req, donation = await donate(donation, db_session, expiry=3600 * 24)
+                pay_req, donation = await init_donation(donation, db_session, expiry=3600 * 24)
         if pay_req:
             invoice_tweet = await self.send_payreq(mention.id, receiver_account.handle, donation, pay_req)
             async with db.session() as db_session:

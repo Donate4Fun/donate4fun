@@ -145,6 +145,7 @@ class DonationDb(Base):
     r_hash = Column(String, unique=True)
     # For transient donations (look at models.py for description)
     transient_r_hash = Column(String, unique=True)
+    transient_payment_request = Column(String)
     amount = Column(BigInteger, nullable=False)
     fee_msat = Column(BigInteger)
     donator_id = Column(Uuid(as_uuid=True))

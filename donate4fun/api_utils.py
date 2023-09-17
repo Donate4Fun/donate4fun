@@ -1,8 +1,8 @@
 import hashlib
 import json
+import logging
 import unicodedata
 from contextlib import asynccontextmanager
-from datetime import datetime
 from functools import wraps
 from uuid import uuid4, UUID
 
@@ -18,15 +18,16 @@ from sqlalchemy.orm.exc import NoResultFound  # noqa - imported from other modul
 from jwcrypto.jwt import JWT
 from jwcrypto.jwk import JWK
 
-from .models import Donator, Credentials, Donation, SocialProviderId, SocialAccountOwned, SocialAccount, Toast
+from .models import Donator, Credentials, SocialProviderId, SocialAccount, Toast
 from .db import DbSession, db, Database
 from .db_libs import TwitterDbLib, YoutubeDbLib, GithubDbLib, DonationsDbLib
 from .core import ContextualObject, register_command
-from .types import LightningAddress, Satoshi, MilliSatoshi
+from .types import LightningAddress, Satoshi
 from .settings import settings, load_settings
 
 
 task_group = ContextualObject('task_group')
+logger = logging.getLogger(__name__)
 
 
 def get_donator(request: Request):
@@ -68,62 +69,8 @@ def scrape_lightning_address(text: str):
     return LightningAddress.parse(text)
 
 
-def track_donation(donation: Donation):
-    if donation.twitter_account:
-        target_type = 'twitter'
-    elif donation.youtube_channel:
-        target_type = 'youtube'
-    elif donation.receiver:
-        target_type = 'donate4fun'
-    else:
-        target_type = 'unknown'
-    if donation.lightning_address:
-        via = 'lightning-address'
-    else:
-        via = 'donate4fun'
-    donator_id = donation.donator and donation.donator.id
-    posthog.capture(donator_id, 'donation-paid', dict(amount=donation.amount, target_type=target_type, via=via))
-
-
 def make_absolute_uri(path: str) -> str:
     return str(furl(url=settings.base_url, path=furl(path).path))
-
-
-async def auto_transfer_donations(db: DbSession, donation: Donation) -> int:
-    """
-    Returns sats amount transferred
-    """
-    if donation.youtube_channel:
-        social_db = YoutubeDbLib(db)
-    elif donation.twitter_account:
-        social_db = TwitterDbLib(db)
-    elif donation.github_user:
-        social_db = GithubDbLib(db)
-    else:
-        social_db = None
-
-    if social_db:
-        account = getattr(donation, social_db.donation_field)
-        if not isinstance(account, social_db.owned_model):
-            account: SocialAccountOwned = await social_db.query_account(id=account.id)
-        if account.owner_id is not None:
-            return await social_db.transfer_donations(account, Donator(id=account.owner_id))
-    return 0
-
-
-async def donation_paid(
-    db_session: DbSession, donation: Donation, amount: Satoshi, paid_at: datetime,
-    fee_msat: MilliSatoshi = 0, claimed_at: datetime = None,
-) -> Donation:
-    donations_db = DonationsDbLib(db_session)
-    await donations_db.donation_paid(
-        donation_id=donation.id, amount=amount, paid_at=paid_at, fee_msat=fee_msat, claimed_at=claimed_at,
-    )
-    await auto_transfer_donations(db_session, donation)
-    # Reload donation with a fresh state
-    donation = await donations_db.query_donation(id=donation.id)
-    track_donation(donation)
-    return donation
 
 
 def encode_jwt(**claims) -> str:
@@ -225,6 +172,7 @@ async def create_common():
         posthog.debug = settings.posthog.debug
     else:
         posthog.disabled = True
+    logger.warning("create_common: posthog.disabled=%s", posthog.disabled)
     yield
 
 

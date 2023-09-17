@@ -2,25 +2,25 @@ import json
 from datetime import datetime
 
 import httpx
+import posthog
 from lnpayencode import LnAddr
 
-from .models import Donation, PaymentRequest
+from .models import Donation, PaymentRequest, Donator, SocialAccountOwned
 from .db import DbSession
-from .db_donations import DonationsDbLib
-from .types import LnurlpError, RequestHash, Satoshi
-from .api_utils import load_donator, donation_paid, HttpClient, sha256hash
-from .lnd import lnd, Invoice, PayInvoiceResult
+from .db_libs import TwitterDbLib, YoutubeDbLib, GithubDbLib, DonationsDbLib
+from .types import LnurlpError, RequestHash, Satoshi, MilliSatoshi
+from .api_utils import load_donator, HttpClient, sha256hash
 
 
-async def donate(donation: Donation, db_session: DbSession, expiry: int = None) -> (PaymentRequest, Donation):
+async def init_donation(db_session: DbSession, donation: Donation, expiry: int = None) -> (PaymentRequest, Donation):
     """
     Takes pre-filled Donation object and do one of the following:
          - if receiver is a Donate4.Fun account and sender has enough balance then just transfers money without lightning
-         - if receievr has a lightning address and sender has enough money then pays from balance to a lightning address
+         - if receiver has a lightning address and sender has enough money then pays from balance to a lightning address
          - if receiver has no lightning address (just a social account) then transfers money from sender balance
            or create a payment request to send money from a lightning wallet
-    In the end money from social accounts are automatically transferred to linked Donate4.Fun account if they exist.
     """
+    from .lnd import lnd, Invoice, PayInvoiceResult
     donator = await load_donator(db_session, donation.donator.id)
     # If donator has enough money (and not fulfilling his own balance) - try to pay donation instantly
     use_balance = (
@@ -28,42 +28,69 @@ async def donate(donation: Donation, db_session: DbSession, expiry: int = None) 
         and (donator.available_balance if donation.lightning_address else donator.balance) >= donation.amount
     )
     if donation.lightning_address:
-        # Payment to a lnurlp
-        pay_req: PaymentRequest = await fetch_lightning_address(donation)
-        r_hash = RequestHash(pay_req.decode().paymenthash)
-        if use_balance:
-            # FIXME: this leads to 'duplicate key value violates unique constraint "donation_rhash_key"'
-            # if we are donating to a local lightning address
-            donation.r_hash = r_hash
-        else:
-            donation.transient_r_hash = r_hash
-    elif not use_balance:
-        # Payment by invoice
-        invoice: Invoice = await lnd.create_invoice(memo=make_memo(donation), value=donation.amount, expiry=expiry)
-        donation.r_hash = invoice.r_hash  # This hash is needed to find and complete donation after payment succeeds
-        pay_req = invoice.payment_request
-    else:
-        # Fully internal payment
-        pay_req = None
+        # Payment to a lnurlp - check that it works and we can pay later, but we will fetch invoice again
+        output_pay_req: PaymentRequest = await fetch_lightning_address(donation)
+        donation.output_r_hash = RequestHash(pay_req.decode().paymenthash)
     donations_db = DonationsDbLib(db_session)
     await donations_db.create_donation(donation)
     if use_balance:
-        if donation.lightning_address:
-            pay_result: PayInvoiceResult = await lnd.pay_invoice(pay_req)
-            amount = pay_result.value_sat
-            paid_at = pay_result.creation_date
-            fee_msat = pay_result.fee_msat
-            claimed_at = pay_result.creation_date
-            pay_req = None  # We should not return pay_req to client because it's already paid
-        else:
-            amount = donation.amount
-            paid_at = datetime.utcnow()
-            fee_msat = None
-            claimed_at = None
-        donation = await donation_paid(
-            db_session, donation=donation, amount=amount, paid_at=paid_at, fee_msat=fee_msat, claimed_at=claimed_at,
-        )
-    return pay_req, donation
+        return None, await finish_donation(db_session, donation, amount=donation.amount, paid_at=donation.created_at)
+    else:
+        # Payment by invoice
+        invoice: Invoice = await lnd.create_invoice(memo=make_memo(donation), value=donation.amount, expiry=expiry)
+        donation.r_hash = invoice.r_hash  # Save this hash to finish the donation after the payment
+        return invoice.payment_request, donation
+
+
+async def finish_donation(
+    db_session: DbSession, donation: Donation, amount: Satoshi, paid_at: datetime,
+    fee_msat: MilliSatoshi = 0, claimed_at: datetime = None,
+) -> Donation:
+    """
+    At the end money from social accounts are automatically transferred to linked Donate4.Fun account if they exist.
+    """
+    if donation.lightning_address:
+        pay_req: PaymentRequest = await fetch_lightning_address(donation)
+        pay_result: PayInvoiceResult = await lnd.pay_invoice(pay_req)
+        amount = pay_result.value_sat
+        paid_at = pay_result.creation_date
+        fee_msat = pay_result.fee_msat
+        claimed_at = pay_result.creation_date
+
+    donations_db = DonationsDbLib(db_session)
+    await donations_db.donation_paid(
+        donation_id=donation.id, amount=amount, paid_at=paid_at, fee_msat=fee_msat, claimed_at=claimed_at,
+    )
+    await auto_transfer_donations(db_session, donation)
+    # Reload donation with a fresh state
+    donation = await donations_db.query_donation(id=donation.id)
+    track_donation(donation)
+    return donation
+
+
+async def auto_transfer_donations(db: DbSession, donation: Donation) -> int:
+    """
+    Returns sats amount transferred
+    """
+    if donation.youtube_channel:
+        social_db = YoutubeDbLib(db)
+    elif donation.twitter_account:
+        social_db = TwitterDbLib(db)
+    elif donation.github_user:
+        social_db = GithubDbLib(db)
+    else:
+        social_db = None
+
+    if social_db:
+        account = getattr(donation, social_db.donation_field)
+        if not isinstance(account, social_db.owned_model):
+            account: SocialAccountOwned = await social_db.query_account(id=account.id)
+        if account.lightning_address:
+            pay_req: PaymentRequest = await fetch_lightning_address(donation)
+            r_hash = RequestHash(pay_req.decode().paymenthash)
+        if account.owner_id is not None:
+            return await social_db.transfer_donations(account, Donator(id=account.owner_id))
+    return 0
 
 
 def lightning_address_to_lnurlp(address: str) -> str:
@@ -119,29 +146,37 @@ class LnurlpClient(HttpClient):
         return pay_req
 
 
+def get_lnurlp_name(donation: Donation) -> str:
+    if donation.donator_twitter_account:
+        return '@' + donation.donator_twitter_account.handle
+    else:
+        return donation.donator.name
+
+
+def get_lnurlp_comment(donation: Donation, name: str) -> str:
+    if donation.youtube_video:
+        target = f'https://youtube.com/watch?v={donation.youtube_video.video_id}'
+    elif donation.twitter_tweet:
+        target = f'https://twitter.com/{donation.twitter_account.handle}/status/{donation.twitter_tweet.tweet_id}'
+    elif donation.youtube_channel:
+        target = f'https://youtube.com/channel/{donation.youtube_channel.channel_id}'
+    elif donation.twitter_account:
+        target = f'https://twitter.com/{donation.twitter_account.handle}'
+    elif donation.lightning_address:
+        target = fields.get('text/identifier', donation.lightning_address)
+    return f'Tip from {name} via Donate4.Fun for {target}'
+
+
 async def fetch_lightning_address(donation: Donation) -> PaymentRequest:
     async with LnurlpClient() as client:
         metadata: dict = await client.fetch_metadata(lightning_address_to_lnurlp(donation.lightning_address))
         fields = dict(json.loads(metadata['metadata']))
-        if donation.donator_twitter_account:
-            name = '@' + donation.donator_twitter_account.handle
-        else:
-            name = donation.donator.name
-        if donation.youtube_video:
-            target = f'https://youtube.com/watch?v={donation.youtube_video.video_id}'
-        elif donation.twitter_tweet:
-            target = f'https://twitter.com/{donation.twitter_account.handle}/status/{donation.twitter_tweet.tweet_id}'
-        elif donation.youtube_channel:
-            target = f'https://youtube.com/channel/{donation.youtube_channel.channel_id}'
-        elif donation.twitter_account:
-            target = f'https://twitter.com/{donation.twitter_account.handle}'
-        elif donation.lightning_address:
-            target = fields.get('text/identifier', donation.lightning_address)
+        name: str = get_lnurlp_name(donation)
         pay_req = await client.fetch_invoice(
             metadata,
             amount=donation.amount,
             name=f'{name} via Donate4.Fun',
-            comment=f'Tip from {name} via Donate4.Fun for {target}'
+            comment=get_lnurlp_comment(donation, name),
         )
         return pay_req
 
@@ -156,3 +191,20 @@ def make_memo(donation: Donation) -> str:
             return f"[Donate4.fun] donation to {donation.receiver.name}"
     else:
         raise ValueError(f"Could not make a memo for donation {donation}")
+
+
+def track_donation(donation: Donation):
+    if donation.twitter_account:
+        target_type = 'twitter'
+    elif donation.youtube_channel:
+        target_type = 'youtube'
+    elif donation.receiver:
+        target_type = 'donate4fun'
+    else:
+        target_type = 'unknown'
+    if donation.lightning_address:
+        via = 'lightning-address'
+    else:
+        via = 'donate4fun'
+    donator_id = donation.donator and donation.donator.id
+    posthog.capture(donator_id, 'donation-paid', dict(amount=donation.amount, target_type=target_type, via=via))

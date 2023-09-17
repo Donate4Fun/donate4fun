@@ -13,14 +13,14 @@ from .models import (
 )
 from .types import ValidationError, PaymentRequest
 from .social import SocialProviderId, SocialProvider
-from .api_utils import get_donator, get_db_session, load_donator, get_donations_db, only_me, donation_paid
+from .api_utils import get_donator, get_db_session, load_donator, get_donations_db, only_me
 from .db_libs import GithubDbLib, TwitterDbLib, YoutubeDbLib, DonationsDbLib
 from .db_donations import sent_donations_subquery, received_donations_subquery
 from .db_models import DonationDb
 from .db_social import SocialDbWrapper
 from .lnd import lnd, Invoice
 from .settings import settings
-from .donation import donate, make_memo
+from .donation import init_donation, make_memo, finish_donation
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -73,7 +73,7 @@ async def donate_api(
         donation.donator_twitter_account = await twitter_provider.query_or_fetch_account(
             twitter_provider.wrap_db(db_session), handle=request.donator_twitter_handle
         )
-    pay_req, donation = await donate(donation, db_session)
+    pay_req, donation = await init_donation(donation, db_session)
     if pay_req is None:
         # FIXME: balance is saved in cookie to notify extension about balance change, but it should be done via VAPID
         web_request.session['balance'] = (await db_session.query_donator(id=donator.id)).balance
@@ -99,18 +99,25 @@ async def get_donation(donation_id: UUID, db_session=Depends(get_donations_db)):
 async def get_invoice(donation_id: UUID, db_session=Depends(get_donations_db)):
     donation: Donation = await db_session.query_donation(id=donation_id)
     if donation.paid_at is None:
-        invoice: Invoice = await lnd.lookup_invoice(donation.r_hash)
-        if invoice is None or invoice.state == 'CANCELED':
-            logger.debug(f"Invoice {invoice} cancelled, recreating")
-            invoice = await lnd.create_invoice(memo=make_memo(donation), value=donation.amount)
-            await db_session.update_donation(donation_id=donation_id, r_hash=invoice.r_hash)
-        return RedirectResponse(f'lightning:{invoice.payment_request}', status_code=307)
+        if donation.r_hash:
+            invoice: Invoice = await lnd.lookup_invoice(donation.r_hash)
+            if invoice is None or invoice.state == 'CANCELED':
+                logger.debug(f"Invoice {invoice} cancelled, recreating")
+                invoice = await lnd.create_invoice(memo=make_memo(donation), value=donation.amount)
+                await db_session.update_donation(donation_id=donation_id, r_hash=invoice.r_hash)
+            payment_request: PaymentRequest = invoice.payment_request
+        elif donation.transient_payment_request:
+            payment_request: PaymentRequest = donation.transient_payment_request
+        return RedirectResponse(f'lightning:{payment_request}', status_code=307)
     else:
         return RedirectResponse(f'/donation/{donation.id}', status_code=303)
 
 
 @router.post("/donation/{donation_id}/paid", response_model=Donation)
 async def donation_paid_api(donation_id: UUID, request: DonationPaidRequest, db=Depends(get_donations_db)):
+    """
+    This API is called by extension after making payment using WebLN - it just confirms that payment is done
+    """
     donation: Donation = await db.query_donation(id=donation_id)
     if donation.lightning_address is None:
         # Do nothing for all other cases
@@ -121,7 +128,7 @@ async def donation_paid_api(donation_id: UUID, request: DonationPaidRequest, db=
     if request.route.total_amt != donation.amount:
         raise ValidationError(f"Donation amount do not match {request.route.total_amt}")
     now = datetime.utcnow()
-    return await donation_paid(
+    return await finish_donation(
         db.session, donation=donation, amount=donation.amount, paid_at=now,
         fee_msat=request.route.total_fees * 1000, claimed_at=now,
     )
