@@ -91,7 +91,7 @@ services:
     configs:
     - source: rtl-config
       target: /rtl-config/RTL-Config.json
-  donate4fun-backend:
+  backend:
     build: .
     ports:
     - "127.0.0.1:18080:8080"
@@ -103,7 +103,7 @@ services:
       target: /app/config.yaml
     - source: donate4fun-googleaccount
       target: /app/service-account.json
-  donate4fun-frontend:
+  frontend:
     build: ./frontend/
     ports:
     - "127.0.0.1:18090:80"
